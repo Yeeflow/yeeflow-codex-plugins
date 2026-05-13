@@ -7,6 +7,20 @@ const { validateWorkflowActionShapes } = require("./workflow-action-config-valid
 const PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
 const NUMERIC_OPS = new Set(["n.>", "n.>=", "n.<", "n.<=", "n.=", "n.!=", ">", ">=", "<", "<="]);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const HEX_COLOR_RE = /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/g;
+const ROOT_STYLE_TOKEN_HEX = new Map([
+  ["#0065ff", "--c--primary"],
+  ["#00d1ff", "--c--secondary"],
+  ["#15df42", "--c--success"],
+  ["#f9c434", "--c--warning"],
+  ["#f61515", "--c--danger"],
+  ["#b3b7c0", "--c--neutral"],
+  ["#ffffff", "--c--background"],
+  ["#071638", "--c--text"],
+  ["#e7e9eb", "--c--neutral-light-active"],
+  ["#f7f8f9", "--c--neutral-light"],
+  ["#f4f4f6", "--c--neutral-light-hover"],
+]);
 
 function usage(exitCode = 1) {
   const out = [
@@ -53,6 +67,12 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function zeroPadding(padding) {
+  const value = Array.isArray(padding) ? padding[1] : padding;
+  if (!isObject(value)) return false;
+  return ["top", "right", "bottom", "left"].every((side) => value[side] === "--sp--s0" || value[side] === 0 || value[side] === "0" || value[side] === "");
+}
+
 function isSequenceFlow(shape) {
   return shape && shape.stencil && shape.stencil.id === "SequenceFlow";
 }
@@ -80,6 +100,23 @@ function deepWalk(value, visitor, pointer = "$", parent = null) {
       deepWalk(child, visitor, `${pointer}.${key}`, value);
     });
   }
+}
+
+function findControlByLabel(root, label) {
+  let found = null;
+  deepWalk(root, (node) => {
+    if (!found && isObject(node) && node.nv_label === label) found = node;
+  });
+  return found;
+}
+
+function controlContains(parent, child) {
+  if (!parent || !child) return false;
+  let found = false;
+  deepWalk(parent, (node) => {
+    if (node === child) found = true;
+  });
+  return found;
 }
 
 function collectPlaceholders(value) {
@@ -150,6 +187,7 @@ function validateDecodedDef(def, options = {}) {
   validateSetVariableTasks();
   validateWorkflowActionConfigurations();
   validatePlaceholderPolicy();
+  validateDesignSystemColorUsage();
 
   return finish();
 
@@ -303,6 +341,7 @@ function validateDecodedDef(def, options = {}) {
       if (page.formdef.exts !== undefined && !Array.isArray(page.formdef.exts)) {
         addIssue(errors, "FORMDEF_EXTS_NOT_ARRAY", "formdef.exts must be an array when present", `${pagePath}.formdef.exts`);
       }
+      validateUiUxStandardPage(page, pagePath);
       walkControls(page.formdef.children, { page, pagePath, listContext: null });
       if (page.type === 1) {
         deepWalk(page.formdef.children, (node) => {
@@ -335,6 +374,46 @@ function validateDecodedDef(def, options = {}) {
       } else {
         controlIds.set(controlId, entry.path);
       }
+    }
+  }
+
+  function validateUiUxStandardPage(page, pagePath) {
+    const formdef = page.formdef;
+    const container = formdef && formdef.attrs && formdef.attrs.container;
+    if (container && container.cw !== "2") {
+      addIssue(warnings, "UI_STANDARD_CONTENT_WIDTH_NOT_FULL", "UI/UX standard approval pages should use full-width content area: formdef.attrs.container.cw = \"2\"", `${pagePath}.formdef.attrs.container.cw`);
+    }
+    if (!zeroPadding(container && container.padding)) {
+      addIssue(warnings, "UI_STANDARD_FORM_PADDING_NOT_ZERO", "UI/UX standard approval pages should use zero page padding with --sp--s0 on all sides", `${pagePath}.formdef.attrs.container.padding`);
+    }
+    const main = findControlByLabel(formdef, "Main");
+    const content = findControlByLabel(formdef, "Content");
+    if (!main) addIssue(warnings, "UI_STANDARD_MAIN_CONTAINER_MISSING", "Approval pages should have a container with nv_label \"Main\"", `${pagePath}.formdef.children`);
+    if (!content) addIssue(warnings, "UI_STANDARD_CONTENT_CONTAINER_MISSING", "Approval pages should have a container with nv_label \"Content\"", `${pagePath}.formdef.children`);
+    if (main && content && !controlContains(main, content)) {
+      addIssue(warnings, "UI_STANDARD_CONTENT_NOT_INSIDE_MAIN", "Approval page Content container should be inside Main", `${pagePath}.formdef.children`);
+    }
+
+    const panels = [];
+    const histories = [];
+    deepWalk(formdef, (node) => {
+      if (!isObject(node)) return;
+      if (node.type === "workflowControlPanel") panels.push(node);
+      if (node.type === "workflowHistory") histories.push(node);
+    });
+    const formBody = findControlByLabel(formdef, "Form body");
+    const formBottom = findControlByLabel(formdef, "Form bottom");
+    if (panels.length || histories.length || page.type === 1 || page.type === 2) {
+      if (!formBody) addIssue(warnings, "UI_STANDARD_FORM_BODY_MISSING", "Approval pages should place main fields in a container with nv_label \"Form body\"", `${pagePath}.formdef.children`);
+      if (!formBottom) addIssue(warnings, "UI_STANDARD_FORM_BOTTOM_MISSING", "Approval pages should place Action Panel and Flow History in a container with nv_label \"Form bottom\"", `${pagePath}.formdef.children`);
+    }
+    if (formBottom) {
+      panels.forEach((panel) => {
+        if (!controlContains(formBottom, panel)) addIssue(warnings, "UI_STANDARD_ACTION_PANEL_NOT_IN_FORM_BOTTOM", "workflowControlPanel should be inside Form bottom", `${pagePath}.formdef.children`);
+      });
+      histories.forEach((history) => {
+        if (!controlContains(formBottom, history)) addIssue(warnings, "UI_STANDARD_FLOW_HISTORY_NOT_IN_FORM_BOTTOM", "workflowHistory should be inside Form bottom", `${pagePath}.formdef.children`);
+      });
     }
   }
 
@@ -842,6 +921,33 @@ function validateDecodedDef(def, options = {}) {
       const target = entry.level === "error" ? errors : warnings;
       addIssue(target, entry.code, entry.message, entry.path, entry);
     });
+  }
+
+  function validateDesignSystemColorUsage() {
+    const literalHits = [];
+    const arbitraryHits = [];
+    deepWalk(def, (node, pointer) => {
+      if (typeof node !== "string") return;
+      for (const match of node.matchAll(HEX_COLOR_RE)) {
+        const color = match[0].toLowerCase();
+        const token = ROOT_STYLE_TOKEN_HEX.get(color);
+        const hit = { color: match[0], path: pointer, token: token || null };
+        if (token) literalHits.push(hit);
+        else arbitraryHits.push(hit);
+      }
+    });
+    if (literalHits.length) {
+      addIssue(warnings, "DESIGN_SYSTEM_RESOLVED_TOKEN_COLOR", "Generated approval UI contains literal hex colors that match known Yeeflow root tokens. Prefer token references where supported, but do not fail exports that store resolved values.", literalHits[0].path, {
+        count: literalHits.length,
+        examples: literalHits.slice(0, 8),
+      });
+    }
+    if (arbitraryHits.length > 8) {
+      addIssue(warnings, "DESIGN_SYSTEM_ARBITRARY_COLOR_USAGE", "Generated approval UI contains many hard-coded hex colors. Prefer semantic Yeeflow root tokens where supported.", arbitraryHits[0].path, {
+        count: arbitraryHits.length,
+        examples: arbitraryHits.slice(0, 8),
+      });
+    }
   }
 
   function validatePlaceholderPolicy() {

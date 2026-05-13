@@ -9,6 +9,20 @@ const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
 const PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
 const SECRET_KEY_RE = /(token|secret|password|credential|clientsecret|apikey|api_key|accesskey|authorization|bearer)/i;
+const HEX_COLOR_RE = /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/g;
+const ROOT_STYLE_TOKEN_HEX = new Map([
+  ["#0065ff", "--c--primary"],
+  ["#00d1ff", "--c--secondary"],
+  ["#15df42", "--c--success"],
+  ["#f9c434", "--c--warning"],
+  ["#f61515", "--c--danger"],
+  ["#b3b7c0", "--c--neutral"],
+  ["#ffffff", "--c--background"],
+  ["#071638", "--c--text"],
+  ["#e7e9eb", "--c--neutral-light-active"],
+  ["#f7f8f9", "--c--neutral-light"],
+  ["#f4f4f6", "--c--neutral-light-hover"],
+]);
 
 function usage(exitCode = 1) {
   const text = [
@@ -106,6 +120,33 @@ function safeString(value) {
 function displayLabelDisabled(value) {
   if (value === false) return true;
   return Array.isArray(value) && value[1] === false;
+}
+
+function zeroPadding(padding) {
+  const value = Array.isArray(padding) ? padding[1] : padding;
+  if (!isObject(value)) return false;
+  return ["top", "right", "bottom", "left"].every((side) => value[side] === "--sp--s0" || value[side] === 0 || value[side] === "0" || value[side] === "");
+}
+
+function findControlByLabel(root, label) {
+  let found = null;
+  walkControls(root, (control) => {
+    if (!found && control && control.nv_label === label) found = control;
+  });
+  return found;
+}
+
+function controlContains(parent, child) {
+  if (!parent || !child) return false;
+  let found = false;
+  walkControls(parent, (control) => {
+    if (control === child) found = true;
+  });
+  return found;
+}
+
+function uiStandardWarning(report, code, message, details) {
+  issue(report, "warning", code, message, details);
 }
 
 function issue(report, level, code, message, details = {}) {
@@ -391,6 +432,7 @@ function validate(inputPath, mode, stage) {
   validateReportsDashboardsModules(data, listsById, fieldsByList, replaceIds, localIds, report);
   validateLookupRelationships(listsById, fieldsByList, report);
   validateSensitiveResources(data, report);
+  validateDesignSystemColorUsage({ resource, data }, report);
   validatePlaceholders({ wrapper, resource, data }, report);
 
   if (report._largeNumbers.size) {
@@ -519,6 +561,13 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
   const severity = generatorFinalSeverity(report);
   const title = layout.Title;
   const layoutId = safeString(layout.LayoutID);
+  if (page.attrs && page.attrs.hideHeaderAll !== true) {
+    uiStandardWarning(report, "UI_STANDARD_DASHBOARD_HEADER_NOT_HIDDEN", "UI/UX standard dashboards should set attrs.hideHeaderAll to true.", { title, layoutId });
+  }
+  if (!zeroPadding(page.attrs && page.attrs.container && page.attrs.container.padding)) {
+    uiStandardWarning(report, "UI_STANDARD_DASHBOARD_PADDING_NOT_ZERO", "UI/UX standard dashboards should use zero page padding: attrs.container.padding with --sp--s0 on all sides.", { title, layoutId });
+  }
+  validateUiStandardContainers(page, report, { surface: "dashboard", title, layoutId, requireFormBody: false });
   if (page.filterVars !== undefined && !Array.isArray(page.filterVars)) {
     issue(report, severity, "DASHBOARD_FILTERVARS_NOT_ARRAY", "Dashboard page filterVars must be an array when present.", { title, layoutId });
   }
@@ -975,6 +1024,8 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
   for (const key of ["children", "attrs", "title", "filterVars", "ver", "tempVars"]) {
     if (form[key] === undefined) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_REQUIRED_KEY_MISSING", `Custom form Resource missing ${key}.`, { title: layout.Title, key });
   }
+  validateUiStandardFormRoot(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix });
+  validateUiStandardContainers(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix, requireFormBody: false });
   if (!asArray(form.children).length) {
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "CUSTOM_FORM_EMPTY_CHILDREN", "Assigned custom form has no controls.", { title: layout.Title });
   }
@@ -1060,7 +1111,12 @@ function validateApprovalDef(def, form, report) {
     if (!page.id) issue(report, "error", "PAGEURL_ID_MISSING", "pageurls entry missing id.", { form: form.Name, index });
     if (page.id) ids.add(String(page.id));
     if (!page.formdef) issue(report, "error", "PAGEURL_FORMDEF_MISSING", "pageurls entry missing formdef.", { form: form.Name, page: page.title || page.name || page.id });
-    if (page.formdef && !Array.isArray(page.formdef.children)) issue(report, "error", "PAGEURL_FORMDEF_CHILDREN_NOT_ARRAY", "formdef.children must be an array.", { form: form.Name, page: page.title || page.id });
+    const formdef = typeof page.formdef === "string" ? tryParseJson(page.formdef) : page.formdef;
+    if (formdef && !Array.isArray(formdef.children)) issue(report, "error", "PAGEURL_FORMDEF_CHILDREN_NOT_ARRAY", "formdef.children must be an array.", { form: form.Name, page: page.title || page.id });
+    if (isObject(formdef)) {
+      validateUiStandardFormRoot(formdef, report, { surface: "approval form page", title: page.title || page.name || page.id, form: form.Name });
+      validateUiStandardContainers(formdef, report, { surface: "approval form page", title: page.title || page.name || page.id, form: form.Name, requireFormBody: true });
+    }
   });
   collectShapes(def).forEach((shape) => {
     if (shapeType(shape) !== "MultiAssignmentTask" && shapeType(shape) !== "StartNoneEvent") return;
@@ -1069,6 +1125,51 @@ function validateApprovalDef(def, form, report) {
       issue(report, "warning", "TASKURL_PAGE_NOT_FOUND", "Workflow taskurl does not match a pageurls id.", { form: form.Name, node: shape.properties && shape.properties.name, taskurl });
     }
   });
+}
+
+function validateUiStandardFormRoot(form, report, context = {}) {
+  const container = form && form.attrs && form.attrs.container;
+  if (container && container.cw !== "2") {
+    uiStandardWarning(report, "UI_STANDARD_CONTENT_WIDTH_NOT_FULL", "UI/UX standard forms should use full-width content area: attrs.container.cw = \"2\".", context);
+  }
+  if (!zeroPadding(container && container.padding)) {
+    uiStandardWarning(report, "UI_STANDARD_FORM_PADDING_NOT_ZERO", "UI/UX standard forms should use zero page padding: attrs.container.padding with --sp--s0 on all sides.", context);
+  }
+}
+
+function validateUiStandardContainers(root, report, context = {}) {
+  const main = findControlByLabel(root, "Main");
+  const content = findControlByLabel(root, "Content");
+  if (!main) {
+    uiStandardWarning(report, "UI_STANDARD_MAIN_CONTAINER_MISSING", "UI/UX standard pages/forms should have a top-level container with nv_label \"Main\".", context);
+    return;
+  }
+  if (!content) {
+    uiStandardWarning(report, "UI_STANDARD_CONTENT_CONTAINER_MISSING", "UI/UX standard pages/forms should place visible content inside a container with nv_label \"Content\".", context);
+    return;
+  }
+  if (!controlContains(main, content)) {
+    uiStandardWarning(report, "UI_STANDARD_CONTENT_NOT_INSIDE_MAIN", "UI/UX standard Content container should be inside Main.", context);
+  }
+  const actionPanel = [];
+  const flowHistory = [];
+  walkControls(root, (control) => {
+    if (control.type === "workflowControlPanel") actionPanel.push(control);
+    if (control.type === "workflowHistory") flowHistory.push(control);
+  });
+  if (!context.requireFormBody && !actionPanel.length && !flowHistory.length) return;
+  const formBody = findControlByLabel(root, "Form body");
+  const formBottom = findControlByLabel(root, "Form bottom");
+  if (!formBody) uiStandardWarning(report, "UI_STANDARD_FORM_BODY_MISSING", "Approval form pages should put main fields inside a container with nv_label \"Form body\".", context);
+  if (!formBottom) uiStandardWarning(report, "UI_STANDARD_FORM_BOTTOM_MISSING", "Approval form pages should put Action Panel and Flow History inside a container with nv_label \"Form bottom\".", context);
+  if (formBottom) {
+    for (const control of actionPanel) {
+      if (!controlContains(formBottom, control)) uiStandardWarning(report, "UI_STANDARD_ACTION_PANEL_NOT_IN_FORM_BOTTOM", "workflowControlPanel should be placed inside Form bottom.", context);
+    }
+    for (const control of flowHistory) {
+      if (!controlContains(formBottom, control)) uiStandardWarning(report, "UI_STANDARD_FLOW_HISTORY_NOT_IN_FORM_BOTTOM", "workflowHistory should be placed inside Form bottom.", context);
+    }
+  }
 }
 
 function validateWorkflowGraph(def, form, report) {
@@ -1212,6 +1313,34 @@ function validateSensitiveResources(data, report) {
     if (/agent/i.test(type)) issue(report, "dependency", "AI_AGENT_MODULE_PRESENT", "AI Agent module present; validate agent dependencies before generated package use.", { type });
     if (/knowledge/i.test(type)) issue(report, "dependency", "KNOWLEDGE_MODULE_PRESENT", "Knowledge module present; validate knowledge/copilot dependencies before generated package use.", { type });
   });
+}
+
+function validateDesignSystemColorUsage(root, report) {
+  if (report.mode !== "generator") return;
+  const literalHits = [];
+  const arbitraryHits = [];
+  walk(root, (node, pointer) => {
+    if (typeof node !== "string") return;
+    for (const match of node.matchAll(HEX_COLOR_RE)) {
+      const color = match[0].toLowerCase();
+      const token = ROOT_STYLE_TOKEN_HEX.get(color);
+      const hit = { color: match[0], path: pointer, token: token || null };
+      if (token) literalHits.push(hit);
+      else arbitraryHits.push(hit);
+    }
+  });
+  if (literalHits.length) {
+    issue(report, "warning", "DESIGN_SYSTEM_RESOLVED_TOKEN_COLOR", "Generated UI contains literal hex colors that match known Yeeflow root tokens. Prefer token references where the target schema supports them, but do not fail exports that store resolved values.", {
+      count: literalHits.length,
+      examples: literalHits.slice(0, 8),
+    });
+  }
+  if (arbitraryHits.length > 12) {
+    issue(report, "warning", "DESIGN_SYSTEM_ARBITRARY_COLOR_USAGE", "Generated UI contains many hard-coded hex colors. Prefer semantic Yeeflow root tokens for primary, success, warning, danger, neutral, background, and text colors where supported.", {
+      count: arbitraryHits.length,
+      examples: arbitraryHits.slice(0, 8),
+    });
+  }
 }
 
 function validatePlaceholders(root, report) {

@@ -42,6 +42,24 @@ Use v1 for apps like `Department Access Management`:
 - generated multi-type approval/list fields, including text, number, radio/dropdown, switch, and conditional display
 - simple root navigation and one Type `103` app page
 
+## Generated App UI/UX Standard
+
+Use `docs/yeeflow-application-design-system.md` as the master reusable generated-app design system when present in the active workspace. Use `docs/yeeflow-application-ui-ux-standards.md`, `docs/yeeflow-application-layout-standards.md`, `docs/yeeflow-application-style-token-standards.md`, `docs/yeeflow-dashboard-ui-ux-patterns.md`, `docs/yeeflow-data-list-ui-ux-patterns.md`, and `docs/yeeflow-approval-form-ui-ux-patterns.md` as supporting references.
+
+The first official reference export is `UI and UX design (1).yap`. It proves this native shell:
+
+- dashboard pages set `attrs.hideHeaderAll = true`, page padding to `--sp--s0` on all sides, and use `Main` -> `Content` containers named through `nv_label`
+- generated data lists include `Edit Item` and `View Item` custom forms; New/Edit map to `Edit Item`, View maps to `View Item`
+- custom list forms use `attrs.container.cw = "2"`, zero padding, and `Main` -> `Content`
+- approval form pages use `attrs.container.cw = "2"`, zero padding, `Main` -> `Content`, with business controls in `Form body` and workflow controls in `Form bottom`
+- default approval forms include both `workflowControlPanel` and `workflowHistory` in `Form bottom` unless the user explicitly asks to omit them
+
+Treat validator UI/UX standard findings as warnings until the first generated UI/UX standard package has passed runtime import/open and export-back comparison.
+
+Use `docs/yeeflow-root-style-token-reference.md` as the root style/design-token reference. Generated apps should use Yeeflow-native root style tokens such as `--c--primary`, `--c--success`, `--c--warning`, `--c--danger`, `--c--neutral-light-active`, `--fs--base`, and `--sp--s200` where supported. Avoid arbitrary custom colors and do not inject the full root stylesheet into generated apps. Do not require token references when a real Yeeflow export stores resolved hex values.
+
+Generated apps should apply the Yeeflow Application Design System by default: use `Main` / `Content` containers, meaningful `nv_label` names, token-aligned colors and spacing, Edit/View custom forms for generated data lists, `Form body` / `Form bottom` approval pages, and clear dashboard sections plus Collection naming. Treat design-system validator findings as warnings until runtime import/open/export-back proof exists for the specific generated package.
+
 Keep these out of scope in v1 unless the user asks for research only:
 
 - dashboards beyond a minimal Type `103` shell page

@@ -8,6 +8,20 @@ const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
 const PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
 const SECRET_KEY_RE = /(token|secret|password|credential|clientsecret|apikey|api_key|accesskey)/i;
+const HEX_COLOR_RE = /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/g;
+const ROOT_STYLE_TOKEN_HEX = new Map([
+  ["#0065ff", "--c--primary"],
+  ["#00d1ff", "--c--secondary"],
+  ["#15df42", "--c--success"],
+  ["#f9c434", "--c--warning"],
+  ["#f61515", "--c--danger"],
+  ["#b3b7c0", "--c--neutral"],
+  ["#ffffff", "--c--background"],
+  ["#071638", "--c--text"],
+  ["#e7e9eb", "--c--neutral-light-active"],
+  ["#f7f8f9", "--c--neutral-light"],
+  ["#f4f4f6", "--c--neutral-light-hover"],
+]);
 
 const KNOWN_SYSTEM_FIELDS = new Set([
   "ListDataID",
@@ -132,6 +146,12 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function zeroPadding(padding) {
+  const value = Array.isArray(padding) ? padding[1] : padding;
+  if (!isObject(value)) return false;
+  return ["top", "right", "bottom", "left"].every((side) => value[side] === "--sp--s0" || value[side] === 0 || value[side] === "0" || value[side] === "");
+}
+
 function safeString(value) {
   if (value === null || value === undefined) return "";
   return String(value);
@@ -173,6 +193,23 @@ function walkControls(control, visitor, pointer = "$") {
       control[key].forEach((child, index) => walkControls(child, visitor, `${pointer}.${key}[${index}]`));
     }
   }
+}
+
+function findControlByLabel(root, label) {
+  let found = null;
+  walkControls(root, (control) => {
+    if (!found && control && control.nv_label === label) found = control;
+  });
+  return found;
+}
+
+function controlContains(parent, child) {
+  if (!parent || !child) return false;
+  let found = false;
+  walkControls(parent, (control) => {
+    if (control === child) found = true;
+  });
+  return found;
 }
 
 function normalizeType(field, rules = {}) {
@@ -333,6 +370,34 @@ function detectPlaceholders(root, report) {
       }
     }
   });
+}
+
+function validateDesignSystemColorUsage(root, report) {
+  if (report.mode !== "generator") return;
+  const literalHits = [];
+  const arbitraryHits = [];
+  walk(root, (node, pointer) => {
+    if (typeof node !== "string") return;
+    for (const match of node.matchAll(HEX_COLOR_RE)) {
+      const color = match[0].toLowerCase();
+      const token = ROOT_STYLE_TOKEN_HEX.get(color);
+      const hit = { color: match[0], path: pointer, token: token || null };
+      if (token) literalHits.push(hit);
+      else arbitraryHits.push(hit);
+    }
+  });
+  if (literalHits.length) {
+    issue(report, "warning", "DESIGN_SYSTEM_RESOLVED_TOKEN_COLOR", "Generated list UI contains literal hex colors that match known Yeeflow root tokens. Prefer token references where supported, but do not fail exports that store resolved values.", {
+      count: literalHits.length,
+      examples: literalHits.slice(0, 8),
+    });
+  }
+  if (arbitraryHits.length > 8) {
+    issue(report, "warning", "DESIGN_SYSTEM_ARBITRARY_COLOR_USAGE", "Generated list UI contains many hard-coded hex colors. Prefer semantic Yeeflow root tokens where supported.", {
+      count: arbitraryHits.length,
+      examples: arbitraryHits.slice(0, 8),
+    });
+  }
 }
 
 function validateStructure(data, resource, report) {
@@ -612,6 +677,7 @@ function isAllowedUnboundControl(type) {
 function validateCustomForms(item, fieldByName, report) {
   const layouts = asArray(item.Layouts);
   const customFormLayoutIds = [];
+  const customFormsByTitle = new Map();
   let customFormCount = 0;
   layouts.forEach((layout, index) => {
     if (layoutType(layout) !== "1") return;
@@ -635,6 +701,7 @@ function validateCustomForms(item, fieldByName, report) {
     }
     customFormCount += 1;
     if (layout.LayoutID) customFormLayoutIds.push(String(layout.LayoutID));
+    if (layout.Title) customFormsByTitle.set(String(layout.Title).toLowerCase(), layout);
     if (report.mode === "generator" && (!layoutResource.ID || !layoutResource.RefId)) {
       issue(report, "error", "CUSTOM_FORM_RESOURCE_ID_MISSING", "Generated custom form resources should include LayoutInResources ID and RefId like real exports.", {
         location: `Item.Layouts[${index}].LayoutInResources[0]`,
@@ -678,6 +745,10 @@ function validateCustomForms(item, fieldByName, report) {
       });
     }
     const form = redact(parsed.value);
+    validateUiUxStandardListForm(form, report, {
+      location: `Item.Layouts[${index}].LayoutInResources[0].Resource`,
+      title: layout.Title || null,
+    });
     const children = asArray(form.children);
     if (children.length === 0) {
       generatorOrWarning(report, "CUSTOM_FORM_CHILDREN_EMPTY", "Custom form Resource has no children, so the designer/form will be empty.", {
@@ -736,6 +807,25 @@ function validateCustomForms(item, fieldByName, report) {
           layoutView: parsedLayoutView.value,
         });
       }
+      const editLayout = customFormsByTitle.get("edit item");
+      const viewLayout = customFormsByTitle.get("view item");
+      if (report.mode === "generator") {
+        if (!editLayout) {
+          issue(report, "warning", "UI_STANDARD_EDIT_ITEM_FORM_MISSING", "UI/UX standard generated data lists should include a custom form titled \"Edit Item\".", {});
+        }
+        if (!viewLayout) {
+          issue(report, "warning", "UI_STANDARD_VIEW_ITEM_FORM_MISSING", "UI/UX standard generated data lists should include a custom form titled \"View Item\".", {});
+        }
+        if (editLayout && String(parsedLayoutView.value.add) !== String(editLayout.LayoutID)) {
+          issue(report, "warning", "UI_STANDARD_NEW_NOT_USING_EDIT_ITEM_FORM", "UI/UX standard New item display setting should use the Edit Item custom form.", { expectedLayoutId: editLayout.LayoutID, actualLayoutId: parsedLayoutView.value.add });
+        }
+        if (editLayout && String(parsedLayoutView.value.edit) !== String(editLayout.LayoutID)) {
+          issue(report, "warning", "UI_STANDARD_EDIT_NOT_USING_EDIT_ITEM_FORM", "UI/UX standard Edit item display setting should use the Edit Item custom form.", { expectedLayoutId: editLayout.LayoutID, actualLayoutId: parsedLayoutView.value.edit });
+        }
+        if (viewLayout && String(parsedLayoutView.value.view) !== String(viewLayout.LayoutID)) {
+          issue(report, "warning", "UI_STANDARD_VIEW_NOT_USING_VIEW_ITEM_FORM", "UI/UX standard View item display setting should use the View Item custom form.", { expectedLayoutId: viewLayout.LayoutID, actualLayoutId: parsedLayoutView.value.view });
+        }
+      }
     } else if (report.mode === "generator") {
       issue(report, "warning", "CUSTOM_FORM_DISPLAY_SETTINGS_UNPARSEABLE", "Custom form exists, but ListModel.LayoutView could not be parsed to confirm display setting assignment.", {
         customFormLayoutIds,
@@ -743,6 +833,29 @@ function validateCustomForms(item, fieldByName, report) {
     }
   }
   return customFormCount;
+}
+
+function validateUiUxStandardListForm(form, report, details) {
+  const container = form && form.attrs && form.attrs.container;
+  if (container && container.cw !== "2") {
+    issue(report, "warning", "UI_STANDARD_CONTENT_WIDTH_NOT_FULL", "UI/UX standard custom list forms should use full-width content area: attrs.container.cw = \"2\".", details);
+  }
+  if (!zeroPadding(container && container.padding)) {
+    issue(report, "warning", "UI_STANDARD_FORM_PADDING_NOT_ZERO", "UI/UX standard custom list forms should use zero page padding with --sp--s0 on all sides.", details);
+  }
+  const main = findControlByLabel(form, "Main");
+  const content = findControlByLabel(form, "Content");
+  if (!main) {
+    issue(report, "warning", "UI_STANDARD_MAIN_CONTAINER_MISSING", "UI/UX standard custom list forms should have a container with nv_label \"Main\".", details);
+    return;
+  }
+  if (!content) {
+    issue(report, "warning", "UI_STANDARD_CONTENT_CONTAINER_MISSING", "UI/UX standard custom list forms should have a container with nv_label \"Content\".", details);
+    return;
+  }
+  if (!controlContains(main, content)) {
+    issue(report, "warning", "UI_STANDARD_CONTENT_NOT_INSIDE_MAIN", "UI/UX standard custom list form Content container should be inside Main.", details);
+  }
 }
 
 function stencilId(node) {
@@ -1071,6 +1184,7 @@ function validate(inputPath, mode, stage, dependencyMapPath = null) {
   validateWorkflows(decoded.data, item, fieldByName, knownListIds, report);
   validateSampleData(item, fieldByName, report, dependencyMap, externalLookupFields, decoded.resource);
   validateLookupRelationships(lookupRelationships, knownListIds, report, dependencyMap);
+  validateDesignSystemColorUsage(decoded, report);
 
   report.summary.fields = asArray(item.Defs).length;
   report.summary.views = viewCount;

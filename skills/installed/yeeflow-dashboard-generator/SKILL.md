@@ -45,6 +45,24 @@ Start from the smallest proven dashboard app, then add one capability at a time:
 
 Each import-test package must use a fresh local ID family.
 
+## Generated Dashboard UI/UX Standard
+
+When the active workspace contains `docs/yeeflow-application-design-system.md` and `docs/yeeflow-dashboard-design-standards.md`, use them as the default dashboard design standard. Use `docs/yeeflow-dashboard-ui-ux-patterns.md` for export-level evidence. The first official UI/UX reference export is `UI and UX design (1).yap`.
+
+Default generated dashboards should:
+
+- set embedded page `attrs.hideHeaderAll = true`
+- set embedded page `attrs.container.padding` to `--sp--s0` on all sides
+- use a top-level container with `nv_label: "Main"`
+- place the main visible content inside a child container with `nv_label: "Content"`
+- keep Type `103` `LayoutView = null`, `Ext2 = "{\"src\":true}"`, and embedded page JSON in `LayoutInResources[0].Resource`
+
+The studied dashboard does not prove a dashboard `attrs.container.cw` setting. Do not invent one until another real export proves it.
+
+Use `docs/yeeflow-root-style-token-reference.md` for dashboard color, spacing, radius, and typography guidance. Prefer semantic tokens for generated dashboard surfaces and statuses: primary, success, warning, danger, and neutral. Avoid arbitrary custom palettes; do not inject the full root stylesheet.
+
+Generated dashboards should use clear sections (`Page header`, `Summary section`, `Body section`, `Collection section`, `Empty state`), meaningful `nv_label` names, token-aligned neutral surfaces, and Collection controls for repeatable list-style content when source lists are local and proven.
+
 ## Minimal Proven Baseline
 
 The first proven generated dashboard package is:

@@ -35,6 +35,12 @@ For any new Yeeflow feature:
 
 A feature is not learned until real export study, validation, runtime proof, baseline documentation, and skill updates are complete.
 
+For generated-app UI/UX standards, first study a focused export such as `UI and UX design (1).yap`, document dashboard/list/approval form shells, add validator warnings where exact checks are safe, and only then propose a minimal generated test package. Do not make UI/UX standard warnings into hard generator errors until a generated package has runtime import/open and export-back proof.
+
+For root style/token learning, study `root_styles.txt` read-only, preserve token names exactly, document token groups, and update generator guidance to prefer Yeeflow-native tokens over arbitrary colors. Do not inject the full root stylesheet into generated apps.
+
+For Yeeflow Application Design System learning, consolidate the focused UI/UX export, root tokens, design-system alignment guidance, and proven generated-app baselines into `docs/yeeflow-application-design-system.md` plus layout/style/dashboard/list/form/control-naming standards. Keep validator checks warning-first until a generated design-system package has runtime import/open/export-back proof.
+
 ## What To Load
 
 - For the full lifecycle, read `references/feature-learning-workflow.md`.

@@ -102,6 +102,21 @@ Load only the relevant reference:
 - For app-level `.yap` internal lookup samples, target sample record IDs are local IDs, should be included in `ReplaceIds`, and dependent lookup sample values may reference those local IDs.
 - For generated lists intended as approval-form storage targets, build/import/export the `.ydl` first, then use exported-back list and field metadata to patch the approval form `ContentList` target.
 
+## Generated Data List UI/UX Standard
+
+When the active workspace contains `docs/yeeflow-application-design-system.md` and `docs/yeeflow-data-list-form-design-standards.md`, use them as the default generated data-list form standard. Use `docs/yeeflow-data-list-ui-ux-patterns.md` for export-level evidence. The first official UI/UX reference export is `UI and UX design (1).yap`.
+
+Generated data lists should include two custom list forms by default:
+
+- `Edit Item`
+- `View Item`
+
+New and Edit display settings should use `Edit Item`; View should use `View Item`. Both custom forms should use `attrs.container.cw = "2"`, zero padding with `--sp--s0` on all sides, and a `Main` -> `Content` container shell named with `nv_label`.
+
+Use `docs/yeeflow-root-style-token-reference.md` for custom form token guidance. Prefer `--c--background`, `--c--neutral-light-active`, `--c--neutral-light-hover`, `--fs--base`, and spacing tokens such as `--sp--s150` and `--sp--s200` where the form schema supports style values. Avoid arbitrary custom colors and do not inject the full root stylesheet.
+
+Generated list forms should use meaningful `nv_label` names for `Main`, `Content`, `Field group`, and `Readonly section`. Keep `Edit Item` input-optimized and `View Item` display-optimized unless the user explicitly scopes out custom forms.
+
 ## Field Type And Sample Rules
 
 Generated `.ydl` lists and `.yap` child lists can now use these proven field shapes:

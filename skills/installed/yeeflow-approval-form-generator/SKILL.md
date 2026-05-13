@@ -41,6 +41,26 @@ Prefer Yeeflow native configuration in this order:
 
 Use custom code only when the requirement is justified client-side behavior that native Yeeflow features cannot model safely.
 
+## Generated Approval Form UI/UX Standard
+
+When the active workspace contains `docs/yeeflow-application-design-system.md` and `docs/yeeflow-approval-form-design-standards.md`, use them as the default approval-form design standard. Use `docs/yeeflow-approval-form-ui-ux-patterns.md` for export-level evidence. The first official UI/UX reference export is `UI and UX design (1).yap`.
+
+Generated submission and task pages should use:
+
+- `attrs.container.cw = "2"`
+- zero padding with `--sp--s0` on all sides
+- a top-level `Main` container
+- a `Content` container inside `Main`
+- a `Form body` container inside `Content` for request/review fields
+- a `Form bottom` container at the end of `Content`
+- `workflowControlPanel` and `workflowHistory` inside `Form bottom` by default
+
+Some forms may omit Action Panel or Flow History only when the user explicitly asks or a real export proves the omission.
+
+Use `docs/yeeflow-root-style-token-reference.md` for approval-form token guidance. Generated forms should prefer Yeeflow-native tokens for backgrounds, neutral borders, headings, spacing, and semantic decision/status colors. Let native `workflowControlPanel` and `workflowHistory` styles apply unless a real export proves a style override.
+
+Generated approval forms should apply the design system by default: business content in `Form body`, Action Panel and Flow History in `Form bottom`, readonly task-page mirroring where useful, meaningful `nv_label`, and token-aligned colors and spacing without changing core workflow logic.
+
 ## Hard Stop Conditions
 
 Stop and report blockers. Do not build final `.ywf` when:
