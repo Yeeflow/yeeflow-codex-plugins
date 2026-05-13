@@ -162,11 +162,11 @@ The next generation stage stayed small and became a lookup isolation sequence:
 1. v5 added article-to-category lookup with local lookup sample values. Import passed, but Articles stayed on a loading spinner.
 2. v6 blanked the lookup sample values. Articles still stayed on a loading spinner.
 3. v7 hid the lookup field from the visible Articles list view. Articles still stayed on a loading spinner.
-4. v8 moved the lookup to the source-like `Text4` slot and validated/build round-tripped successfully; runtime import is pending because Chrome UI automation lost macOS assistive-device access.
+4. v8 moved the lookup to the source-like `Text4` slot and validated/build round-tripped successfully. Runtime import succeeded and the Home dashboard rendered, but both Categories and Articles stayed on loading spinners.
 
 See `docs/generated-knowledge-base-lookup-isolation.md`.
 
-Current rule: do not promote Knowledge Base lookup generation beyond the v4 plain text category-label baseline until the source-like `Text4` lookup package passes runtime import and Articles opens.
+Current rule: do not promote Knowledge Base lookup generation beyond the v4 plain text category-label baseline. The source-like `Text4` lookup metadata package did not pass list runtime testing, so the next safe lookup isolation must reduce or source-align list metadata instead of adding lookup sample values.
 
 ## Stop Conditions
 
