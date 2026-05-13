@@ -38,6 +38,7 @@ Use v1 for apps like `Department Access Management`:
 - approval form lookup controls
 - lookup additional field mappings
 - approval workflow `ContentList` create/update actions targeting included lists
+- workflow action validation against the normalized node/action configuration reference
 - generated multi-type approval/list fields, including text, number, radio/dropdown, switch, and conditional display
 - simple root navigation and one Type `103` app page
 
@@ -60,6 +61,7 @@ Stop before final `.yap` build if any of these are true:
 - invalid or incomplete root app shell
 - missing root navigation or app page
 - unresolved AI/connection/knowledge/document/external resources
+- workflow action properties do not satisfy `workflow-action-configurations.normalized.json`
 - placeholders remain in final mode
 - validators fail
 - sensitive credential-like resources would be copied
@@ -221,6 +223,13 @@ Load only the relevant reference:
 - `references/validate-yap-graph.md`: graph validator behavior.
 - `references/build-yap-wrapper.md`: wrapper builder usage and safety rules.
 - `references/examples-summary.md`: proven baseline and quick pattern reminders.
+- In the active generator workspace, use `docs/workflow-action-configuration-reference.md`, `docs/workflow-action-generation-rules.md`, and `workflow-action-configurations.normalized.json` as the official workflow action configuration reference when generating or validating workflow nodes.
+
+## Workflow Action Configuration Reference
+
+The app validator stack should validate workflow nodes against the normalized action reference when present. Stop before wrapper build on missing required node properties, invalid enum values, invalid value types, invalid `ContentList` mappings, invalid `QueryData` filters, invalid `SequenceFlow` conditions, invalid `Loop`/`Delay` condition shapes, and unsafe external or credential-related actions.
+
+Treat `GenerateDocument`, `ConvertToPdf`, `AddWatermark`, and `DocumentRecognition` as partially supported until template/document-library dependencies are proven. Treat `AI`, `AzureOpenAI`, `Connector`, `HttpRequest`, `AcrobatSign`, `DocuSign`, and `PandaDoc` as external/credential-sensitive; do not bundle secrets, tokens, passwords, API keys, connection IDs, or tenant-specific credential values.
 
 ## Output Expectations
 

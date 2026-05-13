@@ -55,7 +55,7 @@ Also read the relevant installed feature skills when the task touches their area
 3. Inventory feature resources and dependencies. Identify where the feature lives in `Data.Item`, `Data.Childs`, `Data.Forms`, `DataReports`, `FormReports`, dashboards, document libraries, agents, knowledges, connections, or `OtherModules`.
 4. Compare with known baselines from the app, list, and approval-form skills. Mark what is known, new, similar, risky, or externally dependent.
 5. Extract a reusable feature pattern: location, required fields, IDs, `ReplaceIds`, navigation/menu links, related child resources, data sources, runtime dependencies, and export-back behavior.
-6. Update or design validator rules before generating. A feature should not be generated until obvious mistakes can be caught.
+6. Update or design validator rules before generating. For workflow actions, first normalize the official action configuration reference into `workflow-action-configurations.normalized.json` and document it in `docs/workflow-action-configuration-reference.md` plus `docs/workflow-action-generation-rules.md`.
 7. Write a dedicated study doc such as `docs/dashboard-feature-pattern-study.md`, `docs/document-library-feature-pattern-study.md`, `docs/report-feature-pattern-study.md`, or `docs/ai-agent-feature-pattern-study.md`.
 8. Generate only the smallest possible test package, using fresh local ID families and minimal dependencies.
 9. Run component and package validators. Build wrappers only after validators pass.
@@ -65,6 +65,12 @@ Also read the relevant installed feature skills when the task touches their area
 13. Patch minimally with fresh IDs, retest, and preserve known-good baselines.
 14. Document the successful baseline.
 15. Update or create the relevant feature-specific skill, including proven patterns, hard rules, validators/scripts, stop conditions, summarized examples, and remaining gaps.
+
+## Workflow Action Learning Rules
+
+When learning workflow actions from `node-configurations.json`, treat the uploaded JSON as read-only source evidence. Extract control types, required/optional properties, value types, enums, nested schemas, and conditional applicability. Update validators before generating new workflow packages.
+
+Validation should cover missing required node properties, invalid enum values, invalid value types, invalid `ContentList` mappings, invalid `QueryData` filters, invalid `SequenceFlow` conditions, invalid `Loop`/`Delay` condition shapes, and unsafe external or credential-related actions. Do not bundle sensitive values.
 
 ## Validation Commands To Prefer
 
@@ -88,4 +94,3 @@ Never import into Yeeflow or operate Chrome for Yeeflow testing unless the user 
 `https://codex.yeeflow.com/`
 
 Use Chrome console/network evidence when import or runtime behavior fails. Do not expose secrets or tenant credentials in logs, summaries, docs, or skills.
-
