@@ -4,6 +4,8 @@ Validate decoded Yeeflow approval form `Def` JSON drafts before base64 wrapping 
 
 This tool is intentionally read-only. It does not import into Yeeflow, operate the UI, create final `.ywf` files, or base64 encode drafts.
 
+It also loads `workflow-action-configurations.normalized.json` through `workflow-action-config-validator.js` to validate workflow action properties against the normalized node/action reference.
+
 ## Usage
 
 ```bash
@@ -48,7 +50,7 @@ The script prints a structured JSON report:
 
 ## Scope
 
-The validator checks decoded `Def` structure, variables and listrefs, page/control bindings, approval page workflow controls, task URL page references, workflow graph connectivity, workflow designer layout readiness, approval/reject paths, sequence-flow condition shape, ContentList mappings, SetVariableTask variable references, and placeholder policy.
+The validator checks decoded `Def` structure, variables and listrefs, page/control bindings, approval page workflow controls, task URL page references, workflow graph connectivity, workflow designer layout readiness, approval/reject paths, sequence-flow condition shape, ContentList mappings, SetVariableTask variable references, normalized workflow action required properties, enum values, value types, `QueryData` filters, `Loop`/`Delay` condition shapes, unsafe external/credential actions, and placeholder policy.
 
 Publish-ready page checks include:
 

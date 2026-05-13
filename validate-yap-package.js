@@ -3,6 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
+const { validateWorkflowActionShapes } = require("./workflow-action-config-validator");
 
 const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
@@ -348,6 +349,13 @@ function validate(inputPath, mode, stage) {
       replaceIds: 0,
       lookupRelationships: 0,
       contentListReferences: 0,
+      workflowActionConfig: {
+        checkedNodes: 0,
+        supportedNodes: 0,
+        unsupportedNodes: 0,
+        partialNodes: 0,
+        unsafeNodes: 0,
+      },
     },
     inventories: {
       resources: [],
@@ -1036,6 +1044,7 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     if (def.defkey && key && String(def.defkey) !== key) issue(report, "warning", "FORM_DEFKEY_MISMATCH", "Form Key and decoded Def defkey differ.", { form: formName, key, defkey: def.defkey });
     if (approvalLike) validateApprovalDef(def, form, report);
     validateWorkflowGraph(def, form, report);
+    validateWorkflowActionConfigurations(def, form, report);
     validateWorkflowReferences(def, form, listsById, fieldsByList, report);
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "AI")) issue(report, "dependency", "AI_NODE_PRESENT", "AI node present in workflow; validate agent/tool dependencies before generated package use.", { form: formName, key });
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "HttpRequest")) issue(report, "dependency", "HTTP_REQUEST_NODE_PRESENT", "HTTP request node present; external connection/credential dependency must be resolved.", { form: formName, key });
@@ -1078,6 +1087,24 @@ function validateWorkflowGraph(def, form, report) {
       const id = refId(ref);
       if (id && !ids.has(id)) issue(report, "warning", "WORKFLOW_INCOMING_SOURCE_NOT_FOUND", "Workflow incoming reference does not resolve.", { form: form.Name, node: shapeId(shape), incoming: id });
     }
+  });
+}
+
+function validateWorkflowActionConfigurations(def, form, report) {
+  const shapes = collectShapes(def);
+  const actionReport = validateWorkflowActionShapes(shapes, {
+    mode: report.mode,
+    stage: report.stage,
+    pointerForIndex: (index) => `Data.Forms[${safeString(form.Key || form.Name)}].DefResource.childshapes[${index}]`,
+  });
+  for (const [key, value] of Object.entries(actionReport.summary)) {
+    report.summary.workflowActionConfig[key] = (report.summary.workflowActionConfig[key] || 0) + value;
+  }
+  actionReport.issues.forEach((entry) => {
+    let level = entry.level;
+    if (level === "dependency") level = "dependency";
+    else if (level !== "error") level = "warning";
+    issue(report, level, entry.code, entry.message, { form: form.Name, key: form.Key, ...entry });
   });
 }
 

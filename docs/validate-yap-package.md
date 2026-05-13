@@ -2,6 +2,8 @@
 
 `validate-yap-package.js` is a read-only structural validator for Yeeflow `.yap` application packages.
 
+It loads `workflow-action-configurations.normalized.json` through `workflow-action-config-validator.js` so app-level forms and workflows are checked against the normalized workflow action reference.
+
 It accepts either:
 
 - a wrapped `.yap` export, or
@@ -45,6 +47,7 @@ The validator checks:
 - root Type `103` app page registration, including the rule that `LayoutInResources` resource IDs are separate from the page `LayoutID`
 - child resource `ListModel`, `Defs`, `Layouts`, custom forms, and sample data
 - workflow/form `DefResource` parsing
+- normalized workflow action required properties, enum values, value types, conditional `ContentList`, `QueryData`, `SequenceFlow`, `Loop`, and `Delay` shapes
 - approval form page URLs and task URLs
 - workflow graph references
 - `ContentList` target list/field references

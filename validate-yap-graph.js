@@ -3,6 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
+const { validateWorkflowActionShapes } = require("./workflow-action-config-validator");
 
 const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
@@ -400,6 +401,13 @@ function validate(inputPath, mode, stage) {
       queryDataEdges: 0,
       unresolvedEdges: 0,
       cycles: 0,
+      workflowActionConfig: {
+        checkedNodes: 0,
+        supportedNodes: 0,
+        unsupportedNodes: 0,
+        partialNodes: 0,
+        unsafeNodes: 0,
+      },
     },
     _largeNumbers: new Set(),
   };
@@ -689,8 +697,27 @@ function addFormsAndWorkflowEdges(context) {
     }
     const variableKeys = buildVariableKeySet(def);
     addPageEdges(context, formNodeId, formKey, formName, def);
+    validateWorkflowActionConfigurations(context, formName, formKey, def);
     addWorkflowShapeEdges(context, formNodeId, formName, formKey, def, variableKeys, kind);
     addApprovalFormLookupControlEdges(context, formNodeId, formName, def, variableKeys);
+  });
+}
+
+function validateWorkflowActionConfigurations(context, formName, formKey, def) {
+  const shapes = collectShapes(def);
+  const actionReport = validateWorkflowActionShapes(shapes, {
+    mode: context.report.mode,
+    stage: context.report.stage,
+    pointerForIndex: (index) => `Data.Forms[${formKey}].DefResource.childshapes[${index}]`,
+  });
+  for (const [key, value] of Object.entries(actionReport.summary)) {
+    context.report.summary.workflowActionConfig[key] = (context.report.summary.workflowActionConfig[key] || 0) + value;
+  }
+  actionReport.issues.forEach((entry) => {
+    let level = entry.level;
+    if (level === "dependency") level = "dependency";
+    else if (level !== "error") level = "warning";
+    addIssue(context.report, level, entry.code, entry.message, { form: formName, key: formKey, ...entry });
   });
 }
 

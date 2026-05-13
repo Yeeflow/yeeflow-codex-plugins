@@ -2,6 +2,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { validateWorkflowActionShapes } = require("./workflow-action-config-validator");
 
 const PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
 const NUMERIC_OPS = new Set(["n.>", "n.>=", "n.<", "n.<=", "n.=", "n.!=", ">", ">=", "<", "<="]);
@@ -107,6 +108,7 @@ function validateDecodedDef(def, options = {}) {
     approvalTasks: 0,
     contentListNodes: 0,
     lookupControls: 0,
+    workflowActionConfig: null,
   };
 
   if (!isObject(def)) {
@@ -146,6 +148,7 @@ function validateDecodedDef(def, options = {}) {
   validateSequenceFlowConditions();
   validateContentLists();
   validateSetVariableTasks();
+  validateWorkflowActionConfigurations();
   validatePlaceholderPolicy();
 
   return finish();
@@ -825,6 +828,19 @@ function validateDecodedDef(def, options = {}) {
         }
         validateDataExpression(setting.value, `${p}.value`);
       });
+    });
+  }
+
+  function validateWorkflowActionConfigurations() {
+    const actionReport = validateWorkflowActionShapes(childshapes, {
+      mode,
+      stage: mode,
+      pointerForIndex: (index) => `$.childshapes[${index}]`,
+    });
+    summary.workflowActionConfig = actionReport.summary;
+    actionReport.issues.forEach((entry) => {
+      const target = entry.level === "error" ? errors : warnings;
+      addIssue(target, entry.code, entry.message, entry.path, entry);
     });
   }
 

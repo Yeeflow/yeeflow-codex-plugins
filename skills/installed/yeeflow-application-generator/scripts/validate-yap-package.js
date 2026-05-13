@@ -3,6 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
+const { validateWorkflowActionShapes } = require("./workflow-action-config-validator");
 
 const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
@@ -100,6 +101,11 @@ function asArray(value) {
 function safeString(value) {
   if (value === null || value === undefined) return "";
   return String(value);
+}
+
+function displayLabelDisabled(value) {
+  if (value === false) return true;
+  return Array.isArray(value) && value[1] === false;
 }
 
 function issue(report, level, code, message, details = {}) {
@@ -343,6 +349,13 @@ function validate(inputPath, mode, stage) {
       replaceIds: 0,
       lookupRelationships: 0,
       contentListReferences: 0,
+      workflowActionConfig: {
+        checkedNodes: 0,
+        supportedNodes: 0,
+        unsupportedNodes: 0,
+        partialNodes: 0,
+        unsafeNodes: 0,
+      },
     },
     inventories: {
       resources: [],
@@ -372,7 +385,7 @@ function validate(inputPath, mode, stage) {
     validateResourceItem(item, index, index === 0, rootListSetId, replaceIds, localIds, listsById, fieldsByList, report);
   });
 
-  validateRootAppShell(data, wrapper, replaceIds, listsById, report);
+  validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList, report, resource);
   validateReplaceIds(replaceIds, localIds, report);
   validateForms(data, listsById, fieldsByList, replaceIds, localIds, report);
   validateReportsDashboardsModules(data, listsById, fieldsByList, replaceIds, localIds, report);
@@ -387,7 +400,7 @@ function validate(inputPath, mode, stage) {
   return finish(report);
 }
 
-function validateRootAppShell(data, wrapper, replaceIds, listsById, report) {
+function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList, report, outerResource) {
   const root = data && data.Item && data.Item.ListModel ? data.Item.ListModel : {};
   if (!root) return;
   if (wrapper && (!safeString(wrapper.Title) || wrapper.Description === undefined)) {
@@ -413,8 +426,10 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, report) {
       issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", `${key.toUpperCase()}_NOT_ARRAY`, `Data.${key} should be an array for app-level packages; real app exports use an array even when empty.`);
     }
   }
-  if (!Array.isArray(data.AppThemes) || !data.AppThemes.length) {
-    issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "APP_THEME_MISSING", "Generated app packages should include at least one AppThemes entry; real openable apps include application style metadata.");
+  if (!Array.isArray(data.AppThemes)) {
+    issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "APPTHEMES_NOT_ARRAY", "Data.AppThemes should be an array for app-level packages; real app exports use an array even when empty.");
+  } else if (!data.AppThemes.length) {
+    issue(report, "warning", "APP_THEME_EMPTY", "AppThemes is empty. The minimal dashboard-only export uses an empty theme array, but richer generated apps should usually include application style metadata.");
   }
   const rootLayouts = asArray(data.Item && data.Item.Layouts);
   const rootPageLayouts = new Set(rootLayouts.filter((layout) => safeString(layout.Type) === "103").map((layout) => safeString(layout.LayoutID)).filter(Boolean));
@@ -426,9 +441,17 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, report) {
     if (layout.LayoutView !== null && layout.LayoutView !== undefined) {
       issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_LAYOUTVIEW_NOT_NULL", "Root Type 103 app page LayoutView should be null; working exports store page content in LayoutInResources.Resource.", { title: layout.Title, layoutId });
     }
-    const resources = asArray(layout.LayoutInResources);
+    if (!Array.isArray(layout.LayoutInResources)) {
+      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_LAYOUTINRESOURCES_NOT_ARRAY", "Root Type 103 app page LayoutInResources must be an array. Minimal dashboard-only exports use an empty array.", { title: layout.Title, layoutId });
+      continue;
+    }
+    const resources = layout.LayoutInResources;
     if (!resources.length) {
-      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_MISSING", "Root Type 103 app page layout should include LayoutInResources with embedded page content.", { title: layout.Title, layoutId });
+      const ext2 = tryParseJson(layout.Ext2);
+      const isMinimalDashboardShell = ext2 && ext2.src === true && replaceIds.has(layoutId);
+      if (!isMinimalDashboardShell) {
+        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_MISSING", "Root Type 103 app page layout without embedded page content must match the minimal dashboard-only export pattern: LayoutInResources empty, Ext2 {\"src\":true}, and LayoutID in ReplaceIds.", { title: layout.Title, layoutId });
+      }
       continue;
     }
     for (const resource of resources) {
@@ -437,13 +460,14 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, report) {
       if (!resourceId || !refId || !safeString(resource.Resource)) {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_INCOMPLETE", "Root Type 103 app page LayoutInResources entry must include ID, RefId, and Resource.", { title: layout.Title, layoutId });
       }
-      if (resourceId === layoutId || refId === layoutId) {
-        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_ID_MATCHES_LAYOUTID", "Root Type 103 app pages use a separate LayoutInResources ID/RefId from LayoutID in real exports.", { title: layout.Title, layoutId, resourceId, refId });
+      const usesInlinePageResourceId = resourceId === layoutId && refId === layoutId;
+      if ((resourceId === layoutId || refId === layoutId) && !usesInlinePageResourceId) {
+        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_ID_PARTIAL_LAYOUTID_MATCH", "Root Type 103 app page LayoutInResources ID and RefId should either both match LayoutID for inline dashboard page resources, or both use a separate resource ID.", { title: layout.Title, layoutId, resourceId, refId });
       }
       if (resourceId && refId && resourceId !== refId) {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_ID_REFID_MISMATCH", "Root Type 103 app page LayoutInResources ID and RefId should match each other while remaining separate from LayoutID.", { title: layout.Title, layoutId, resourceId, refId });
       }
-      if (replaceIds.has(resourceId) || replaceIds.has(refId)) {
+      if (!usesInlinePageResourceId && (replaceIds.has(resourceId) || replaceIds.has(refId))) {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_ID_IN_REPLACEIDS", "Root Type 103 app page LayoutInResources ID/RefId should not be in ReplaceIds; only the LayoutID is remapped.", { title: layout.Title, layoutId, resourceId, refId });
       }
       const page = tryParseJson(resource.Resource);
@@ -456,6 +480,7 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, report) {
         if (!Array.isArray(page.children) || !page.children.length) {
           issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_EMPTY_CHILDREN", "Root Type 103 app page Resource should contain at least one child component.", { title: layout.Title, layoutId, resourceId });
         }
+        validateDashboardPageResource(page, layout, resource, listsById, fieldsByList, rootPageLayouts, report, outerResource);
       }
     }
   }
@@ -487,6 +512,261 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, report) {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_NAV_FORM_REFERENCE_UNRESOLVED", "Root navigation item references a missing approval/form key.", { title: item.Title, formKey: listId });
       }
     }
+  }
+}
+
+function validateDashboardPageResource(page, layout, resource, listsById, fieldsByList, rootPageLayouts, report, outerResource) {
+  const severity = generatorFinalSeverity(report);
+  const title = layout.Title;
+  const layoutId = safeString(layout.LayoutID);
+  if (page.filterVars !== undefined && !Array.isArray(page.filterVars)) {
+    issue(report, severity, "DASHBOARD_FILTERVARS_NOT_ARRAY", "Dashboard page filterVars must be an array when present.", { title, layoutId });
+  }
+  if (page.tempVars !== undefined && !Array.isArray(page.tempVars)) {
+    issue(report, severity, "DASHBOARD_TEMPVARS_NOT_ARRAY", "Dashboard page tempVars must be an array when present.", { title, layoutId });
+  }
+  if (page.exts !== undefined && !Array.isArray(page.exts) && !(isObject(page.exts) && Object.keys(page.exts).length === 0)) {
+    issue(report, severity, "DASHBOARD_EXTS_NOT_ARRAY", "Dashboard page exts must be an array when populated; an empty object is accepted for simple Type 103 page shells.", { title, layoutId });
+  }
+
+  const tempVars = new Set(asArray(page.tempVars).map((item) => safeString(item.id)).filter(Boolean));
+  const filterVars = new Set(asArray(page.filterVars).map((item) => safeString(item.id)).filter(Boolean));
+  const reportIds = new Set(asArray(outerResource && outerResource.ReportIds).map(safeString).filter(Boolean));
+  const controlIds = new Set();
+  const seenTempVars = new Set();
+  for (const item of asArray(page.tempVars)) {
+    const id = safeString(item.id);
+    if (!id) issue(report, severity, "DASHBOARD_TEMPVAR_ID_MISSING", "Dashboard tempVars entries should include id.", { title, layoutId, item });
+    else if (seenTempVars.has(id)) issue(report, severity, "DASHBOARD_TEMPVAR_ID_DUPLICATE", "Dashboard tempVars ids should be unique.", { title, layoutId, id });
+    seenTempVars.add(id);
+  }
+
+  walk(page, (node, pointer) => {
+    if (!isObject(node)) return;
+    const controlId = safeString(node.id);
+    if (controlId) controlIds.add(controlId);
+    const binding = safeString(node.binding);
+    if (binding && binding.startsWith("__filter_")) {
+      const filterId = binding.replace(/^__filter_/, "");
+      if (!filterVars.has(filterId)) {
+        issue(report, severity, "DASHBOARD_FILTER_CONTROL_BINDING_UNRESOLVED", "Dashboard filter control binding should reference a filterVars id.", { title, layoutId, pointer, binding, filterId });
+      }
+    }
+    const saveVar = node.attrs && node.attrs.save_var;
+    const saveVarId = saveVar && safeString(saveVar.id).replace(/^__temp_/, "");
+    if (saveVarId && !tempVars.has(saveVarId)) {
+      issue(report, severity, "DASHBOARD_SAVE_VAR_UNRESOLVED", "Dashboard component save_var should reference a tempVars id.", { title, layoutId, pointer, saveVarId });
+    }
+    const dataList = node.attrs && node.attrs.data && node.attrs.data.list;
+    if (dataList && safeString(dataList.ListID) && !listsById.has(safeString(dataList.ListID))) {
+      issue(report, severity, "DASHBOARD_CONTROL_LIST_REFERENCE_UNRESOLVED", "Dashboard control data.list references a list not included in the package.", { title, layoutId, pointer, listId: safeString(dataList.ListID) });
+    }
+    const dataForm = node.attrs && node.attrs.data && node.attrs.data.form;
+    if (dataForm && safeString(dataForm.ListSetID) && safeString(dataForm.ListSetID) !== safeString(resource.ListSetID || (resource.Item && resource.Item.ListID)) && !listsById.has(safeString(dataForm.ListSetID))) {
+      issue(report, report.mode === "generator" ? "error" : "dependency", "DASHBOARD_FORM_EXTERNAL_LISTSET_REFERENCE", "Dashboard action references a form/listset outside the package; generated dashboards should model or exclude external dependencies.", { title, layoutId, pointer, listSetId: safeString(dataForm.ListSetID), procKey: safeString(dataForm.ProcKey) });
+    }
+    const pageRef = node.type === "opendashboard" && node.attrs && node.attrs.data && node.attrs.data.page;
+    if (pageRef && safeString(pageRef.PageID) && !rootPageLayouts.has(safeString(pageRef.PageID))) {
+      issue(report, severity, "DASHBOARD_ACTION_PAGE_REFERENCE_UNRESOLVED", "Dashboard opendashboard action references a missing Type 103 page.", { title, layoutId, pointer, pageId: safeString(pageRef.PageID) });
+    }
+  });
+
+  asArray(page.exts).forEach((ext, index) => {
+    const attr = ext && ext.attr;
+    const extId = safeString(ext && ext.i);
+    if (extId && !controlIds.has(extId)) {
+      issue(report, severity, "DASHBOARD_EXT_CONTROL_REFERENCE_UNRESOLVED", "Dashboard ext i should reference a page control id.", { title, layoutId, index, extId });
+    }
+    if (extId && reportIds.size && !reportIds.has(extId)) {
+      issue(report, severity, "DASHBOARD_EXT_REPORTID_MISSING", "Dashboard ext i should be included in Resource.ReportIds for import/runtime binding.", { title, layoutId, index, extId });
+    }
+    if (!isObject(attr)) {
+      issue(report, severity, "DASHBOARD_EXT_ATTR_MISSING", "Dashboard ext entries should include attr configuration.", { title, layoutId, index });
+      return;
+    }
+    validateDashboardListId(title, layoutId, `$.exts[${index}].attr.ListID`, attr.ListID, listsById, report);
+    validateDashboardExtFieldRefs(title, layoutId, `$.exts[${index}]`, attr, fieldsByList, filterVars, report);
+    walk(attr, (node, pointer) => {
+      if (!isObject(node)) return;
+      validateDashboardListId(title, layoutId, `$.exts[${index}].attr${pointer.slice(1)}.listid`, node.listid, listsById, report);
+      validateDashboardListId(title, layoutId, `$.exts[${index}].attr${pointer.slice(1)}.ListID`, node.ListID, listsById, report);
+    });
+  });
+  validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report);
+}
+
+function validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report) {
+  const severity = generatorFinalSeverity(report);
+  const seenControlIds = new Set();
+  function validateExpressionNode(node, pointer, collection) {
+    if (!isObject(node)) return;
+    if (node.exprType === "variable_ctx" && node.ctx === "__ctx_coll") {
+      if (!collection) {
+        issue(report, severity, "DASHBOARD_COLLECTION_CONTEXT_EXPR_OUTSIDE_COLLECTION", "Collection item expressions should be nested inside a collection item template.", { title, layoutId, pointer, field: safeString(node.id) });
+        return;
+      }
+      const fieldName = safeString(node.id);
+      if (fieldName && !collection.fields.has(fieldName)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_EXPR_FIELD_UNRESOLVED", "Collection item expression references a field not present on the collection source list.", { title, layoutId, pointer, listId: collection.listId, fieldName });
+      }
+    }
+    if (node.exprType === "variable" && safeString(node.id).startsWith("__filter_")) {
+      const name = safeString(node.name);
+      const expectedId = name ? `__filter_${name}` : "";
+      if (name && !filterVars.has(name)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_FILTER_VARIABLE_UNRESOLVED", "Collection filter expression should reference a page filterVars id.", { title, layoutId, pointer, filterVar: name });
+      }
+      if (expectedId && safeString(node.id) !== expectedId) {
+        issue(report, severity, "DASHBOARD_COLLECTION_FILTER_VARIABLE_ID_MISMATCH", "Collection filter expression id should use the __filter_ prefix plus the filter variable name.", { title, layoutId, pointer, id: safeString(node.id), expected: expectedId });
+      }
+    }
+  }
+
+  function validateControlDisplay(control, pointer, collection) {
+    for (const [index, rule] of asArray(control.attrs && control.attrs.control_display).entries()) {
+      walk(rule.formulas, (node, formulaPointer) => validateExpressionNode(node, `${pointer}.attrs.control_display[${index}].formulas${formulaPointer.slice(1)}`, collection));
+      const ruleControlId = safeString(rule.controlId);
+      const controlId = safeString(control.id);
+      if (ruleControlId && controlId && ruleControlId !== controlId) {
+        issue(report, severity, "DASHBOARD_COLLECTION_DISPLAY_RULE_CONTROL_MISMATCH", "Collection dynamic display rule controlId should match the target control id.", { title, layoutId, pointer: `${pointer}.attrs.control_display[${index}].controlId`, controlId, ruleControlId });
+      }
+      const action = rule.actions || {};
+      const actionAttrs = action.attrs || {};
+      const regulationAction = safeString(actionAttrs.style_regulation_action);
+      const actionStyle = actionAttrs.action_style;
+      if (safeString(action.type) && safeString(action.type) !== "1") {
+        issue(report, severity, "DASHBOARD_COLLECTION_DISPLAY_ACTION_TYPE_UNSUPPORTED", "Collection dynamic display actions should use the studied action type 1.", { title, layoutId, pointer: `${pointer}.attrs.control_display[${index}].actions.type`, actionType: action.type });
+      }
+      if (regulationAction === "style_class") {
+        if (typeof actionStyle !== "string" || !actionStyle.trim()) {
+          issue(report, severity, "DASHBOARD_COLLECTION_STYLE_ACTION_MISSING", "Collection conditional style action should include action_style JSON.", { title, layoutId, pointer: `${pointer}.attrs.control_display[${index}].actions.attrs.action_style` });
+        } else if (!tryParseJson(actionStyle)) {
+          issue(report, severity, "DASHBOARD_COLLECTION_STYLE_ACTION_JSON_INVALID", "Collection conditional style action_style should be valid JSON.", { title, layoutId, pointer: `${pointer}.attrs.control_display[${index}].actions.attrs.action_style` });
+        }
+      } else if (regulationAction === "style_regulation_action_show") {
+        if (actionStyle !== null && actionStyle !== undefined) {
+          issue(report, severity, "DASHBOARD_COLLECTION_SHOW_ACTION_STYLE_NOT_NULL", "Collection show dynamic display action should keep action_style null.", { title, layoutId, pointer: `${pointer}.attrs.control_display[${index}].actions.attrs.action_style` });
+        }
+      } else if (regulationAction) {
+        issue(report, severity, "DASHBOARD_COLLECTION_DISPLAY_ACTION_UNSTUDIED", "Collection dynamic display rule uses an unstudied style_regulation_action.", { title, layoutId, pointer: `${pointer}.attrs.control_display[${index}].actions.attrs.style_regulation_action`, regulationAction });
+      }
+    }
+  }
+
+  function visit(control, pointer, collection) {
+    if (!isObject(control)) return;
+    const controlId = safeString(control.id);
+    if (controlId) {
+      if (seenControlIds.has(controlId)) {
+        issue(report, severity, "DASHBOARD_CONTROL_ID_DUPLICATE", "Dashboard page control ids should be unique.", { title, layoutId, pointer, controlId });
+      }
+      seenControlIds.add(controlId);
+    }
+    if (control.type === "flex_grid") {
+      const attrs = control.attrs || {};
+      if (attrs.layout && attrs.layout.cols && !attrs.columns) {
+        issue(report, severity, "DASHBOARD_FLEX_GRID_COLUMNS_SCHEMA_INVALID", "Dashboard flex_grid columns should use attrs.columns/attrs.rows, not attrs.layout.cols.", { title, layoutId, pointer, controlId });
+      }
+      if (attrs.columns && !attrs.rows) {
+        issue(report, severity, "DASHBOARD_FLEX_GRID_ROWS_MISSING", "Dashboard flex_grid controls with columns should also include attrs.rows.", { title, layoutId, pointer, controlId });
+      }
+      if (["Table header", "Table row"].includes(safeString(control.label)) && !displayLabelDisabled(control.displayLabel)) {
+        issue(report, severity, "DASHBOARD_FLEX_GRID_DISPLAY_CAPTION_VISIBLE", "Table-style Collection header and row flex_grid controls should turn off Display caption with displayLabel [null,false].", { title, layoutId, pointer, controlId, label: safeString(control.label) });
+      }
+    }
+    const binding = safeString(control.binding);
+    if (binding.startsWith("__filter_")) {
+      const filterVar = binding.slice("__filter_".length);
+      if (!filterVars.has(filterVar)) {
+        issue(report, severity, "DASHBOARD_FILTER_CONTROL_BINDING_UNRESOLVED", "Dashboard filter control binding should resolve to page.filterVars.", { title, layoutId, pointer, controlId, binding, filterVar });
+      }
+    }
+    let activeCollection = collection;
+    if (control.type === "collection") {
+      const listId = safeString(control.attrs && control.attrs.data && control.attrs.data.list && control.attrs.data.list.ListID);
+      if (!listId) {
+        issue(report, severity, "DASHBOARD_COLLECTION_LIST_MISSING", "Collection control should include attrs.data.list.ListID.", { title, layoutId, pointer });
+      } else if (!listsById.has(listId)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_LIST_REFERENCE_UNRESOLVED", "Collection control data source should resolve to a list included in the package.", { title, layoutId, pointer, listId });
+      }
+      const fields = fieldsByList.get(listId) || new Map();
+      activeCollection = { listId, fields };
+      if (!asArray(control.children).length) {
+        issue(report, severity, "DASHBOARD_COLLECTION_ITEM_TEMPLATE_MISSING", "Collection control should include one item-template child.", { title, layoutId, pointer, listId });
+      }
+      for (const [fulltextIndex, item] of asArray(control.attrs && control.attrs.data && control.attrs.data.fulltext).entries()) {
+        for (const [fieldIndex, fieldName] of asArray(item.fields).map(safeString).entries()) {
+          if (fieldName && !fields.has(fieldName)) {
+            issue(report, severity, "DASHBOARD_COLLECTION_FULLTEXT_FIELD_UNRESOLVED", "Collection fulltext search references a field not present on the collection source list.", { title, layoutId, pointer: `${pointer}.attrs.data.fulltext[${fulltextIndex}].fields[${fieldIndex}]`, listId, fieldName });
+          }
+        }
+        walk(item.value, (node, valuePointer) => validateExpressionNode(node, `${pointer}.attrs.data.fulltext[${fulltextIndex}].value${valuePointer.slice(1)}`, activeCollection));
+      }
+    }
+    if (control.type === "dynamic-field" && safeString(control.attrs && control.attrs.source) === "3") {
+      if (!activeCollection) {
+        issue(report, severity, "DASHBOARD_COLLECTION_DYNAMIC_FIELD_OUTSIDE_COLLECTION", "Dynamic field source 3 should be nested inside a collection item template.", { title, layoutId, pointer, fieldName: safeString(control.attrs && control.attrs["obj-f"]) });
+      } else {
+        const fieldName = safeString(control.attrs && control.attrs["obj-f"]);
+        if (fieldName && !activeCollection.fields.has(fieldName)) {
+          issue(report, severity, "DASHBOARD_COLLECTION_DYNAMIC_FIELD_UNRESOLVED", "Dynamic field source 3 references a field not present on the collection source list.", { title, layoutId, pointer, listId: activeCollection.listId, fieldName });
+        }
+      }
+    }
+    validateControlDisplay(control, pointer, activeCollection);
+    if (control.attrs) walk(control.attrs, (node, attrPointer) => validateExpressionNode(node, `${pointer}.attrs${attrPointer.slice(1)}`, activeCollection));
+    asArray(control.children).forEach((child, index) => visit(child, `${pointer}.children[${index}]`, activeCollection));
+  }
+
+  asArray(page.children).forEach((child, index) => visit(child, `$.children[${index}]`, null));
+}
+
+function validateDashboardExtFieldRefs(title, layoutId, pointer, attr, fieldsByList, filterVars, report) {
+  const listId = safeString(attr && attr.ListID);
+  if (!listId) return;
+  const fields = fieldsByList.get(listId);
+  if (!fields) return;
+  const systemFields = new Set(["ListDataID", "CreatedBy", "Created", "ModifiedBy", "Modified"]);
+  const settings = attr.settings;
+  if (!isObject(settings)) return;
+  for (const key of ["rows", "columns", "values"]) {
+    for (const [index, item] of asArray(settings[key]).entries()) {
+      const fieldName = safeString(item && item.fieldName);
+      if (!fieldName || fields.has(fieldName) || systemFields.has(fieldName)) continue;
+      issue(report, generatorFinalSeverity(report), "DASHBOARD_EXT_FIELD_REFERENCE_UNRESOLVED", "Dashboard ext settings fieldName does not resolve to the referenced list fields.", { title, layoutId, pointer: `${pointer}.attr.settings.${key}[${index}].fieldName`, listId, fieldName });
+    }
+  }
+  validateDashboardConditions(title, layoutId, `${pointer}.attr.settings.Conditions`, settings.Conditions, fields, filterVars, report);
+}
+
+function validateDashboardConditions(title, layoutId, pointer, conditions, fields, filterVars, report) {
+  asArray(conditions).forEach((condition, index) => {
+    if (!isObject(condition)) return;
+    const conditionPointer = `${pointer}[${index}]`;
+    const left = safeString(condition.left);
+    if (left && !fields.has(left)) {
+      issue(report, generatorFinalSeverity(report), "DASHBOARD_EXT_CONDITION_FIELD_UNRESOLVED", "Dashboard ext condition left field does not resolve to the referenced list fields.", { title, layoutId, pointer: `${conditionPointer}.left`, fieldName: left });
+    }
+    for (const [rightIndex, item] of asArray(condition.right).entries()) {
+      if (!isObject(item) || item.exprType !== "variable") continue;
+      const name = safeString(item.name);
+      const id = safeString(item.id);
+      if (name && !filterVars.has(name)) {
+        issue(report, generatorFinalSeverity(report), "DASHBOARD_EXT_FILTER_VARIABLE_UNRESOLVED", "Dashboard ext condition variable name should resolve to page filterVars.", { title, layoutId, pointer: `${conditionPointer}.right[${rightIndex}].name`, filterVar: name });
+      }
+      if (id && name && id !== `__filter_${name}`) {
+        issue(report, generatorFinalSeverity(report), "DASHBOARD_EXT_FILTER_VARIABLE_ID_MISMATCH", "Dashboard ext condition variable id should use the __filter_ prefix plus the filter variable name.", { title, layoutId, pointer: `${conditionPointer}.right[${rightIndex}].id`, id, expected: `__filter_${name}` });
+      }
+    }
+    validateDashboardConditions(title, layoutId, `${conditionPointer}.conditions`, condition.conditions, fields, filterVars, report);
+  });
+}
+
+function validateDashboardListId(title, layoutId, pointer, value, listsById, report) {
+  const listId = safeString(value);
+  if (!listId) return;
+  if (!listsById.has(listId)) {
+    issue(report, generatorFinalSeverity(report), "DASHBOARD_DATA_SOURCE_UNRESOLVED", "Dashboard data source ListID/listid does not resolve to a package list or report resource.", { title, layoutId, pointer, listId });
   }
 }
 
@@ -570,12 +850,12 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
     }
     if (displayName) fieldsByName.set(displayName, field);
     if (fieldId) fieldsByName.set(fieldId, field);
-    if (!isRoot && resourceType === "data list" && fieldName === "Title" && (field.Status !== 0 || field.IsSystem !== true || field.IsIndex !== true)) {
+    if (!isRoot && resourceType === "data list" && fieldName === "Title" && (field.Status !== 0 || field.IsSystem !== true || field.IsIndex !== true || field.FieldIndex !== 0)) {
       issue(
         report,
         generatorFinalSeverity(report),
         "DATA_LIST_TITLE_FIELD_NATIVE_METADATA_INVALID",
-        "Generated child data lists must preserve Yeeflow's native Title field metadata; otherwise api/crafts/datas/{AppID}/{ListID}/query can fail at runtime.",
+        "Generated child data lists must preserve Yeeflow's native Title field metadata; otherwise api/crafts/datas/{AppID}/{ListID}/query can fail or hang at runtime.",
         {
           list: title,
           listId,
@@ -583,7 +863,8 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
           status: field.Status,
           isSystem: field.IsSystem,
           isIndex: field.IsIndex,
-          expected: { Status: 0, IsSystem: true, IsIndex: true },
+          fieldIndex: field.FieldIndex,
+          expected: { Status: 0, IsSystem: true, IsIndex: true, FieldIndex: 0 },
         }
       );
     }
@@ -763,6 +1044,7 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     if (def.defkey && key && String(def.defkey) !== key) issue(report, "warning", "FORM_DEFKEY_MISMATCH", "Form Key and decoded Def defkey differ.", { form: formName, key, defkey: def.defkey });
     if (approvalLike) validateApprovalDef(def, form, report);
     validateWorkflowGraph(def, form, report);
+    validateWorkflowActionConfigurations(def, form, report);
     validateWorkflowReferences(def, form, listsById, fieldsByList, report);
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "AI")) issue(report, "dependency", "AI_NODE_PRESENT", "AI node present in workflow; validate agent/tool dependencies before generated package use.", { form: formName, key });
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "HttpRequest")) issue(report, "dependency", "HTTP_REQUEST_NODE_PRESENT", "HTTP request node present; external connection/credential dependency must be resolved.", { form: formName, key });
@@ -805,6 +1087,24 @@ function validateWorkflowGraph(def, form, report) {
       const id = refId(ref);
       if (id && !ids.has(id)) issue(report, "warning", "WORKFLOW_INCOMING_SOURCE_NOT_FOUND", "Workflow incoming reference does not resolve.", { form: form.Name, node: shapeId(shape), incoming: id });
     }
+  });
+}
+
+function validateWorkflowActionConfigurations(def, form, report) {
+  const shapes = collectShapes(def);
+  const actionReport = validateWorkflowActionShapes(shapes, {
+    mode: report.mode,
+    stage: report.stage,
+    pointerForIndex: (index) => `Data.Forms[${safeString(form.Key || form.Name)}].DefResource.childshapes[${index}]`,
+  });
+  for (const [key, value] of Object.entries(actionReport.summary)) {
+    report.summary.workflowActionConfig[key] = (report.summary.workflowActionConfig[key] || 0) + value;
+  }
+  actionReport.issues.forEach((entry) => {
+    let level = entry.level;
+    if (level === "dependency") level = "dependency";
+    else if (level !== "error") level = "warning";
+    issue(report, level, entry.code, entry.message, { form: form.Name, key: form.Key, ...entry });
   });
 }
 

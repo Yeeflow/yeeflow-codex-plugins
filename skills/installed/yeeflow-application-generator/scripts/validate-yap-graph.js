@@ -3,6 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
+const { validateWorkflowActionShapes } = require("./workflow-action-config-validator");
 
 const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
@@ -400,6 +401,13 @@ function validate(inputPath, mode, stage) {
       queryDataEdges: 0,
       unresolvedEdges: 0,
       cycles: 0,
+      workflowActionConfig: {
+        checkedNodes: 0,
+        supportedNodes: 0,
+        unsupportedNodes: 0,
+        partialNodes: 0,
+        unsafeNodes: 0,
+      },
     },
     _largeNumbers: new Set(),
   };
@@ -689,8 +697,27 @@ function addFormsAndWorkflowEdges(context) {
     }
     const variableKeys = buildVariableKeySet(def);
     addPageEdges(context, formNodeId, formKey, formName, def);
+    validateWorkflowActionConfigurations(context, formName, formKey, def);
     addWorkflowShapeEdges(context, formNodeId, formName, formKey, def, variableKeys, kind);
     addApprovalFormLookupControlEdges(context, formNodeId, formName, def, variableKeys);
+  });
+}
+
+function validateWorkflowActionConfigurations(context, formName, formKey, def) {
+  const shapes = collectShapes(def);
+  const actionReport = validateWorkflowActionShapes(shapes, {
+    mode: context.report.mode,
+    stage: context.report.stage,
+    pointerForIndex: (index) => `Data.Forms[${formKey}].DefResource.childshapes[${index}]`,
+  });
+  for (const [key, value] of Object.entries(actionReport.summary)) {
+    context.report.summary.workflowActionConfig[key] = (context.report.summary.workflowActionConfig[key] || 0) + value;
+  }
+  actionReport.issues.forEach((entry) => {
+    let level = entry.level;
+    if (level === "dependency") level = "dependency";
+    else if (level !== "error") level = "warning";
+    addIssue(context.report, level, entry.code, entry.message, { form: formName, key: formKey, ...entry });
   });
 }
 
@@ -1044,6 +1071,10 @@ function addReportEdgesFromArray(context, key, reports) {
 
 function addDashboardEdges(context) {
   const resources = [context.data && context.data.Item, ...asArray(context.data && context.data.Childs)].filter(Boolean);
+  const rootPageLayouts = new Set(asArray(context.data && context.data.Item && context.data.Item.Layouts)
+    .filter((layout) => Number(layout.Type) === 103)
+    .map((layout) => safeString(layout.LayoutID))
+    .filter(Boolean));
   resources.forEach((item) => {
     asArray(item.Layouts).forEach((layout) => {
       if (Number(layout.Type) !== 103) return;
@@ -1056,9 +1087,54 @@ function addDashboardEdges(context) {
             addEdge(context.graph, { from: dashboardNodeId, to: `list:${id}`, type: "dashboardDataSource", label: "dashboard data source", sourceId: id });
           }
         }
+        addDashboardPageEdges(context, dashboardNodeId, layout, parsed, rootPageLayouts);
       }
     });
   });
+}
+
+function addDashboardPageEdges(context, dashboardNodeId, layout, page, rootPageLayouts) {
+  if (!isObject(page)) return;
+  const title = layout.Title || safeString(layout.LayoutID);
+  walk(page, (node, pointer) => {
+    if (!isObject(node)) return;
+    const dataList = node.attrs && node.attrs.data && node.attrs.data.list;
+    if (dataList && safeString(dataList.ListID)) {
+      const listId = safeString(dataList.ListID);
+      if (context.listsById.has(listId)) {
+        addEdge(context.graph, { from: dashboardNodeId, to: `list:${listId}`, type: "dashboardControlSource", label: "dashboard control data.list", sourceId: listId, pointer, path: pointer });
+        if (node.type === "collection") addEdge(context.graph, { from: dashboardNodeId, to: `list:${listId}`, type: "dashboardCollectionSource", label: "dashboard collection data.list", sourceId: listId, pointer, path: pointer });
+      }
+      else reportMissingReference(context, "DASHBOARD_CONTROL_LIST_REFERENCE_UNRESOLVED", "Dashboard control data.list references a missing list.", { title, pointer, listId });
+    }
+    const dataForm = node.attrs && node.attrs.data && node.attrs.data.form;
+    if (dataForm && safeString(dataForm.ListSetID) && !context.listsById.has(safeString(dataForm.ListSetID))) {
+      addIssue(context.report, context.report.mode === "generator" ? "error" : "dependency", "DASHBOARD_FORM_EXTERNAL_LISTSET_REFERENCE", "Dashboard action references a form/listset outside the package.", { title, pointer, listSetId: safeString(dataForm.ListSetID), procKey: safeString(dataForm.ProcKey) });
+    }
+    const pageRef = node.type === "opendashboard" && node.attrs && node.attrs.data && node.attrs.data.page;
+    if (pageRef && safeString(pageRef.PageID)) {
+      const pageId = safeString(pageRef.PageID);
+      if (rootPageLayouts.has(pageId)) addEdge(context.graph, { from: dashboardNodeId, to: `dashboard:${pageId}`, type: "dashboardActionPage", label: "opendashboard action", pageId, pointer });
+      else reportMissingReference(context, "DASHBOARD_ACTION_PAGE_REFERENCE_UNRESOLVED", "Dashboard opendashboard action references a missing Type 103 page.", { title, pointer, pageId });
+    }
+  });
+  asArray(page.exts).forEach((ext, index) => {
+    const attr = ext && ext.attr;
+    if (!isObject(attr)) return;
+    addDashboardListRef(context, dashboardNodeId, title, `$.exts[${index}].attr.ListID`, attr.ListID);
+    walk(attr, (node, pointer) => {
+      if (!isObject(node)) return;
+      addDashboardListRef(context, dashboardNodeId, title, `$.exts[${index}].attr${pointer.slice(1)}.listid`, node.listid);
+      addDashboardListRef(context, dashboardNodeId, title, `$.exts[${index}].attr${pointer.slice(1)}.ListID`, node.ListID);
+    });
+  });
+}
+
+function addDashboardListRef(context, dashboardNodeId, title, pointer, value) {
+  const listId = safeString(value);
+  if (!listId) return;
+  if (context.listsById.has(listId)) addEdge(context.graph, { from: dashboardNodeId, to: `list:${listId}`, type: "dashboardConfigSource", label: "dashboard ext data source", sourceId: listId, pointer });
+  else reportMissingReference(context, "DASHBOARD_DATA_SOURCE_UNRESOLVED", "Dashboard ext data source ListID/listid does not resolve to a package list or report resource.", { title, pointer, listId });
 }
 
 function addOtherModuleEdges(context) {

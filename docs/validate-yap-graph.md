@@ -2,6 +2,8 @@
 
 `validate-yap-graph.js` is a read-only Yeeflow `.yap` application graph validator. It decodes a wrapped `.yap` export or reads a decoded `Resource.Data` JSON file, builds an internal relationship graph, and reports whether resources resolve to each other correctly.
 
+It also loads `workflow-action-configurations.normalized.json` through `workflow-action-config-validator.js` to report normalized workflow action configuration issues while building the relationship graph.
+
 It does not import packages, operate Yeeflow UI, modify exports, or create `.yap` packages.
 
 ## Usage
@@ -65,6 +67,7 @@ The tool checks:
 - approval-form lookup source lists and additional mappings resolve where parseable
 - `ContentList` target lists and target fields resolve
 - `QueryData` target lists resolve
+- workflow action required properties, enum values, value types, and conditional action shapes match the normalized action reference where safely checkable
 - workflow sequence-flow references resolve
 - workflow graphs are connected enough to inspect
 - reports and dashboards reference known lists when parseable
