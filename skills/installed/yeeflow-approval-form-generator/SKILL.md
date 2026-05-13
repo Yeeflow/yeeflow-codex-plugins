@@ -54,6 +54,7 @@ Stop and report blockers. Do not build final `.ywf` when:
 - WorkflowType does not equal `workflowType`
 - custom code is unreviewed or unjustified
 - sensitive credential/token resources are involved
+- workflow action properties do not satisfy the normalized action reference from `workflow-action-configurations.normalized.json`
 - production use is requested without sandbox import/export round-trip proof
 
 Never guess app IDs, listset IDs, list IDs, field internal names, users, groups, positions, document template IDs, AI agent IDs, or connection IDs.
@@ -72,6 +73,7 @@ This skill can help generate or validate:
 - workflow graph layout metadata
 - ContentList parent persistence
 - ContentList persistence to a newly generated dedicated data list after importing/exporting the list back and patching to the real metadata
+- workflow action validation against the normalized node/action configuration reference
 - data-list lookup controls with additional-field mappings into readonly approval form variables
 - number fields using number variables and `input_number` controls
 - single-select fields using text variables and `radio` controls, including dropdown style via `attrs.displayStyle = "dropdown"`
@@ -95,6 +97,7 @@ Load only the reference needed for the task:
 - `references/yap-structure-study.md`: `.yap` package structure and app/list relationship patterns.
 - `references/field-type-pattern-study.md`: number, radio/dropdown, switch, conditional display, and v11 generated `.yap` proof.
 - `references/validation-guide.md`: structural and app-context validator usage.
+- In the active generator workspace, also use `docs/workflow-action-configuration-reference.md`, `docs/workflow-action-generation-rules.md`, and `workflow-action-configurations.normalized.json` as the official workflow action configuration reference when present.
 - `references/metadata-and-wrapper-guide.md`: metadata replacement and wrapper build usage.
 - `references/data-list-approval-integration-pattern.md`: staged generated data list plus approval form persistence integration.
 - `references/examples-summary.md`: proven examples and what each demonstrates.
@@ -181,6 +184,8 @@ Use bundled scripts rather than rewriting validators/builders:
 - `scripts/extract-yap-metadata.js`: extract app/list/form/field metadata from `.yap`.
 - `scripts/apply-ywf-metadata.js`: safely replace placeholders using metadata mapping.
 - `scripts/build-ywf-wrapper.js`: base64 wrap validated decoded Def and round-trip validate.
+
+Workflow action validation now covers missing required node properties, invalid enum values, invalid value types, `ContentList` mappings, `QueryData` filters, `SequenceFlow` conditions, `Loop`/`Delay` condition shapes, and unsafe external or credential-related workflow actions. Do not bundle sensitive values.
 
 ## Output Contract
 

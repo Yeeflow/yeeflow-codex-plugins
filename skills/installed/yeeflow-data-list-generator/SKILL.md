@@ -38,6 +38,7 @@ Do not build a final `.ydl` when:
 - production IDs are guessed
 - custom form bindings are unresolved
 - workflow, AI, HTTP/API, credential, user, file, or external dependencies are unresolved
+- list workflow actions do not satisfy the normalized action reference from `workflow-action-configurations.normalized.json`
 - no sandbox import/export round trip has proven production readiness
 
 Do not import anything, operate Yeeflow UI, or modify original exports unless the user explicitly asks.
@@ -60,6 +61,8 @@ node scripts/validate-ydl-list.js ./final.json --mode generator --stage final --
 node scripts/build-ydl-wrapper.js ./final.json ./output.ydl --title "List Name" --description "Sandbox generated list" --dependency-map ./dependencies.json
 ```
 
+When a generated data list includes workflow actions, run workflow-aware validators and stop on missing required action properties, invalid enum/type values, invalid `QueryData` filters, invalid `SequenceFlow` conditions, invalid `Loop`/`Delay` condition shapes, or unsafe external/credential-related actions. Never bundle credentials, API keys, tokens, connection secrets, or tenant-specific sensitive values.
+
 ## References
 
 Load only the relevant reference:
@@ -71,6 +74,7 @@ Load only the relevant reference:
 - `references/approval-form-integration-pattern.md`: generated storage list handoff to approval-form `ContentList` persistence.
 - `references/knowledge-base-list-pattern.md`: Knowledge Base category/article list and lookup pattern.
 - `references/validation-guide.md`: validator and builder usage.
+- In the active generator workspace, use `docs/workflow-action-configuration-reference.md`, `docs/workflow-action-generation-rules.md`, and `workflow-action-configurations.normalized.json` as the official workflow action configuration reference when validating list workflows.
 - `references/metadata-guide.md`: `.ydl` and `.yap` metadata lessons.
 - `references/examples-summary.md`: proven examples and intentionally omitted bulky artifacts.
 
