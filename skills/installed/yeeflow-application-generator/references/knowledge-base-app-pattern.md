@@ -19,7 +19,7 @@ Generate:
 Defer:
 
 - `Sections`
-- article-to-category lookup metadata
+- article-to-category lookup metadata until source-like `Articles.Text4` lookup passes runtime import/open testing
 - richtext article bodies
 - icon-upload images
 - article detail pages
@@ -67,3 +67,5 @@ Exclude:
 - v1 imported and opened but showed Yeeflow's empty component shell, so import alone is not enough.
 - v2/v3 rendered Home/Categories, but Articles stayed on the loading spinner.
 - v4 passed after correcting child-list metadata, keeping list `LayoutView: null`, removing the first-stage lookup, and preserving native `Title.FieldIndex: 0`.
+- v5/v6/v7 article-to-category lookup isolations imported and rendered Home/Categories, but Articles stayed on the loading spinner. The failed variants used `Articles.Text3` lookup with local sample IDs, blank values, and hidden list-view visibility.
+- The source template uses `Articles.Text4` for Category lookup; v8 validates and round-trips with that source-like slot but is still runtime-pending due browser automation permissions.

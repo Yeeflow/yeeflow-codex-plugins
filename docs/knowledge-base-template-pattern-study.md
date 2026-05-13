@@ -157,12 +157,16 @@ Root causes learned:
 
 ## First Safe Next Stage
 
-The next generation stage should stay small:
+The next generation stage stayed small and became a lookup isolation sequence:
 
-1. Generate a dedicated lookup isolation package for article-to-category lookup.
-2. Only after lookup passes, add `Sections` and article-to-section lookup.
-3. Defer nested category-to-article Collection filters to a separate isolation package.
-4. Defer rich text, image upload fields, Search page query-param flow, and Admin action links.
+1. v5 added article-to-category lookup with local lookup sample values. Import passed, but Articles stayed on a loading spinner.
+2. v6 blanked the lookup sample values. Articles still stayed on a loading spinner.
+3. v7 hid the lookup field from the visible Articles list view. Articles still stayed on a loading spinner.
+4. v8 moved the lookup to the source-like `Text4` slot and validated/build round-tripped successfully; runtime import is pending because Chrome UI automation lost macOS assistive-device access.
+
+See `docs/generated-knowledge-base-lookup-isolation.md`.
+
+Current rule: do not promote Knowledge Base lookup generation beyond the v4 plain text category-label baseline until the source-like `Text4` lookup package passes runtime import and Articles opens.
 
 ## Stop Conditions
 

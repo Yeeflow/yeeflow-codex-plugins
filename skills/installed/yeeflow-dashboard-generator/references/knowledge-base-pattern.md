@@ -54,6 +54,8 @@ Defer lookup fields, `Sections`, nested Collections, rich text, images, detail-p
 - When lookup is introduced, it must target the local generated Categories list and display `Title`.
 - Local lookup sample values may reference local category sample row IDs, and those IDs must be in `ReplaceIds`.
 - Do not copy the source export's self lookup on `Categories.Parent category` into the first generated package; it creates a dependency cycle and should be isolated separately.
+- Knowledge Base lookup isolation v5-v7 showed that `Articles.Text3` lookup is not runtime-safe: Articles stayed on a loading spinner with local lookup sample values, with blank lookup values, and with the lookup hidden from the list layout.
+- The source export uses `Articles.Text4` for Category lookup. A source-like `Text4` lookup package (`knowledge-base-lookup-v8-text4-lookup.yap`) validates and round-trips, but still needs runtime import/open proof before generator promotion.
 
 ## Runtime Lessons
 
@@ -61,6 +63,7 @@ Defer lookup fields, `Sections`, nested Collections, rich text, images, detail-p
 - v2/v3 imported and rendered Home/Categories, but `Articles` stayed on the loading spinner.
 - v4 passed runtime: Home rendered article/category Collections, `Categories` opened with sample rows, and `Articles` opened with sample rows.
 - Root causes fixed by v4: child list metadata followed the app-level baseline, root `ListSetID` was not added directly to the root `ListModel`, list `LayoutView` stayed `null`, and native `Title.FieldIndex` was set to `0`.
+- v5/v6/v7 lookup isolations imported and rendered Home/Categories, but Articles stayed on a loading spinner. This keeps Knowledge Base lookup support pending, not proven.
 
 ## Stop Conditions
 
