@@ -11,6 +11,7 @@ const SECRET_KEY_RE = /(token|secret|password|credential|clientsecret|apikey|api
 const HEX_COLOR_RE = /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/g;
 const ROOT_STYLE_TOKEN_HEX = new Map([
   ["#0065ff", "--c--primary"],
+  ["#e6f0ff", "--c--primary-light"],
   ["#00d1ff", "--c--secondary"],
   ["#15df42", "--c--success"],
   ["#f9c434", "--c--warning"],

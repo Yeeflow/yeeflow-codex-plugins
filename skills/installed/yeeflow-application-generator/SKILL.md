@@ -56,6 +56,8 @@ The first official reference export is `UI and UX design (1).yap`. It proves thi
 
 Treat validator UI/UX standard findings as warnings until the first generated UI/UX standard package has passed runtime import/open and export-back comparison.
 
+Runtime update: `Design System Request Tracker v1` proved the generated design-system package pattern through import, dashboard render, Requests list query, Edit/View custom forms, submission form render, reviewer approval routing, approval completion, and workflow-created list record. Use its dashboard `LayoutInResources[0].ID = RefId = LayoutID` pattern for generated root app dashboards with embedded page JSON.
+
 Use `docs/yeeflow-root-style-token-reference.md` as the root style/design-token reference. Generated apps should use Yeeflow-native root style tokens such as `--c--primary`, `--c--success`, `--c--warning`, `--c--danger`, `--c--neutral-light-active`, `--fs--base`, and `--sp--s200` where supported. Avoid arbitrary custom colors and do not inject the full root stylesheet into generated apps. Do not require token references when a real Yeeflow export stores resolved hex values.
 
 Generated apps should apply the Yeeflow Application Design System by default: use `Main` / `Content` containers, meaningful `nv_label` names, token-aligned colors and spacing, Edit/View custom forms for generated data lists, `Form body` / `Form bottom` approval pages, and clear dashboard sections plus Collection naming. Treat design-system validator findings as warnings until runtime import/open/export-back proof exists for the specific generated package.
@@ -157,7 +159,7 @@ For generated packages, the root app shell is mandatory. Use the v5 baseline rul
 For root Type `103` app pages:
 
 - include the page `LayoutID` in `ReplaceIds`
-- `LayoutInResources[0].ID` and `RefId` are separate resource IDs
+- for generated root dashboard pages with embedded page JSON, use the dashboard `LayoutID` for `LayoutInResources[0].ID` and `RefId`; Design System Request Tracker v1 proved that a separate generated resource ID can import but render as an empty designer placeholder
 - Type `103` `LayoutInResources` resource IDs are excluded from `ReplaceIds`
 - `LayoutInResources[0].Resource` must contain valid page JSON
 

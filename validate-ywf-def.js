@@ -10,6 +10,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 const HEX_COLOR_RE = /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/g;
 const ROOT_STYLE_TOKEN_HEX = new Map([
   ["#0065ff", "--c--primary"],
+  ["#e6f0ff", "--c--primary-light"],
   ["#00d1ff", "--c--secondary"],
   ["#15df42", "--c--success"],
   ["#f9c434", "--c--warning"],

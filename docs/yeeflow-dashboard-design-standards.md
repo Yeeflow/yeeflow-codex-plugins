@@ -80,3 +80,9 @@ Example: `No requests yet. Submitted requests will appear here after the workflo
 ## Validator Guidance
 
 Warn when dashboards are missing hidden header, zero padding, `Main`, `Content`, meaningful `nv_label`, or use many arbitrary hard-coded colors.
+
+## Runtime-Proven Generation Notes
+
+The first Design System Request Tracker runtime package proved that a generated Type `103` dashboard with embedded page JSON should store `LayoutInResources[0].ID` and `LayoutInResources[0].RefId` as the dashboard `LayoutID` when the page resource is the runtime dashboard body. A separate resource ID imported successfully but rendered the dashboard as an empty designer placeholder. Use the dashboard `LayoutID` for the embedded resource unless a later export proves a safer split-resource pattern.
+
+Keep `LayoutView = null`, `Ext2 = "{\"src\":true}"`, and `LayoutInResources[0].Resource` as the serialized page JSON. The runtime-proven shell still uses embedded `attrs.hideHeaderAll = true`, zero padding, and `Main` -> `Content`.

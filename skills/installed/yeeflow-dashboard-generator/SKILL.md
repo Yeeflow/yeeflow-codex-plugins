@@ -56,6 +56,7 @@ Default generated dashboards should:
 - use a top-level container with `nv_label: "Main"`
 - place the main visible content inside a child container with `nv_label: "Content"`
 - keep Type `103` `LayoutView = null`, `Ext2 = "{\"src\":true}"`, and embedded page JSON in `LayoutInResources[0].Resource`
+- for generated root dashboard pages with embedded page JSON, set `LayoutInResources[0].ID` and `RefId` to the dashboard `LayoutID`; Design System Request Tracker v1 proved this renders the runtime dashboard, while a separate generated resource ID rendered an empty designer placeholder
 
 The studied dashboard does not prove a dashboard `attrs.container.cw` setting. Do not invent one until another real export proves it.
 
