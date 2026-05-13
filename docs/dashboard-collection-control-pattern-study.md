@@ -460,6 +460,7 @@ For the first generated Collection package:
 - `generated-dashboard-collection-search-button-v6.yap`: imported successfully and proved a local `New Ticket` action button opens the local Support Tickets add panel.
 - `generated-dashboard-collection-grid-v7.yap`: imported successfully and proved the card/grid Collection renders as a three-column card grid with a local `New Ticket` action button.
 - `generated-dashboard-collection-grid-display-v8.yap`: imported successfully and proved the updated inline/grow header action pattern plus a per-item dynamic show rule on a Collection item field.
+- `knowledge-base-phase1-full.generated.yap`: imported successfully and proved flat article/category/section Collections can render together in a Knowledge Base-style app, with the known list-page refresh caveat documented in `docs/generated-knowledge-base-phase1-baseline.md`.
 
 ## Known Gaps
 

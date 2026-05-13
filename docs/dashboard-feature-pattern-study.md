@@ -1169,3 +1169,30 @@ Remaining gaps:
 - Collection hide/show display actions remain unproven.
 - Collection full-text search/filter binding is studied but not generated yet.
 - Collection sorting, pagination, and empty-state behavior remain unproven.
+
+## Knowledge Base Phase 1 Dashboard Baseline
+
+The generated `knowledge-base-phase1-full.generated.yap` package is the first broader Knowledge Base Phase 1 dashboard/data-list baseline.
+
+It combines:
+
+- v4 Knowledge Base dashboard/list pattern
+- v11 category lookup isolation pattern
+- a plain `Sections` list
+- two Type `103` dashboards: `Home Page` and `Article Library`
+- flat article/category/section Collections bound to local lists
+- meaningful `nv_label` values for generated dashboard controls
+
+Runtime evidence at `https://codex.yeeflow.com/`:
+
+- import passed and app tile appeared as `Knowledge Base Phase 1 Full`
+- Home dashboard opened and rendered article/category/section Collections
+- Article Library dashboard opened and rendered article rows
+- Categories, Sections, and Articles list pages rendered sample rows
+- Articles add form displayed the generated Category Lookup field
+
+Known caveat:
+
+- Sections and Articles list pages may initially render the shell and require a refresh stabilization before rows appear.
+- Chrome console logged Yeeflow runtime `RangeError: Wrong length!` entries during refresh transitions.
+- Because the rows and dashboards rendered after stabilization, this baseline is suitable for Phase 1 learning and generator guidance, but Phase 2 should isolate the remaining first-open list behavior before claiming production readiness.

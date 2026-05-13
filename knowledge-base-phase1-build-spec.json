@@ -1,0 +1,61 @@
+{
+  "name": "Knowledge Base Phase 1 Full",
+  "sourceExport": "/Users/Renger/Downloads/Knowledge Base_1.yap",
+  "freshIdFamily": "281",
+  "stages": [
+    "A baseline: v4/v11 reconfirmation",
+    "B local Sections list without lookup dependency",
+    "C richer Article metadata fields",
+    "D v11 Article Category Lookup shape with blank sample values",
+    "E Home and Article Library dashboard Collections",
+    "F final Phase 1 import/runtime test"
+  ],
+  "resources": {
+    "rootApp": "2810010000000000000",
+    "homeDashboard": "2810010000000000001",
+    "articleLibraryDashboard": "2810010000000000002",
+    "articlesList": "2810020000000001000",
+    "categoriesList": "2810030000000001000",
+    "sectionsList": "2810040000000001000"
+  },
+  "lists": {
+    "Categories": [
+      "Title native Category Name",
+      "Text1 Description",
+      "Decimal1 Order",
+      "Text2 Accent"
+    ],
+    "Sections": [
+      "Title native Section Name",
+      "Text1 Category Label",
+      "Text2 Description",
+      "Decimal1 Order"
+    ],
+    "Articles": [
+      "Title native Article Title",
+      "Text1 Summary",
+      "Text2 Category Label",
+      "Text4 Category Slot plain input",
+      "Text3 Category Lookup sorted by Categories.Decimal1",
+      "Text5 Section Label",
+      "Text6 Status",
+      "Bit1 Featured",
+      "Datetime1 Updated Date",
+      "Text7 Body Excerpt"
+    ]
+  },
+  "dashboards": [
+    "Home Page",
+    "Article Library"
+  ],
+  "deferred": [
+    "nested category-to-article collections",
+    "source-style section lookup chain",
+    "lookup sample target record IDs",
+    "rich text body editor",
+    "image/icon upload fields",
+    "query-param detail pages",
+    "admin action cards",
+    "custom list forms"
+  ]
+}

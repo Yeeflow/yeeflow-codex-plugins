@@ -16,6 +16,15 @@ Generate:
 - local category/article sample rows
 - root navigation for Home, Categories, and Articles
 
+After the v4 and v11 baselines are accepted, the Phase 1 completion package may also include:
+
+- a plain local `Sections` list
+- an `Article Library` Type `103` dashboard
+- flat article/category/section dashboard Collections
+- `Categories.Decimal1` Order
+- `Articles.Text3` Category Lookup sorted by `Categories.Decimal1`
+- `Articles.Text4` kept as a plain input slot
+
 Defer:
 
 - `Sections`
@@ -72,3 +81,4 @@ Exclude:
 - v9 removes the generated `Text3` placeholder and adds only blank `Articles.Text4` lookup metadata. It imports, renders Home, and opens Categories, but Articles still stays on the loading spinner. This narrows the blocker to Articles lookup metadata.
 - v10 adds `Articles.Text4` as a plain input field and imports successfully. Home renders and Categories opens, but Articles stays on a loading spinner with Chrome console `Uncaught RangeError: Wrong length!`. Do not treat the plain non-contiguous `Text4` field slot as proven.
 - v11 follows the user's exported v10 update and is the first generated Knowledge Base lookup isolation to pass runtime: `Categories.Decimal1` Order, `Articles.Text4` plain input slot, and `Articles.Text3` Category Lookup sorted by `Decimal1`. Articles loaded after one refresh, and the new-item lookup dropdown resolved Categories in Order sequence. Keep v4 as the safest initial app baseline.
+- `knowledge-base-phase1-full.generated.yap` is the first broader Phase 1 generated app baseline. It imported, opened, rendered Home and Article Library Collections, and opened Categories/Sections/Articles with sample rows after refresh stabilization where needed. It keeps the v11 first-open refresh caveat and should not yet be treated as production-ready for lookup sample values, nested Collections, or source-style section lookup chains.

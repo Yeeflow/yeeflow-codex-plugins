@@ -6,6 +6,8 @@ Source studied: `/Users/Renger/Downloads/Knowledge Base_1.yap`
 
 Runtime-proven generated baseline: `knowledge-base-generated-v4.yap`
 
+Phase 1 completion baseline: `knowledge-base-phase1-full.generated.yap`
+
 ## Source Shape
 
 The Knowledge Base template is an app-level `.yap` with:
@@ -67,6 +69,7 @@ Defer lookup fields, `Sections`, nested Collections, rich text, images, detail-p
 - v4 passed runtime: Home rendered article/category Collections, `Categories` opened with sample rows, and `Articles` opened with sample rows.
 - Root causes fixed by v4: child list metadata followed the app-level baseline, root `ListSetID` was not added directly to the root `ListModel`, list `LayoutView` stayed `null`, and native `Title.FieldIndex` was set to `0`.
 - v5/v6/v7 lookup isolations imported and rendered Home/Categories, but Articles stayed on a loading spinner. v8 imported and rendered Home, but Categories and Articles stayed on loading spinners. v9 restored Categories runtime while Articles still spun. v10 shows that plain non-contiguous `Text4` also leaves Articles spinning. v11 proves the manually discovered `Categories.Decimal1` sort + `Articles.Text3` lookup + `Articles.Text4` plain slot pattern, with a first-open refresh caveat.
+- Phase 1 combines v4, v11, a plain `Sections` list, `Home Page`, and `Article Library`. Runtime import/open passed: Home rendered article/category/section Collections, Article Library rendered article rows, Categories/Sections/Articles rendered sample rows, and the Articles add form displayed Category Lookup. Sections and Articles may need refresh stabilization on first list open; Chrome console can log Yeeflow `RangeError: Wrong length!` during the transition. Treat Phase 1 as a learning/completion baseline with a caveat, not final production readiness.
 
 ## Stop Conditions
 
@@ -91,3 +94,5 @@ After import:
 - category Collection renders local rows
 - `Categories` list opens without datas/query `400`
 - `Articles` list opens without datas/query `400`
+- `Sections` list opens and renders local rows when included
+- Article Library opens and renders article Collection rows when included

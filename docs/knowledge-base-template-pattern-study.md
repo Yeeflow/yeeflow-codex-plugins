@@ -171,6 +171,35 @@ See `docs/generated-knowledge-base-lookup-isolation.md`.
 
 Current rule: use v4 plain text category-label as the safest first package. For lookup learning, v11 is the first runtime-proven generated Knowledge Base lookup isolation, but keep it as a later-stage pattern because Articles needed one refresh on first open and lookup sample values were intentionally blank.
 
+## Phase 1 Completion Baseline
+
+The first broader Phase 1 completion package is `knowledge-base-phase1-full.generated.yap`.
+
+It starts from the v4 dashboard/list baseline, adds the v11 category lookup isolation shape, and introduces the source template's `Sections` list as a plain local list.
+
+Included:
+
+- root Knowledge Base app shell
+- `Home Page` Type `103` dashboard
+- `Article Library` Type `103` dashboard
+- local `Categories`, `Sections`, and `Articles` lists
+- dashboard article/category/section Collections
+- `Categories.Decimal1` Order and `Articles.Text3` Category Lookup sorted by Order
+- `Articles.Text4` kept as a plain input slot
+- sample category, section, and article records
+
+Runtime result at `https://codex.yeeflow.com/`:
+
+- import passed
+- app tile appeared as `Knowledge Base Phase 1 Full`
+- app opened
+- Home dashboard rendered all generated Collections
+- Article Library dashboard rendered article rows
+- Categories, Sections, and Articles list pages rendered rows
+- Articles add form displayed Category Lookup
+
+Runtime caveat: Sections and Articles list pages may initially render only the shell and then show rows after refresh stabilization. Chrome console logged Yeeflow runtime `RangeError: Wrong length!` entries during the refresh transitions. Treat this as a Phase 1 dashboard/data-list completion baseline with a known runtime caveat, not as a final production pattern.
+
 ## Stop Conditions
 
 Stop before generation if:
