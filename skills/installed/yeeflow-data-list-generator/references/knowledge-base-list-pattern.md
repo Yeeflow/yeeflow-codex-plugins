@@ -36,6 +36,7 @@ Start with only:
 - Do not place Knowledge Base `Articles.Category` lookup in `Text3`; v5-v7 import tests showed Articles stayed on a loading spinner even with blank lookup values and the lookup hidden from the list view.
 - The source template places `Articles.Category` in `Text4`, but source-like `Text4` lookup isolations still failed list runtime: v8 imported and rendered Home while Categories and Articles stayed on loading spinners; v9 removed the generated `Text3` placeholder and Categories opened, but Articles still stayed on a loading spinner. Keep the v4 plain text `Category Label` baseline until a reduced/source-aligned lookup isolation opens lists cleanly.
 - v10 adds `Articles.Text4` as a plain input field and imports; Home renders; Categories opens; Articles stays on a loading spinner with Chrome console `Uncaught RangeError: Wrong length!`. Do not treat the plain `Text4` slot as runtime-proven.
+- v11 is the first runtime-proven Knowledge Base lookup isolation. It follows the user's exported v10 update: add `Categories.Decimal1` as `Order`, keep `Articles.Text4` as a plain input slot, add `Articles.Text3` as `Category Lookup`, and set `Rules.sort-first` to `{ "SortName": "Decimal1", "SortByDesc": false }`. Keep article lookup sample values blank. Articles loaded after one refresh, and the new-item lookup dropdown resolved Categories in Order sequence.
 
 ## Runtime Lessons
 
@@ -44,7 +45,7 @@ Start with only:
 - v4 proved Articles after removing first-stage lookup metadata and setting native `Title.FieldIndex: 0`.
 - v5/v6/v7 showed that an unresolved lookup list runtime issue can persist even without local lookup sample values and even when the lookup column is not visible in the list layout.
 - v8 showed that moving the lookup to the source-like `Text4` slot is not sufficient by itself; v9 narrowed the failure to Articles lookup metadata by restoring Categories runtime. Do not advance to local lookup sample values until lookup metadata alone opens cleanly.
-- v10 proves non-contiguous generated `Text4` field usage or field ordering is unproven and must be studied before lookup generation resumes. The next safe isolation should avoid lookup metadata and test contiguous/source-aligned Article field order first.
+- v10 proved non-contiguous generated `Text4` alone was not enough. v11 proved the combined `Text3` lookup plus `Text4` plain slot and category `Decimal1` sort pattern. Because Articles needed one refresh on first open, keep this as a lookup-isolation pattern rather than the default first Knowledge Base package.
 
 ## Validation Notes
 

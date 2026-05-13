@@ -19,7 +19,7 @@ Generate:
 Defer:
 
 - `Sections`
-- article-to-category lookup metadata until a reduced/source-aligned lookup isolation passes runtime import/open testing
+- article-to-category lookup metadata until the v4 plain text baseline is already proven; use the v11 lookup-isolation shape only when the test explicitly includes lookup
 - richtext article bodies
 - icon-upload images
 - article detail pages
@@ -71,3 +71,4 @@ Exclude:
 - The source template uses `Articles.Text4` for Category lookup; v8 validates and round-trips with that source-like slot, imports, and renders Home, but Categories and Articles stay on loading spinners. Lookup generation remains blocked.
 - v9 removes the generated `Text3` placeholder and adds only blank `Articles.Text4` lookup metadata. It imports, renders Home, and opens Categories, but Articles still stays on the loading spinner. This narrows the blocker to Articles lookup metadata.
 - v10 adds `Articles.Text4` as a plain input field and imports successfully. Home renders and Categories opens, but Articles stays on a loading spinner with Chrome console `Uncaught RangeError: Wrong length!`. Do not treat the plain non-contiguous `Text4` field slot as proven.
+- v11 follows the user's exported v10 update and is the first generated Knowledge Base lookup isolation to pass runtime: `Categories.Decimal1` Order, `Articles.Text4` plain input slot, and `Articles.Text3` Category Lookup sorted by `Decimal1`. Articles loaded after one refresh, and the new-item lookup dropdown resolved Categories in Order sequence. Keep v4 as the safest initial app baseline.

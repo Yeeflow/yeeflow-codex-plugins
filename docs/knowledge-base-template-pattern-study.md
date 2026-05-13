@@ -165,10 +165,11 @@ The next generation stage stayed small and became a lookup isolation sequence:
 4. v8 moved the lookup to the source-like `Text4` slot and validated/build round-tripped successfully. Runtime import succeeded and the Home dashboard rendered, but both Categories and Articles stayed on loading spinners.
 5. v9 removed the generated `Text3` placeholder and added only blank `Articles.Text4` lookup metadata. Runtime import succeeded; Home rendered; Categories opened with 3 rows; Articles stayed on a loading spinner.
 6. v10 replaced the lookup with a plain `Articles.Text4` input field. Local validation, graph validation, wrapper build, and import passed; Home dashboard rendered; Categories opened with 3 rows; Articles stayed on a loading spinner and Chrome console showed `Uncaught RangeError: Wrong length!`.
+7. v11 studied the user's exported update to v10, then generated `Categories.Decimal1` Order and `Articles.Text3` Category Lookup sorted by `Decimal1` while preserving `Articles.Text4` as a plain input slot. Local validation, graph validation, wrapper build, and import passed. Runtime Home and Categories opened; Articles loaded after one refresh; the new-item lookup dropdown resolved Categories in Order sequence.
 
 See `docs/generated-knowledge-base-lookup-isolation.md`.
 
-Current rule: do not promote Knowledge Base lookup generation beyond the v4 plain text category-label baseline. The source-like `Text4` lookup metadata package did not pass list runtime testing, and v10 shows that plain non-contiguous `Text4` also breaks Articles runtime. Field ordering or non-contiguous generated `Text4` usage must be studied before any lookup work continues.
+Current rule: use v4 plain text category-label as the safest first package. For lookup learning, v11 is the first runtime-proven generated Knowledge Base lookup isolation, but keep it as a later-stage pattern because Articles needed one refresh on first open and lookup sample values were intentionally blank.
 
 ## Stop Conditions
 

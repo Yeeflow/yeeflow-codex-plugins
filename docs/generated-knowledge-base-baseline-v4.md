@@ -67,6 +67,7 @@ v4 fixed the runtime issue by:
 - First Knowledge Base baseline should use category label text, not lookup fields.
 - Lookup isolation after v4 showed `Articles.Text3` lookup is not safe: v5 with local sample IDs, v6 with blank lookup values, and v7 with the lookup hidden from the list view all imported but left Articles on a loading spinner.
 - The source template uses `Articles.Text4` for Category lookup; v8 validates and round-trips with that source-like slot, imports, and renders Home, but Categories and Articles stay on loading spinners. v9 removes the generated `Text3` placeholder and confirms Categories can open while Articles still spins. v10 imports with `Text4` as a plain input field, renders Home, and opens Categories, but Articles still spins with Chrome console `Uncaught RangeError: Wrong length!`. Do not add non-contiguous `Text4` or lookup metadata beyond the v4 baseline.
+- v11 proves a later-stage lookup isolation based on the user's exported v10 update: `Categories.Decimal1` Order, `Articles.Text4` plain input slot, and `Articles.Text3` Category Lookup sorted by `Decimal1`. It imports and opens; Articles may require one refresh on first open; the lookup dropdown resolves Categories sorted by Order. Keep v4 as the safest baseline and use v11 only when lookup is explicitly part of the test.
 - Every generated data-list `Title` field must preserve:
   - `FieldName: "Title"`
   - `Status: 0`

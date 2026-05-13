@@ -58,6 +58,7 @@ Defer lookup fields, `Sections`, nested Collections, rich text, images, detail-p
 - The source export uses `Articles.Text4` for Category lookup. A source-like `Text4` lookup package (`knowledge-base-lookup-v8-text4-lookup.yap`) validates, round-trips, imports, and renders Home, but Categories and Articles stay on loading spinners. Do not promote lookup generation from this package.
 - A narrower source-like package (`knowledge-base-lookup-v9-text4-only.yap`) removes the generated `Text3` placeholder and adds only blank `Articles.Text4` lookup metadata. It imports, renders Home, and opens Categories, but Articles still stays on a loading spinner. This narrows the blocker to Articles lookup metadata.
 - A plain field-slot package (`knowledge-base-text4-input-v10.yap`) adds `Articles.Text4` as an input field instead of lookup metadata. It imports, Home renders, and Categories opens, but Articles stays on a loading spinner with Chrome console `Uncaught RangeError: Wrong length!`. Do not treat plain non-contiguous `Text4` as proven.
+- The user's exported v10 update added `Categories.Decimal1` Order and `Articles.Text3` Category Lookup sorted by `Decimal1`, while leaving `Articles.Text4` as a plain input slot. The generated reproduction (`knowledge-base-category-lookup-v11.yap`) imports and opens. Home and Categories render immediately; Articles loaded after one refresh; the new-item lookup dropdown resolved Categories in Order sequence. This is a proven later-stage lookup isolation, not the safest first baseline.
 
 ## Runtime Lessons
 
@@ -65,7 +66,7 @@ Defer lookup fields, `Sections`, nested Collections, rich text, images, detail-p
 - v2/v3 imported and rendered Home/Categories, but `Articles` stayed on the loading spinner.
 - v4 passed runtime: Home rendered article/category Collections, `Categories` opened with sample rows, and `Articles` opened with sample rows.
 - Root causes fixed by v4: child list metadata followed the app-level baseline, root `ListSetID` was not added directly to the root `ListModel`, list `LayoutView` stayed `null`, and native `Title.FieldIndex` was set to `0`.
-- v5/v6/v7 lookup isolations imported and rendered Home/Categories, but Articles stayed on a loading spinner. v8 imported and rendered Home, but Categories and Articles stayed on loading spinners. v9 restored Categories runtime while Articles still spun. v10 shows that plain non-contiguous `Text4` also leaves Articles spinning. Knowledge Base lookup support remains pending, not proven.
+- v5/v6/v7 lookup isolations imported and rendered Home/Categories, but Articles stayed on a loading spinner. v8 imported and rendered Home, but Categories and Articles stayed on loading spinners. v9 restored Categories runtime while Articles still spun. v10 shows that plain non-contiguous `Text4` also leaves Articles spinning. v11 proves the manually discovered `Categories.Decimal1` sort + `Articles.Text3` lookup + `Articles.Text4` plain slot pattern, with a first-open refresh caveat.
 
 ## Stop Conditions
 
