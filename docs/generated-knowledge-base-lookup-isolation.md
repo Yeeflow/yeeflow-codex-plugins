@@ -30,7 +30,7 @@ Article sample lookup values are plain target category `ListDataID` strings in `
 | `knowledge-base-lookup-v7-hidden-lookup-column.yap` | Kept `Articles.Text3` lookup, blank sample values, and hid lookup from Articles list view | package passed with `APP_THEME_EMPTY`; graph passed | imported; Home and Categories rendered; Articles stayed on loading spinner |
 | `knowledge-base-lookup-v8-text4-lookup.yap` | Moved lookup to source-like `Articles.Text4`, kept blank values, and hid lookup from Articles list view | package passed with `APP_THEME_EMPTY`; graph passed; wrapper round-trip passed | imported; Home dashboard rendered; Categories and Articles stayed on loading spinners |
 | `knowledge-base-lookup-v9-text4-only.yap` | Started from the runtime-proven v4 shape, added only blank source-like `Articles.Text4` lookup metadata, omitted the generated `Text3` placeholder, and kept the lookup hidden from the list view | package passed with `APP_THEME_EMPTY`; graph passed; wrapper round-trip passed | imported; Home dashboard rendered; Categories opened with 3 rows; Articles stayed on loading spinner |
-| `knowledge-base-text4-input-v10.yap` | Started from the runtime-proven v4 shape and added `Articles.Text4` as a plain input field instead of lookup metadata | package passed with `APP_THEME_EMPTY`; graph passed; wrapper round-trip passed | imported and app tile appeared; app-open/list runtime verification is pending because Chrome accessibility and screenshot access failed during the verification step |
+| `knowledge-base-text4-input-v10.yap` | Started from the runtime-proven v4 shape and added `Articles.Text4` as a plain input field instead of lookup metadata | package passed with `APP_THEME_EMPTY`; graph passed; wrapper round-trip passed | imported; Home dashboard rendered; Categories opened with 3 rows; Articles stayed on loading spinner; Chrome console showed `Uncaught RangeError: Wrong length!` |
 
 ## Current Finding
 
@@ -40,7 +40,7 @@ The v8 failure shows that moving the lookup to source-like `Text4` is still not 
 
 The v9 result narrows that finding: with the generated `Text3` placeholder removed and only `Articles.Text4` lookup metadata added, `Categories` opens correctly again while `Articles` stays on a loading spinner. This points to the article list lookup metadata itself rather than the category list definition or a generated `Text3` field-slot collision.
 
-The v10 package isolates the `Text4` field slot without lookup metadata. It imported and produced a workspace tile, but the app-open smoke test could not be completed in the current session because Chrome returned `cgWindowNotFound` through Computer Use and the screenshot surface was black. Do not mark plain `Text4` field-slot runtime as proven until v10 opens and both generated lists render.
+The v10 package isolates the `Text4` field slot without lookup metadata. It imports and opens, and Home/Categories render, but Articles stays on the loading spinner. The captured Chrome console error is `Uncaught RangeError: Wrong length!`. Because v10 contains no lookup relationship, non-contiguous generated `Text4` usage or field/list-view ordering is itself unproven for this Knowledge Base package.
 
 ## Generator Rules
 
@@ -54,8 +54,9 @@ The v10 package isolates the `Text4` field slot without lookup metadata. It impo
 - Add only one lookup relationship per isolation package.
 - Keep lookup sample values blank until lookup metadata alone opens cleanly.
 - After lookup metadata opens, run a second package with local target sample row IDs in lookup values and include those local target IDs in `ReplaceIds`.
-- v8/v9 prove that `Articles.Text4` lookup metadata alone is not yet safe; the next isolation must finish the plain `Text4` field-slot smoke test before reducing or source-aligning lookup metadata.
-- v10 should be opened and verified before any new package is generated. If v10 passes, the lookup metadata is the failure trigger. If v10 fails, field ordering or non-contiguous generated `Text4` usage is itself unproven.
+- v8/v9 prove that `Articles.Text4` lookup metadata alone is not safe.
+- v10 proves that adding a non-contiguous generated `Text4` field without `Text3` is also not safe for Articles runtime.
+- The next isolation should not add lookup metadata. It should test a contiguous/source-aligned field sequence first, for example generated `Articles.Text3` plain input followed by `Text4`, or source-like `Text2`/`Text3`/`Text4` ordering only if those field types have been studied enough to avoid guessing.
 
 ## Stop Conditions
 
