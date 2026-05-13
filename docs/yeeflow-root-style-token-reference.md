@@ -110,6 +110,8 @@ Danger:
 
 Neutral:
 
+Generated app themes should use Neutral with `lightmodel: "Luminance"`. Do not use `Lightness` for Neutral in new generated packages.
+
 | Token | Value |
 | --- | --- |
 | `--c--neutral` | `#B3B7C0` |

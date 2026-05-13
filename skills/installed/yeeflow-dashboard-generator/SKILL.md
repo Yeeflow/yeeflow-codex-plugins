@@ -64,6 +64,8 @@ Use `docs/yeeflow-root-style-token-reference.md` for dashboard color, spacing, r
 
 Generated dashboards should use clear sections (`Page header`, `Summary section`, `Body section`, `Collection section`, `Empty state`), meaningful `nv_label` names, token-aligned neutral surfaces, and Collection controls for repeatable list-style content when source lists are local and proven.
 
+For app-shell navigation around dashboards, keep the menu readable by inverting the root header colors: `navigator-menu.bgc` should equal `appearance.color`, and `navigator-menu.color` should equal `appearance.bgc`.
+
 ## Minimal Proven Baseline
 
 The first proven generated dashboard package is:

@@ -19,6 +19,40 @@ The source is `/Users/Renger/Downloads/root_styles.txt`. Treat it as read-only e
 
 Use light variants for badge backgrounds and base tokens for badge text/borders where style attributes allow it.
 
+## Theme Light Models
+
+Generated `Data.AppThemes[].Config` should use `lightmodel: "Luminance"` for Neutral as well as Primary and Secondary. Do not generate Neutral with `Lightness`; the lighter neutral steps can become visually weak or inconsistent with the Yeeflow root style scale.
+
+Recommended generated theme colors:
+
+```json
+{
+  "primary": { "value": "#0065FF", "lightmodel": "Luminance" },
+  "secondary": { "value": "#00D1FF", "lightmodel": "Luminance" },
+  "neutral": { "value": "#B3B7C0", "lightmodel": "Luminance" }
+}
+```
+
+## App Header And Navigation
+
+Root app navigation must keep enough contrast between the header and the navigator menu. When the header uses `LayoutView.attrs.appearance`, generated apps should invert those colors for `LayoutView.attrs["navigator-menu"]`:
+
+- header background: `attrs.appearance.bgc`
+- header text/icon color: `attrs.appearance.color`
+- navigator background: `attrs["navigator-menu"].bgc = attrs.appearance.color`
+- navigator text/icon color: `attrs["navigator-menu"].color = attrs.appearance.bgc`
+
+For the standard generated design-system theme this means:
+
+```json
+{
+  "appearance": { "bgc": "var(--c--primary-light)", "color": "var(--c--primary)" },
+  "navigator-menu": { "bgc": "var(--c--primary)", "color": "var(--c--primary-light)" }
+}
+```
+
+Do not leave the navigator text color implicit when the navigator background is set. The Design System Request Tracker runtime showed that an implicit nav text color can match the nav background and make menu labels unreadable.
+
 ## Typography
 
 Use:

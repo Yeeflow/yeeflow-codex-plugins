@@ -70,6 +70,13 @@ Navigation names should describe user work, not implementation:
 - use `Overview`, `Requests`, `Catalog`, `Submit Request`, `Settings`, `Help Guide`
 - avoid `Data List`, `Page 1`, field slot names, IDs, or internal type names in production-like generated apps
 
+Navigation styling should preserve contrast. When the root header uses `LayoutView.attrs.appearance.bgc` and `LayoutView.attrs.appearance.color`, set the navigation menu to the inverse pair:
+
+- `LayoutView.attrs["navigator-menu"].bgc = LayoutView.attrs.appearance.color`
+- `LayoutView.attrs["navigator-menu"].color = LayoutView.attrs.appearance.bgc`
+
+For the standard generated app shell, the header background is `var(--c--primary-light)`, the header text/icon color is `var(--c--primary)`, the nav background is `var(--c--primary)`, and nav text/icons are `var(--c--primary-light)`.
+
 ## Dashboard Standards
 
 Dashboard pages should use:

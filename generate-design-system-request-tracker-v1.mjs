@@ -410,7 +410,7 @@ data.Item.ListModel.LayoutView = JSON.stringify({
   ],
   attrs: {
     appearance: { bgc: "var(--c--primary-light)", color: "var(--c--primary)" },
-    "navigator-menu": { bgc: "var(--c--primary)", position: "default" },
+    "navigator-menu": { bgc: "var(--c--primary)", color: "var(--c--primary-light)", position: "default" },
     CustomColors: [],
     CustomFonts: []
   },
@@ -425,7 +425,7 @@ data.AppThemes = [
     Config: JSON.stringify({
       primary: { value: "#0065FF", lightmodel: "Luminance" },
       secondary: { value: "#00D1FF", lightmodel: "Luminance" },
-      neutral: { value: "#B3B7C0", lightmodel: "Lightness" },
+      neutral: { value: "#B3B7C0", lightmodel: "Luminance" },
       typography: { fontfamily: "Default", basevalue: 14, scale: "1.125", lineheight: 1.4 }
     }),
     Ext: null

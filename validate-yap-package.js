@@ -473,6 +473,8 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "APPTHEMES_NOT_ARRAY", "Data.AppThemes should be an array for app-level packages; real app exports use an array even when empty.");
   } else if (!data.AppThemes.length) {
     issue(report, "warning", "APP_THEME_EMPTY", "AppThemes is empty. The minimal dashboard-only export uses an empty theme array, but richer generated apps should usually include application style metadata.");
+  } else {
+    validateAppThemeStandards(data.AppThemes, report);
   }
   const rootLayouts = asArray(data.Item && data.Item.Layouts);
   const rootPageLayouts = new Set(rootLayouts.filter((layout) => safeString(layout.Type) === "103").map((layout) => safeString(layout.LayoutID)).filter(Boolean));
@@ -508,7 +510,7 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_ID_PARTIAL_LAYOUTID_MATCH", "Root Type 103 app page LayoutInResources ID and RefId should either both match LayoutID for inline dashboard page resources, or both use a separate resource ID.", { title: layout.Title, layoutId, resourceId, refId });
       }
       if (resourceId && refId && resourceId !== refId) {
-        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_ID_REFID_MISMATCH", "Root Type 103 app page LayoutInResources ID and RefId should match each other while remaining separate from LayoutID.", { title: layout.Title, layoutId, resourceId, refId });
+        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_ID_REFID_MISMATCH", "Root Type 103 app page LayoutInResources ID and RefId should match each other.", { title: layout.Title, layoutId, resourceId, refId });
       }
       if (!usesInlinePageResourceId && (replaceIds.has(resourceId) || replaceIds.has(refId))) {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_ID_IN_REPLACEIDS", "Root Type 103 app page LayoutInResources ID/RefId should not be in ReplaceIds; only the LayoutID is remapped.", { title: layout.Title, layoutId, resourceId, refId });
@@ -532,6 +534,7 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_LAYOUTVIEW_INVALID", "Root app/ListSet LayoutView must be parseable JSON navigation metadata.");
     return;
   }
+  validateRootNavigationStyle(layoutView, report);
   const navItems = flattenNavigationItems(layoutView.sort || []);
   if (!navItems.length) {
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_NAVIGATION_EMPTY", "Root app/ListSet LayoutView.sort is empty; generated apps need navigation entries to open reliably.");
@@ -555,6 +558,48 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_NAV_FORM_REFERENCE_UNRESOLVED", "Root navigation item references a missing approval/form key.", { title: item.Title, formKey: listId });
       }
     }
+  }
+}
+
+function validateAppThemeStandards(appThemes, report) {
+  for (const theme of appThemes) {
+    const config = tryParseJson(theme && theme.Config);
+    if (!config || !config.neutral) continue;
+    const neutralLightModel = safeString(config.neutral.lightmodel || config.neutral.lightModel);
+    if (neutralLightModel && neutralLightModel !== "Luminance") {
+      uiStandardWarning(report, "UI_STANDARD_NEUTRAL_LIGHTMODEL_NOT_LUMINANCE", "Generated app themes should use Neutral lightmodel \"Luminance\" so neutral variants follow the Yeeflow root style standard.", {
+        theme: theme.Name || theme.ID || null,
+        neutralLightModel
+      });
+    }
+  }
+}
+
+function validateRootNavigationStyle(layoutView, report) {
+  const attrs = layoutView && layoutView.attrs;
+  if (!isObject(attrs)) return;
+  const appearance = attrs.appearance;
+  const navigatorMenu = attrs["navigator-menu"];
+  if (!isObject(appearance) || !isObject(navigatorMenu)) return;
+  const headerBackground = safeString(appearance.bgc);
+  const headerText = safeString(appearance.color);
+  const navBackground = safeString(navigatorMenu.bgc);
+  const navText = safeString(navigatorMenu.color);
+  if (!headerBackground || !headerText || !navBackground) return;
+  if (!navText) {
+    uiStandardWarning(report, "UI_STANDARD_NAV_TEXT_COLOR_MISSING", "Generated app navigation should set navigator-menu.color explicitly. Use the header background color as nav text/icon color.", {
+      expectedColor: headerBackground,
+      navBackground
+    });
+    return;
+  }
+  if (navBackground !== headerText || navText !== headerBackground) {
+    uiStandardWarning(report, "UI_STANDARD_NAV_COLOR_NOT_INVERTED", "Generated app navigation should invert header colors: navigator-menu.bgc should equal appearance.color and navigator-menu.color should equal appearance.bgc.", {
+      headerBackground,
+      headerText,
+      navBackground,
+      navText
+    });
   }
 }
 

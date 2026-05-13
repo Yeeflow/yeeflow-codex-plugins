@@ -105,3 +105,5 @@ No visible console or network failure was encountered during the successful runt
 ## Minor Presentation Notes
 
 The dashboard still includes an empty-state section even when sample request cards are visible. This is acceptable for the first proof package, but future generated dashboards should conditionally show the empty state only when the bound collection has no records if that condition pattern is proven.
+
+After the first runtime proof, the navigation color standard was tightened: generated app shells should explicitly set the navigator menu text color to the header background color and the navigator menu background to the header text color. The original runtime proof package imported and functioned, but its nav label contrast exposed this styling gap.

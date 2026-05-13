@@ -64,6 +64,8 @@ Use the business domain when helpful:
 - `Knowledge Base`
 - `Support Tickets`
 
+Navigation menu styling should make those names readable. If the app header uses a light background and primary text, use the header text color as the navigation background and the header background as the navigation text color.
+
 ## Collection Names
 
 Use:

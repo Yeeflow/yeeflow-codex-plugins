@@ -62,6 +62,10 @@ Use `docs/yeeflow-root-style-token-reference.md` as the root style/design-token 
 
 Generated apps should apply the Yeeflow Application Design System by default: use `Main` / `Content` containers, meaningful `nv_label` names, token-aligned colors and spacing, Edit/View custom forms for generated data lists, `Form body` / `Form bottom` approval pages, and clear dashboard sections plus Collection naming. Treat design-system validator findings as warnings until runtime import/open/export-back proof exists for the specific generated package.
 
+Navigation contrast rule: when root `LayoutView.attrs.appearance` defines a header background and text color, generated apps should invert that pair for `LayoutView.attrs["navigator-menu"]`. Use the header text color as the navigator background and the header background as the navigator text/icon color. For the standard shell, use `appearance: { bgc: "var(--c--primary-light)", color: "var(--c--primary)" }` and `"navigator-menu": { bgc: "var(--c--primary)", color: "var(--c--primary-light)", position: "default" }`.
+
+Theme color rule: generated `Data.AppThemes[].Config.neutral.lightmodel` should be `"Luminance"`, not `"Lightness"`.
+
 Keep these out of scope in v1 unless the user asks for research only:
 
 - dashboards beyond a minimal Type `103` shell page
