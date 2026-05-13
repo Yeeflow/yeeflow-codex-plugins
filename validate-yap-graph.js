@@ -1074,7 +1074,10 @@ function addDashboardPageEdges(context, dashboardNodeId, layout, page, rootPageL
     const dataList = node.attrs && node.attrs.data && node.attrs.data.list;
     if (dataList && safeString(dataList.ListID)) {
       const listId = safeString(dataList.ListID);
-      if (context.listsById.has(listId)) addEdge(context.graph, { from: dashboardNodeId, to: `list:${listId}`, type: "dashboardControlSource", label: "dashboard control data.list", sourceId: listId, pointer });
+      if (context.listsById.has(listId)) {
+        addEdge(context.graph, { from: dashboardNodeId, to: `list:${listId}`, type: "dashboardControlSource", label: "dashboard control data.list", sourceId: listId, pointer, path: pointer });
+        if (node.type === "collection") addEdge(context.graph, { from: dashboardNodeId, to: `list:${listId}`, type: "dashboardCollectionSource", label: "dashboard collection data.list", sourceId: listId, pointer, path: pointer });
+      }
       else reportMissingReference(context, "DASHBOARD_CONTROL_LIST_REFERENCE_UNRESOLVED", "Dashboard control data.list references a missing list.", { title, pointer, listId });
     }
     const dataForm = node.attrs && node.attrs.data && node.attrs.data.form;

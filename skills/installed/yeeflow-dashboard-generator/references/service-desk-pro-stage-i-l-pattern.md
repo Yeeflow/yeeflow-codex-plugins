@@ -1,4 +1,4 @@
-# Service Desk Pro Stage I-M Pattern
+# Service Desk Pro Stage I-N Pattern
 
 Use this after `service-desk-pro-stage-e-f-pattern.md` when continuing the Service Desk Pro dashboard rebuild beyond static Settings, Help, and Drill-down scaffolds.
 
@@ -101,6 +101,20 @@ Rules:
 - Settings grids are safe with three columns and `24px` column and row gaps
 - Help Guide page polish is safe as static cards, but links/actions remain excluded until target resources are proven
 - update visible helper copy when a formerly staged filter becomes active
+
+## Stage N: Active Submitted-period Helper Copy
+
+Package: `service-desk-pro-dashboard-stage-n.generated.yap`
+
+Runtime result: imported and opened in Yeeflow. Executive Dashboard rendered the updated helper copy that says Submitted period is bound to the generated Support Tickets Created Time field. Default KPI values rendered as `6`, `2`, `4`, `0`; clicking `Today` changed all four values to `0`. Settings, Help Guide, Drill-down Tickets List, Support Tickets, and Support Teams all opened without visible query failures.
+
+Rules:
+
+- use a fresh ID family even for copy-only page JSON cleanup
+- keep the Stage M submitted-period conditions unchanged when only updating helper copy
+- the active helper copy should mention both local filters: Support Teams and Submitted period
+- a copy-only Type 103 dashboard change still requires wrapper validation and runtime import testing
+- Stage N is the current safest Service Desk Pro generated dashboard baseline before isolating query-param to `tempVars`, original collection cards, Settings actions, or SLA report resources
 
 ## Remaining Stop Conditions
 

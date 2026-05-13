@@ -102,6 +102,11 @@ function safeString(value) {
   return String(value);
 }
 
+function displayLabelDisabled(value) {
+  if (value === false) return true;
+  return Array.isArray(value) && value[1] === false;
+}
+
 function issue(report, level, code, message, details = {}) {
   const entry = { code, message, ...redactDetails(details) };
   if (level === "error") report.errors.push(entry);
@@ -579,6 +584,133 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
       validateDashboardListId(title, layoutId, `$.exts[${index}].attr${pointer.slice(1)}.ListID`, node.ListID, listsById, report);
     });
   });
+  validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report);
+}
+
+function validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report) {
+  const severity = generatorFinalSeverity(report);
+  const seenControlIds = new Set();
+  function validateExpressionNode(node, pointer, collection) {
+    if (!isObject(node)) return;
+    if (node.exprType === "variable_ctx" && node.ctx === "__ctx_coll") {
+      if (!collection) {
+        issue(report, severity, "DASHBOARD_COLLECTION_CONTEXT_EXPR_OUTSIDE_COLLECTION", "Collection item expressions should be nested inside a collection item template.", { title, layoutId, pointer, field: safeString(node.id) });
+        return;
+      }
+      const fieldName = safeString(node.id);
+      if (fieldName && !collection.fields.has(fieldName)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_EXPR_FIELD_UNRESOLVED", "Collection item expression references a field not present on the collection source list.", { title, layoutId, pointer, listId: collection.listId, fieldName });
+      }
+    }
+    if (node.exprType === "variable" && safeString(node.id).startsWith("__filter_")) {
+      const name = safeString(node.name);
+      const expectedId = name ? `__filter_${name}` : "";
+      if (name && !filterVars.has(name)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_FILTER_VARIABLE_UNRESOLVED", "Collection filter expression should reference a page filterVars id.", { title, layoutId, pointer, filterVar: name });
+      }
+      if (expectedId && safeString(node.id) !== expectedId) {
+        issue(report, severity, "DASHBOARD_COLLECTION_FILTER_VARIABLE_ID_MISMATCH", "Collection filter expression id should use the __filter_ prefix plus the filter variable name.", { title, layoutId, pointer, id: safeString(node.id), expected: expectedId });
+      }
+    }
+  }
+
+  function validateControlDisplay(control, pointer, collection) {
+    for (const [index, rule] of asArray(control.attrs && control.attrs.control_display).entries()) {
+      walk(rule.formulas, (node, formulaPointer) => validateExpressionNode(node, `${pointer}.attrs.control_display[${index}].formulas${formulaPointer.slice(1)}`, collection));
+      const ruleControlId = safeString(rule.controlId);
+      const controlId = safeString(control.id);
+      if (ruleControlId && controlId && ruleControlId !== controlId) {
+        issue(report, severity, "DASHBOARD_COLLECTION_DISPLAY_RULE_CONTROL_MISMATCH", "Collection dynamic display rule controlId should match the target control id.", { title, layoutId, pointer: `${pointer}.attrs.control_display[${index}].controlId`, controlId, ruleControlId });
+      }
+      const action = rule.actions || {};
+      const actionAttrs = action.attrs || {};
+      const regulationAction = safeString(actionAttrs.style_regulation_action);
+      const actionStyle = actionAttrs.action_style;
+      if (safeString(action.type) && safeString(action.type) !== "1") {
+        issue(report, severity, "DASHBOARD_COLLECTION_DISPLAY_ACTION_TYPE_UNSUPPORTED", "Collection dynamic display actions should use the studied action type 1.", { title, layoutId, pointer: `${pointer}.attrs.control_display[${index}].actions.type`, actionType: action.type });
+      }
+      if (regulationAction === "style_class") {
+        if (typeof actionStyle !== "string" || !actionStyle.trim()) {
+          issue(report, severity, "DASHBOARD_COLLECTION_STYLE_ACTION_MISSING", "Collection conditional style action should include action_style JSON.", { title, layoutId, pointer: `${pointer}.attrs.control_display[${index}].actions.attrs.action_style` });
+        } else if (!tryParseJson(actionStyle)) {
+          issue(report, severity, "DASHBOARD_COLLECTION_STYLE_ACTION_JSON_INVALID", "Collection conditional style action_style should be valid JSON.", { title, layoutId, pointer: `${pointer}.attrs.control_display[${index}].actions.attrs.action_style` });
+        }
+      } else if (regulationAction === "style_regulation_action_show") {
+        if (actionStyle !== null && actionStyle !== undefined) {
+          issue(report, severity, "DASHBOARD_COLLECTION_SHOW_ACTION_STYLE_NOT_NULL", "Collection show dynamic display action should keep action_style null.", { title, layoutId, pointer: `${pointer}.attrs.control_display[${index}].actions.attrs.action_style` });
+        }
+      } else if (regulationAction) {
+        issue(report, severity, "DASHBOARD_COLLECTION_DISPLAY_ACTION_UNSTUDIED", "Collection dynamic display rule uses an unstudied style_regulation_action.", { title, layoutId, pointer: `${pointer}.attrs.control_display[${index}].actions.attrs.style_regulation_action`, regulationAction });
+      }
+    }
+  }
+
+  function visit(control, pointer, collection) {
+    if (!isObject(control)) return;
+    const controlId = safeString(control.id);
+    if (controlId) {
+      if (seenControlIds.has(controlId)) {
+        issue(report, severity, "DASHBOARD_CONTROL_ID_DUPLICATE", "Dashboard page control ids should be unique.", { title, layoutId, pointer, controlId });
+      }
+      seenControlIds.add(controlId);
+    }
+    if (control.type === "flex_grid") {
+      const attrs = control.attrs || {};
+      if (attrs.layout && attrs.layout.cols && !attrs.columns) {
+        issue(report, severity, "DASHBOARD_FLEX_GRID_COLUMNS_SCHEMA_INVALID", "Dashboard flex_grid columns should use attrs.columns/attrs.rows, not attrs.layout.cols.", { title, layoutId, pointer, controlId });
+      }
+      if (attrs.columns && !attrs.rows) {
+        issue(report, severity, "DASHBOARD_FLEX_GRID_ROWS_MISSING", "Dashboard flex_grid controls with columns should also include attrs.rows.", { title, layoutId, pointer, controlId });
+      }
+      if (["Table header", "Table row"].includes(safeString(control.label)) && !displayLabelDisabled(control.displayLabel)) {
+        issue(report, severity, "DASHBOARD_FLEX_GRID_DISPLAY_CAPTION_VISIBLE", "Table-style Collection header and row flex_grid controls should turn off Display caption with displayLabel [null,false].", { title, layoutId, pointer, controlId, label: safeString(control.label) });
+      }
+    }
+    const binding = safeString(control.binding);
+    if (binding.startsWith("__filter_")) {
+      const filterVar = binding.slice("__filter_".length);
+      if (!filterVars.has(filterVar)) {
+        issue(report, severity, "DASHBOARD_FILTER_CONTROL_BINDING_UNRESOLVED", "Dashboard filter control binding should resolve to page.filterVars.", { title, layoutId, pointer, controlId, binding, filterVar });
+      }
+    }
+    let activeCollection = collection;
+    if (control.type === "collection") {
+      const listId = safeString(control.attrs && control.attrs.data && control.attrs.data.list && control.attrs.data.list.ListID);
+      if (!listId) {
+        issue(report, severity, "DASHBOARD_COLLECTION_LIST_MISSING", "Collection control should include attrs.data.list.ListID.", { title, layoutId, pointer });
+      } else if (!listsById.has(listId)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_LIST_REFERENCE_UNRESOLVED", "Collection control data source should resolve to a list included in the package.", { title, layoutId, pointer, listId });
+      }
+      const fields = fieldsByList.get(listId) || new Map();
+      activeCollection = { listId, fields };
+      if (!asArray(control.children).length) {
+        issue(report, severity, "DASHBOARD_COLLECTION_ITEM_TEMPLATE_MISSING", "Collection control should include one item-template child.", { title, layoutId, pointer, listId });
+      }
+      for (const [fulltextIndex, item] of asArray(control.attrs && control.attrs.data && control.attrs.data.fulltext).entries()) {
+        for (const [fieldIndex, fieldName] of asArray(item.fields).map(safeString).entries()) {
+          if (fieldName && !fields.has(fieldName)) {
+            issue(report, severity, "DASHBOARD_COLLECTION_FULLTEXT_FIELD_UNRESOLVED", "Collection fulltext search references a field not present on the collection source list.", { title, layoutId, pointer: `${pointer}.attrs.data.fulltext[${fulltextIndex}].fields[${fieldIndex}]`, listId, fieldName });
+          }
+        }
+        walk(item.value, (node, valuePointer) => validateExpressionNode(node, `${pointer}.attrs.data.fulltext[${fulltextIndex}].value${valuePointer.slice(1)}`, activeCollection));
+      }
+    }
+    if (control.type === "dynamic-field" && safeString(control.attrs && control.attrs.source) === "3") {
+      if (!activeCollection) {
+        issue(report, severity, "DASHBOARD_COLLECTION_DYNAMIC_FIELD_OUTSIDE_COLLECTION", "Dynamic field source 3 should be nested inside a collection item template.", { title, layoutId, pointer, fieldName: safeString(control.attrs && control.attrs["obj-f"]) });
+      } else {
+        const fieldName = safeString(control.attrs && control.attrs["obj-f"]);
+        if (fieldName && !activeCollection.fields.has(fieldName)) {
+          issue(report, severity, "DASHBOARD_COLLECTION_DYNAMIC_FIELD_UNRESOLVED", "Dynamic field source 3 references a field not present on the collection source list.", { title, layoutId, pointer, listId: activeCollection.listId, fieldName });
+        }
+      }
+    }
+    validateControlDisplay(control, pointer, activeCollection);
+    if (control.attrs) walk(control.attrs, (node, attrPointer) => validateExpressionNode(node, `${pointer}.attrs${attrPointer.slice(1)}`, activeCollection));
+    asArray(control.children).forEach((child, index) => visit(child, `${pointer}.children[${index}]`, activeCollection));
+  }
+
+  asArray(page.children).forEach((child, index) => visit(child, `$.children[${index}]`, null));
 }
 
 function validateDashboardExtFieldRefs(title, layoutId, pointer, attr, fieldsByList, filterVars, report) {
@@ -710,12 +842,12 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
     }
     if (displayName) fieldsByName.set(displayName, field);
     if (fieldId) fieldsByName.set(fieldId, field);
-    if (!isRoot && resourceType === "data list" && fieldName === "Title" && (field.Status !== 0 || field.IsSystem !== true || field.IsIndex !== true)) {
+    if (!isRoot && resourceType === "data list" && fieldName === "Title" && (field.Status !== 0 || field.IsSystem !== true || field.IsIndex !== true || field.FieldIndex !== 0)) {
       issue(
         report,
         generatorFinalSeverity(report),
         "DATA_LIST_TITLE_FIELD_NATIVE_METADATA_INVALID",
-        "Generated child data lists must preserve Yeeflow's native Title field metadata; otherwise api/crafts/datas/{AppID}/{ListID}/query can fail at runtime.",
+        "Generated child data lists must preserve Yeeflow's native Title field metadata; otherwise api/crafts/datas/{AppID}/{ListID}/query can fail or hang at runtime.",
         {
           list: title,
           listId,
@@ -723,7 +855,8 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
           status: field.Status,
           isSystem: field.IsSystem,
           isIndex: field.IsIndex,
-          expected: { Status: 0, IsSystem: true, IsIndex: true },
+          fieldIndex: field.FieldIndex,
+          expected: { Status: 0, IsSystem: true, IsIndex: true, FieldIndex: 0 },
         }
       );
     }

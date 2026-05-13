@@ -11,6 +11,7 @@ For component details, also use the installed skills:
 
 - `yeeflow-data-list-generator` for `.ydl` child list structure, fields, views, custom forms, sample data, and lookup fields.
 - `yeeflow-approval-form-generator` for approval form Def structure, request/approval pages, lookup controls, workflow graph, and `ContentList` mapping.
+- For Knowledge Base-style local list plus dashboard packages, read `references/knowledge-base-app-pattern.md` and also use `yeeflow-dashboard-generator`.
 
 ## Standard Workflow
 

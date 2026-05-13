@@ -4,6 +4,7 @@ Source exports studied:
 
 - `/Users/Renger/Downloads/Service Desk Pro (1).yap`
 - `/Users/Renger/Downloads/Test Dashboard Only.yap`
+- `/Users/Renger/Downloads/Knowledge Base_1.yap`
 
 Focus pages:
 
@@ -218,6 +219,49 @@ For the first safe generated dashboard:
 9. Keep `AppTags`, `AppMetadatas`, `AppThemes`, and `AppComponents` as arrays even when empty.
 10. Use fresh local IDs for every generated import-test package.
 11. Add child lists, dashboard page JSON, widgets, `exts`, and data-source bindings only after the empty dashboard shell imports and opens.
+
+## Knowledge Base Dashboard Pattern
+
+`Knowledge Base_1.yap` adds a compact app-template pattern that combines local data lists and dashboard Collections without approval forms, workflows, reports, AI modules, connections, or document libraries.
+
+Observed source shape:
+
+- root app/listset `Knowledge Base_1`
+- local lists: `Categories`, `Sections`, `Articles`
+- dashboard pages: `Home Page`, `Search`, `Admin`
+- Home Page uses search, Article Collection, Category Collection, and a nested category-to-article Collection
+- Search page uses a search filter, fulltext Collection binding, and collection item expressions over article system fields
+- Admin page uses static cards with application URL expressions
+
+Runtime-proven generated v4 safe scope:
+
+- root app/listset
+- local `Categories` and `Articles` lists
+- plain text article category labels
+- one Home dashboard page
+- article Collection with fulltext search
+- category Collection
+- dynamic-field controls inside Collection item templates
+- `nv_label` names
+
+Deferred from v1:
+
+- `Sections`
+- richtext article body
+- icon-upload/image controls
+- article detail links
+- nested category-to-article Collection filters
+- Search page query-param behavior
+- Admin action cards
+
+Runtime status:
+
+- `knowledge-base-generated-v1.yap` uploaded, imported, and opened, but rendered Yeeflow's empty component shell instead of the generated app content
+- `knowledge-base-generated-v2.yap` and `knowledge-base-generated-v3.yap` imported and rendered Home/Categories, but Articles stayed on the loading spinner
+- `knowledge-base-generated-v4.yap` imported successfully, opened as `Knowledge Base Generated v4`, rendered article/category Collection cards on Home, and opened both `Categories` and `Articles` with sample rows
+- v4 is the first successful Knowledge Base runtime baseline; it uses native `Title.FieldIndex: 0`, corrected child-list metadata, and no article-to-category lookup field
+
+Use `docs/knowledge-base-template-pattern-study.md`, `docs/generated-knowledge-base-baseline-v4.md`, and `skills/installed/yeeflow-dashboard-generator/references/knowledge-base-pattern.md` before expanding this template.
 12. Do not include Settings-style external form actions until their external ListSet/ProcKey dependency is understood.
 
 ## Stop Conditions
@@ -1014,3 +1058,114 @@ Rules learned:
 Known cleanup for the next package:
 
 - update the Executive Dashboard helper text so it no longer says date filtering is only staged
+
+## Service Desk Pro Resume: Stage N Active Filter Helper Copy
+
+Stage N continued from the proven Stage M package and changed only the user-facing copy needed after the submitted-period binding became active.
+
+Generated artifacts:
+
+- package: `service-desk-pro-dashboard-stage-n.generated.yap`
+- app def: `service-desk-pro-dashboard-stage-n-app-def.json`
+- resource: `service-desk-pro-dashboard-stage-n-resource.json`
+- generator: `generate-service-desk-pro-dashboard-stage-n.mjs`
+- Downloads copy: `/Users/Renger/Downloads/service-desk-pro-dashboard-stage-n.generated.yap`
+
+Stage N preserves:
+
+- all Stage M submitted-period conditions on KPI summaries and the local priority chart
+- the local `Support Tickets` and `Support Teams` lists
+- Settings three-column grid layout and `24px` grid gaps
+- improved static Help Guide card grids
+- static high-priority Drill-down Tickets List table filter
+
+Stage N changes:
+
+- fresh ID family `259`
+- app title `Service Desk Pro Dashboard Stage N`
+- Executive Dashboard helper text now says the local Support Teams and Submitted period filters narrow the KPI and priority chart bindings
+- helper text states that Submitted period is bound to the local Created Time field for the generated Support Tickets list
+
+Validation evidence:
+
+- `node --check generate-service-desk-pro-dashboard-stage-n.mjs`: pass
+- decoded resource package validation: `pass_with_warnings`
+- decoded resource graph validation: pass
+- wrapper build: pass
+- wrapper package validation: `pass_with_warnings`
+- wrapper graph validation: pass
+- only recurring package warning: `APP_THEME_EMPTY`
+
+Runtime evidence:
+
+- imported into `https://codex.yeeflow.com/`
+- appeared in Shared Workspace as `Service Desk Pro Dashboard Stage N`
+- opened as `Executive Dashboard | Service Desk Pro Dashboard Stage N`
+- helper copy rendered the active submitted-period binding message
+- default Executive Dashboard rendered KPI values `6`, `2`, `4`, and `0`
+- clicking `Today` changed all four KPI values to `0`, confirming the period filter remained active after the copy cleanup
+- `Settings` rendered the 3-column card grid layout
+- `Help Guide` rendered improved static card sections
+- `Drill-down Tickets List` rendered `T-1001` and `T-1006`
+- `Support Tickets` opened with six rows and no visible query failure
+- `Support Teams` opened with four rows and no visible query failure
+
+Rules learned:
+
+- after a staged filter becomes active, update static dashboard helper text in the same fresh-ID generation cycle
+- copy-only dashboard page updates can be promoted only after a full import/open test, because page JSON edits still travel through the same Type 103 wrapper path
+- Stage N is the current safest Service Desk Pro baseline before isolating query-param to `tempVars`, original collection cards, Settings actions, or SLA report resources
+
+## Collection Control Learning: Tickets with Collection Export
+
+Source export studied read-only: `/Users/Renger/Downloads/Service Desk Pro Dashboard Stage M.yap`
+
+The export adds a Type `103` dashboard named `Tickets with Collection` to the Stage M app. This page introduces the first studied dashboard `collection` controls.
+
+What changed from the generated Stage M baseline:
+
+- added one root app dashboard layout titled `Tickets with Collection`
+- added one root navigation entry targeting the new Type `103` layout
+- added two `collection` controls bound to local `Support Tickets`
+- added dynamic fields inside Collection item templates using `source: "3"` and `obj-f`
+- added collection item expressions using `exprType: "variable_ctx"` with `ctx: "__ctx_coll"`
+- added conditional priority badge styles in `attrs.control_display`
+- added meaningful designer navigator labels in `nv_label`
+
+Patterns learned:
+
+- Collection data source is stored at `attrs.data.list`.
+- Collection item template is the first child of the Collection control.
+- Dynamic field controls inside the item template use `source: "3"` and source-list `FieldName` in `obj-f`.
+- Text/heading expressions can read collection item fields with `variable_ctx` and `ctx: "__ctx_coll"`.
+- `dateFormat(...)` can wrap a collection item date expression.
+- Conditional style rules for per-item badges are stored in `attrs.control_display`.
+- The studied dynamic rules apply styles, not hide/show behavior; hide/show remains unproven.
+- Navigator names are stored in `nv_label` and are useful for generator readability but not runtime behavior.
+
+Dedicated study doc: `docs/dashboard-collection-control-pattern-study.md`
+
+First safe generation plan:
+
+- `dashboard-collection-first-generation-test-plan.md`
+- `dashboard-collection-first-generation-test-spec.json`
+
+Generation/runtime results:
+
+- `generated-dashboard-collection-card-v1.yap` passed validation, wrapper build, import, and runtime rendering.
+- `generated-dashboard-collection-table-v2.yap` imported but failed visual runtime layout because generated `flex_grid` controls used `attrs.layout.cols`.
+- `generated-dashboard-collection-table-v3.yap` corrected the table schema to `attrs.columns` / `attrs.rows`, passed validation, imported, and rendered horizontal table-style rows.
+
+Validator follow-up:
+
+- `validate-yap-package.js` now rejects dashboard `flex_grid` controls that put columns under `attrs.layout.cols`.
+
+Baseline doc:
+
+- `docs/generated-dashboard-baseline-collection-control-v1.md`
+
+Remaining gaps:
+
+- Collection hide/show display actions remain unproven.
+- Collection full-text search/filter binding is studied but not generated yet.
+- Collection sorting, pagination, and empty-state behavior remain unproven.

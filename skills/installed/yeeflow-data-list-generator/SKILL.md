@@ -69,6 +69,7 @@ Load only the relevant reference:
 - `references/baseline-asset-inventory-v5.md`: proven single-list custom form baseline.
 - `references/related-list-lookup-pattern.md`: staged lookup and sample-data rules.
 - `references/approval-form-integration-pattern.md`: generated storage list handoff to approval-form `ContentList` persistence.
+- `references/knowledge-base-list-pattern.md`: Knowledge Base category/article list and lookup pattern.
 - `references/validation-guide.md`: validator and builder usage.
 - `references/metadata-guide.md`: `.ydl` and `.yap` metadata lessons.
 - `references/examples-summary.md`: proven examples and intentionally omitted bulky artifacts.

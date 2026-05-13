@@ -38,6 +38,7 @@ coverage/
 *.md
 !README.md
 !CHANGELOG.md
+!dashboard-collection-first-generation-test-plan.md
 !docs/
 !docs/**/*.md
 !generated/README.md
@@ -71,9 +72,15 @@ assets/
 yeeflow-application-generator/
 yeeflow-approval-form-generator/
 yeeflow-data-list-generator/
+!skills/installed/yeeflow-application-generator/
+!skills/installed/yeeflow-application-generator/**
+!skills/installed/yeeflow-data-list-generator/
+!skills/installed/yeeflow-data-list-generator/**
+.DS_Store
 
 # Large or decoded generated artifacts that may contain customer data.
 *.json
+!dashboard-collection-first-generation-test-spec.json
 *-app-def*.json
 *-resource*.json
 *.decoded.json

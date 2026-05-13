@@ -20,6 +20,8 @@ For unproven dashboard areas, use this with `yeeflow-feature-learning-orchestrat
 - For the first proven Service Desk Pro-style local Support Tickets source list, read `references/service-desk-pro-stage-d-pattern.md`.
 - For the proven Service Desk Pro KPI summary stages and pending first chart package, read `references/service-desk-pro-stage-e-f-pattern.md`.
 - For proven Service Desk Pro Support Teams filters, opendashboard actions, Drill-down data-list tables, static Drill-down filters, submitted-period binding, and Settings/Help Guide polish, read `references/service-desk-pro-stage-i-l-pattern.md`.
+- For the first studied dashboard Collection control pattern, read `references/collection-control-pattern.md`.
+- For Knowledge Base-style dashboard apps with article/category Collections and local data lists, read `references/knowledge-base-pattern.md`.
 - For validator and wrapper expectations, read `references/validator-rules.md`.
 - Before operating Yeeflow UI, read `references/runtime-testing.md`.
 - For app shell/list/form hard rules, also use `yeeflow-application-generator`, `yeeflow-data-list-generator`, and `yeeflow-approval-form-generator` as needed.
@@ -157,6 +159,30 @@ The twelfth proven Service Desk Pro resumed package is:
 - workspace artifact: `service-desk-pro-dashboard-stage-m.generated.yap`
 - app shape: Stage L export-back study plus submitted-period conditions on all local KPI summaries and the local priority chart, Settings 3-column layout polish, and an improved static Help Guide layout
 - runtime result: imported into `https://codex.yeeflow.com/`, opened as `Executive Dashboard | Service Desk Pro Dashboard Stage M`, rendered the KPI cards, and clicking `Today` changed the KPI values from `6`, `2`, `4`, `0` to `0`, `0`, `0`, `0`; Settings, Help Guide, Drill-down, Support Tickets, and Support Teams also rendered successfully
+
+The thirteenth proven Service Desk Pro resumed package is:
+
+- workspace artifact: `service-desk-pro-dashboard-stage-n.generated.yap`
+- app shape: Stage M with fresh IDs and Executive Dashboard helper copy updated to describe the active Submitted period binding
+- runtime result: imported into `https://codex.yeeflow.com/`, opened as `Executive Dashboard | Service Desk Pro Dashboard Stage N`, rendered the active helper copy, changed KPI values from `6`, `2`, `4`, `0` to `0`, `0`, `0`, `0` after clicking `Today`, and successfully opened Settings, Help Guide, Drill-down Tickets List, Support Tickets, and Support Teams
+
+The first studied Service Desk Pro Collection export is:
+
+- source export: `Service Desk Pro Dashboard Stage M.yap`
+- studied dashboard: `Tickets with Collection`
+- app shape: Stage M plus one Type `103` dashboard containing two Collection controls bound to local `Support Tickets`
+- learned patterns: card/grid Collection, table-style Collection, dynamic fields with `source: "3"`, collection item expressions with `ctx: "__ctx_coll"`, `dateFormat` expression wrapper, conditional priority badge styles in `attrs.control_display`, and designer `nv_label` naming
+- generation status: documented and validator-covered, but not yet a generated runtime baseline; first generated package should use one card/grid Collection only
+
+The first runtime-proven generated Knowledge Base-style package is:
+
+- workspace artifact: `knowledge-base-generated-v4.yap`
+- source export studied: `Knowledge Base_1.yap`
+- app shape: one root app/listset, one Type `103` Home dashboard page, local `Categories` and `Articles` data lists, plain text article category labels, article/category sample rows, Article Collection with fulltext search, Category Collection, and `dynamic-field` controls inside Collection item templates
+- intentionally deferred: article-to-category lookup metadata, `Sections`, richtext body fields, icon-upload/image controls, article detail links, nested category-to-article Collections, Search query-param flow, Admin action cards, forms, workflows, reports, AI modules, connections, and document libraries
+- validation result: generator syntax passed, package/graph validation passed, wrapper round-trip passed; only `APP_THEME_EMPTY` warning remains
+- runtime result: imported into `https://codex.yeeflow.com/`, opened as `Knowledge Base Generated v4`, rendered Home article/category Collection cards, and opened both `Categories` and `Articles` with sample rows
+- key lesson: native generated `Title` fields require `FieldIndex: 0` in addition to `Status: 0`, `IsSystem: true`, and `IsIndex: true`
 
 ## Stop Conditions
 
