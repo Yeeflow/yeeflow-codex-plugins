@@ -1,0 +1,235 @@
+---
+name: yeeflow-application-generator
+description: generate, inspect, validate, package, debug, and improve small yeeflow application-level .yap packages, including multi-list apps, app shells, app navigation, lookup relationships, approval forms, contentlist persistence, replaceids, exported-back .yap comparison, and sandbox app import/export learning.
+---
+
+# Yeeflow Application Generator
+
+Use this skill for small Yeeflow `.yap` application packages that combine related data lists and approval forms. Keep v1 scoped to proven patterns: data lists, custom list forms, lookup relationships, simple approval forms, and `ContentList` persistence.
+
+For component details, also use the installed skills:
+
+- `yeeflow-data-list-generator` for `.ydl` child list structure, fields, views, custom forms, sample data, and lookup fields.
+- `yeeflow-approval-form-generator` for approval form Def structure, request/approval pages, lookup controls, workflow graph, and `ContentList` mapping.
+
+## Standard Workflow
+
+1. Decompose the app requirement into resources, relationships, and stop conditions.
+2. Create a normalized app spec before generating package JSON.
+3. Generate or patch decoded `.yap` Resource/Data JSON only after the graph is clear.
+4. Validate child lists and approval forms where practical.
+5. Validate the assembled app with `scripts/validate-yap-package.js`.
+6. Validate app relationships with `scripts/validate-yap-graph.js`.
+7. Build the wrapper with `scripts/build-yap-wrapper.js` only after validation passes.
+8. Report sandbox import checklist and require export-back learning before production-like use.
+
+Never import into Yeeflow or operate the UI unless the user explicitly asks. Preserve large numeric IDs as strings. Redact secret/token/client values.
+
+## Supported v1 Package Shape
+
+Use v1 for apps like `Department Access Management`:
+
+- root app/listset shell
+- child data lists in `Data.Childs[]`
+- data-list fields, views, sample records, and custom forms
+- internal lookup relationships between lists
+- one or more simple approval forms in `Data.Forms[]`
+- approval form lookup controls
+- lookup additional field mappings
+- approval workflow `ContentList` create/update actions targeting included lists
+- generated multi-type approval/list fields, including text, number, radio/dropdown, switch, and conditional display
+- simple root navigation and one Type `103` app page
+
+Keep these out of scope in v1 unless the user asks for research only:
+
+- dashboards beyond a minimal Type `103` shell page
+- data reports and form reports
+- AI Agents, Copilots, Connections, Knowledges
+- document libraries, document generation, templates
+- external HTTP/API actions
+- complex list workflows or scheduled workflows
+
+## Hard Stop Conditions
+
+Stop before final `.yap` build if any of these are true:
+
+- unresolved resource graph
+- missing lookup target list or display/search field
+- missing `ContentList` target list or target field
+- invalid or incomplete root app shell
+- missing root navigation or app page
+- unresolved AI/connection/knowledge/document/external resources
+- placeholders remain in final mode
+- validators fail
+- sensitive credential-like resources would be copied
+- production use is requested without sandbox import/export-back proof
+
+## Current Advanced Baseline
+
+Use Visitor Access Management v11 as the current advanced generated `.yap` baseline for small app packages.
+
+Confirmed v11 settings:
+
+- fresh `216...` local ID family
+- fresh FlowKey/form key `VBB`
+- `Data.Forms[].ListID = 0`
+- `ProcModelID` carries the approval process ID
+- app imported and passed runtime testing
+- package, graph, approval form, and wrapper round-trip validations passed
+
+Proven v11 field/control types:
+
+- text/input
+- number/input_number
+- single select radio/dropdown using `radio` control plus `attrs.displayStyle = "dropdown"`
+- switch/boolean
+- conditional display using target control `attrs.control_display[]`
+
+Proven v11 storage and `ContentList` mappings:
+
+| Business field | Variable | Target |
+| --- | --- | --- |
+| Visitor Email | `VisitorEmail` | `Text13` |
+| Visitor Phone | `VisitorPhone` | `Text14` |
+| Number of Visitors | `NumberofVisitors` | `Decimal1` |
+| Access Type | `AccessType` | `Text15` |
+| Requires Escort | `RequiresEscort` | `Bit1` |
+
+Sample value shapes:
+
+- Decimal: numeric values
+- choice/dropdown: selected option text
+- data-list Bit/switch: `"1"` or `"0"`
+- approval switch variable/control: boolean `true` or `false`
+
+`EscortUser` is proven as a form-only conditional field shown when `RequiresEscort == true`; it is not persisted in v11.
+
+## Child Data List Title Field Rule
+
+HARD RULE: every generated child data list must preserve `FieldName: "Title"` as Yeeflow's native primary/display field.
+
+Required metadata:
+
+- `Status: 0`
+- `IsSystem: true`
+- `IsIndex: true`
+
+Do not generate `Title` as an ordinary custom business field. Heep Hong IT eWorkflow Option A v7 proved that `Title` with `Status: 1`, `IsSystem: false`, and `IsIndex: false` can import and render list metadata while causing `api/crafts/datas/{AppID}/{ListID}/query` to fail with HTTP `400`. Option A v8 restored the native `Title` metadata and fixed the data-grid query.
+
+Business labels such as `Request No.`, `Name`, `Equipment Name`, or `Center / Department Name` may be displayed on `Title`, but the underlying metadata must remain native/system/indexed. Use `Text1`, `Text2`, etc. for additional business fields.
+
+## Root App Shell Rules
+
+For generated packages, the root app shell is mandatory. Use the v5 baseline rules:
+
+- top-level wrapper `Title`, `Description`, and non-null `IconUrl`
+- `Resource.MainListType = 1024`
+- root `Data.Item.ListModel.Type = 1024`
+- root `CustomType = ""`
+- root `Perm = 0`
+- root `WorkspaceID` present
+- root `LayoutView` navigation populated
+- `Data.AppTags`, `Data.AppMetadatas`, and `Data.AppComponents` arrays present
+- `Data.AppThemes` non-empty
+- root `CreatedBy` and `ModifiedBy` populated
+
+For root Type `103` app pages:
+
+- include the page `LayoutID` in `ReplaceIds`
+- `LayoutInResources[0].ID` and `RefId` are separate resource IDs
+- Type `103` `LayoutInResources` resource IDs are excluded from `ReplaceIds`
+- `LayoutInResources[0].Resource` must contain valid page JSON
+
+Minimal dashboard-only exception: `Test Dashboard Only.yap` and the generated `generated-dashboard-minimal-v1.yap` runtime baseline prove that an empty dashboard shell can use `LayoutInResources: []`, `Ext2: "{\"src\":true}"`, and only two `ReplaceIds` (root app/ListSet ID plus dashboard `LayoutID`). Use `yeeflow-dashboard-generator` before generating dashboard-specific packages.
+
+Read `references/baseline-department-access-management-v5.md` before changing app shell or Type `103` page logic.
+
+## App-Level Approval Form Rules
+
+- `Data.Forms[].ListID` must be numeric `0` for app-level approval forms.
+- `ProcModelID` carries the generated approval process ID and should be included in `ReplaceIds`.
+- Root navigation Type `105` should point to the form key.
+- Use a fresh FlowKey/form key for every generated import-test package.
+- Do not reuse a FlowKey/form key from a previously imported generated app unless explicitly testing update behavior.
+
+## ReplaceIds And Lookup Sample Rules
+
+Local app graph IDs should be included in `Resource.ReplaceIds`:
+
+- root app/listset ID
+- child list IDs
+- field IDs
+- view/custom form layout IDs
+- data-list custom form resource IDs where the data-list rule requires it
+- approval form/process IDs and form keys
+- local sample record `ListDataID` values
+- root Type `103` page `LayoutID`
+
+Do not include external dependency IDs in `ReplaceIds`.
+
+For standalone `.ydl` with external lookup sample data, external target record IDs must be excluded from the dependent package `ReplaceIds`.
+
+For app-level `.yap` with internal lookup sample data:
+
+- target sample record IDs are local package IDs
+- include target sample record IDs in `ReplaceIds`
+- dependent sample lookup values may reference those local target sample IDs as plain strings
+- export-back from v5 proved Yeeflow remaps target records and dependent lookup values consistently
+
+If grid display appears blank but export-back lookup values match exported target records, classify it as a runtime display/index/cache issue unless the item form lookup value or manually edited rows are also broken.
+
+## ID And Expansion Strategy
+
+- Every generated `.yap` import-test package needs a fresh local ID family.
+- Do not reuse ID families from previously imported generated apps, even if the earlier import failed.
+- Start from a known-good baseline.
+- Add one field/change at a time for unproven field/control types.
+- Multi-field expansion is allowed only after the underlying field/control types are proven by export-backed examples and generated import tests.
+- Preserve proven field slots unless deliberately testing a new slot.
+
+## Validation Commands
+
+Use these from the project root or adapt paths to the current workspace:
+
+```bash
+node scripts/validate-yap-package.js ./app-def.json --mode generator --stage final
+node scripts/validate-yap-graph.js ./app-def.json --mode generator --stage final --json ./app-graph.json --md ./app-graph.md
+node scripts/validate-ywf-def.js ./extracted-approval-form-def.json --mode final
+node scripts/validate-ydl-list.js ./extracted-child-list.json --mode generator --stage final
+node scripts/build-yap-wrapper.js ./app-def.json ./app.yap --title "App Name" --description "Description"
+```
+
+For real historical exports, use compatibility mode:
+
+```bash
+node scripts/validate-yap-package.js "./Existing App.yap" --mode compatibility
+node scripts/validate-yap-graph.js "./Existing App.yap" --mode compatibility
+```
+
+## References
+
+Load only the relevant reference:
+
+- `references/yap-structure-study.md`: `.yap` wrapper, root app, child resources, forms, reports/modules, ReplaceIds.
+- `references/first-test-plan.md`: first safe app-generation test strategy.
+- `references/baseline-department-access-management-v5.md`: successful v5 baseline and root app shell rules.
+- `references/baseline-visitor-access-management-v11.md`: Visitor Access v5-v11 generated baselines, including v11 multi-type proof.
+- `references/data-list-approval-integration-pattern.md`: generated data list plus approval form integration.
+- `references/related-list-lookup-pattern.md`: standalone related-list lookup rules and `.yap` internal lookup contrast.
+- `references/validate-yap-package.md`: package validator behavior.
+- `references/validate-yap-graph.md`: graph validator behavior.
+- `references/build-yap-wrapper.md`: wrapper builder usage and safety rules.
+- `references/examples-summary.md`: proven baseline and quick pattern reminders.
+
+## Output Expectations
+
+When generating or debugging a `.yap`, report:
+
+- files created or changed
+- resource inventory
+- generated IDs and `ReplaceIds` strategy
+- lookup and `ContentList` mappings
+- validation results
+- wrapper build result, if built
+- unresolved risks and stop conditions
+- sandbox import/export-back checklist

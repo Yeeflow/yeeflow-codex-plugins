@@ -1,0 +1,60 @@
+---
+name: yeeflow-copilot-template-builder
+description: Build, validate, and maintain reusable Yeeflow Copilot template manifests from Word catalogs, icon manifests, instruction drafts, exported .yaic packages, and Sanity/template publishing reports. Use when preparing Copilot template libraries, mapping Copilot icons and packages, or coordinating Copilot creation/export/Sanity handoff workflows.
+---
+
+# Yeeflow Copilot Template Builder
+
+Use this skill when the user is preparing reusable Yeeflow Copilot templates before upload, import/export, or Sanity publishing.
+
+## Core Workflow
+
+1. Read the source catalog first. Prefer `docs/Yeeflow_Copilot_Template_Configuration_Catalog.docx`; fall back to an explicit user-provided list only when parsing is blocked.
+2. Build or update a creation manifest with one entry per Copilot:
+   - `name`
+   - `short_description`
+   - `icon_file_path`
+   - `instruction`
+   - `tool_calls`
+   - `validation_status`
+3. Enrich each Copilot with reusable-template metadata when preparing Sanity records:
+   - `copilotScope`
+   - `userRole`
+   - `supportedObjects`
+   - `suggestedPrompts`
+   - `knowledgeSources`
+   - `connectedAgents`
+4. Validate that every Copilot has exactly one matching 64 x 64 icon and, when exports are requested, one matching `.yaic` package.
+5. Keep tools, knowledge sources, HTTP calls, lists, workflows, and connected Agents as guidance unless the user provides real target-app bindings.
+
+## Expected Workspace Files
+
+- `working/final-copilot-creation-manifest.json`
+- `assets/icons/icon_manifest.json`
+- `assets/icons/copilots/*.png`
+- `output/Copilot/*.yaic`
+- `output/Copilot/icons/*.png`
+- `working/copilot-template-generation-report.md`
+- `working/sanity-copilot-templateasset-*.json`
+
+## Safety Rules
+
+- Do not create duplicate Copilots.
+- Do not bind tools, knowledge sources, workflows, lists, HTTP connections, or Agents during reusable-template setup unless target resources are explicit.
+- Do not hand-generate opaque `.yaic` `PackageJson` payloads. Use Yeeflow import/export flows when final importable packages are needed.
+- Treat generated `COPxxxxx` IDs as review/product-catalog IDs unless a confirmed runtime install ID is found.
+- Keep Copilot copy practical and governed: guided assistance, drafting, context finding, and human-reviewed next steps.
+
+## References
+
+- For the recommended reusable Copilot content model, read `references/copilot-template-model.md`.
+
+## Useful Script
+
+Run:
+
+```bash
+node scripts/validate_copilot_manifest.js working/final-copilot-creation-manifest.json assets/icons/icon_manifest.json
+```
+
+This checks required manifest fields and icon/package mappings.

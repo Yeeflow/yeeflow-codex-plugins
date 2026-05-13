@@ -1,0 +1,107 @@
+# macOS and editor noise
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*secret*
+*secrets*
+*token*
+*credentials*
+
+# Dependencies
+node_modules/
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+.tmp/
+.cache/
+.pytest_cache/
+coverage/
+
+# Historical root-level reports are ignored by default.
+# Curated documentation belongs under docs/.
+*.md
+!README.md
+!CHANGELOG.md
+!docs/
+!docs/**/*.md
+!generated/README.md
+!examples/README.md
+!skills/**/*.md
+!generated-skills/**/*.md
+
+# Generated document outputs are excluded unless explicitly reviewed.
+*.docx
+
+# Raw Yeeflow exports and generated packages.
+# Commit only explicitly sanitized, reviewed samples via docs/examples.
+*.yap
+*.ydl
+*.ywf
+*.yaia
+*.yaic
+*.skill.zip
+*.zip
+
+# Downloaded/customer/output work areas
+Downloads/
+downloaded/
+customer-files/
+raw-exports/
+outputs/
+output/
+Templates/
+working/
+assets/
+yeeflow-application-generator/
+yeeflow-approval-form-generator/
+yeeflow-data-list-generator/
+
+# Large or decoded generated artifacts that may contain customer data.
+*.json
+*-app-def*.json
+*-resource*.json
+*.decoded.json
+*.app-def.json
+*.resource.json
+*.metadata.json
+*inspection*.json
+*source*.json
+*exportback*.json
+
+# Generated package internals and reports are kept out by default.
+# Promote sanitized summaries into docs/ instead.
+*build-report*.json
+*generation-report*.json
+*validation*.json
+*graph*.json
+*compatibility*.json
+*dependencies*.json
+*decomposition*.json
+*mapping*.json
+*manifest*.json
+
+# Keep repository scaffolding under these otherwise-generated folders.
+!generated/
+!generated/README.md
+!examples/
+!examples/README.md
+!skills/
+!skills/README.md
+!package.json
+!package-lock.json
