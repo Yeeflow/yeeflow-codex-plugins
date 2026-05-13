@@ -66,7 +66,7 @@ v4 fixed the runtime issue by:
 
 - First Knowledge Base baseline should use category label text, not lookup fields.
 - Lookup isolation after v4 showed `Articles.Text3` lookup is not safe: v5 with local sample IDs, v6 with blank lookup values, and v7 with the lookup hidden from the list view all imported but left Articles on a loading spinner.
-- The source template uses `Articles.Text4` for Category lookup; v8 validates and round-trips with that source-like slot, imports, and renders Home, but Categories and Articles stay on loading spinners. Knowledge Base lookup remains unproven.
+- The source template uses `Articles.Text4` for Category lookup; v8 validates and round-trips with that source-like slot, imports, and renders Home, but Categories and Articles stay on loading spinners. v9 removes the generated `Text3` placeholder and confirms Categories can open while Articles still spins, which narrows the issue to Articles lookup metadata. v10 imports with `Text4` as a plain input field, but app-open runtime verification is still pending because browser control failed during the smoke test.
 - Every generated data-list `Title` field must preserve:
   - `FieldName: "Title"`
   - `Status: 0`

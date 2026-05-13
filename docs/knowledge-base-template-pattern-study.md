@@ -163,10 +163,12 @@ The next generation stage stayed small and became a lookup isolation sequence:
 2. v6 blanked the lookup sample values. Articles still stayed on a loading spinner.
 3. v7 hid the lookup field from the visible Articles list view. Articles still stayed on a loading spinner.
 4. v8 moved the lookup to the source-like `Text4` slot and validated/build round-tripped successfully. Runtime import succeeded and the Home dashboard rendered, but both Categories and Articles stayed on loading spinners.
+5. v9 removed the generated `Text3` placeholder and added only blank `Articles.Text4` lookup metadata. Runtime import succeeded; Home rendered; Categories opened with 3 rows; Articles stayed on a loading spinner.
+6. v10 replaced the lookup with a plain `Articles.Text4` input field. Local validation, graph validation, wrapper build, and import passed; app-open/list runtime verification is pending because the current Chrome session became inaccessible to Computer Use and screenshots during verification.
 
 See `docs/generated-knowledge-base-lookup-isolation.md`.
 
-Current rule: do not promote Knowledge Base lookup generation beyond the v4 plain text category-label baseline. The source-like `Text4` lookup metadata package did not pass list runtime testing, so the next safe lookup isolation must reduce or source-align list metadata instead of adding lookup sample values.
+Current rule: do not promote Knowledge Base lookup generation beyond the v4 plain text category-label baseline. The source-like `Text4` lookup metadata package did not pass list runtime testing, so the next safe lookup isolation is to finish v10 runtime verification. If plain `Text4` passes, lookup metadata is the failure trigger. If plain `Text4` fails, field ordering or non-contiguous generated `Text4` usage must be studied before any lookup work continues.
 
 ## Stop Conditions
 

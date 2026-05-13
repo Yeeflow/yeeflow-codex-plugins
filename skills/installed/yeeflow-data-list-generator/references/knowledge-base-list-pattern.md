@@ -34,7 +34,8 @@ Start with only:
 - Do not include `Sections`, article-to-category lookup, or article-to-section lookup until each lookup pattern has imported and opened cleanly in an isolated package.
 - When local app-level lookup samples are reintroduced, the target category sample record IDs may be local generated IDs and must be included in `ReplaceIds`.
 - Do not place Knowledge Base `Articles.Category` lookup in `Text3`; v5-v7 import tests showed Articles stayed on a loading spinner even with blank lookup values and the lookup hidden from the list view.
-- The source template places `Articles.Category` in `Text4`, but a source-like `Text4` lookup isolation still failed list runtime: v8 imported and rendered Home, while Categories and Articles stayed on loading spinners. Keep the v4 plain text `Category Label` baseline until a reduced/source-aligned lookup isolation opens lists cleanly.
+- The source template places `Articles.Category` in `Text4`, but source-like `Text4` lookup isolations still failed list runtime: v8 imported and rendered Home while Categories and Articles stayed on loading spinners; v9 removed the generated `Text3` placeholder and Categories opened, but Articles still stayed on a loading spinner. Keep the v4 plain text `Category Label` baseline until a reduced/source-aligned lookup isolation opens lists cleanly.
+- v10 adds `Articles.Text4` as a plain input field and imports, but app-open/list runtime verification is pending due browser control failure. Do not treat the plain `Text4` slot as runtime-proven until v10 opens and both lists render.
 
 ## Runtime Lessons
 
@@ -42,7 +43,8 @@ Start with only:
 - v2/v3 showed that Home/Categories can work while Articles remains on a spinner.
 - v4 proved Articles after removing first-stage lookup metadata and setting native `Title.FieldIndex: 0`.
 - v5/v6/v7 showed that an unresolved lookup list runtime issue can persist even without local lookup sample values and even when the lookup column is not visible in the list layout.
-- v8 showed that moving the lookup to the source-like `Text4` slot is not sufficient by itself; do not advance to local lookup sample values until lookup metadata alone opens cleanly.
+- v8 showed that moving the lookup to the source-like `Text4` slot is not sufficient by itself; v9 narrowed the failure to Articles lookup metadata by restoring Categories runtime. Do not advance to local lookup sample values until lookup metadata alone opens cleanly.
+- v10 is the pending field-slot isolation. If it passes, the failure trigger is lookup metadata. If it fails, non-contiguous generated `Text4` field usage or field ordering is unproven and must be studied before lookup generation resumes.
 
 ## Validation Notes
 

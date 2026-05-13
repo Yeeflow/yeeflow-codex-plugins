@@ -56,6 +56,8 @@ Defer lookup fields, `Sections`, nested Collections, rich text, images, detail-p
 - Do not copy the source export's self lookup on `Categories.Parent category` into the first generated package; it creates a dependency cycle and should be isolated separately.
 - Knowledge Base lookup isolation v5-v7 showed that `Articles.Text3` lookup is not runtime-safe: Articles stayed on a loading spinner with local lookup sample values, with blank lookup values, and with the lookup hidden from the list layout.
 - The source export uses `Articles.Text4` for Category lookup. A source-like `Text4` lookup package (`knowledge-base-lookup-v8-text4-lookup.yap`) validates, round-trips, imports, and renders Home, but Categories and Articles stay on loading spinners. Do not promote lookup generation from this package.
+- A narrower source-like package (`knowledge-base-lookup-v9-text4-only.yap`) removes the generated `Text3` placeholder and adds only blank `Articles.Text4` lookup metadata. It imports, renders Home, and opens Categories, but Articles still stays on a loading spinner. This narrows the blocker to Articles lookup metadata.
+- A plain field-slot package (`knowledge-base-text4-input-v10.yap`) adds `Articles.Text4` as an input field instead of lookup metadata and imports successfully, but app-open/list runtime verification is pending because the Chrome session became inaccessible during verification. Do not treat plain `Text4` as proven until v10 opens and both generated lists render.
 
 ## Runtime Lessons
 
@@ -63,7 +65,7 @@ Defer lookup fields, `Sections`, nested Collections, rich text, images, detail-p
 - v2/v3 imported and rendered Home/Categories, but `Articles` stayed on the loading spinner.
 - v4 passed runtime: Home rendered article/category Collections, `Categories` opened with sample rows, and `Articles` opened with sample rows.
 - Root causes fixed by v4: child list metadata followed the app-level baseline, root `ListSetID` was not added directly to the root `ListModel`, list `LayoutView` stayed `null`, and native `Title.FieldIndex` was set to `0`.
-- v5/v6/v7 lookup isolations imported and rendered Home/Categories, but Articles stayed on a loading spinner. v8 imported and rendered Home, but Categories and Articles stayed on loading spinners. This keeps Knowledge Base lookup support pending, not proven.
+- v5/v6/v7 lookup isolations imported and rendered Home/Categories, but Articles stayed on a loading spinner. v8 imported and rendered Home, but Categories and Articles stayed on loading spinners. v9 restored Categories runtime while Articles still spun, which keeps Knowledge Base lookup support pending, not proven. v10 is the pending plain `Text4` field-slot check.
 
 ## Stop Conditions
 
