@@ -76,6 +76,7 @@ Load only the relevant reference:
 - `references/validation-guide.md`: validator and builder usage.
 - In the active generator workspace, use `docs/workflow-action-configuration-reference.md`, `docs/workflow-action-generation-rules.md`, and `workflow-action-configurations.normalized.json` as the official workflow action configuration reference when validating list workflows.
 - In the active generator workspace, use `field-configurations.normalized.json`, `docs/yeeflow-field-configuration-reference.md`, and `docs/yeeflow-control-field-generation-rules.md` as the data-list field schema reference.
+- In the active generator workspace, use `yeeflow-expression-functions.normalized.json`, `yeeflow-expression-operators.normalized.json`, `yeeflow-expression-utils.js`, and `docs/yeeflow-expression-generation-rules.md` before generating data-list calculated fields, custom form calculated controls, lookup filters, list workflow conditions, or request-number/default-value formulas.
 - In the active generator workspace, use `control-configurations.normalized.json`, `docs/yeeflow-control-to-field-mapping.md`, and `yeeflow-control-field-schema-utils.js` when translating approval-form controls into persisted data-list fields.
 - In the active generator workspace, use `docs/yeeflow-form-design-quality-rules.md` when data-list custom forms need to align with rich approval-form section/grid/text/icon standards.
 - For generated data-list persistence, prefer Text fallback for requester/user values unless a focused native data-list identity/user field export proves the persisted shape.
@@ -93,6 +94,7 @@ Load only the relevant reference:
 - Use `Decimal` + `input_number` fields for persisted numbers; `Decimal1` is the proven generated slot in Visitor Access Management v11.
 - Use `Bit` + `switch` fields for persisted booleans; `Bit1` is the proven generated slot in Visitor Access Management v11.
 - Use calculated data-list fields only when the field formula is export-backed. When an approval form has calculated display values such as `Subtotal = Quantity * Unit Price`, prefer persisting the source quantity/unit price plus a Decimal result only if `ContentList` mapping is type-compatible and validated.
+- Use Yeeflow expression-token arrays for calculated/default/filter formulas. Do not generate JavaScript formulas or invented expression function names.
 - Use text/radio-compatible fields for single-select storage; selected option values are stored as text.
 - Custom forms must follow the Asset Inventory v5 pattern:
   - `Layout.Type = 1`

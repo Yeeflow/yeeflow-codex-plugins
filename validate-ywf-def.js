@@ -8,6 +8,7 @@ const {
   loadControlFieldSchemas,
   validateControlAgainstSchema,
 } = require("./yeeflow-control-field-schema-utils");
+const { validateExpressionTokens } = require("./yeeflow-expression-utils");
 
 const PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
 const NUMERIC_OPS = new Set(["n.>", "n.>=", "n.<", "n.<=", "n.=", "n.!=", ">", ">=", "<", "<="]);
@@ -787,6 +788,7 @@ function validateDecodedDef(def, options = {}) {
 
   function validateCalculationExpressions(expr, exprPath, listContext) {
     if (!expr) return;
+    validateExpressionStructure(expr, exprPath);
     deepWalk(expr, (node, pointer) => {
       if (!isObject(node) || node.exprType !== "variable") return;
       const id = node.id;
@@ -802,6 +804,14 @@ function validateDecodedDef(def, options = {}) {
       if (!rowFieldsByListVar.has(ctx) || !rowFieldsByListVar.get(ctx).has(id)) {
         addIssue(errors, "CALC_UNKNOWN_ROW_FIELD", `Calculation references unknown row field ${ctx}.${id}`, `${exprPath}${pointer.slice(1)}`);
       }
+    });
+  }
+
+  function validateExpressionStructure(expr, exprPath) {
+    const report = validateExpressionTokens(expr, { path: exprPath });
+    report.issues.forEach((entry) => {
+      const target = entry.code === "EXPRESSION_NOT_ARRAY" || entry.code === "EXPRESSION_VARIABLE_MISSING_PROPERTY" ? errors : warnings;
+      addIssue(target, entry.code, entry.message, entry.path, entry.detail);
     });
   }
 
@@ -1017,6 +1027,7 @@ function validateDecodedDef(def, options = {}) {
     if (value === null || value === undefined) return;
     if (typeof value === "number" || typeof value === "boolean") return;
     if (Array.isArray(value)) {
+      validateExpressionStructure(value, valuePath);
       deepWalk(value, (node, pointer) => {
         if (!isObject(node) || node.exprType !== "variable") return;
         if (!variableById.has(node.id)) {

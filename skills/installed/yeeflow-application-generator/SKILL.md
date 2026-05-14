@@ -74,6 +74,8 @@ Approval Form Controls Test v2 runtime update: app-level packages can now use th
 
 Approval Form Controls Test v6 runtime update: app-level packages can now use internal packaged single-select approval-form `lookup` controls and workflow-form `list` / `listref` controls when scoped and validated. The v6 package imported, opened source and target lists without `datas/query` 400, selected a packaged lookup record, populated readonly fields via `attrs.addition[]`, added/edited a list row, submitted, opened the reviewer task, approved, and created the target `ContentList` record. Do not persist raw lookup variables into plain text fields when the expected value is readable display text: v6 proved that this stores the internal local row ID. Use lookup addition/autofill variables or explicit summary variables for readable persistence. Direct child-row-to-data-list persistence for list/listref remains deferred; use a text summary or a separately modeled child list until export-backed proof exists.
 
+Expression generation update: when a package includes calculated controls, dynamic display rules, lookup/data filters, workflow transition conditions, workflow action conditions, default values, request numbers, or subtotal/total/date/string formulas, use `yeeflow-expression-functions.normalized.json`, `yeeflow-expression-operators.normalized.json`, `yeeflow-expression-utils.js`, and the `yeeflow-expression-generator` skill. Generate Yeeflow expression-token arrays, not JavaScript formulas. Validate expressions before package build and keep unknown functions/operators as stop conditions for generated final packages.
+
 Navigation contrast rule: when root `LayoutView.attrs.appearance` defines a header background and text color, generated apps should invert that pair for `LayoutView.attrs["navigator-menu"]`. Use the header text color as the navigator background and the header background as the navigator text/icon color. For the standard shell, use `appearance: { bgc: "var(--c--primary-light)", color: "var(--c--primary)" }` and `"navigator-menu": { bgc: "var(--c--primary)", color: "var(--c--primary-light)", position: "default" }`.
 
 Theme color rule: generated `Data.AppThemes[].Config.neutral.lightmodel` should be `"Luminance"`, not `"Lightness"`.
@@ -98,6 +100,7 @@ Stop before final `.yap` build if any of these are true:
 - missing root navigation or app page
 - unresolved AI/connection/knowledge/document/external resources
 - workflow action properties do not satisfy `workflow-action-configurations.normalized.json`
+- expression formulas or conditions do not satisfy the normalized expression references
 - placeholders remain in final mode
 - validators fail
 - sensitive credential-like resources would be copied
@@ -262,7 +265,7 @@ Load only the relevant reference:
 - `references/examples-summary.md`: proven baseline and quick pattern reminders.
 - In the active generator workspace, use `docs/workflow-action-configuration-reference.md`, `docs/workflow-action-generation-rules.md`, and `workflow-action-configurations.normalized.json` as the official workflow action configuration reference when generating or validating workflow nodes.
 - In the active generator workspace, use `control-configurations.normalized.json`, `field-configurations.normalized.json`, `docs/yeeflow-control-to-field-mapping.md`, and `docs/yeeflow-control-field-generation-rules.md` when planning approval-form controls, data-list persistence, custom list forms, and app-level control-to-field mappings.
-- In the active generator workspace, use `workflow-action-config-validator.js` and `yeeflow-control-field-schema-utils.js` when available; these are the compact helper/validator entry points for workflow action and control/field schema checks.
+- In the active generator workspace, use `workflow-action-config-validator.js`, `yeeflow-control-field-schema-utils.js`, and `yeeflow-expression-utils.js` when available; these are the compact helper/validator entry points for workflow action, control/field schema, and expression checks.
 
 ## Workflow Action Configuration Reference
 

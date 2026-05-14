@@ -2,10 +2,32 @@
 
 const fs = require("fs");
 const path = require("path");
+const { validateWorkflowActionShapes } = require("./workflow-action-config-validator");
+const {
+  isGeneratedValueControl,
+  loadControlFieldSchemas,
+  validateControlAgainstSchema,
+} = require("./yeeflow-control-field-schema-utils");
+const { validateExpressionTokens } = require("./yeeflow-expression-utils");
 
 const PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
 const NUMERIC_OPS = new Set(["n.>", "n.>=", "n.<", "n.<=", "n.=", "n.!=", ">", ">=", "<", "<="]);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const HEX_COLOR_RE = /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/g;
+const ROOT_STYLE_TOKEN_HEX = new Map([
+  ["#0065ff", "--c--primary"],
+  ["#e6f0ff", "--c--primary-light"],
+  ["#00d1ff", "--c--secondary"],
+  ["#15df42", "--c--success"],
+  ["#f9c434", "--c--warning"],
+  ["#f61515", "--c--danger"],
+  ["#b3b7c0", "--c--neutral"],
+  ["#ffffff", "--c--background"],
+  ["#071638", "--c--text"],
+  ["#e7e9eb", "--c--neutral-light-active"],
+  ["#f7f8f9", "--c--neutral-light"],
+  ["#f4f4f6", "--c--neutral-light-hover"],
+]);
 
 function usage(exitCode = 1) {
   const out = [
@@ -52,6 +74,24 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function zeroPadding(padding) {
+  const value = Array.isArray(padding) ? padding[1] : padding;
+  if (!isObject(value)) return false;
+  return ["top", "right", "bottom", "left"].every((side) => value[side] === "--sp--s0" || value[side] === 0 || value[side] === "0" || value[side] === "");
+}
+
+function configValue(value) {
+  return Array.isArray(value) && value.length === 2 && value[0] === null ? value[1] : value;
+}
+
+function controlName(control) {
+  return control && (control.nv_label || control.label || control.title || control.binding || control.id || control.type || "control");
+}
+
+function controlWidthType(control) {
+  return configValue(control && control.attrs && control.attrs.common && control.attrs.common.positioning && control.attrs.common.positioning.widthtype);
+}
+
 function isSequenceFlow(shape) {
   return shape && shape.stencil && shape.stencil.id === "SequenceFlow";
 }
@@ -81,6 +121,23 @@ function deepWalk(value, visitor, pointer = "$", parent = null) {
   }
 }
 
+function findControlByLabel(root, label) {
+  let found = null;
+  deepWalk(root, (node) => {
+    if (!found && isObject(node) && node.nv_label === label) found = node;
+  });
+  return found;
+}
+
+function controlContains(parent, child) {
+  if (!parent || !child) return false;
+  let found = false;
+  deepWalk(parent, (node) => {
+    if (node === child) found = true;
+  });
+  return found;
+}
+
 function collectPlaceholders(value) {
   const found = new Map();
   deepWalk(value, (node, pointer) => {
@@ -107,6 +164,7 @@ function validateDecodedDef(def, options = {}) {
     approvalTasks: 0,
     contentListNodes: 0,
     lookupControls: 0,
+    workflowActionConfig: null,
   };
 
   if (!isObject(def)) {
@@ -128,6 +186,7 @@ function validateDecodedDef(def, options = {}) {
   const controls = [];
   const controlEntries = [];
   const placeholders = collectPlaceholders(def);
+  const controlFieldSchemas = loadControlFieldSchemas(__dirname);
 
   summary.variables = basicVars.length;
   summary.listrefs = listrefs.length;
@@ -146,7 +205,9 @@ function validateDecodedDef(def, options = {}) {
   validateSequenceFlowConditions();
   validateContentLists();
   validateSetVariableTasks();
+  validateWorkflowActionConfigurations();
   validatePlaceholderPolicy();
+  validateDesignSystemColorUsage();
 
   return finish();
 
@@ -300,6 +361,7 @@ function validateDecodedDef(def, options = {}) {
       if (page.formdef.exts !== undefined && !Array.isArray(page.formdef.exts)) {
         addIssue(errors, "FORMDEF_EXTS_NOT_ARRAY", "formdef.exts must be an array when present", `${pagePath}.formdef.exts`);
       }
+      validateUiUxStandardPage(page, pagePath);
       walkControls(page.formdef.children, { page, pagePath, listContext: null });
       if (page.type === 1) {
         deepWalk(page.formdef.children, (node) => {
@@ -335,6 +397,68 @@ function validateDecodedDef(def, options = {}) {
     }
   }
 
+  function validateUiUxStandardPage(page, pagePath) {
+    const formdef = page.formdef;
+    const container = formdef && formdef.attrs && formdef.attrs.container;
+    if (container && container.cw !== "2") {
+      addIssue(warnings, "UI_STANDARD_CONTENT_WIDTH_NOT_FULL", "UI/UX standard approval pages should use full-width content area: formdef.attrs.container.cw = \"2\"", `${pagePath}.formdef.attrs.container.cw`);
+    }
+    if (!zeroPadding(container && container.padding)) {
+      addIssue(warnings, "UI_STANDARD_FORM_PADDING_NOT_ZERO", "UI/UX standard approval pages should use zero page padding with --sp--s0 on all sides", `${pagePath}.formdef.attrs.container.padding`);
+    }
+    const main = findControlByLabel(formdef, "Main");
+    const content = findControlByLabel(formdef, "Content");
+    if (!main) addIssue(warnings, "UI_STANDARD_MAIN_CONTAINER_MISSING", "Approval pages should have a container with nv_label \"Main\"", `${pagePath}.formdef.children`);
+    if (!content) addIssue(warnings, "UI_STANDARD_CONTENT_CONTAINER_MISSING", "Approval pages should have a container with nv_label \"Content\"", `${pagePath}.formdef.children`);
+    if (page.type === 1 && !(formdef.attrs && formdef.attrs.background)) {
+      addIssue(warnings, "FORM_PAGE_BACKGROUND_MISSING", "Generated full-page submission forms should set page-level formdef.attrs.background instead of relying on Main/Content backgrounds", `${pagePath}.formdef.attrs.background`);
+    }
+    if (main && main.attrs && main.attrs.common && main.attrs.common.background) {
+      addIssue(warnings, "MAIN_CONTAINER_PAGE_BACKGROUND", "Main should stay primarily structural; put full-page form background on formdef.attrs.background", `${pagePath}.formdef.children`);
+      if (!(formdef.attrs && formdef.attrs.background)) {
+        addIssue(warnings, "FORM_PAGE_BACKGROUND_MISSING_WITH_MAIN_BACKGROUND", "Page/form background is missing while Main carries a background. Generated submission and task pages should use formdef.attrs.background for full-page color.", `${pagePath}.formdef.attrs.background`);
+      }
+    }
+    if (main && content && !controlContains(main, content)) {
+      addIssue(warnings, "UI_STANDARD_CONTENT_NOT_INSIDE_MAIN", "Approval page Content container should be inside Main", `${pagePath}.formdef.children`);
+    }
+
+    const panels = [];
+    const histories = [];
+    deepWalk(formdef, (node) => {
+      if (!isObject(node)) return;
+      if (node.type === "workflowControlPanel") panels.push(node);
+      if (node.type === "workflowHistory") histories.push(node);
+    });
+    const formBody = findControlByLabel(formdef, "Form body");
+    const formBottom = findControlByLabel(formdef, "Form bottom");
+    const formHeader = findControlByLabel(formdef, "Form header");
+    const requestSummary = findControlByLabel(formdef, "Request summary panel");
+    if (panels.length || histories.length || page.type === 1 || page.type === 2) {
+      if (!formBody) addIssue(warnings, "UI_STANDARD_FORM_BODY_MISSING", "Approval pages should place main fields in a container with nv_label \"Form body\"", `${pagePath}.formdef.children`);
+      if (!formBottom) addIssue(warnings, "UI_STANDARD_FORM_BOTTOM_MISSING", "Approval pages should place Action Panel and Flow History in a container with nv_label \"Form bottom\"", `${pagePath}.formdef.children`);
+    }
+    if (page.type === 1 && requestSummary && !formHeader) {
+      addIssue(warnings, "FORM_HEADER_CONTAINER_MISSING", "Submission form request summary should be wrapped by a Form header container so background, border, radius, and overflow are controlled together", `${pagePath}.formdef.children`);
+    }
+    if (formHeader) {
+      const overflow = configValue(formHeader.attrs && formHeader.attrs.style && formHeader.attrs.style.overflow);
+      const normalBorder = formHeader.attrs && formHeader.attrs.common && formHeader.attrs.common.border && formHeader.attrs.common.border.normal;
+      const normalBackground = formHeader.attrs && formHeader.attrs.common && formHeader.attrs.common.background && formHeader.attrs.common.background.normal;
+      if (overflow !== "hidden") addIssue(warnings, "FORM_HEADER_OVERFLOW_NOT_HIDDEN", "Form header containers should set attrs.style.overflow = [null, \"hidden\"] when they carry rounded borders or gradient panels", `${pagePath}.formdef.children`);
+      if (!normalBackground) addIssue(warnings, "FORM_HEADER_BACKGROUND_MISSING", "Form header containers should carry an explicit background", `${pagePath}.formdef.children`);
+      if (!normalBorder || !normalBorder.radius) addIssue(warnings, "FORM_HEADER_BORDER_RADIUS_MISSING", "Form header containers should carry border radius on attrs.common.border.normal.radius", `${pagePath}.formdef.children`);
+    }
+    if (formBottom) {
+      panels.forEach((panel) => {
+        if (!controlContains(formBottom, panel)) addIssue(warnings, "UI_STANDARD_ACTION_PANEL_NOT_IN_FORM_BOTTOM", "workflowControlPanel should be inside Form bottom", `${pagePath}.formdef.children`);
+      });
+      histories.forEach((history) => {
+        if (!controlContains(formBottom, history)) addIssue(warnings, "UI_STANDARD_FLOW_HISTORY_NOT_IN_FORM_BOTTOM", "workflowHistory should be inside Form bottom", `${pagePath}.formdef.children`);
+      });
+    }
+  }
+
   function walkControls(nodes, context) {
     asArray(nodes).forEach((control, index) => {
       const controlPath = `${context.pagePath}.formdef.children${context.suffix || ""}[${index}]`;
@@ -345,7 +469,9 @@ function validateDecodedDef(def, options = {}) {
       if (typeof control.binding === "string") {
         validateBinding(control.binding, controlPath, context.listContext);
       }
+      validateControlSchema(control, controlPath);
       validateApprovalFormUsabilityControl(control, controlPath, context.page);
+      validateFormDesignQualityControl(control, controlPath);
 
       if (control.type === "list") {
         validateListControl(control, controlPath);
@@ -360,6 +486,7 @@ function validateDecodedDef(def, options = {}) {
             if (typeof field.control.binding === "string") {
               validateBinding(field.control.binding, `${fieldPath}.control`, listContext);
             }
+            validateControlSchema(field.control, `${fieldPath}.control`);
             validateCalculationExpressions(field.control.attrs && field.control.attrs.calculated, `${fieldPath}.control.attrs.calculated`, listContext);
           }
         });
@@ -376,6 +503,120 @@ function validateDecodedDef(def, options = {}) {
         });
       }
     });
+  }
+
+  function validateFormDesignQualityControl(control, controlPath) {
+    if (!control || !control.type) return;
+    const name = controlName(control);
+    const attrs = control.attrs || {};
+
+    if ((control.type === "heading" || control.type === "text-editor") && controlWidthType(control) !== "2") {
+      addIssue(warnings, "TEXT_CONTROL_INLINE_WIDTH_MISSING", "Generated text and heading controls should default to inline width via attrs.common.positioning.widthtype = [null, \"2\"] unless intentionally full-row", controlPath, {
+        control: name,
+        type: control.type,
+      });
+    }
+
+    if (control.type === "heading") {
+      const headingType = attrs.heads && attrs.heads.ty;
+      const headingTypeIsPair = Array.isArray(headingType) && headingType[0] === null && typeof headingType[1] === "string";
+      const headingTypeIsObject = isObject(headingType);
+      if (!headingTypeIsPair && !headingTypeIsObject) {
+        addIssue(warnings, "TEXT_CONTROL_TOKEN_TYPOGRAPHY_MISSING", "Generated heading controls should use the Text Style Sample export-backed shape: attrs.heads.ty = [null, \"h5-medium\"] for named presets, or a custom typography object for explicit font settings.", `${controlPath}.attrs.heads.ty`, {
+          control: name,
+        });
+      }
+      const headingColor = attrs.heads && attrs.heads.color;
+      if (typeof headingColor !== "string") {
+        addIssue(warnings, "TEXT_CONTROL_COLOR_SHAPE_UNSAFE", "Generated heading controls should use the Text Style Sample export-backed plain string color shape such as attrs.heads.color = \"var(--c--text)\". Avoid [null, color] here because it can leave the designer style editors unresponsive.", `${controlPath}.attrs.heads.color`, {
+          control: name,
+        });
+      }
+    }
+
+    if (control.type === "icon" && controlWidthType(control) !== "2") {
+      addIssue(warnings, "ICON_CONTROL_INLINE_WIDTH_MISSING", "Generated icon controls used as visual badges should default to inline width and be centered inside a square wrapper container", controlPath, {
+        control: name,
+      });
+    }
+
+    if (control.type === "container" && String(control.nv_label || "").endsWith(" fields")) {
+      const children = asArray(control.children);
+      const hasGrid = children.some((child) => child && child.type === "flex_grid");
+      const longFullRowTypes = new Set(["textarea", "richtext", "list"]);
+      const hasNormalValueControls = children.some((child) => child && isGeneratedValueControl(child.type) && !longFullRowTypes.has(child.type));
+      if (hasNormalValueControls && !hasGrid) {
+        addIssue(warnings, "FIELD_SECTION_GRID_MISSING", "Generated field sections should place normal value-entry controls in a flex_grid, usually two columns; long controls may sit outside the grid as full-row controls", controlPath, {
+          control: name,
+        });
+      }
+    }
+
+    if (control.type === "flex_grid") {
+      if (JSON.stringify(control.displayLabel) !== "[null,false]") {
+        addIssue(warnings, "FIELD_GRID_CAPTION_VISIBLE", "Generated flex_grid controls used for form field layout should set displayLabel = [null, false] so the grid caption is not displayed", `${controlPath}.displayLabel`, {
+          control: name,
+        });
+      }
+      const desktopColumns = attrs.columns && attrs.columns["1"] && attrs.columns["1"].list;
+      if (!Array.isArray(desktopColumns) || desktopColumns.length !== 2) {
+        addIssue(warnings, "FIELD_GRID_NOT_TWO_COLUMNS", "Standard generated form field grids should use two desktop columns unless a studied export proves another layout", `${controlPath}.attrs.columns`);
+      }
+    }
+
+    if ((control.type === "location-picker" || control.type === "cost-center-picker") && (attrs.placeholder !== undefined || attrs.required !== undefined)) {
+      addIssue(warnings, "PICKER_CONTROL_RUNTIME_SENSITIVE_ATTRS", "Runtime V2 repaired environment picker controls by re-adding native controls with minimal attrs; generated picker placeholder/required attrs should be export-backed before use", controlPath, {
+        control: name,
+        type: control.type,
+      });
+    }
+
+    if (control.type === "file-upload" && attrs.ver !== 1) {
+      addIssue(warnings, "FILE_UPLOAD_VERSION_MISSING", "Runtime V2 export stores working file-upload controls with attrs.ver = 1; generated file uploads should include it until another export proves otherwise", `${controlPath}.attrs.ver`, {
+        control: name,
+      });
+    }
+
+    if (control.type === "icon-upload" && attrs.controlmultiple !== true) {
+      addIssue(warnings, "ICON_UPLOAD_CONTROL_MULTIPLE_MISSING", "Runtime V2 repaired image/icon upload with attrs.controlmultiple = true; generated icon-upload controls should use the export-backed pattern or fallback", `${controlPath}.attrs.controlmultiple`, {
+        control: name,
+      });
+    }
+
+    const maybeCalculated = /\\b(sub\\s*total|subtotal|total|amount|balance|difference|duration)\\b/i.test(String(control.label || control.nv_label || control.binding || ""));
+    if (maybeCalculated && ["input", "input_number", "currency"].includes(control.type) && attrs.readonly !== true && attrs.disabled !== true) {
+      addIssue(warnings, "CALCULATED_LOOKING_FIELD_EDITABLE", "Fields that read like calculated values should not default to editable input controls; use a calculated control or readonly display when the requirement implies a formula", controlPath, {
+        control: name,
+        type: control.type,
+      });
+    }
+  }
+
+  function validateControlSchema(control, controlPath) {
+    const schemaIssues = validateControlAgainstSchema(control, controlFieldSchemas);
+    for (const schemaIssue of schemaIssues) {
+      addIssue(
+        warnings,
+        `CONTROL_${schemaIssue.code}`,
+        schemaIssue.message,
+        schemaIssue.detail && schemaIssue.detail.path ? `${controlPath}.${schemaIssue.detail.path}` : controlPath,
+        schemaIssue.detail
+      );
+    }
+    if (
+      mode === "final" &&
+      isGeneratedValueControl(control && control.type) &&
+      control.readonly !== true &&
+      !control.binding
+    ) {
+      addIssue(
+        warnings,
+        "CONTROL_BINDING_MISSING_FOR_VALUE_CONTROL",
+        "Generated value-entry controls should usually include a binding unless intentionally display-only.",
+        controlPath,
+        { controlType: control.type, label: control.label || control.nv_label || null }
+      );
+    }
   }
 
   function childControlCollections(control) {
@@ -547,6 +788,7 @@ function validateDecodedDef(def, options = {}) {
 
   function validateCalculationExpressions(expr, exprPath, listContext) {
     if (!expr) return;
+    validateExpressionStructure(expr, exprPath);
     deepWalk(expr, (node, pointer) => {
       if (!isObject(node) || node.exprType !== "variable") return;
       const id = node.id;
@@ -562,6 +804,14 @@ function validateDecodedDef(def, options = {}) {
       if (!rowFieldsByListVar.has(ctx) || !rowFieldsByListVar.get(ctx).has(id)) {
         addIssue(errors, "CALC_UNKNOWN_ROW_FIELD", `Calculation references unknown row field ${ctx}.${id}`, `${exprPath}${pointer.slice(1)}`);
       }
+    });
+  }
+
+  function validateExpressionStructure(expr, exprPath) {
+    const report = validateExpressionTokens(expr, { path: exprPath });
+    report.issues.forEach((entry) => {
+      const target = entry.code === "EXPRESSION_NOT_ARRAY" || entry.code === "EXPRESSION_VARIABLE_MISSING_PROPERTY" ? errors : warnings;
+      addIssue(target, entry.code, entry.message, entry.path, entry.detail);
     });
   }
 
@@ -697,11 +947,17 @@ function validateDecodedDef(def, options = {}) {
 
       let approved = false;
       let rejected = false;
+      let completed = false;
       for (const outgoing of asArray(shape.outgoing)) {
         const seq = seqById.get(refId(outgoing));
         const text = JSON.stringify((seq && seq.properties && seq.properties.conditioninfo) || []);
         if (text.includes("Task outcome:Approved") || text.includes("已同意") || text.includes("Approved")) approved = true;
         if (text.includes("Task outcome:Rejected") || text.includes("Rejected")) rejected = true;
+        if (text.includes("Task outcome:Completed") || text.includes("Completed")) completed = true;
+      }
+      if (props.tasktype === "complete") {
+        if (!completed) addIssue(errors, "COMPLETE_TASK_COMPLETED_PATH_MISSING", "Complete task must have at least one Completed outgoing condition", `${p}.outgoing`);
+        return;
       }
       if (!approved) addIssue(errors, "APPROVAL_APPROVED_PATH_MISSING", "Approval task must have at least one Approved outgoing condition", `${p}.outgoing`);
       if (!rejected && props.allowNoRejectedPath !== true) {
@@ -721,8 +977,8 @@ function validateDecodedDef(def, options = {}) {
         if (isApprovalOutcome) {
           if (condition.op !== "s.=") addIssue(errors, "APPROVAL_CONDITION_BAD_OP", "Approval outcome condition should use op: s.=", `${p}.op`);
           if (!text.includes("Outcome") && !text.includes("结果")) addIssue(errors, "APPROVAL_CONDITION_MISSING_OUTCOME", "Approval outcome condition should include task Outcome reference", p);
-          if (!text.includes("Task outcome:Approved") && !text.includes("Task outcome:Rejected") && !text.includes("任务结果:已同意")) {
-            addIssue(errors, "APPROVAL_CONDITION_MISSING_RESULT", "Approval outcome condition should include Task outcome:Approved or Task outcome:Rejected", p);
+          if (!text.includes("Task outcome:Approved") && !text.includes("Task outcome:Rejected") && !text.includes("Task outcome:Completed") && !text.includes("任务结果:已同意")) {
+            addIssue(errors, "APPROVAL_CONDITION_MISSING_RESULT", "Approval outcome condition should include Task outcome:Approved, Task outcome:Rejected, or Task outcome:Completed", p);
           }
         }
         const isNumeric = condition.group === "number" || (typeof condition.op === "string" && condition.op.startsWith("n."));
@@ -771,6 +1027,7 @@ function validateDecodedDef(def, options = {}) {
     if (value === null || value === undefined) return;
     if (typeof value === "number" || typeof value === "boolean") return;
     if (Array.isArray(value)) {
+      validateExpressionStructure(value, valuePath);
       deepWalk(value, (node, pointer) => {
         if (!isObject(node) || node.exprType !== "variable") return;
         if (!variableById.has(node.id)) {
@@ -826,6 +1083,46 @@ function validateDecodedDef(def, options = {}) {
         validateDataExpression(setting.value, `${p}.value`);
       });
     });
+  }
+
+  function validateWorkflowActionConfigurations() {
+    const actionReport = validateWorkflowActionShapes(childshapes, {
+      mode,
+      stage: mode,
+      pointerForIndex: (index) => `$.childshapes[${index}]`,
+    });
+    summary.workflowActionConfig = actionReport.summary;
+    actionReport.issues.forEach((entry) => {
+      const target = entry.level === "error" ? errors : warnings;
+      addIssue(target, entry.code, entry.message, entry.path, entry);
+    });
+  }
+
+  function validateDesignSystemColorUsage() {
+    const literalHits = [];
+    const arbitraryHits = [];
+    deepWalk(def, (node, pointer) => {
+      if (typeof node !== "string") return;
+      for (const match of node.matchAll(HEX_COLOR_RE)) {
+        const color = match[0].toLowerCase();
+        const token = ROOT_STYLE_TOKEN_HEX.get(color);
+        const hit = { color: match[0], path: pointer, token: token || null };
+        if (token) literalHits.push(hit);
+        else arbitraryHits.push(hit);
+      }
+    });
+    if (literalHits.length) {
+      addIssue(warnings, "DESIGN_SYSTEM_RESOLVED_TOKEN_COLOR", "Generated approval UI contains literal hex colors that match known Yeeflow root tokens. Prefer token references where supported, but do not fail exports that store resolved values.", literalHits[0].path, {
+        count: literalHits.length,
+        examples: literalHits.slice(0, 8),
+      });
+    }
+    if (arbitraryHits.length > 8) {
+      addIssue(warnings, "DESIGN_SYSTEM_ARBITRARY_COLOR_USAGE", "Generated approval UI contains many hard-coded hex colors. Prefer semantic Yeeflow root tokens where supported.", arbitraryHits[0].path, {
+        count: arbitraryHits.length,
+        examples: arbitraryHits.slice(0, 8),
+      });
+    }
   }
 
   function validatePlaceholderPolicy() {

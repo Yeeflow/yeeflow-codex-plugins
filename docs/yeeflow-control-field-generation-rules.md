@@ -5,6 +5,7 @@ This document operationalizes the normalized control and field references for Ye
 ## Approval Form Controls
 
 - Consult `control-configurations.normalized.json` before using a control type.
+- Consult `yeeflow-expression-functions.normalized.json`, `yeeflow-expression-operators.normalized.json`, and `docs/yeeflow-expression-generation-rules.md` before generating calculated controls, dynamic display rules, custom validation rules, lookup filters, or workflow transition conditions.
 - Default to proven-safe controls: input, textarea, input_number, currency, radio, switch, datepicker, lookup, list, container, section, heading, workflowControlPanel, and workflowHistory.
 - Require `binding` for generated value-entry controls when the value must persist.
 - Use `attrs.required` for required behavior and keep custom validators in `attrs.control_validation`.
@@ -16,6 +17,7 @@ This document operationalizes the normalized control and field references for Ye
 - File upload controls in the Runtime V2 export include `attrs.ver = 1`; generated file uploads should include this until another export proves otherwise.
 - Image/icon upload in Runtime V2 uses `attrs.controlmultiple = true`; generated `icon-upload` should follow that or fall back.
 - Detect calculated-looking fields. Use native `calculated` controls for patterns such as `Subtotal = Quantity * Unit Price`; do not generate editable input controls for formulas without an explicit reason.
+- Generate expression arrays with exact Yeeflow token shapes. Variables must use `exprType: "variable"`, `type: "expr"`, and `valueType` limited to `number`, `text`, `date`, or `boolean`. Do not invent expression functions or operators.
 
 ### AI Training Approval Control Reference
 

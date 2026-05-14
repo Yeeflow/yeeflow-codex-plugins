@@ -1,0 +1,69 @@
+{
+  "name": "Yeeflow Expression First Generation Test",
+  "status": "planned",
+  "doNotGenerateInThisPass": true,
+  "resources": {
+    "app": "Expression Controls Test",
+    "dataLists": [
+      {
+        "name": "Products",
+        "purpose": "internal lookup source",
+        "fields": ["Title", "Product Code", "Unit Price", "Active"]
+      },
+      {
+        "name": "Expression Test Requests",
+        "purpose": "ContentList target",
+        "fields": ["Title", "Quantity", "Unit Price", "Subtotal", "Amount", "Reason", "Required Date", "Selected Product", "Approval Status"]
+      }
+    ],
+    "approvalForm": {
+      "name": "Expression Test Request",
+      "freshFlowKeyRequired": true,
+      "dataFormsListId": 0
+    }
+  },
+  "expressionScenarios": [
+    {
+      "id": "subtotal",
+      "context": "calculated-control",
+      "goal": "Quantity * Unit Price",
+      "expectedValueType": "number"
+    },
+    {
+      "id": "show-reason",
+      "context": "dynamic-display",
+      "goal": "Amount > 10000",
+      "expectedValueType": "boolean"
+    },
+    {
+      "id": "required-date-not-past",
+      "context": "custom-validation",
+      "goal": "dateDiff(Required Date, now(), day, false) >= 0",
+      "expectedValueType": "boolean"
+    },
+    {
+      "id": "active-product-filter",
+      "context": "lookup-filter",
+      "goal": "Active == true",
+      "expectedValueType": "boolean"
+    },
+    {
+      "id": "finance-route",
+      "context": "workflow-transition-condition",
+      "goal": "Total Amount >= 5000",
+      "expectedValueType": "boolean"
+    },
+    {
+      "id": "request-number",
+      "context": "default-value-or-set-variable",
+      "goal": "concat or &: REQ-dateFormat(now(), YYYYMMDD)-UniqueID()",
+      "expectedValueType": "text"
+    }
+  ],
+  "stopConditions": [
+    "expression wrapper shape for a context is not export-backed",
+    "validator reports structurally invalid expression JSON",
+    "lookup/data filter context cannot resolve a source field",
+    "workflow condition cannot be mapped to a proven SequenceFlow condition shape"
+  ]
+}

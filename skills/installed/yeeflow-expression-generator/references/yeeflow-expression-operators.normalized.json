@@ -1,0 +1,4 @@
+{
+  "reference": "../../../yeeflow-expression-operators.normalized.json",
+  "note": "Use the workspace root normalized operator reference as the source of truth."
+}

@@ -10,6 +10,7 @@ const {
   validateControlAgainstSchema,
   validateFieldAgainstSchema,
 } = require("./yeeflow-control-field-schema-utils");
+const { validateExpressionTokens } = require("./yeeflow-expression-utils");
 
 const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
@@ -1132,6 +1133,40 @@ function validateEmbeddedControlSchema(control, report, context) {
       label: control.label || control.nv_label || null,
     });
   }
+  validateEmbeddedControlExpressions(control, report, context);
+}
+
+function validateEmbeddedControlExpressions(control, report, context) {
+  const candidates = [
+    { value: control && control.attrs && control.attrs.calculated, label: "attrs.calculated" },
+    { value: control && control.attrs && control.attrs.formula, label: "attrs.formula" },
+    { value: control && control.attrs && control.attrs.default_value_expr, label: "attrs.default_value_expr" },
+  ].filter((entry) => entry.value);
+  for (const entry of candidates) {
+    const expressionReport = validateExpressionTokens(entry.value, { path: `${context.path}.${entry.label}` });
+    expressionReport.issues.forEach((expressionIssue) => {
+      issue(report, expressionIssue.code === "EXPRESSION_NOT_ARRAY" ? "error" : "warning", expressionIssue.code, expressionIssue.message, {
+        surface: context.surface,
+        title: context.title,
+        path: expressionIssue.path,
+        controlType: control && control.type || null,
+        detail: expressionIssue.detail || null,
+      });
+    });
+  }
+  asArray(control && control.attrs && control.attrs.control_display).forEach((rule, index) => {
+    if (!rule || !rule.formulas) return;
+    const expressionReport = validateExpressionTokens(rule.formulas, { path: `${context.path}.attrs.control_display[${index}].formulas` });
+    expressionReport.issues.forEach((expressionIssue) => {
+      issue(report, "warning", expressionIssue.code, expressionIssue.message, {
+        surface: context.surface,
+        title: context.title,
+        path: expressionIssue.path,
+        controlType: control && control.type || null,
+        detail: expressionIssue.detail || null,
+      });
+    });
+  });
 }
 
 function validateReplaceIds(replaceIds, localIds, report) {

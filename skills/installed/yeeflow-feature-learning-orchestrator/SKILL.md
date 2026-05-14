@@ -53,6 +53,8 @@ For global page-background learning, apply the rule across all generated Yeeflow
 
 After a generated application reaches a runtime baseline, sync the relevant project skill mirrors and active `~/.codex/skills` installs. The CAPEX Runtime V2/V3/V4 learning promoted manual form corrections into generator standards: page-level backgrounds, Form header/request summary/metric row, inline Text/Icon controls, icon badge wrappers, two-column field grids, runtime-sensitive control fallback rules, calculated fields, workflow-action schema validation, and control/field schema mapping. Use `docs/generated-it-hardware-capex-request-text-standard-baseline.md` as the latest CAPEX runtime evidence.
 
+For Yeeflow expression-editor learning, treat uploaded training references as read-only schema evidence. Extract the exact token model, variable shape, allowed operators, allowed function names, and function parameter counts into normalized JSON references. Add helper validation before generation. Expressions are used across calculated controls, dynamic display rules, custom validation rules, lookup/data filters, workflow transition/action conditions, default values, request numbers, and subtotal/total/date/string formulas. Create or update a dedicated expression skill when the expression layer becomes a reusable cross-feature capability. Do not generate an app during the foundation pass.
+
 ## What To Load
 
 - For the full lifecycle, read `references/feature-learning-workflow.md`.

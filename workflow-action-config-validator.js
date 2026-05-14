@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { validateExpressionTokens } = require("./yeeflow-expression-utils");
 
 const DEFAULT_REFERENCE_PATH = path.join(__dirname, "workflow-action-configurations.normalized.json");
 const SECRET_KEY_RE = /(token|secret|password|credential|clientsecret|api[_-]?key|accesskey|authorization|bearer|pwd)/i;
@@ -345,6 +346,16 @@ function validateConditionArray(issues, value, pointer, code, severity, requireP
     issue(issues, severity, code, "Condition configuration must be an array.", { path: pointer });
     return;
   }
+  if (looksLikeExpressionTokenArray(value)) {
+    const expressionReport = validateExpressionTokens(value, { path: pointer });
+    expressionReport.issues.forEach((entry) => {
+      issue(issues, entry.level === "error" ? severity : "warning", entry.code, entry.message, {
+        path: entry.path,
+        detail: entry.detail || null,
+      });
+    });
+    return;
+  }
   value.forEach((condition, index) => {
     if (!isObject(condition)) {
       issue(issues, severity, code, "Condition entry must be an object.", { path: `${pointer}[${index}]` });
@@ -365,6 +376,18 @@ function validateConditionArray(issues, value, pointer, code, severity, requireP
       });
     }
   });
+}
+
+function looksLikeExpressionTokenArray(value) {
+  return Array.isArray(value) && value.some((entry) => isObject(entry) && (
+    entry.type === "op" ||
+    entry.type === "func" ||
+    entry.type === "str" ||
+    entry.type === "num" ||
+    entry.type === "bool" ||
+    entry.exprType === "variable" ||
+    entry.exprType === "variable_ctx"
+  ));
 }
 
 function walk(value, visitor, pointer = "", key = "") {
