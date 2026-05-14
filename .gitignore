@@ -81,6 +81,7 @@ yeeflow-data-list-generator/
 # Large or decoded generated artifacts that may contain customer data.
 *.json
 !dashboard-collection-first-generation-test-spec.json
+!it-hardware-capex-request-ui-generation-spec.json
 !workflow-action-configurations.normalized.json
 !control-configurations.normalized.json
 !field-configurations.normalized.json

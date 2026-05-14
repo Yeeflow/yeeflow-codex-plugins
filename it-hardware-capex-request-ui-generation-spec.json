@@ -1,0 +1,28 @@
+{
+  "name": "IT Hardware CAPEX Request",
+  "version": "v1",
+  "idFamily": "438",
+  "flowKey": "CAPX",
+  "sources": {
+    "functional": "/Users/Renger/Downloads/IT Hardware CAPEX Request.md",
+    "visual": "/Users/Renger/Downloads/it_hardware_capex_request_page.jsx"
+  },
+  "resources": {
+    "dashboards": ["Overview"],
+    "dataLists": ["IT Hardware CAPEX Requests"],
+    "approvalForms": ["IT Hardware CAPEX Request"]
+  },
+  "designSystem": {
+    "shell": ["Main", "Content", "Form body", "Form bottom"],
+    "workflowControls": ["workflowControlPanel", "workflowHistory"],
+    "nativeOnly": true,
+    "customCode": false
+  },
+  "deferred": [
+    "InclusiveGateway conditional routing",
+    "file upload persistence",
+    "icon upload persistence",
+    "signer persistence",
+    "native persisted identity/location/cost-center field shapes"
+  ]
+}
