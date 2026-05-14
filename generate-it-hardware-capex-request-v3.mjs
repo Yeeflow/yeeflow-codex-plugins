@@ -103,6 +103,10 @@ function cardCommon(color = "var(--c--background)", radius = 12) {
   };
 }
 
+function pageBackground(color = "var(--c--neutral-light)") {
+  return { type: "classic", classic: { color } };
+}
+
 const optionSets = {
   request_type: ["Laptop", "Desktop", "Server", "Network Device", "Peripheral", "Infrastructure"],
   purchase_reason: ["New Requirement", "Replacement", "Upgrade", "Expansion", "Compliance"],
@@ -442,7 +446,7 @@ function makeCustomForm(title, layoutId, fields, readonly = false) {
         ])
       ])
     ],
-    attrs: { container: { cw: "2", padding: tokenPadding("--sp--s0") } },
+    attrs: { container: { cw: "2", padding: tokenPadding("--sp--s0") }, background: pageBackground() },
     title,
     filterVars: [],
     ver: 2,
@@ -727,7 +731,7 @@ function makeApprovalPage(title, review = false) {
     ],
     attrs: {
       container: { cw: "2", padding: tokenPadding("--sp--s0") },
-      ...(review ? {} : { background: { type: "classic", classic: { color: "var(--c--neutral-light)" } } })
+      background: pageBackground()
     },
     title,
     pagetype: review ? 2 : 1,
@@ -777,7 +781,7 @@ function dashboardPage() {
         ])
       ])
     ],
-    attrs: { hideHeaderAll: true, container: { padding: tokenPadding("--sp--s0") } },
+    attrs: { hideHeaderAll: true, container: { padding: tokenPadding("--sp--s0") }, background: pageBackground() },
     title: "Overview",
     ver: 2,
     filterVars: [],

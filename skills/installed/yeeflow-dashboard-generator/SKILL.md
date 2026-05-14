@@ -53,12 +53,15 @@ Default generated dashboards should:
 
 - set embedded page `attrs.hideHeaderAll = true`
 - set embedded page `attrs.container.padding` to `--sp--s0` on all sides
+- set full-page background on embedded page `attrs.background` when needed
 - use a top-level container with `nv_label: "Main"`
 - place the main visible content inside a child container with `nv_label: "Content"`
 - keep Type `103` `LayoutView = null`, `Ext2 = "{\"src\":true}"`, and embedded page JSON in `LayoutInResources[0].Resource`
 - for generated root dashboard pages with embedded page JSON, set `LayoutInResources[0].ID` and `RefId` to the dashboard `LayoutID`; Design System Request Tracker v1 proved this renders the runtime dashboard, while a separate generated resource ID rendered an empty designer placeholder
 
 The studied dashboard does not prove a dashboard `attrs.container.cw` setting. Do not invent one until another real export proves it.
+
+Global page background rule: do not set full-page background color on the dashboard `Main` container. `Main` stays structural; page background belongs on embedded page attrs. Use backgrounds on `Page header`, cards, KPI containers, Collection sections, or other specific visible containers only when those surfaces need their own color.
 
 Use `docs/yeeflow-root-style-token-reference.md` for dashboard color, spacing, radius, and typography guidance. Prefer semantic tokens for generated dashboard surfaces and statuses: primary, success, warning, danger, and neutral. Avoid arbitrary custom palettes; do not inject the full root stylesheet.
 

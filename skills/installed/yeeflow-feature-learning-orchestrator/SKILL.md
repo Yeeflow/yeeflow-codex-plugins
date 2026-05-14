@@ -45,6 +45,8 @@ For manual form-design correction learning, study the exported-back `.yap` read-
 
 For focused Text control learning, treat a small `.ywf` sample as authoritative. Decode it read-only, extract every native Text control, document `attrs.headc`, `attrs.heads`, and `attrs.common` shapes, update `docs/yeeflow-text-control-generation-standards.md`, add warning-first validators, sync approval/application/data-list/dashboard skills, and only then regenerate affected apps with fresh IDs.
 
+For global page-background learning, apply the rule across all generated Yeeflow visual surfaces: dashboard pages, data-list custom forms, approval submission pages, and approval/task pages should set full-page background color on the page/form background property, not on the top-level `Main` container. Keep `Main` structural and reserve container backgrounds for specific sections, cards, headers, summary panels, and content surfaces.
+
 ## What To Load
 
 - For the full lifecycle, read `references/feature-learning-workflow.md`.

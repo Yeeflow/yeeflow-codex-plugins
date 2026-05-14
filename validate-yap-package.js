@@ -1240,6 +1240,14 @@ function validateUiStandardFormRoot(form, report, context = {}) {
   }
 }
 
+function hasPageLevelBackground(root) {
+  return Boolean(root && root.attrs && root.attrs.background);
+}
+
+function hasContainerBackground(control) {
+  return Boolean(control && control.attrs && control.attrs.common && control.attrs.common.background);
+}
+
 function validateUiStandardContainers(root, report, context = {}) {
   const main = findControlByLabel(root, "Main");
   const content = findControlByLabel(root, "Content");
@@ -1253,6 +1261,12 @@ function validateUiStandardContainers(root, report, context = {}) {
   }
   if (!controlContains(main, content)) {
     uiStandardWarning(report, "UI_STANDARD_CONTENT_NOT_INSIDE_MAIN", "UI/UX standard Content container should be inside Main.", context);
+  }
+  if (hasContainerBackground(main)) {
+    uiStandardWarning(report, "MAIN_CONTAINER_PAGE_BACKGROUND", "Main should stay structural. Put full-page background on the page/form background property, and reserve container backgrounds for specific sections, cards, headers, and content surfaces.", context);
+    if (!hasPageLevelBackground(root)) {
+      uiStandardWarning(report, "PAGE_BACKGROUND_MISSING_WITH_MAIN_BACKGROUND", "Page/form background is missing while Main carries a background. Generated dashboards, custom list forms, and approval pages should use the page-level background setting for full-page color.", context);
+    }
   }
   const actionPanel = [];
   const flowHistory = [];

@@ -15,6 +15,7 @@ Submission and task pages use:
 - `Form bottom`
 
 `Main` should remain primarily structural. Do not put full-page background color on `Main`; set it on `page.formdef.attrs.background`.
+This same rule applies to submission pages and task pages. Section/card/header-specific backgrounds are allowed on their own containers, but `Main` should not be used as the page background layer.
 
 ## Form Header
 

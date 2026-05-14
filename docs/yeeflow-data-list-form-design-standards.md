@@ -17,7 +17,10 @@ Both forms use:
 
 - `attrs.container.cw = "2"`
 - zero padding
+- page-level background on the custom form `attrs.background` when a full-page background is needed
 - `Main` -> `Content`
+
+`Main` is structural. Do not set full-page background color on `Main.attrs.common.background`; use the custom form page-level background instead. Field group, card, page header, and readonly-section backgrounds are allowed on their own containers.
 
 ## Edit Form Pattern
 
@@ -67,6 +70,6 @@ Generated lists must preserve native `Title` metadata. Business labels may be di
 
 ## Validator Guidance
 
-Warn for missing Edit/View forms, incorrect display settings, missing `Main` / `Content`, non-full-width form pages, non-zero padding, and excessive arbitrary colors.
+Warn for missing Edit/View forms, incorrect display settings, missing `Main` / `Content`, non-full-width form pages, non-zero padding, `Main` carrying full-page-like background, missing page-level background when `Main` has a background, and excessive arbitrary colors.
 
 Data-list custom form headings, helper text, card labels, and empty-state text should follow the shared Text control standard in `docs/yeeflow-text-control-generation-standards.md`. Default to native `heading` Text controls with inline width, `[null, token]` typography presets, plain string colors, and meaningful `nv_label`.

@@ -64,3 +64,8 @@ Runtime verification on `https://codex.yeeflow.com/` passed for the Text-control
 - Text shadow settings popup opened successfully.
 
 This directly verifies the previous issue where generated Text controls rendered visually but the Typography and Text shadow designer buttons did not respond.
+
+Design-system carry-forward rule:
+
+- The CAPEX V2/V4 form-design learning remains global: full-page backgrounds belong on page/form background settings, not on the `Main` container.
+- Future generated approval forms, task pages, data-list custom forms, and dashboard pages should keep `Main` structural and put section/card/header backgrounds on those specific containers only.

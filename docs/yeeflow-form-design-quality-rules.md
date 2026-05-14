@@ -1,12 +1,14 @@
 # Yeeflow Form Design Quality Rules
 
-Use these rules for generated Yeeflow approval forms and custom list forms when a richer native UI is needed.
+Use these rules for generated Yeeflow approval forms, custom list forms, and dashboard pages when a richer native UI is needed.
 
 These rules are based on the manually improved `IT Hardware CAPEX Request Runtime V2.yap` export and should be applied as warning-first generator standards until more app types prove the same patterns.
 
 ## Page Background
 
-- Put full-page form backgrounds on `page.formdef.attrs.background`.
+- Put full-page approval form backgrounds on `page.formdef.attrs.background`.
+- Put full-page data-list custom form backgrounds on the custom form `attrs.background`.
+- Put full-page dashboard backgrounds on embedded dashboard page `attrs.background`.
 - Keep `Main` as a structural wrapper.
 - Do not set full-page background on `Main.attrs.common.background`.
 - `Content` may carry padding and a neutral surface, but should not be the only source of the full-page background.

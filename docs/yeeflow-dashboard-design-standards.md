@@ -9,10 +9,13 @@ Use:
 - Type `103` app page
 - `attrs.hideHeaderAll = true`
 - zero page padding
+- page-level background on embedded page `attrs.background` when a full-page background is needed
 - `Main` -> `Content`
 - meaningful `nv_label` values
 
 Do not invent dashboard `attrs.container.cw` until a real export proves it.
+
+`Main` is structural. Do not set full-page background color on `Main.attrs.common.background`; use the page-level background instead. Section, card, header, KPI, Collection, and content-area backgrounds are allowed on their own containers.
 
 ## Default Structure
 
@@ -79,7 +82,7 @@ Example: `No requests yet. Submitted requests will appear here after the workflo
 
 ## Validator Guidance
 
-Warn when dashboards are missing hidden header, zero padding, `Main`, `Content`, meaningful `nv_label`, or use many arbitrary hard-coded colors.
+Warn when dashboards are missing hidden header, zero padding, page-level background when `Main` has a background, `Main`, `Content`, meaningful `nv_label`, or use many arbitrary hard-coded colors. Warn when `Main` carries a full-page-like background because generated dashboards should put full-page background on embedded page attrs.
 
 Dashboard Text controls should follow the shared Yeeflow Text control standard in `docs/yeeflow-text-control-generation-standards.md`: native `heading` controls, inline width by default, typography presets as `[null, token]`, and `heads.color` as a plain string. Do not reuse the old CAPEX generated text style shape with pair-shaped color values.
 

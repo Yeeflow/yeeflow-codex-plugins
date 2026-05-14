@@ -13,7 +13,17 @@ Page or form
       └─ semantic sections
 ```
 
-`Main` is the root visual parent. `Content` holds visible user-facing content. Both names are stored as `nv_label`.
+`Main` is the structural root parent. `Content` holds visible user-facing content. Both names are stored as `nv_label`.
+
+## Page Background Rule
+
+When a generated page needs a full-page background, configure it on the page/form background setting rather than on `Main`.
+
+- dashboard page background: embedded page `attrs.background`
+- data-list custom form background: custom form `attrs.background`
+- approval form background: `page.formdef.attrs.background`
+
+`Main` should stay a layout container. Section, card, content, and header backgrounds are still allowed on their own containers.
 
 ## Page Settings
 
@@ -21,12 +31,14 @@ Dashboard pages:
 
 - hide header bar: `attrs.hideHeaderAll = true`
 - padding: all sides `--sp--s0`
+- page background: page-level `attrs.background` when needed
 - no dashboard content-width setting is required yet because the studied export did not prove `cw`
 
 Form pages:
 
 - content width: `attrs.container.cw = "2"`
 - padding: all sides `--sp--s0`
+- page background: form-level `attrs.background` when needed
 
 ## Standard Sections
 
@@ -104,4 +116,4 @@ Avoid layouts that rely on precise viewport width or negative spacing.
 
 ## Validator Guidance
 
-Validators may warn for missing shell containers, missing section names, incorrect form page width, non-zero page padding, or workflow controls outside `Form bottom`.
+Validators may warn for missing shell containers, missing section names, incorrect form page width, non-zero page padding, `Main` carrying full-page-like background, missing page-level background when `Main` has a background, or workflow controls outside `Form bottom`.

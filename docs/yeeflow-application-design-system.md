@@ -52,6 +52,16 @@ Generated dashboard, data-list custom form, and approval-form pages should use:
 
 Designer-facing names are stored in `nv_label`. Do not add visible text labels only to describe layout containers.
 
+## Page Background Standard
+
+Full-page background color belongs on the page/form background setting, not on the top-level `Main` container.
+
+- dashboard pages: set the background on the embedded page JSON, such as `page.attrs.background`
+- data-list custom forms: set the background on the custom form page JSON, such as `form.attrs.background`
+- approval submission and task pages: set the background on `page.formdef.attrs.background`
+
+`Main` is a structural/layout parent. It should provide layout direction, gap, alignment, and containment, but it should not simulate the full page background. If a specific visual section, card, header, summary panel, or content band needs its own background, set that background on that section/card/header container.
+
 ## Application Standards
 
 Every generated application should include:
@@ -86,6 +96,7 @@ Dashboard pages should use:
 - embedded page JSON in `LayoutInResources[0].Resource`
 - `attrs.hideHeaderAll = true`
 - zero page padding
+- page-level background on embedded page attrs when a full-page background is needed
 - `Main` -> `Content`
 - optional `Page header`, `Summary section`, `Body section`, `Collection section`, and `Empty state` containers
 
@@ -110,6 +121,7 @@ Both forms should use:
 
 - `attrs.container.cw = "2"`
 - zero padding
+- page-level background on the custom form attrs when a full-page background is needed
 - `Main` -> `Content`
 
 `Edit Item` is input optimized. `View Item` is readonly/display optimized. Both should use the same shell so generated apps feel coherent.
@@ -141,6 +153,7 @@ When a submission form has a top request summary, use a `Form header` container 
 The manually improved IT Hardware CAPEX Runtime V2 export proved these additional form-quality defaults:
 
 - use `page.formdef.attrs.background` for full-page background instead of `Main.attrs.common.background`
+- apply the same page-background rule to dashboard pages and data-list custom forms
 - use `attrs.common.css` on a specific container when a gradient/background image is needed and native settings cannot express it
 - generate `heading` and `text-editor` controls with inline width positioning by default
 - wrap section icons in square centered badge containers
@@ -245,6 +258,8 @@ Generated-app design-system validation should warn for:
 
 - missing `Main`
 - missing `Content`
+- full-page-like background on `Main`
+- missing page-level background when `Main` carries a background
 - missing meaningful `nv_label`
 - missing `Edit Item` / `View Item` custom list forms
 - New/Edit/View display settings not following standard

@@ -117,6 +117,8 @@ Generated data lists should include two custom list forms by default:
 
 New and Edit display settings should use `Edit Item`; View should use `View Item`. Both custom forms should use `attrs.container.cw = "2"`, zero padding with `--sp--s0` on all sides, and a `Main` -> `Content` container shell named with `nv_label`.
 
+Global page background rule: for generated `Edit Item` and `View Item` custom forms, set full-page background on the custom form page `attrs.background`, not on `Main.attrs.common.background`. Keep `Main` structural. Use backgrounds on `Content`, field groups, cards, headers, and readonly sections only when those containers are intended as visible surfaces.
+
 Use `docs/yeeflow-root-style-token-reference.md` for custom form token guidance. Prefer `--c--background`, `--c--neutral-light-active`, `--c--neutral-light-hover`, `--fs--base`, and spacing tokens such as `--sp--s150` and `--sp--s200` where the form schema supports style values. Avoid arbitrary custom colors and do not inject the full root stylesheet.
 
 When the workspace includes `docs/yeeflow-text-control-generation-standards.md`, generated data-list custom form headings, helper text, card titles, and empty states must follow the Text Style Sample standard: native `heading` Text controls, inline width, `attrs.heads.ty = [null, token]` or a custom typography object, and plain string `attrs.heads.color`.

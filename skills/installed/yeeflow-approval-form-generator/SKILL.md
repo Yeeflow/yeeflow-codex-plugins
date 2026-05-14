@@ -63,6 +63,8 @@ Generated approval forms should apply the design system by default: business con
 
 For higher-quality generated forms, also use the Runtime V2/V3 CAPEX form rules in `docs/yeeflow-form-design-quality-rules.md` when present. Put page background on `page.formdef.attrs.background`, keep `Main` structural, add `Form header` for request summaries, use inline text/icon widths, follow the Text Style Sample standard for native Text controls (`type: "heading"`, `attrs.heads.ty = [null, "h5-medium"]` or a custom typography object, `attrs.heads.color = "var(--c--text)"`, and inline `attrs.common.positioning`), avoid old generated Text shapes with pair-shaped colors, use square icon badge wrappers, two-column `flex_grid` field sections with `displayLabel = [null, false]`, and native calculated controls for formula fields such as `Subtotal = Quantity * Unit Price`.
 
+Global page background rule: for every generated approval submission page and task page, put any full-page background on `page.formdef.attrs.background`. Do not set full-page background color on the `Main` container. Use backgrounds on `Form header`, cards, sections, summary panels, or field groups only when those specific containers should be visible surfaces.
+
 ## Hard Stop Conditions
 
 Stop and report blockers. Do not build final `.ywf` when:

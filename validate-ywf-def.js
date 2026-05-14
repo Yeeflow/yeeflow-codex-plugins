@@ -414,6 +414,9 @@ function validateDecodedDef(def, options = {}) {
     }
     if (main && main.attrs && main.attrs.common && main.attrs.common.background) {
       addIssue(warnings, "MAIN_CONTAINER_PAGE_BACKGROUND", "Main should stay primarily structural; put full-page form background on formdef.attrs.background", `${pagePath}.formdef.children`);
+      if (!(formdef.attrs && formdef.attrs.background)) {
+        addIssue(warnings, "FORM_PAGE_BACKGROUND_MISSING_WITH_MAIN_BACKGROUND", "Page/form background is missing while Main carries a background. Generated submission and task pages should use formdef.attrs.background for full-page color.", `${pagePath}.formdef.attrs.background`);
+      }
     }
     if (main && content && !controlContains(main, content)) {
       addIssue(warnings, "UI_STANDARD_CONTENT_NOT_INSIDE_MAIN", "Approval page Content container should be inside Main", `${pagePath}.formdef.children`);
