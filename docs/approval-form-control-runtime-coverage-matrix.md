@@ -8,6 +8,7 @@ Sources:
 - `docs/generated-approval-form-controls-test-baseline.md`
 - `docs/generated-approval-form-controls-test-v2-baseline.md`
 - `docs/generated-approval-form-controls-test-v3-baseline.md`
+- `docs/generated-approval-form-controls-test-v4-baseline.md`
 - `control-configurations.normalized.json`
 - `field-configurations.normalized.json`
 
@@ -41,10 +42,10 @@ This matrix separates export-backed control anatomy from generated runtime proof
 | `time` | `date` | Yes | No | Proven | v2 accepted `10:30:00`, displayed it on the approval task, and persisted it to the list view. |
 | `file-upload` | `file` | Yes | Yes | Proven | v3 rendered, uploaded `yeeflow-upload-stage3-test.txt`, submitted, displayed the uploaded file on submitted/reviewer pages, approved, and created the text persistence record. Binary list persistence remains deferred. |
 | `icon-upload` | `img` | Yes | No | Proven | v3 rendered, uploaded `yeeflow-upload-stage3-test.png`, displayed the image preview on submitted/reviewer pages, approved, and created the text persistence record. Binary list persistence remains deferred. |
-| `identity-picker` | `user` | Yes | Yes | Proven | Current user resolved and reviewer task assignment worked. |
-| `organization-picker` | `groupselect` | Yes | No | Runtime-sensitive | Depends on tenant organization tree. Stage 4. |
-| `location-picker` | `location` | Yes | No | Runtime-sensitive | Depends on tenant location metadata. Stage 4. |
-| `cost-center-picker` | `costcenter` | Yes | No | Runtime-sensitive | Depends on tenant cost center metadata. Stage 4. |
+| `identity-picker` | `user` | Yes | Yes | Proven | Current user resolved in v1/v4; v4 editable single-select user picker retained `Renger from Yeeflow`, displayed on submitted/reviewer pages, and completed approval. |
+| `organization-picker` | `groupselect` | Yes | No | Partially proven | v4 rendered and opened the department selector with `Default` visible; selection did not retain after OK in this sandbox, so value behavior remains environment-sensitive. |
+| `location-picker` | `location` | Yes | No | Partially proven | v4 rendered and opened the location picker; sandbox returned no matching location data. |
+| `cost-center-picker` | `costcenter` | Yes | No | Partially proven | v4 rendered and opened the cost center selector; sandbox returned no cost center rows. |
 | `metadata` | `metadata` | Yes | No | Deferred | Requires known `source` and `categoryId`; do not guess. Stage 5 only with resolved metadata. |
 | `mutiple-metadata` | `mutiple-metadata` | Yes | No | Deferred | Same metadata source risk plus multi-value shape. |
 | `lookup` | `lookup` | Yes | Yes | Partially proven | Internal lookup rendered in v1 but no value was selected. Stage 6 will test selection/persistence. |
@@ -121,14 +122,43 @@ Runtime evidence:
 
 Scope note: v3 proves workflow-form upload/media usage through render, upload, submit, task display, and approval completion. Binary file/image persistence into a data-list field was intentionally out of scope and remains deferred.
 
-## Remaining Staged Runtime Tests
+## V4 Runtime Set
 
-The next package should be Stage 4: people and organization picker controls.
+`Approval Form Controls Test v4 - People and Organization Picker Controls` proved:
 
-It should isolate:
+- `identity-picker` editable single-select workflow-form usage
+
+It partially proved:
 
 - `organization-picker`
 - `location-picker`
 - `cost-center-picker`
 
-Later stages should not start until picker behavior is documented.
+Runtime evidence:
+
+- Imported `Approval Form Controls Test v4.generated.yap` successfully.
+- Opened the imported app and `Picker Test Requests` without `datas/query` 400.
+- Opened `Approval Form Controls Test v4` approval form.
+- `Requester` identity-picker resolved to the current user.
+- `Selected User` identity-picker opened the user selector, selected `Renger from Yeeflow`, retained the value, displayed it on the submitted request and reviewer task, and completed approval.
+- `organization-picker` rendered and opened the department selector with `Default` visible, but the selected department did not retain after confirmation in this sandbox.
+- `cost-center-picker` rendered and opened the cost center selector, but the sandbox returned no rows.
+- `location-picker` rendered and opened the native picker/dropdown, but the sandbox returned no matching location data.
+- Submit completed successfully.
+- Reviewer task opened and displayed the selected user plus notes.
+- Approval completed successfully.
+- `ContentList` created a new `Picker Test Requests` row with the expected text summary.
+
+Scope note: v4 proves identity-picker workflow-form usage and partial render/open behavior for tenant-metadata pickers. Direct picker-value persistence and organization/cost-center/location selection remain deferred until the tenant has selectable metadata or a focused working export proves the required retention attrs.
+
+## Remaining Staged Runtime Tests
+
+The next package should be Stage 5: metadata and tag controls.
+
+It should isolate:
+
+- `metadata`
+- `mutiple-metadata`
+- `tag`
+
+Later stages should not start until metadata/tag behavior is documented.
