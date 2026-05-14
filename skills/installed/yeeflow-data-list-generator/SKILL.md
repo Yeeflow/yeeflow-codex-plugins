@@ -133,7 +133,7 @@ Generated list forms should use meaningful `nv_label` names for `Main`, `Content
 
 Before generating data-list fields, check the normalized field reference. Safe default field/control types are `input`, `textarea`, `input_number`, `currency`, `radio`, `switch`, `datepicker`, and `lookup` when the lookup target is local and resolved.
 
-Always preserve the native `Title` field metadata: `FieldName: Title`, `Status: 0`, `IsSystem: true`, and `IsIndex: true`. Keep choice options non-empty for `radio`/`checkbox`; keep switch defaults boolean-like; keep lookup `Rules` complete with app/listset/list/display-field metadata. Use fallback Text/Decimal fields for environment-dependent pickers, tag, metadata, hyperlink, rate, and rich text until native runtime proof exists. Defer file/image uploads, signer, lookup-list, nested list persistence, and calculated-column generation unless a focused export/import proves the shape.
+Always preserve the native `Title` field metadata: `FieldName: Title`, `Status: 0`, `IsSystem: true`, and `IsIndex: true`. Keep choice options non-empty for `radio`/`checkbox`; keep switch defaults boolean-like; keep lookup `Rules` complete with app/listset/list/display-field metadata. Approval Form Controls Test v2 proves data-list persistence/display for `Decimal` fields with `percent` and `rate` control types, `Datetime` fields with `time`, and `Text` fields with `hyperlink` in generated app packages. Use fallback Text/Decimal fields for environment-dependent pickers, tag, metadata, and rich text until native runtime proof exists. Defer file/image uploads, signer, lookup-list, nested list persistence, and calculated-column generation unless a focused export/import proves the shape.
 
 ## Field Type And Sample Rules
 
@@ -145,12 +145,20 @@ Generated `.ydl` lists and `.yap` child lists can now use these proven field sha
 | number | `Decimal1` | `Decimal` | `input_number` | numeric value |
 | single select storage | `Text15` | `Text` | `radio` | selected option text |
 | boolean switch | `Bit1` | `Bit` | `switch` | `"1"` or `"0"` |
+| percent | `Decimal2` | `Decimal` | `percent` | numeric value displayed as percent |
+| rating | `Decimal4` | `Decimal` | `rate` | numeric value such as `3.5` |
+| time | `Datetime1` | `Datetime` | `time` | time string/display such as `10:30:00` |
+| hyperlink | `Text1` | `Text` | `hyperlink` | URL string rendered as an open link |
 
 Custom list forms should use matching bound controls for these fields:
 
 - number fields: `input_number`
 - choice/dropdown storage: `radio` or dropdown-compatible radio attrs when supported by the form pattern
 - switch fields: `switch`
+- percent fields: `percent`
+- rating fields: `rate`
+- time fields: `time`
+- URL fields: `hyperlink`
 
 When an approval form writes to a generated data list, require compatible mappings:
 
@@ -158,6 +166,10 @@ When an approval form writes to a generated data list, require compatible mappin
 - number variables -> `Decimal/input_number`
 - radio/dropdown text variables -> `Text/radio`
 - boolean switch variables -> `Bit/switch`
+- percent variables -> `Decimal/percent`
+- rating variables -> `Decimal/rate`
+- time/date variables -> `Datetime/time`
+- URL text variables -> `Text/hyperlink`
 
 ## Approval Form Storage Integration
 
