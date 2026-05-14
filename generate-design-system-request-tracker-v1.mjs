@@ -7,15 +7,15 @@ const outAppPath = "design-system-request-tracker-app-def.v1.json";
 const outFormDefPath = "design-system-request-tracker-approval-form-def.v1.json";
 const outReportPath = "design-system-request-tracker-generation-report.v1.json";
 
-const family = "312";
-const generatedAt = "2026-05-13 23:45:00";
+const family = "427";
+const generatedAt = "2026-05-14 10:20:00";
 const appId = 41;
 const tenantId = "1697103066096734208";
 const userId = "1697103066163843073";
 const rootId = `${family}0010000000000000`;
 const dashboardId = `${family}0010000000000001`;
 const requestsListId = `${family}0020000000001000`;
-const formKey = "DSV";
+const formKey = "DSX";
 const processId = `${family}0030000000000001`;
 const iconUrl = JSON.stringify({ b: "#E6F0FF", i: "fa-regular fa-object-group", c: "#0065FF" });
 
@@ -300,7 +300,7 @@ const requestFieldSpecs = [
   ["Title", "Request No.", "RequestNo", "Text", "input", { required: false, placeholder: "Generated request number" }],
   ["Text1", "Request Title", "RequestTitle", "Text", "input", { required: true, placeholder: "Enter request title", "input-maxlength": 200 }],
   ["Text2", "Request Type", "RequestType", "Text", "radio", { required: true, placeholder: "Select request type", displayStyle: "dropdown", choices: ["General", "IT Support", "Facilities", "Finance"] }],
-  ["Text3", "Requested By", "Applicant", "Text", "identity-picker", { required: false, placeholder: "Requester" }],
+  ["Text3", "Requested By", "Applicant", "Text", "input", { required: false, placeholder: "Requester" }],
   ["Text4", "Status", "Status", "Text", "radio", { required: false, placeholder: "Select status", displayStyle: "dropdown", choices: ["Draft", "Submitted", "Approved", "Rejected"] }],
   ["Datetime1", "Needed By", "NeededBy", "Datetime", "datepicker", { required: false, placeholder: "Select needed-by date", showtime: false, date_type: "0", dateformat: "0" }],
   ["Text5", "Notes", "Notes", "Text", "textarea", { required: false, placeholder: "Optional notes", "input-maxlength": 2000 }]

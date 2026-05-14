@@ -90,6 +90,7 @@ This skill can help generate or validate:
 - current user/current date defaults
 - workflow action panel and history
 - page registration/publish metadata
+- runtime import may leave app-level approval forms unpublished; for sandbox proof, publish the imported form in Yeeflow Form Builder before submit/approve testing
 - workflow graph layout metadata
 - ContentList parent persistence
 - ContentList persistence to a newly generated dedicated data list after importing/exporting the list back and patching to the real metadata
@@ -119,6 +120,7 @@ Load only the reference needed for the task:
 - `references/validation-guide.md`: structural and app-context validator usage.
 - In the active generator workspace, also use `docs/workflow-action-configuration-reference.md`, `docs/workflow-action-generation-rules.md`, and `workflow-action-configurations.normalized.json` as the official workflow action configuration reference when present.
 - In the active generator workspace, use `control-configurations.normalized.json`, `docs/yeeflow-control-configuration-reference.md`, and `docs/yeeflow-control-field-generation-rules.md` as the approval form control schema reference.
+- Yeeflow page/control JSON may store config values as `[null, value]`; validator logic should unwrap that representation before primitive or enum checks.
 - `references/metadata-and-wrapper-guide.md`: metadata replacement and wrapper build usage.
 - `references/data-list-approval-integration-pattern.md`: staged generated data list plus approval form persistence integration.
 - `references/examples-summary.md`: proven examples and what each demonstrates.

@@ -10,8 +10,8 @@
 - Generator: `/Users/Renger/Documents/Codex Projects/AI Agent and Copilot templates/generate-design-system-request-tracker-v1.mjs`
 - Source app definition: `/Users/Renger/Documents/Codex Projects/AI Agent and Copilot templates/design-system-request-tracker-app-def.v1.json`
 - Approval form definition: `/Users/Renger/Documents/Codex Projects/AI Agent and Copilot templates/design-system-request-tracker-approval-form-def.v1.json`
-- Fresh local ID family: `312`
-- Fresh FlowKey/form key: `DSV`
+- Fresh local ID family: `427`
+- Fresh FlowKey/form key: `DSX`
 
 The raw `.yap` package is a generated runtime artifact and is not committed.
 
@@ -51,22 +51,23 @@ The package applies the generated-app design-system standards:
 All blocking local validation passed.
 
 - `node --check generate-design-system-request-tracker-v1.mjs`: pass
-- `node validate-yap-package.js ./design-system-request-tracker-app-def.v1.json --mode generator --stage final`: pass with one token-aligned color warning
+- `node validate-yap-package.js ./design-system-request-tracker-app-def.v1.json --mode generator --stage final`: pass with warnings, errors `0`, warnings `5`
 - `node validate-yap-graph.js ./design-system-request-tracker-app-def.v1.json --mode generator --stage final`: pass
-- `node validate-ywf-def.js ./design-system-request-tracker-approval-form-def.v1.json --mode final`: pass
-- `node validate-ydl-list.js ./design-system-request-tracker-requests-list.v1.json --mode generator --stage final`: pass with non-blocking standalone-list warnings
+- `node validate-ywf-def.js ./design-system-request-tracker-approval-form-def.v1.json --mode final`: pass with warnings, errors `0`, warnings `2`
+- `node validate-ydl-list.js ./design-system-request-tracker-requests-list.v1.json --mode generator --stage final`: pass with warnings, errors `0`, warnings `4`
+- `node scripts/smoke-control-field-schema-validation.mjs`: pass
 - `node build-yap-wrapper.js ./design-system-request-tracker-app-def.v1.json ./design-system-request-tracker.v1.yap`: pass; round-trip decoded source matched
-- workflow action configuration validation: pass
-- wrapper package validation: pass with one token-aligned color warning
+- workflow action configuration validation: pass, checked nodes `11`, supported nodes `11`, unsafe nodes `0`
+- wrapper package validation: pass with warnings, errors `0`, warnings `5`
 - wrapper graph validation: pass
 
-The remaining color warning is expected because Yeeflow exports may store resolved root-token hex values instead of token references.
+The remaining warnings are non-blocking generation evidence warnings: schema-supported dashboard text-editor controls, environment-dependent approval-form identity-picker controls, standalone list validation context, and token color resolution.
 
 ## Runtime Result
 
 Runtime site: `https://codex.yeeflow.com/`
 
-Imported runtime display name: `Design System Request Tracker DSV`.
+Imported runtime display name: `Design System Request Tracker DSX`.
 
 Runtime checks passed:
 
@@ -78,7 +79,9 @@ Runtime checks passed:
 - master sample data loaded
 - `Edit Item` custom list form rendered from `New item`
 - `View Item` custom list form rendered from an existing row
-- approval submission form opened
+- approval form imported and appeared in navigation
+- approval form initially opened as unpublished, then published successfully from Yeeflow Form Builder
+- approval submission form opened after publish
 - `Form body` rendered request fields
 - `Form bottom` rendered workflow actions; Flow History rendered on submitted/task pages
 - request submitted successfully
@@ -88,9 +91,9 @@ Runtime checks passed:
 
 Runtime-created record:
 
-- Request title: `Design system runtime approval test`
+- Request title: `Design system runtime DSX approval test`
 - Request type: `General`
-- Requested by: `Renger from Yeeflow`
+- Requested by: current user value rendered in the form as `Renger from Yeeflow`; the persisted list value was the remapped user ID
 - Status after approval: `Approved`
 
 No visible console or network failure was encountered during the successful runtime path.
@@ -101,6 +104,8 @@ No visible console or network failure was encountered during the successful runt
 - Child data lists must keep `ListModel.CustomType` aligned to the current root list set ID. A stale source `CustomType` can import while hiding the child list from navigation.
 - Applicant/current-user assignment should use a user-typed workflow variable. The requester identity-picker rendered correctly with `value: "CurrentUser"` and could be used for the reviewer assignment.
 - Yeeflow runtime record creation from the approved workflow path created the data-list row correctly.
+- Generated app-level approval forms may import as unpublished. Runtime proof for approval submission must include publishing the imported form in Form Builder before testing submit/approve/persist behavior.
+- For data-list persistence fields, use text fallback for environment-dependent requester fields unless a focused identity field/list persistence export proves the native data-list user field shape.
 
 ## Minor Presentation Notes
 

@@ -55,22 +55,34 @@ function getByPath(root, propertyPath) {
   return current;
 }
 
+function valueMissing(value) {
+  return value === undefined || value === null || value === "";
+}
+
+function unwrapConfigValue(value) {
+  if (Array.isArray(value) && value.length === 2 && value[0] === null) return value[1];
+  return value;
+}
+
 function valueMatchesType(value, valueTypes) {
+  if (valueMissing(value)) return true;
+  const actual = unwrapConfigValue(value);
+  if (valueMissing(actual)) return true;
   const types = Array.isArray(valueTypes) ? valueTypes : [valueTypes];
   return types.some((type) => {
     switch (type) {
       case "string":
-        return typeof value === "string";
+        return typeof actual === "string";
       case "boolean":
-        return typeof value === "boolean";
+        return typeof actual === "boolean";
       case "number":
-        return typeof value === "number";
+        return typeof actual === "number";
       case "array":
-        return Array.isArray(value);
+        return Array.isArray(actual);
       case "object":
-        return isObject(value);
+        return isObject(actual);
       case "enum":
-        return typeof value === "string" || typeof value === "number" || typeof value === "boolean";
+        return typeof actual === "string" || typeof actual === "number" || typeof actual === "boolean";
       case "any":
       case "unknown":
         return true;
@@ -93,7 +105,8 @@ function collectKnownPathIssues(target, typeName, schemaEntry, options = {}) {
   }
   for (const [propertyPath, spec] of Object.entries(schemaEntry.properties || {})) {
     const value = getByPath(target, propertyPath);
-    if (value === undefined) continue;
+    if (valueMissing(value)) continue;
+    const normalizedValue = unwrapConfigValue(value);
     if (!valueMatchesType(value, spec.valueTypes)) {
       issues.push({
         code: "SCHEMA_VALUE_TYPE_MISMATCH",
@@ -101,13 +114,13 @@ function collectKnownPathIssues(target, typeName, schemaEntry, options = {}) {
         detail: { propertyPath, expected: spec.valueTypes, actual: Array.isArray(value) ? "array" : typeof value },
       });
     }
-    if (spec.enum && value !== undefined && value !== null && value !== "") {
-      const stringValue = String(value);
+    if (spec.enum && !valueMissing(normalizedValue)) {
+      const stringValue = String(normalizedValue);
       if (!spec.enum.map(String).includes(stringValue)) {
         issues.push({
           code: "SCHEMA_ENUM_VALUE_INVALID",
           message: `${typeName}.${propertyPath} has a value outside the normalized enum.`,
-          detail: { propertyPath, value, allowed: spec.enum },
+          detail: { propertyPath, value: normalizedValue, allowed: spec.enum },
         });
       }
     }

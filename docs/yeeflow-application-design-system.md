@@ -223,6 +223,7 @@ Use these proven lessons:
 - Knowledge Base Phase 1/v4 proves dashboard Collections can render local list sample rows when scope is kept conservative.
 - Service Desk Pro Stage N proves staged dashboard expansion, KPI bindings, filters, Settings/Help pages, and local source lists.
 - Heep Hong IT eWorkflow Option A v9 proves the five-list purchase requisition structure, workflow action validation, and the need to defer risky detail-row persistence until proven.
+- Design System Request Tracker DSX proves the first combined design-system package: dashboard, local data list, Edit/View custom list forms, approval form controls, workflow action validation, manual form publish, submit/approve path, and `ContentList` persistence to a local list.
 
 ## Validator Policy
 
@@ -238,8 +239,8 @@ Generated-app design-system validation should warn for:
 - excessive arbitrary hard-coded colors
 - dashboard/form page not full width or zero padding where detectable
 
-Keep warnings non-blocking until the first generated design-system package passes import/open/export-back proof.
+Keep warnings non-blocking until a focused generated design-system package proves the rule at import/runtime. The Design System Request Tracker DSX baseline proves the core layout/list/form/workflow path, but generated app-level approval forms may still require publishing in Yeeflow Form Builder after import before submit/approve runtime testing.
 
 ## Generation Boundary
 
-Do not generate a new app from this document alone. First create a small design-system test package, validate it, import-test only when explicitly requested, export back, and then promote proven rules from warning to stronger generator behavior.
+Do not generate a new app from this document alone. Start from a small focused package, validate it, import-test only when explicitly requested, publish imported approval forms when Yeeflow marks them unpublished, export back when useful, and then promote proven rules from warning to stronger generator behavior.

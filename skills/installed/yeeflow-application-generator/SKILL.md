@@ -56,7 +56,7 @@ The first official reference export is `UI and UX design (1).yap`. It proves thi
 
 Treat validator UI/UX standard findings as warnings until the first generated UI/UX standard package has passed runtime import/open and export-back comparison.
 
-Runtime update: `Design System Request Tracker v1` proved the generated design-system package pattern through import, dashboard render, Requests list query, Edit/View custom forms, submission form render, reviewer approval routing, approval completion, and workflow-created list record. Use its dashboard `LayoutInResources[0].ID = RefId = LayoutID` pattern for generated root app dashboards with embedded page JSON.
+Runtime update: `Design System Request Tracker DSX` proved the generated design-system package pattern through import, dashboard render, Requests list query, Edit/View custom forms, approval form publish, submission form render, reviewer approval routing, approval completion, and workflow-created list record. Use its dashboard `LayoutInResources[0].ID = RefId = LayoutID` pattern for generated root app dashboards with embedded page JSON. Expect imported app-level approval forms to require publishing in Yeeflow Form Builder before submit/approve runtime testing.
 
 Use `docs/yeeflow-root-style-token-reference.md` as the root style/design-token reference. Generated apps should use Yeeflow-native root style tokens such as `--c--primary`, `--c--success`, `--c--warning`, `--c--danger`, `--c--neutral-light-active`, `--fs--base`, and `--sp--s200` where supported. Avoid arbitrary custom colors and do not inject the full root stylesheet into generated apps. Do not require token references when a real Yeeflow export stores resolved hex values.
 
@@ -164,6 +164,7 @@ For root Type `103` app pages:
 
 - include the page `LayoutID` in `ReplaceIds`
 - for generated root dashboard pages with embedded page JSON, use the dashboard `LayoutID` for `LayoutInResources[0].ID` and `RefId`; Design System Request Tracker v1 proved that a separate generated resource ID can import but render as an empty designer placeholder
+- for data-list persistence, prefer Text fallback for requester/user values unless a focused native data-list identity/user field export proves the persisted shape; approval forms may still use identity-picker/current-user values for workflow assignment when that pattern is proven
 - Type `103` `LayoutInResources` resource IDs are excluded from `ReplaceIds`
 - `LayoutInResources[0].Resource` must contain valid page JSON
 
@@ -258,7 +259,7 @@ Treat `GenerateDocument`, `ConvertToPdf`, `AddWatermark`, and `DocumentRecogniti
 
 ## Control-To-Field Mapping Rules
 
-Use generation-safe mappings first: `input` to Text, `textarea` to Text, `input_number` to Decimal, `currency` to Decimal, `radio` to Text choice, `switch` to Bit, `datepicker` to Datetime, and resolved local `lookup` to a lookup field. Use fallback mappings for rich text, percent, checkbox, identity/organization/location/cost-center pickers, tag, metadata, hyperlink, and rate until runtime proof exists. Defer file uploads, icon uploads, signer, lookup-list, nested list persistence, and calculated-column approval variables unless a focused export/import proves the structure.
+Use generation-safe mappings first: `input` to Text, `textarea` to Text, `input_number` to Decimal, `currency` to Decimal, `radio` to Text choice, `switch` to Bit, `datepicker` to Datetime, and resolved local `lookup` to a lookup field. Use fallback mappings for rich text, percent, checkbox, identity/organization/location/cost-center pickers, tag, metadata, hyperlink, and rate until runtime proof exists. In generated data lists, requester/user persistence should use Text fallback unless a native identity field persistence export has been studied. Defer file uploads, icon uploads, signer, lookup-list, nested list persistence, and calculated-column approval variables unless a focused export/import proves the structure.
 
 ## Output Expectations
 

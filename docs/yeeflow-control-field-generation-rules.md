@@ -10,6 +10,7 @@ This document operationalizes the normalized control and field references for Ye
 - Use `attrs.required` for required behavior and keep custom validators in `attrs.control_validation`.
 - Use `attrs.control_display` for dynamic show/hide/readonly/style only when the rule shape is copied from a studied export.
 - Use `attrs.control_event_rule` only when the action is explicitly modeled and validated.
+- Yeeflow page/control JSON often stores style and config values as `[null, value]`; schema validators should unwrap that representation before checking primitive value type or enum membership.
 
 ## Data List Fields
 
@@ -27,6 +28,7 @@ This document operationalizes the normalized control and field references for Ye
 ## Fallback And Stop Rules
 
 - Prefer Text fallback for user, organization, location, cost center, tag, metadata, hyperlink, signer, and file/image display values until native runtime is proven.
+- For data-list persistence, prefer Text fallback for requester/user values unless a focused data-list identity/user field export proves the native persisted field shape. Approval forms may still use identity-picker for current-user workflow assignment when that pattern is proven.
 - Prefer Decimal fallback for percent and rate until native display behavior is proven.
 - Defer file upload, icon upload, signer, metadata tree, lookup-list, and sublist persistence unless a focused export/import proves the shape.
 - Do not guess enum values, picker max-selection settings, lookup metadata, or calculated-column formulas.
