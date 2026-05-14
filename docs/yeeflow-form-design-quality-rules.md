@@ -81,13 +81,30 @@ Generated `heading` and `text-editor` controls should default to:
 - meaningful `nv_label`
 - `attrs.common.positioning.widthtype = [null, "2"]`
 - zero padding for helper/description text
-- explicit typography when the visual hierarchy matters
+- tokenized typography when the visual hierarchy matters
 
-Use object typography for important generated headings when possible:
+Use the focused `Text Style Sample.ywf` export as the source of truth for generated Text controls. The native Text control is `type: "heading"` with `label: "Text"`.
 
 ```json
-{ "size": [null, 18], "wei": "600" }
+{
+  "headc": { "title": { "value": "Workflow route", "variable": null } },
+  "heads": {
+    "ty": [null, "h5-medium"],
+    "color": "var(--c--text)"
+  },
+  "common": { "positioning": { "widthtype": [null, "2"] } }
+}
 ```
+
+Observed safe heading tokens:
+- `attrs.heads.ty = [null, "h5-medium"]` for section headings, card titles, and metric values
+- `attrs.heads.ty = [null, "xs-medium"]` for labels and eyebrow text
+- custom typography objects under `attrs.heads.ty` only when explicitly export-backed
+
+Text Style Sample correction:
+- `attrs.heads.ty` should be a config pair such as `[null, "h5-medium"]` for named presets, or an explicit typography object.
+- `attrs.heads.color` should be a plain string such as `"var(--c--text)"`, not `[null, "var(--c--text)"]`.
+- The prior CAPEX attempts rendered visually but left Typography/Text shadow editors unresponsive because they mixed unsupported generated style shapes.
 
 Use helper text pattern:
 
@@ -126,6 +143,7 @@ Recommended grid:
 - mobile: one `1fr` column
 - row size: auto
 - column gap: `10px` or a token-equivalent if supported
+- display caption: off, represented as `displayLabel = [null, false]`
 
 Long controls should be full row:
 

@@ -68,3 +68,5 @@ Generated lists must preserve native `Title` metadata. Business labels may be di
 ## Validator Guidance
 
 Warn for missing Edit/View forms, incorrect display settings, missing `Main` / `Content`, non-full-width form pages, non-zero padding, and excessive arbitrary colors.
+
+Data-list custom form headings, helper text, card labels, and empty-state text should follow the shared Text control standard in `docs/yeeflow-text-control-generation-standards.md`. Default to native `heading` Text controls with inline width, `[null, token]` typography presets, plain string colors, and meaningful `nv_label`.

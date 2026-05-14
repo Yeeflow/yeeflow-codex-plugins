@@ -148,10 +148,11 @@ Metric card:
 - `attrs.common.border.normal.color = "var(--c--neutral-light-active)"`
 - `attrs.common.border.normal.radius = 8` on all corners
 
-Metric labels/values are `heading` controls:
+Metric labels/values are `heading` controls. After studying `Text Style Sample.ywf`, generated metric text should use:
 
-- label: `attrs.heads.ty = [null, "s-medium"]`
-- value: `attrs.heads.ty = { size: [null, 18], wei: "600" }`
+- label: `attrs.heads.ty = [null, "xs-medium"]`
+- value: `attrs.heads.ty = [null, "h5-medium"]`
+- color: plain string token such as `attrs.heads.color = "var(--c--text)"`
 - both use `attrs.common.positioning.widthtype = [null, "2"]`
 
 ## Text Control Quality
@@ -165,7 +166,10 @@ Corrected heading:
   "type": "heading",
   "nv_label": "Applicant Information heading",
   "attrs": {
-    "heads": { "ty": { "size": [null, 18], "wei": "600" } },
+    "heads": {
+      "ty": [null, "h5-medium"],
+      "color": "var(--c--text)"
+    },
     "common": { "positioning": { "widthtype": [null, "2"] } }
   }
 }
@@ -196,7 +200,10 @@ Corrected descriptive text:
 Generation rule:
 
 - Generated `heading` and `text-editor` controls should default to `attrs.common.positioning.widthtype = [null, "2"]`.
-- Use explicit typography objects for important headings instead of relying only on named style tokens when exported-back evidence shows inconsistent rendering.
+- Use `Text Style Sample.ywf` as the focused Text control source of truth: `attrs.heads.ty = [null, "h5-medium"]` for named presets, `attrs.heads.color = "var(--c--text)"` as a plain string, and `attrs.common.positioning.widthtype = [null, "2"]`.
+- Dynamic Text controls use the same native `heading` control with `attrs.headc.title.variable[]`; links live under `attrs.headc.link`.
+- Old generated shapes with `attrs.heads.color = [null, "var(--c--text)"]` should be replaced because they can leave Yeeflow designer style popups unresponsive.
+- Generated visual Text/heading controls should use native-like UUID IDs where safe, not generator-specific `ctrl-*` IDs, because the manually added working controls use plain UUIDs and export back with the full style shape intact.
 - Keep helper/description text padding at zero.
 - Use meaningful `nv_label` values for every generated heading and helper text.
 
@@ -290,6 +297,7 @@ Generation rule:
 
 - Standard form field sections use a `flex_grid`.
 - Use two desktop/tablet columns and one mobile column.
+- Set `displayLabel = [null, false]` on generated `flex_grid` layout controls so the grid caption is not displayed.
 - Put normal controls in the grid.
 - Place textarea, rich text, list/sublist, and long helper content outside the two-column grid or make them span the full row once column-span export evidence is available.
 

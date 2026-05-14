@@ -119,6 +119,8 @@ New and Edit display settings should use `Edit Item`; View should use `View Item
 
 Use `docs/yeeflow-root-style-token-reference.md` for custom form token guidance. Prefer `--c--background`, `--c--neutral-light-active`, `--c--neutral-light-hover`, `--fs--base`, and spacing tokens such as `--sp--s150` and `--sp--s200` where the form schema supports style values. Avoid arbitrary custom colors and do not inject the full root stylesheet.
 
+When the workspace includes `docs/yeeflow-text-control-generation-standards.md`, generated data-list custom form headings, helper text, card titles, and empty states must follow the Text Style Sample standard: native `heading` Text controls, inline width, `attrs.heads.ty = [null, token]` or a custom typography object, and plain string `attrs.heads.color`.
+
 Generated list forms should use meaningful `nv_label` names for `Main`, `Content`, `Field group`, and `Readonly section`. Keep `Edit Item` input-optimized and `View Item` display-optimized unless the user explicitly scopes out custom forms.
 
 ## Field Schema Rules

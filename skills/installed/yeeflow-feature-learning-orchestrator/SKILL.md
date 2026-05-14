@@ -43,6 +43,8 @@ For Yeeflow Application Design System learning, consolidate the focused UI/UX ex
 
 For manual form-design correction learning, study the exported-back `.yap` read-only, compare the improved form Def against the generated baseline, extract exact property paths, update `docs/yeeflow-form-design-quality-rules.md`, add warning-first validators, and update approval/application/data-list generator skills. Do not regenerate the app in the same pass unless the user explicitly requests it.
 
+For focused Text control learning, treat a small `.ywf` sample as authoritative. Decode it read-only, extract every native Text control, document `attrs.headc`, `attrs.heads`, and `attrs.common` shapes, update `docs/yeeflow-text-control-generation-standards.md`, add warning-first validators, sync approval/application/data-list/dashboard skills, and only then regenerate affected apps with fresh IDs.
+
 ## What To Load
 
 - For the full lifecycle, read `references/feature-learning-workflow.md`.

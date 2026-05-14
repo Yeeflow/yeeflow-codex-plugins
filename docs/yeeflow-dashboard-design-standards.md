@@ -81,6 +81,8 @@ Example: `No requests yet. Submitted requests will appear here after the workflo
 
 Warn when dashboards are missing hidden header, zero padding, `Main`, `Content`, meaningful `nv_label`, or use many arbitrary hard-coded colors.
 
+Dashboard Text controls should follow the shared Yeeflow Text control standard in `docs/yeeflow-text-control-generation-standards.md`: native `heading` controls, inline width by default, typography presets as `[null, token]`, and `heads.color` as a plain string. Do not reuse the old CAPEX generated text style shape with pair-shaped color values.
+
 ## Runtime-Proven Generation Notes
 
 The first Design System Request Tracker runtime package proved that a generated Type `103` dashboard with embedded page JSON should store `LayoutInResources[0].ID` and `LayoutInResources[0].RefId` as the dashboard `LayoutID` when the page resource is the runtime dashboard body. A separate resource ID imported successfully but rendered the dashboard as an empty designer placeholder. Use the dashboard `LayoutID` for the embedded resource unless a later export proves a safer split-resource pattern.

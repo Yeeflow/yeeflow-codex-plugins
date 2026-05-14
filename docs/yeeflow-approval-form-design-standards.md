@@ -111,6 +111,8 @@ Generated forms should detect calculated-looking fields. `Subtotal` should not b
 
 For detailed patterns from the manually improved CAPEX export, see `docs/yeeflow-form-design-quality-rules.md` and `docs/it-hardware-capex-request-runtime-v2-ui-study.md`.
 
+For native Text controls, use `docs/yeeflow-text-control-generation-standards.md`. The focused `Text Style Sample.ywf` export proves that generated Text controls should use `type: "heading"`, inline width at `attrs.common.positioning.widthtype = [null, "2"]`, named typography presets as `attrs.heads.ty = [null, "h5-medium"]`, and plain string colors such as `attrs.heads.color = "var(--c--text)"`.
+
 ## Validator Guidance
 
 Warn for missing full width, zero padding, missing page-level background on rich full-page forms, background on `Main`, missing `Main`, missing `Content`, missing `Form body`, missing `Form bottom`, missing `Form header` when a request summary exists, workflow controls outside `Form bottom`, text/icon controls without inline width, field sections without grids, calculated-looking editable fields, runtime-sensitive picker/image attrs, and excessive arbitrary decision/status colors.

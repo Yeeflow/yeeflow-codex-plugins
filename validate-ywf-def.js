@@ -513,6 +513,23 @@ function validateDecodedDef(def, options = {}) {
       });
     }
 
+    if (control.type === "heading") {
+      const headingType = attrs.heads && attrs.heads.ty;
+      const headingTypeIsPair = Array.isArray(headingType) && headingType[0] === null && typeof headingType[1] === "string";
+      const headingTypeIsObject = isObject(headingType);
+      if (!headingTypeIsPair && !headingTypeIsObject) {
+        addIssue(warnings, "TEXT_CONTROL_TOKEN_TYPOGRAPHY_MISSING", "Generated heading controls should use the Text Style Sample export-backed shape: attrs.heads.ty = [null, \"h5-medium\"] for named presets, or a custom typography object for explicit font settings.", `${controlPath}.attrs.heads.ty`, {
+          control: name,
+        });
+      }
+      const headingColor = attrs.heads && attrs.heads.color;
+      if (typeof headingColor !== "string") {
+        addIssue(warnings, "TEXT_CONTROL_COLOR_SHAPE_UNSAFE", "Generated heading controls should use the Text Style Sample export-backed plain string color shape such as attrs.heads.color = \"var(--c--text)\". Avoid [null, color] here because it can leave the designer style editors unresponsive.", `${controlPath}.attrs.heads.color`, {
+          control: name,
+        });
+      }
+    }
+
     if (control.type === "icon" && controlWidthType(control) !== "2") {
       addIssue(warnings, "ICON_CONTROL_INLINE_WIDTH_MISSING", "Generated icon controls used as visual badges should default to inline width and be centered inside a square wrapper container", controlPath, {
         control: name,
@@ -522,8 +539,9 @@ function validateDecodedDef(def, options = {}) {
     if (control.type === "container" && String(control.nv_label || "").endsWith(" fields")) {
       const children = asArray(control.children);
       const hasGrid = children.some((child) => child && child.type === "flex_grid");
-      const hasValueControls = children.some((child) => child && isGeneratedValueControl(child.type));
-      if (hasValueControls && !hasGrid) {
+      const longFullRowTypes = new Set(["textarea", "richtext", "list"]);
+      const hasNormalValueControls = children.some((child) => child && isGeneratedValueControl(child.type) && !longFullRowTypes.has(child.type));
+      if (hasNormalValueControls && !hasGrid) {
         addIssue(warnings, "FIELD_SECTION_GRID_MISSING", "Generated field sections should place normal value-entry controls in a flex_grid, usually two columns; long controls may sit outside the grid as full-row controls", controlPath, {
           control: name,
         });
@@ -531,6 +549,11 @@ function validateDecodedDef(def, options = {}) {
     }
 
     if (control.type === "flex_grid") {
+      if (JSON.stringify(control.displayLabel) !== "[null,false]") {
+        addIssue(warnings, "FIELD_GRID_CAPTION_VISIBLE", "Generated flex_grid controls used for form field layout should set displayLabel = [null, false] so the grid caption is not displayed", `${controlPath}.displayLabel`, {
+          control: name,
+        });
+      }
       const desktopColumns = attrs.columns && attrs.columns["1"] && attrs.columns["1"].list;
       if (!Array.isArray(desktopColumns) || desktopColumns.length !== 2) {
         addIssue(warnings, "FIELD_GRID_NOT_TWO_COLUMNS", "Standard generated form field grids should use two desktop columns unless a studied export proves another layout", `${controlPath}.attrs.columns`);
@@ -911,11 +934,17 @@ function validateDecodedDef(def, options = {}) {
 
       let approved = false;
       let rejected = false;
+      let completed = false;
       for (const outgoing of asArray(shape.outgoing)) {
         const seq = seqById.get(refId(outgoing));
         const text = JSON.stringify((seq && seq.properties && seq.properties.conditioninfo) || []);
         if (text.includes("Task outcome:Approved") || text.includes("已同意") || text.includes("Approved")) approved = true;
         if (text.includes("Task outcome:Rejected") || text.includes("Rejected")) rejected = true;
+        if (text.includes("Task outcome:Completed") || text.includes("Completed")) completed = true;
+      }
+      if (props.tasktype === "complete") {
+        if (!completed) addIssue(errors, "COMPLETE_TASK_COMPLETED_PATH_MISSING", "Complete task must have at least one Completed outgoing condition", `${p}.outgoing`);
+        return;
       }
       if (!approved) addIssue(errors, "APPROVAL_APPROVED_PATH_MISSING", "Approval task must have at least one Approved outgoing condition", `${p}.outgoing`);
       if (!rejected && props.allowNoRejectedPath !== true) {
@@ -935,8 +964,8 @@ function validateDecodedDef(def, options = {}) {
         if (isApprovalOutcome) {
           if (condition.op !== "s.=") addIssue(errors, "APPROVAL_CONDITION_BAD_OP", "Approval outcome condition should use op: s.=", `${p}.op`);
           if (!text.includes("Outcome") && !text.includes("结果")) addIssue(errors, "APPROVAL_CONDITION_MISSING_OUTCOME", "Approval outcome condition should include task Outcome reference", p);
-          if (!text.includes("Task outcome:Approved") && !text.includes("Task outcome:Rejected") && !text.includes("任务结果:已同意")) {
-            addIssue(errors, "APPROVAL_CONDITION_MISSING_RESULT", "Approval outcome condition should include Task outcome:Approved or Task outcome:Rejected", p);
+          if (!text.includes("Task outcome:Approved") && !text.includes("Task outcome:Rejected") && !text.includes("Task outcome:Completed") && !text.includes("任务结果:已同意")) {
+            addIssue(errors, "APPROVAL_CONDITION_MISSING_RESULT", "Approval outcome condition should include Task outcome:Approved, Task outcome:Rejected, or Task outcome:Completed", p);
           }
         }
         const isNumeric = condition.group === "number" || (typeof condition.op === "string" && condition.op.startsWith("n."));

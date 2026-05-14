@@ -64,6 +64,8 @@ Use `docs/yeeflow-root-style-token-reference.md` for dashboard color, spacing, r
 
 Generated dashboards should use clear sections (`Page header`, `Summary section`, `Body section`, `Collection section`, `Empty state`), meaningful `nv_label` names, token-aligned neutral surfaces, and Collection controls for repeatable list-style content when source lists are local and proven.
 
+When the workspace includes `docs/yeeflow-text-control-generation-standards.md`, generated dashboard headings, labels, card titles, KPI text, and empty states must follow the Text Style Sample native Text shape: `type: "heading"`, inline width by default, `attrs.heads.ty = [null, token]` or a custom typography object, and plain string `attrs.heads.color`.
+
 For app-shell navigation around dashboards, keep the menu readable by inverting the root header colors: `navigator-menu.bgc` should equal `appearance.color`, and `navigator-menu.color` should equal `appearance.bgc`.
 
 ## Minimal Proven Baseline
@@ -81,6 +83,13 @@ The second proven generated dashboard package is:
 - source export studied: `Test Dashboard Only (2).yap`
 - app shape: one root app/listset, one Type `103` dashboard layout, one embedded static page JSON resource, no child resources
 - runtime result: imported into `https://codex.yeeflow.com/`, appeared in Shared Workspace, opened, and rendered static dashboard elements
+
+The first proven Yeeflow Application Design System dashboard package is:
+
+- workspace artifact: `design-system-request-tracker.v1.yap`
+- app shape: one Type `103` dashboard, one Requests data list with Edit/View custom forms, and one simple approval workflow
+- runtime result: imported into `https://codex.yeeflow.com/`, dashboard rendered the `Main` -> `Content` design-system layout, Requests opened without a visible query failure, approval submitted/routed/completed, and the approved workflow path created a Requests record
+- dashboard resource note: use `LayoutInResources[0].ID = RefId = LayoutID` for generated embedded dashboard page JSON
 
 The third proven generated dashboard package is:
 

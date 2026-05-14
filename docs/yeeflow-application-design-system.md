@@ -255,6 +255,19 @@ Generated-app design-system validation should warn for:
 
 Keep warnings non-blocking until a focused generated design-system package proves the rule at import/runtime. The Design System Request Tracker DSX baseline proves the core layout/list/form/workflow path, but generated app-level approval forms may still require publishing in Yeeflow Form Builder after import before submit/approve runtime testing.
 
+## Shared Text Control Standard
+
+Use `docs/yeeflow-text-control-generation-standards.md` for all generated approval forms, data-list custom forms, dashboards, and app pages. The focused `Text Style Sample.ywf` export supersedes earlier CAPEX text-control guesses:
+
+- native Text is `type: "heading"` / `label: "Text"`
+- inline width is `attrs.common.positioning.widthtype = [null, "2"]`
+- named typography presets use `attrs.heads.ty = [null, "<preset>"]`
+- custom typography uses an object under `attrs.heads.ty`
+- text color uses a plain string under `attrs.heads.color`
+- dynamic content uses `attrs.headc.title.variable[]`
+
+Avoid old generated shapes that store `attrs.heads.color` as `[null, color]`, because they can render but leave designer style popups unresponsive.
+
 ## Generation Boundary
 
 Do not generate a new app from this document alone. Start from a small focused package, validate it, import-test only when explicitly requested, publish imported approval forms when Yeeflow marks them unpublished, export back when useful, and then promote proven rules from warning to stronger generator behavior.
