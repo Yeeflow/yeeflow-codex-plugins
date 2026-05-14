@@ -1,6 +1,6 @@
 # Yeeflow Expression Editor Reference
 
-This reference is normalized from `/Users/Renger/Downloads/expression training data generator.txt`. The uploaded file is treated as read-only training evidence, not bundled source data.
+This reference is normalized from the first expression training file, enriched by `expression training data generator_2.txt`, and cross-checked against supplied expression-editor screenshots. Uploaded training files and screenshots are treated as read-only evidence, not bundled source data.
 
 ## Core Token Model
 
@@ -45,6 +45,8 @@ Function token:
 
 Function params are arrays. In most cases, each param is itself an expression-token array. A few export examples use primitive strings or booleans inside params; validators should warn before rejecting these unless a focused export proves the context.
 
+The enriched function knowledge base is stored in `yeeflow-expression-function-knowledge-base.normalized.json`. It adds bilingual descriptions, parameter names, return types, business scenarios, and keywords. It does not override the first-pass allowed function/operator set unless the function exists in `yeeflow-expression-functions.normalized.json`.
+
 ## Operators
 
 Allowed operators from the training reference:
@@ -54,6 +56,8 @@ Allowed operators from the training reference:
 - logical: `and`, `or`
 - comparison: `>`, `>=`, `<`, `<=`, `==`, `!=`
 - string concatenation: `&`
+
+The screenshots also show `%` in the expression-editor toolbar. Do not generate `%` until it is present in the normalized operator reference or an export-backed expression proves the token shape.
 
 Do not invent operator names.
 
@@ -74,6 +78,20 @@ The same token model can appear in:
 - string formatting
 
 Different contexts may wrap expression tokens inside larger Yeeflow condition objects. Preserve the local wrapper shape from the studied export and validate the nested expression token array separately.
+
+For screenshot-derived entry points and caveats, see `docs/yeeflow-expression-editor-ui-contexts.md`.
+
+## UI Observations From Screenshots
+
+- Calculation controls expose an `Expression` field and `Edit` button.
+- Dynamic display rules open from control settings.
+- Custom validation opens from the field Validation section.
+- Lookup/data filters open from the Lookup control's data source/filter settings.
+- Workflow transition conditions open from the selected sequence/transition arrow.
+- The Expression Editor has separate context-variable and function selectors.
+- Variable groups observed include Context, Workflow Variables, Static Variables, Temp variables, and Filter variables.
+- Function tab categories observed include All, String, Logical, Date, Mathematical, and Other.
+- `addWorkDays` and `addWorkHours` are visible in the Function tab but remain metadata-pending and not generation-safe.
 
 ## Serialization
 

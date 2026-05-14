@@ -12,14 +12,17 @@ Use this skill when generating or validating Yeeflow expression editor output ac
 Use the active workspace references first:
 
 - `yeeflow-expression-functions.normalized.json`
+- `yeeflow-expression-function-knowledge-base.normalized.json`
 - `yeeflow-expression-operators.normalized.json`
 - `yeeflow-expression-utils.js`
 - `docs/yeeflow-expression-editor-reference.md`
 - `docs/yeeflow-expression-generation-rules.md`
 - `docs/yeeflow-expression-use-cases.md`
 - `docs/yeeflow-expression-function-reference.md`
+- `docs/yeeflow-expression-reference-reconciliation.md`
+- `docs/yeeflow-expression-editor-ui-contexts.md`
 
-This skill is based on the read-only training reference `expression training data generator.txt`. Do not bundle that raw uploaded file.
+This skill is based on read-only expression training references. Do not bundle raw uploaded training files or screenshots.
 
 ## Core Token Rules
 
@@ -62,6 +65,21 @@ Use only:
 - Use `concat` or `&` for request-number and display-string assembly.
 - Use `formatNumber`, `fixed`, or `round` for numeric display.
 - Use readable lookup summary/autofill variables for user-facing persistence; do not persist raw lookup row IDs into text fields unless that is intentional.
+- Use enriched `businessScenarios`, `keywords`, parameter names, and bilingual descriptions from the function knowledge base to select among known functions.
+- Preserve exact runtime function names. Do not rename `strIndex`, `UniqueID`, or `subString`.
+- Treat `addWorkDays` and `addWorkHours` as screenshot-observed but metadata-pending. Do not generate them until parameter metadata or export-backed token examples are available.
+
+## Editor Contexts
+
+Use the context-specific wrapper only when export-backed. The nested expression token array can be validated consistently, but each Yeeflow setting stores it in its own surrounding object.
+
+- Calculation control: Content tab `Expression` field and `Edit` button.
+- Dynamic display: control settings `Dynamic display rules`.
+- Custom validation: field Validation section `Custom validation`.
+- Lookup/data filters: Lookup control data source/filter `Condition`.
+- Workflow transition: selected sequence/transition arrow `Condition`.
+- Function tab: categories include All, String, Logical, Date, Mathematical, and Other.
+- Variable selector: observed groups include Context, Workflow Variables, Static Variables, Temp variables, and Filter variables.
 
 ## Stop Conditions
 
@@ -70,6 +88,7 @@ Stop before generation when:
 - required variables are unresolved
 - the target wrapper/context shape is not export-backed
 - a requested function/operator is not in the normalized references
+- a requested function is only screenshot-observed and lacks parameter metadata
 - a variable token needs a value type other than `number`, `text`, `date`, or `boolean`
 - expression JSON cannot pass `yeeflow-expression-utils.js`
 

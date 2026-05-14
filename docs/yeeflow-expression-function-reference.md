@@ -1,8 +1,36 @@
 # Yeeflow Expression Function Reference
 
-Source: `/Users/Renger/Downloads/expression training data generator.txt`.
+Sources:
+
+- first-pass expression foundation: `expression training data generator.txt`
+- second-pass enriched function knowledge base: `expression training data generator_2.txt`
+- expression-editor screenshots for UI context and observed function-tab behavior
 
 Use the normalized machine-readable reference in `yeeflow-expression-functions.normalized.json` for validators and generators.
+Use `yeeflow-expression-function-knowledge-base.normalized.json` for richer bilingual descriptions, parameter names, business scenarios, and keywords.
+
+## Selection Guidance
+
+Choose functions by business intent before choosing by name:
+
+| Intent | Preferred functions | Notes |
+| --- | --- | --- |
+| Amount formatting | `formatNumber`, `round`, `fixed` | Use `formatNumber(value, digits, thousandths)` when the result is user-facing text. |
+| Deadline or due-date calculation | `dateAdd`, `dateDiff`, `now` | Use `dateAdd` for offset dates and `dateDiff` for overdue/duration checks. |
+| Conditional value/text | `iif`, `isTrue`, `isFalse` | Use direct boolean comparisons for routing and display rules where possible. |
+| Required-if validation | `isNullOrEmpty`, comparison operators | Native required flags stay preferred for unconditional required fields. |
+| Request number generation | `concat` or `&`, `dateFormat`, `now`, `UniqueID` | Preserve exact `UniqueID` capitalization. |
+| List/sublist totals | `arraySum`, `arrayCount`, `arrayAverage`, `arrayMin`, `arrayMax` | Only generate after the list variable and column names are resolved. |
+| Safe object attribute access | `getAttr` | Use when nested object path access is proven for the target context. |
+| Text cleanup | `trim`, `replace`, `lower`, `upper` | Useful for normalization and generated summaries. |
+| Duplicate removal | `removeDuplicates` | Use for arrays after the array variable is resolved. |
+
+## Enrichment Notes
+
+- The second-pass knowledge base enriched 54 of 55 baseline functions.
+- `strIndex` is baseline-only in the second pass. Keep the exact camel-case name and do not rename it to `strindex`.
+- The Function tab screenshot shows `addWorkDays` and `addWorkHours`, but the second file does not provide parameter metadata. Treat them as observed but not generation-safe yet.
+- Function examples in the knowledge base are human-readable expression strings. Generated packages must convert them to Yeeflow JSON token arrays.
 
 ## Math
 

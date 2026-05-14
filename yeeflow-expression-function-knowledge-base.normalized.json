@@ -1,16 +1,76 @@
 {
-  "source": "expression training data generator.txt",
-  "version": "2026-05-14",
-  "paramTokenConvention": "Function params are arrays of expression-token arrays, except zero-param functions use params: []. Some export examples include literal strings or booleans directly inside params; validators should warn, not hard-fail, when the surrounding shape is otherwise export-backed.",
+  "source": "expression training data generator_2.txt",
+  "version": "2026-05-15",
+  "purpose": "Rich function knowledge base for generation guidance. The first-pass normalized functions file remains the validator source of truth for allowed runtime function names and parameter ranges.",
+  "summary": {
+    "functionEntries": 54,
+    "baselineFunctionCount": 55,
+    "categories": [
+      "array",
+      "conversion",
+      "date",
+      "logic",
+      "math",
+      "object",
+      "string",
+      "system",
+      "validation"
+    ],
+    "missingFromKnowledgeBase": [
+      "strIndex"
+    ],
+    "presentInKnowledgeBaseButMissingFromBaseline": []
+  },
   "functions": {
+    "UniqueID": {
+      "name": "UniqueID",
+      "category": "system",
+      "bilingualDescription": "生成一个唯一的ID | Generate a unique id. 通常用于创建记录的唯一标识符，如订单号、用户ID等 | Typically used to create unique identifiers for records, such as order numbers, user IDs, etc.",
+      "callFormat": {
+        "type": "func",
+        "func": "UniqueID",
+        "params": []
+      },
+      "parameters": [],
+      "returnType": "string",
+      "examples": [
+        {
+          "description": "生成一个唯一的ID | Generate a unique ID",
+          "expression": "UniqueID()"
+        }
+      ],
+      "businessScenarios": [
+        "生成订单号 | Generate order number",
+        "创建用户ID | Create user ID",
+        "唯一标识生成 | Unique identifier generation"
+      ],
+      "keywords": [
+        "唯一ID",
+        "unique ID",
+        "生成ID",
+        "generate ID",
+        "唯一标识",
+        "unique identifier"
+      ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
+      "sourceReferences": [
+        "expression training data generator_2.txt:functionKnowledgeBase"
+      ]
+    },
     "abs": {
+      "name": "abs",
       "category": "math",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "number",
-      "description": "Returns the absolute value of the parameter.",
-      "knowledgeBaseCategory": "math",
       "bilingualDescription": "返回参数的绝对值 / Returns the absolute value of the parameter. 如果参数是负数则返回正值，正数或零返回原值 | If the parameter is negative, returns its positive value; if positive or zero, returns the original value.",
+      "callFormat": {
+        "type": "func",
+        "func": "abs",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -40,26 +100,28 @@
         "数值大小",
         "magnitude"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "arrayAverage": {
+      "name": "arrayAverage",
       "category": "array",
-      "minParams": 1,
-      "maxParams": 4,
-      "optionalParams": [
-        "column",
-        "filterColumn",
-        "filterValue"
-      ],
-      "returnValueType": "number",
-      "description": "Calculate the average value of an array; object arrays may specify a column and optional equality filter.",
-      "knowledgeBaseCategory": "array",
       "bilingualDescription": "计算数组的平均值 | Calculate the average value of an array. 如果数组元素是对象，可通过column参数指定用于计算的属性 | If array elements are objects, use column parameter to specify the property for calculation. 空值不参与计算 | Empty values are excluded from calculation.",
+      "callFormat": {
+        "type": "func",
+        "func": "arrayAverage",
+        "params": [
+          [],
+          [],
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -108,21 +170,26 @@
         "均值",
         "mean"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "arrayConcat": {
+      "name": "arrayConcat",
       "category": "array",
-      "minParams": 2,
-      "maxParams": 2,
-      "returnValueType": "array",
-      "description": "Return a new array containing elements of two arrays.",
-      "knowledgeBaseCategory": "array",
       "bilingualDescription": "返回一个新数组，包含给定两个数组的所有元素 | Returns a new array containing all elements of the two given arrays. 用于合并多个数组 | Used to merge multiple arrays.",
+      "callFormat": {
+        "type": "func",
+        "func": "arrayConcat",
+        "params": [
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -157,26 +224,28 @@
         "数组连接",
         "array join"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "arrayCount": {
+      "name": "arrayCount",
       "category": "array",
-      "minParams": 1,
-      "maxParams": 4,
-      "optionalParams": [
-        "column",
-        "filterColumn",
-        "filterValue"
-      ],
-      "returnValueType": "number",
-      "description": "Count items or non-empty object-column values in an array.",
-      "knowledgeBaseCategory": "array",
       "bilingualDescription": "统计数组中的元素数量 | Count items in an array. 如果数组元素是对象，可通过column参数指定用于计算的属性 | If array elements are objects, use column parameter to specify the property for calculation. 空值不参与计数 | Empty values are excluded from counting.",
+      "callFormat": {
+        "type": "func",
+        "func": "arrayCount",
+        "params": [
+          [],
+          [],
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -223,21 +292,26 @@
         "统计个数",
         "count items"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "arrayIndex": {
+      "name": "arrayIndex",
       "category": "array",
-      "minParams": 2,
-      "maxParams": 2,
-      "returnValueType": "number",
-      "description": "Locate a value in an array and return -1 when it does not exist.",
-      "knowledgeBaseCategory": "array",
       "bilingualDescription": "在数组中查找指定值的位置，如果找到则返回索引，否则返回-1 | Locate the position of a value in array, return index if found, otherwise -1. 用于判断元素是否存在于数组中 | Used to determine if an element exists in the array.",
+      "callFormat": {
+        "type": "func",
+        "func": "arrayIndex",
+        "params": [
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -272,26 +346,28 @@
         "元素查找",
         "element search"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "arrayMax": {
+      "name": "arrayMax",
       "category": "array",
-      "minParams": 1,
-      "maxParams": 4,
-      "optionalParams": [
-        "column",
-        "filterColumn",
-        "filterValue"
-      ],
-      "returnValueType": "number",
-      "description": "Calculate max value of an array or object-array column.",
-      "knowledgeBaseCategory": "array",
       "bilingualDescription": "计算数组中的最大值 | Calculate the max value of an array. 如果数组元素是对象，可通过column参数指定用于计算的属性 | If array elements are objects, use column parameter to specify the property for calculation. 空值不参与计算 | Empty values are excluded from calculation.",
+      "callFormat": {
+        "type": "func",
+        "func": "arrayMax",
+        "params": [
+          [],
+          [],
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -338,26 +414,28 @@
         "最高值",
         "maximum value"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "arrayMin": {
+      "name": "arrayMin",
       "category": "array",
-      "minParams": 1,
-      "maxParams": 4,
-      "optionalParams": [
-        "column",
-        "filterColumn",
-        "filterValue"
-      ],
-      "returnValueType": "number",
-      "description": "Calculate min value of an array or object-array column.",
-      "knowledgeBaseCategory": "array",
       "bilingualDescription": "计算数组中的最小值 | Calculate the min value of an array. 如果数组元素是对象，可通过column参数指定用于计算的属性 | If array elements are objects, use column parameter to specify the property for calculation. 空值不参与计算 | Empty values are excluded from calculation.",
+      "callFormat": {
+        "type": "func",
+        "func": "arrayMin",
+        "params": [
+          [],
+          [],
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -404,26 +482,28 @@
         "最低值",
         "minimum value"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "arraySum": {
+      "name": "arraySum",
       "category": "array",
-      "minParams": 1,
-      "maxParams": 4,
-      "optionalParams": [
-        "column",
-        "filterColumn",
-        "filterValue"
-      ],
-      "returnValueType": "number",
-      "description": "Sum values in an array or object-array column.",
-      "knowledgeBaseCategory": "array",
       "bilingualDescription": "计算数组中所有值的总和 | Sum the values in an array. 如果数组元素是对象，可通过column参数指定要求和的属性 | If array elements are objects, use column parameter to specify the property to sum. 空值不参与计算 | Empty values are excluded from calculation.",
+      "callFormat": {
+        "type": "func",
+        "func": "arraySum",
+        "params": [
+          [],
+          [],
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -470,21 +550,25 @@
         "合计",
         "summation"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "ceil": {
+      "name": "ceil",
       "category": "math",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "number",
-      "description": "Returns the smallest integer not less than the parameter.",
-      "knowledgeBaseCategory": "math",
       "bilingualDescription": "返回不小于参数的最小整数值，即向上取整 | Returns the smallest integer value not less than the parameter, i.e., rounds up. 常用于计算需要完整单位数量的场景 | Commonly used for calculating complete unit quantities.",
+      "callFormat": {
+        "type": "func",
+        "func": "ceil",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -513,26 +597,28 @@
         "取整",
         "round up"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "concat": {
+      "name": "concat",
       "category": "string",
-      "minParams": 1,
-      "maxParams": 4,
-      "optionalParams": [
-        "s2",
-        "s3",
-        "s4"
-      ],
-      "returnValueType": "text",
-      "description": "Concatenate string arguments.",
-      "knowledgeBaseCategory": "string",
       "bilingualDescription": "将多个字符串连接成一个字符串 | Concatenates multiple strings into a single string. 可以连接任意数量的参数，常用于拼接姓名、地址、生成完整描述等场景 | Can concatenate any number of arguments, commonly used for concatenating names, addresses, generating complete descriptions, etc.",
+      "callFormat": {
+        "type": "func",
+        "func": "concat",
+        "params": [
+          [],
+          [],
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -579,21 +665,23 @@
         "合并",
         "join"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "currentUser": {
-      "category": "user/system",
-      "minParams": 0,
-      "maxParams": 0,
-      "returnValueType": "text",
-      "description": "Returns ID of current user.",
-      "knowledgeBaseCategory": "system",
+      "name": "currentUser",
+      "category": "system",
       "bilingualDescription": "返回当前用户的ID | Returns ID of current user. 用于获取当前登录用户的身份信息，常用于权限控制和个性化显示 | Used to get current logged-in user's identity, commonly used for permission control and personalized display.",
+      "callFormat": {
+        "type": "func",
+        "func": "currentUser",
+        "params": []
+      },
       "parameters": [],
       "returnType": "string",
       "examples": [
@@ -615,26 +703,30 @@
         "登录用户",
         "logged-in user"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "date": {
-      "category": "date/time",
-      "minParams": 3,
-      "maxParams": 6,
-      "optionalParams": [
-        "hour",
-        "minute",
-        "second"
-      ],
-      "returnValueType": "date",
-      "description": "Create a system-formatted date string.",
-      "knowledgeBaseCategory": "date",
+      "name": "date",
+      "category": "date",
       "bilingualDescription": "根据年、月、日、时、分、秒参数创建系统格式的日期字符串 | Create a system-formatted date string based on year, month, day, hour, minute, and second parameters. 可以创建特定的日期时间 | Can create specific date and time.",
+      "callFormat": {
+        "type": "func",
+        "func": "date",
+        "params": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -693,21 +785,27 @@
         "日期生成",
         "date generation"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "dateAdd": {
-      "category": "date/time",
-      "minParams": 3,
-      "maxParams": 3,
-      "returnValueType": "date",
-      "description": "Add or subtract year, month, day, hour, minute, or second intervals from a date.",
-      "knowledgeBaseCategory": "date",
+      "name": "dateAdd",
+      "category": "date",
       "bilingualDescription": "在指定日期上添加或减去指定的时间间隔 | Add or subtract the specified time interval from the date. 可以添加年、月、日、时、分、秒等单位，常用于计算未来或过去的日期 | Can add year, month, day, hour, minute, second units, commonly used to calculate future or past dates.",
+      "callFormat": {
+        "type": "func",
+        "func": "dateAdd",
+        "params": [
+          [],
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -748,21 +846,28 @@
         "日期偏移",
         "date offset"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "dateDiff": {
-      "category": "date/time",
-      "minParams": 4,
-      "maxParams": 4,
-      "returnValueType": "number",
-      "description": "Return the number of time intervals between two dates.",
-      "knowledgeBaseCategory": "date",
+      "name": "dateDiff",
+      "category": "date",
       "bilingualDescription": "计算两个日期之间的时间间隔数 | Calculate the number of time intervals between two dates. 可以指定年、月、日、时、分、秒等单位，如果第一个日期晚于第二个日期，返回负数 | Can specify units like year, month, day, hour, minute, second. Returns negative number if first date is later than second date.",
+      "callFormat": {
+        "type": "func",
+        "func": "dateDiff",
+        "params": [
+          [],
+          [],
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -809,21 +914,26 @@
         "日期比较",
         "date comparison"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "dateFormat": {
-      "category": "date/time",
-      "minParams": 2,
-      "maxParams": 2,
-      "returnValueType": "text",
-      "description": "Format a date/time with a format string such as YYYY, MM, DD, HH, mm, ss.",
-      "knowledgeBaseCategory": "date",
+      "name": "dateFormat",
+      "category": "date",
       "bilingualDescription": "将给定的日期/时间按照指定格式进行格式化 | Format the given date/time according to specified format. 支持多种格式符号，如YYYY表示四位年份，MM表示月份等 | Supports various format symbols, such as YYYY for four-digit year, MM for month, etc.",
+      "callFormat": {
+        "type": "func",
+        "func": "dateFormat",
+        "params": [
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -858,33 +968,26 @@
         "格式转换",
         "format conversion"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "datePart": {
-      "category": "date/time",
-      "minParams": 2,
-      "maxParams": 2,
-      "returnValueType": "number",
-      "enumHints": {
-        "type": [
-          "Year",
-          "Quarter",
-          "Month",
-          "dayofweek",
-          "day",
-          "hour",
-          "minute",
-          "second"
+      "name": "datePart",
+      "category": "date",
+      "bilingualDescription": "从日期中提取指定部分的值，如年、月、日、时、分、秒等 | Extract specified part from date, such as year, month, day, hour, minute, second, etc. 用于获取日期的特定组成部分 | Used to get specific components of a date.",
+      "callFormat": {
+        "type": "func",
+        "func": "datePart",
+        "params": [
+          [],
+          []
         ]
       },
-      "description": "Return a selected date part.",
-      "knowledgeBaseCategory": "date",
-      "bilingualDescription": "从日期中提取指定部分的值，如年、月、日、时、分、秒等 | Extract specified part from date, such as year, month, day, hour, minute, second, etc. 用于获取日期的特定组成部分 | Used to get specific components of a date.",
       "parameters": [
         {
           "index": 0,
@@ -919,21 +1022,26 @@
         "获取年/月/日",
         "get year/month/day"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "datePicker": {
-      "category": "date/time",
-      "minParams": 2,
-      "maxParams": 2,
-      "returnValueType": "date",
-      "description": "Select a date/time; second parameter controls display time.",
-      "knowledgeBaseCategory": "date",
+      "name": "datePicker",
+      "category": "date",
       "bilingualDescription": "用于选择日期和时间 | Select the date and time. 可以通过参数指定默认选择的日期和是否显示时间 | Can specify default selected date and whether to show time through parameters.",
+      "callFormat": {
+        "type": "func",
+        "func": "datePicker",
+        "params": [
+          [],
+          true
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -968,24 +1076,27 @@
         "日期时间选择器",
         "datetime picker"
       ],
-      "sourceReferences": [
-        "expression training data generator_2.txt:functionKnowledgeBase"
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
       ],
       "safetyNotes": [
-        "Knowledge-base call_format includes a primitive parameter placeholder; validate export-backed token shape before generating primitive params."
+        "callFormat contains a primitive placeholder; generate primitive params only when export-backed for the target context."
       ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
+      "sourceReferences": [
+        "expression training data generator_2.txt:functionKnowledgeBase"
       ]
     },
     "day": {
-      "category": "date/time",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "number",
-      "description": "Returns the day of the month.",
-      "knowledgeBaseCategory": "date",
+      "name": "day",
+      "category": "date",
       "bilingualDescription": "返回指定日期的月份中的第几天（1-31） | Returns the day of the month for the specified date (1-31). 用于提取日期的日部分 | Used to extract the day part of a date.",
+      "callFormat": {
+        "type": "func",
+        "func": "day",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1014,21 +1125,26 @@
         "日期提取",
         "date extraction"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "fixed": {
+      "name": "fixed",
       "category": "math",
-      "minParams": 2,
-      "maxParams": 2,
-      "returnValueType": "number",
-      "description": "Truncate a number to the requested decimal places.",
-      "knowledgeBaseCategory": "math",
       "bilingualDescription": "将数字截断到指定的小数位数 | Truncate number to specified decimal places. 如果位数为0，结果没有小数点和小数部分 | If digit is 0, result has no decimal point or fractional part. 位数可以是负数，使数字小数点左侧的指定位数变为0 | Digit can be negative to cause specified digits left of decimal point to become zero.",
+      "callFormat": {
+        "type": "func",
+        "func": "fixed",
+        "params": [
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1063,21 +1179,25 @@
         "数字格式化",
         "number formatting"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "floor": {
+      "name": "floor",
       "category": "math",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "number",
-      "description": "Returns the largest integer not greater than the parameter.",
-      "knowledgeBaseCategory": "math",
       "bilingualDescription": "返回不大于参数的最大整数值，即向下取整 | Returns the largest integer value not greater than the parameter, i.e., rounds down. 常用于计算完整单位数量或去除小数部分 | Commonly used to calculate complete unit quantities or remove decimal parts.",
+      "callFormat": {
+        "type": "func",
+        "func": "floor",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1106,21 +1226,27 @@
         "取整",
         "round down"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "formatNumber": {
+      "name": "formatNumber",
       "category": "string",
-      "minParams": 3,
-      "maxParams": 3,
-      "returnValueType": "text",
-      "description": "Format a number with decimals and optional thousandths flag.",
-      "knowledgeBaseCategory": "string",
       "bilingualDescription": "格式化数字并返回字符串 | Format a number and return a string. 可以指定小数位数和是否显示千分位分隔符 | Can specify number of decimal places and whether to show thousand separator.",
+      "callFormat": {
+        "type": "func",
+        "func": "formatNumber",
+        "params": [
+          [],
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1161,24 +1287,27 @@
         "格式数字",
         "format number"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "getAttr": {
-      "category": "utility",
-      "minParams": 2,
-      "maxParams": 3,
-      "optionalParams": [
-        "defaultValue"
-      ],
-      "returnValueType": "unknown",
-      "description": "Get a value at an object path and return a default when undefined.",
-      "knowledgeBaseCategory": "object",
+      "name": "getAttr",
+      "category": "object",
       "bilingualDescription": "获取对象中指定路径的属性值 | Gets the value at path of object. 如果解析的值为undefined，则返回默认值 | If the resolved value is undefined, the defaultValue is returned. 用于安全地访问嵌套对象属性 | Used for safely accessing nested object properties.",
+      "callFormat": {
+        "type": "func",
+        "func": "getAttr",
+        "params": [
+          [],
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1219,21 +1348,25 @@
         "安全访问",
         "safe access"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "hour": {
-      "category": "date/time",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "number",
-      "description": "Returns the hour for a time.",
-      "knowledgeBaseCategory": "date",
+      "name": "hour",
+      "category": "date",
       "bilingualDescription": "返回指定时间的小时部分（0-23） | Returns the hour for the specified time (0-23). 用于提取时间的小时信息 | Used to extract hour information from time.",
+      "callFormat": {
+        "type": "func",
+        "func": "hour",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1262,21 +1395,27 @@
         "获取小时",
         "get hour"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "iif": {
-      "category": "logical",
-      "minParams": 3,
-      "maxParams": 3,
-      "returnValueType": "unknown",
-      "description": "Return then value when condition is true, otherwise else value.",
-      "knowledgeBaseCategory": "logic",
+      "name": "iif",
+      "category": "logic",
       "bilingualDescription": "根据条件判断返回不同的值 | Returns one of two values depending on a condition evaluation. 如果条件为真返回第一个值，否则返回第二个值 | If condition is true returns first value, otherwise returns second value. 类似于if-else语句 | Similar to if-else statement.",
+      "callFormat": {
+        "type": "func",
+        "func": "iif",
+        "params": [
+          [],
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1317,21 +1456,25 @@
         "ternary operation",
         "iif"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "isFalse": {
-      "category": "logical",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "boolean",
-      "description": "Evaluate whether an expression is false-like.",
-      "knowledgeBaseCategory": "logic",
+      "name": "isFalse",
+      "category": "logic",
       "bilingualDescription": "判断表达式是否为假 | Determines if an expression is false. 在以下情况下返回true：null、0、空字符串、字符串'false'、字符串'False'、布尔值false，否则返回false | Returns true in following cases: null, 0, empty string, string 'false', string 'False', boolean false, otherwise returns false.",
+      "callFormat": {
+        "type": "func",
+        "func": "isFalse",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1360,21 +1503,25 @@
         "布尔判断",
         "boolean judgment"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "isNullOrEmpty": {
-      "category": "logical",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "boolean",
-      "description": "Return true if an expression is null or empty string.",
-      "knowledgeBaseCategory": "validation",
+      "name": "isNullOrEmpty",
+      "category": "validation",
       "bilingualDescription": "检查表达式是否为null或空字符串 | Checks if expression is NULL or empty string. 如果是则返回true，否则返回false | Returns true if null or empty string, otherwise returns false. 用于验证输入是否有效 | Used to verify if input is valid.",
+      "callFormat": {
+        "type": "func",
+        "func": "isNullOrEmpty",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1403,21 +1550,25 @@
         "验证输入",
         "validate input"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "isTrue": {
-      "category": "logical",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "boolean",
-      "description": "Evaluate whether an expression is true-like.",
-      "knowledgeBaseCategory": "logic",
+      "name": "isTrue",
+      "category": "logic",
       "bilingualDescription": "判断表达式是否为真 | Determines if an expression is true. 在以下情况下返回false：null、0、空字符串、字符串'false'、字符串'False'、布尔值false，否则返回true | Returns false in following cases: null, 0, empty string, string 'false', string 'False', boolean false, otherwise returns true.",
+      "callFormat": {
+        "type": "func",
+        "func": "isTrue",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1446,24 +1597,26 @@
         "布尔判断",
         "boolean judgment"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "join": {
-      "category": "array",
-      "minParams": 1,
-      "maxParams": 2,
-      "optionalParams": [
-        "separator"
-      ],
-      "returnValueType": "text",
-      "description": "Join array values with comma or provided separator.",
-      "knowledgeBaseCategory": "string",
+      "name": "join",
+      "category": "string",
       "bilingualDescription": "将数组中的所有元素用指定的分隔符连接成一个字符串 | Returns a string by combining all the elements in the array with either commas or a specified separator string. 如果没有提供分隔符，则使用逗号 | If no separator is provided, commas are used.",
+      "callFormat": {
+        "type": "func",
+        "func": "join",
+        "params": [
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1498,21 +1651,26 @@
         "连接数组",
         "join array"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "left": {
+      "name": "left",
       "category": "string",
-      "minParams": 2,
-      "maxParams": 2,
-      "returnValueType": "text",
-      "description": "Return leftmost characters from a string.",
-      "knowledgeBaseCategory": "string",
       "bilingualDescription": "返回字符串左侧指定长度的字符 | Returns the leftmost specified number of characters from the string. 用于提取字符串的前缀部分 | Used to extract prefix part of string.",
+      "callFormat": {
+        "type": "func",
+        "func": "left",
+        "params": [
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1547,21 +1705,25 @@
         "字符串截取",
         "string extraction"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "len": {
+      "name": "len",
       "category": "string",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "number",
-      "description": "Return array item count or character count.",
-      "knowledgeBaseCategory": "string",
       "bilingualDescription": "返回值的长度 | Returns the length of the value. 如果值是数组，返回元素数量；如果是其他类型，返回字符数量 | If value is array, returns number of elements; if other type, returns number of characters. 用于获取字符串长度或数组大小 | Used to get string length or array size.",
+      "callFormat": {
+        "type": "func",
+        "func": "len",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1590,24 +1752,26 @@
         "数组大小",
         "array size"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "log": {
+      "name": "log",
       "category": "math",
-      "minParams": 1,
-      "maxParams": 2,
-      "optionalParams": [
-        "baseOrNumber"
-      ],
-      "returnValueType": "number",
-      "description": "Return natural logarithm or logarithm using a provided base.",
-      "knowledgeBaseCategory": "math",
       "bilingualDescription": "计算对数 | Calculate logarithm. 如果使用一个参数，返回自然对数（以e为底） | If called with one parameter, returns natural logarithm (base e). 如果使用两个参数，返回以第一个参数为底，第二个参数的对数 | If called with two parameters, returns logarithm of second parameter to base of first parameter.",
+      "callFormat": {
+        "type": "func",
+        "func": "log",
+        "params": [
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1642,21 +1806,25 @@
         "log",
         "对数计算"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "lower": {
+      "name": "lower",
       "category": "string",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "text",
-      "description": "Convert text to lowercase.",
-      "knowledgeBaseCategory": "string",
       "bilingualDescription": "将字符串中的所有大写字符转换为小写 | Converts uppercase character data to lowercase. 用于统一字符串的大小写格式 | Used to unify string case format.",
+      "callFormat": {
+        "type": "func",
+        "func": "lower",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1685,21 +1853,28 @@
         "大小写",
         "case"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "max": {
+      "name": "max",
       "category": "math",
-      "minParams": 1,
-      "maxParams": 4,
-      "returnValueType": "number",
-      "description": "Return maximum numeric value.",
-      "knowledgeBaseCategory": "math",
       "bilingualDescription": "返回输入参数中的最大值 | Returns the maximum value in the input parameters. 可以比较多个数值，找出其中的最大值 | Can compare multiple numbers and find the maximum value.",
+      "callFormat": {
+        "type": "func",
+        "func": "max",
+        "params": [
+          [],
+          [],
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1728,21 +1903,28 @@
         "比较数值",
         "compare numbers"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "min": {
+      "name": "min",
       "category": "math",
-      "minParams": 1,
-      "maxParams": 4,
-      "returnValueType": "number",
-      "description": "Return minimum numeric value.",
-      "knowledgeBaseCategory": "math",
       "bilingualDescription": "返回输入参数中的最小值 | Returns the minimum value in the input parameters. 可以比较多个数值，找出其中的最小值 | Can compare multiple numbers and find the minimum value.",
+      "callFormat": {
+        "type": "func",
+        "func": "min",
+        "params": [
+          [],
+          [],
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1771,21 +1953,25 @@
         "比较数值",
         "compare numbers"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "minute": {
-      "category": "date/time",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "number",
-      "description": "Return minute for a time.",
-      "knowledgeBaseCategory": "date",
+      "name": "minute",
+      "category": "date",
       "bilingualDescription": "返回指定时间的分钟部分（0-59） | Returns the minute for the specified time (0-59). 用于提取时间的分钟信息 | Used to extract minute information from time.",
+      "callFormat": {
+        "type": "func",
+        "func": "minute",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1814,21 +2000,25 @@
         "获取分钟",
         "get minute"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "month": {
-      "category": "date/time",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "number",
-      "description": "Return month for a date.",
-      "knowledgeBaseCategory": "date",
+      "name": "month",
+      "category": "date",
       "bilingualDescription": "返回指定日期的月份部分（1-12） | Returns the month for the specified date (1-12). 用于提取日期的月份信息 | Used to extract month information from date.",
+      "callFormat": {
+        "type": "func",
+        "func": "month",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1857,21 +2047,23 @@
         "获取月份",
         "get month"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "now": {
-      "category": "date/time",
-      "minParams": 0,
-      "maxParams": 0,
-      "returnValueType": "date",
-      "description": "Return current date and time.",
-      "knowledgeBaseCategory": "date",
+      "name": "now",
+      "category": "date",
       "bilingualDescription": "返回当前系统的日期和时间 | Returns the current date and time. 常用于记录时间戳、计算与当前时间相关的时间差等场景 | Commonly used for recording timestamps, calculating time differences related to current time, etc.",
+      "callFormat": {
+        "type": "func",
+        "func": "now",
+        "params": []
+      },
       "parameters": [],
       "returnType": "date",
       "examples": [
@@ -1893,21 +2085,25 @@
         "当前日期",
         "current date"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "number": {
+      "name": "number",
       "category": "conversion",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "number",
-      "description": "Convert a value to number; invalid/null becomes 0.",
-      "knowledgeBaseCategory": "conversion",
       "bilingualDescription": "将输入值转换为数字 | Converts input value to a number. 如果输入是null或无效，则返回0 | If input is null or invalid, returns 0. 用于将字符串或其他类型转换为数字 | Used to convert string or other types to number.",
+      "callFormat": {
+        "type": "func",
+        "func": "number",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1936,21 +2132,26 @@
         "类型转换",
         "type conversion"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "pow": {
+      "name": "pow",
       "category": "math",
-      "minParams": 2,
-      "maxParams": 2,
-      "returnValueType": "number",
-      "description": "Return X raised to Y.",
-      "knowledgeBaseCategory": "math",
       "bilingualDescription": "返回X的Y次幂 | Returns the value of X raised to the power of Y. 用于计算指数运算，如平方、立方等 | Used to calculate exponentiation, such as square, cube, etc.",
+      "callFormat": {
+        "type": "func",
+        "func": "pow",
+        "params": [
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -1985,21 +2186,23 @@
         "次方",
         "power"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "rand": {
+      "name": "rand",
       "category": "math",
-      "minParams": 0,
-      "maxParams": 0,
-      "returnValueType": "number",
-      "description": "Return random floating point value from 0 inclusive to 1 exclusive.",
-      "knowledgeBaseCategory": "math",
       "bilingualDescription": "返回一个0到1之间（包含0，不包含1）的随机浮点数 | Returns a random floating-point value in the range 0 <= v < 1.0. 用于生成随机数，如抽奖、随机排序等场景 | Used to generate random numbers, such as for lottery, random sorting, etc.",
+      "callFormat": {
+        "type": "func",
+        "func": "rand",
+        "params": []
+      },
       "parameters": [],
       "returnType": "number",
       "examples": [
@@ -2021,21 +2224,25 @@
         "随机生成",
         "random generation"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "removeDuplicates": {
+      "name": "removeDuplicates",
       "category": "array",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "array",
-      "description": "Return a new array with duplicate values removed.",
-      "knowledgeBaseCategory": "array",
       "bilingualDescription": "从给定数组中移除所有重复项，返回包含唯一元素的新数组 | Remove all duplicates from a given array and return a new array containing unique elements. 如果数组元素是对象，会转换为JSON字符串进行比较 | If elements in the array are objects, they will be converted to JSON strings for comparison.",
+      "callFormat": {
+        "type": "func",
+        "func": "removeDuplicates",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -2064,21 +2271,26 @@
         "唯一数组",
         "unique array"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "repeat": {
+      "name": "repeat",
       "category": "string",
-      "minParams": 2,
-      "maxParams": 2,
-      "returnValueType": "text",
-      "description": "Repeat a string a given number of times.",
-      "knowledgeBaseCategory": "string",
       "bilingualDescription": "返回由指定字符串重复指定次数组成的新字符串 | Returns a string consisting of the specified string repeated specified number of times. 如果次数小于1，返回空字符串 | If count is less than 1, returns an empty string.",
+      "callFormat": {
+        "type": "func",
+        "func": "repeat",
+        "params": [
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -2113,28 +2325,28 @@
         "repeat",
         "重复"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "replace": {
+      "name": "replace",
       "category": "string",
-      "minParams": 4,
-      "maxParams": 4,
-      "returnValueType": "text",
-      "enumHints": {
-        "type": [
-          "1",
-          "0",
-          "2"
+      "bilingualDescription": "在字符串中替换指定模式的文本 | Replacing first/all/last occurrence of a specified string value with another string value. 可以替换第一次出现、最后一次出现或所有出现的模式 | Can replace first occurrence, last occurrence, or all occurrences of pattern.",
+      "callFormat": {
+        "type": "func",
+        "func": "replace",
+        "params": [
+          [],
+          [],
+          [],
+          []
         ]
       },
-      "description": "Replace first/all/last occurrence; type 1 all, 0 first, 2 last.",
-      "knowledgeBaseCategory": "string",
-      "bilingualDescription": "在字符串中替换指定模式的文本 | Replacing first/all/last occurrence of a specified string value with another string value. 可以替换第一次出现、最后一次出现或所有出现的模式 | Can replace first occurrence, last occurrence, or all occurrences of pattern.",
       "parameters": [
         {
           "index": 0,
@@ -2181,21 +2393,26 @@
         "文本替换",
         "text replacement"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "right": {
+      "name": "right",
       "category": "string",
-      "minParams": 2,
-      "maxParams": 2,
-      "returnValueType": "text",
-      "description": "Return rightmost characters from a string.",
-      "knowledgeBaseCategory": "string",
       "bilingualDescription": "返回字符串右侧指定长度的字符 | Returns the rightmost specified number of characters from the string. 用于提取字符串的后缀部分 | Used to extract suffix part of string.",
+      "callFormat": {
+        "type": "func",
+        "func": "right",
+        "params": [
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -2230,24 +2447,26 @@
         "字符串截取",
         "string extraction"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "round": {
+      "name": "round",
       "category": "math",
-      "minParams": 1,
-      "maxParams": 2,
-      "optionalParams": [
-        "digits"
-      ],
-      "returnValueType": "number",
-      "description": "Round to nearest integer or specified fractional digits.",
-      "knowledgeBaseCategory": "math",
       "bilingualDescription": "将数字四舍五入到最接近的整数或指定的小数位数 | Rounds a value to the nearest integer or to the specified number of fractional digits. 用于数值的精确控制 | Used for numerical precision control.",
+      "callFormat": {
+        "type": "func",
+        "func": "round",
+        "params": [
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -2282,21 +2501,25 @@
         "舍入",
         "rounding"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "second": {
-      "category": "date/time",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "number",
-      "description": "Return second for a time.",
-      "knowledgeBaseCategory": "date",
+      "name": "second",
+      "category": "date",
       "bilingualDescription": "返回指定时间的秒部分（0-59） | Returns the second for the specified time (0-59). 用于提取时间的秒信息 | Used to extract second information from time.",
+      "callFormat": {
+        "type": "func",
+        "func": "second",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -2325,21 +2548,26 @@
         "获取秒",
         "get second"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "split": {
+      "name": "split",
       "category": "string",
-      "minParams": 2,
-      "maxParams": 2,
-      "returnValueType": "array",
-      "description": "Split a string by separator.",
-      "knowledgeBaseCategory": "string",
       "bilingualDescription": "根据指定的分隔符将字符串分割成子字符串数组 | Splits a string into an array of substrings based on a specified delimiter. 用于解析字符串数据 | Used to parse string data.",
+      "callFormat": {
+        "type": "func",
+        "func": "split",
+        "params": [
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -2374,37 +2602,27 @@
         "拆分",
         "split"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
-      ]
-    },
-    "strIndex": {
-      "category": "string",
-      "minParams": 2,
-      "maxParams": 3,
-      "optionalParams": [
-        "start_location"
-      ],
-      "returnValueType": "number",
-      "description": "Search one expression inside another and return its starting position.",
-      "sourceReferences": [
-        "expression training data generator.txt:firstPass"
-      ],
-      "safetyNotes": [
-        "Missing from expression training data generator_2.txt function knowledge base; preserve exact first-pass runtime name and do not rename from case-insensitive text."
       ]
     },
     "subString": {
+      "name": "subString",
       "category": "string",
-      "minParams": 3,
-      "maxParams": 3,
-      "returnValueType": "text",
-      "description": "Return part of a string from start for length.",
-      "knowledgeBaseCategory": "string",
       "bilingualDescription": "从字符串中提取子字符串 | Extract part of string, or text. 可以指定起始位置和长度，用于截取字符串的一部分 | Can specify start position and length, used to extract part of a string.",
+      "callFormat": {
+        "type": "func",
+        "func": "subString",
+        "params": [
+          [],
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -2445,21 +2663,25 @@
         "提取子串",
         "extract substring"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "text": {
+      "name": "text",
       "category": "conversion",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "text",
-      "description": "Convert a value to text.",
-      "knowledgeBaseCategory": "conversion",
       "bilingualDescription": "将输入值转换为字符串 | Converts input value to a string value. 用于将数字、日期或其他类型转换为字符串格式 | Used to convert number, date or other types to string format.",
+      "callFormat": {
+        "type": "func",
+        "func": "text",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -2488,21 +2710,25 @@
         "字符串转换",
         "string conversion"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "trim": {
+      "name": "trim",
       "category": "string",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "text",
-      "description": "Remove whitespace from both ends.",
-      "knowledgeBaseCategory": "string",
       "bilingualDescription": "移除字符串两端的空白字符 | Removes whitespace from both ends of a string. 包括空格、制表符、换行符等，用于清理用户输入 | Includes spaces, tabs, newlines, etc., used to clean user input.",
+      "callFormat": {
+        "type": "func",
+        "func": "trim",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -2531,57 +2757,25 @@
         "trim",
         "去除空白"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
-      ]
-    },
-    "UniqueID": {
-      "category": "user/system",
-      "minParams": 0,
-      "maxParams": 0,
-      "returnValueType": "text",
-      "description": "Generate a unique id.",
-      "knowledgeBaseCategory": "system",
-      "bilingualDescription": "生成一个唯一的ID | Generate a unique id. 通常用于创建记录的唯一标识符，如订单号、用户ID等 | Typically used to create unique identifiers for records, such as order numbers, user IDs, etc.",
-      "parameters": [],
-      "returnType": "string",
-      "examples": [
-        {
-          "description": "生成一个唯一的ID | Generate a unique ID",
-          "expression": "UniqueID()"
-        }
-      ],
-      "businessScenarios": [
-        "生成订单号 | Generate order number",
-        "创建用户ID | Create user ID",
-        "唯一标识生成 | Unique identifier generation"
-      ],
-      "keywords": [
-        "唯一ID",
-        "unique ID",
-        "生成ID",
-        "generate ID",
-        "唯一标识",
-        "unique identifier"
-      ],
-      "sourceReferences": [
-        "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "upper": {
+      "name": "upper",
       "category": "string",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "text",
-      "description": "Convert text to uppercase.",
-      "knowledgeBaseCategory": "string",
       "bilingualDescription": "将字符串中的所有小写字符转换为大写 | Converts lowercase character data to uppercase. 用于统一字符串的大小写格式 | Used to unify string case format.",
+      "callFormat": {
+        "type": "func",
+        "func": "upper",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -2610,24 +2804,26 @@
         "大写",
         "uppercase"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "weekNum": {
-      "category": "date/time",
-      "minParams": 1,
-      "maxParams": 2,
-      "optionalParams": [
-        "useISO"
-      ],
-      "returnValueType": "number",
-      "description": "Return week number for a date.",
-      "knowledgeBaseCategory": "date",
+      "name": "weekNum",
+      "category": "date",
       "bilingualDescription": "返回指定日期在一年中的周数 | Returns the week number of a specific date. 可以使用欧洲周编号系统（ISO 8601）或美国周编号系统 | Can use European week numbering system (ISO 8601) or US week numbering system.",
+      "callFormat": {
+        "type": "func",
+        "func": "weekNum",
+        "params": [
+          [],
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -2662,21 +2858,25 @@
         "获取周数",
         "get week number"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     },
     "year": {
-      "category": "date/time",
-      "minParams": 1,
-      "maxParams": 1,
-      "returnValueType": "number",
-      "description": "Return year for a date.",
-      "knowledgeBaseCategory": "date",
+      "name": "year",
+      "category": "date",
       "bilingualDescription": "返回指定日期的年份部分（四位数字） | Returns the year for the specified date (four-digit number). 用于提取日期的年份信息 | Used to extract year information from date.",
+      "callFormat": {
+        "type": "func",
+        "func": "year",
+        "params": [
+          []
+        ]
+      },
       "parameters": [
         {
           "index": 0,
@@ -2705,99 +2905,48 @@
         "获取年份",
         "get year"
       ],
+      "generationNotes": [
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+      ],
+      "safetyNotes": [],
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
-      ],
-      "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
       ]
     }
   },
-  "categories": {
-    "math": [
-      "abs",
-      "ceil",
-      "fixed",
-      "floor",
-      "log",
-      "max",
-      "min",
-      "pow",
-      "rand",
-      "round"
-    ],
-    "string": [
-      "concat",
-      "formatNumber",
-      "left",
-      "len",
-      "lower",
-      "repeat",
-      "replace",
-      "right",
-      "split",
-      "strIndex",
-      "subString",
-      "trim",
-      "upper"
-    ],
-    "date/time": [
-      "date",
-      "dateAdd",
-      "dateDiff",
-      "dateFormat",
-      "datePart",
-      "datePicker",
-      "day",
-      "hour",
-      "minute",
-      "month",
-      "now",
-      "second",
-      "weekNum",
-      "year"
-    ],
-    "array": [
-      "arrayAverage",
-      "arrayConcat",
-      "arrayCount",
-      "arrayIndex",
-      "arrayMax",
-      "arrayMin",
-      "arraySum",
-      "join",
-      "removeDuplicates"
-    ],
-    "logical": [
-      "iif",
-      "isFalse",
-      "isNullOrEmpty",
-      "isTrue"
-    ],
-    "conversion": [
-      "number",
-      "text"
-    ],
-    "user/system": [
-      "currentUser",
-      "UniqueID"
-    ],
-    "utility": [
-      "getAttr"
-    ]
-  },
-  "enrichment": {
-    "enrichedOn": "2026-05-15",
-    "source": "expression training data generator_2.txt",
-    "enrichedFunctionCount": 54,
-    "baselineFunctionCount": 55,
-    "missingFromKnowledgeBase": [
-      "strIndex"
-    ],
-    "presentInKnowledgeBaseButMissingFromBaseline": [],
-    "screenshotObservedFunctionsMetadataPending": [
-      "addWorkDays",
-      "addWorkHours"
-    ]
-  }
+  "screenshotObservedFunctions": [
+    {
+      "name": "addWorkDays",
+      "category": "date",
+      "observedIn": "BDB9E882-A50F-41CD-A067-DDD261A9D81A.png:functionTab",
+      "supportLevel": "observed_in_expression_editor_ui_metadata_pending",
+      "generationSafe": false,
+      "notes": "Visible in the Expression Editor Function tab, but not included in the parsed function knowledge base; do not generate until parameter metadata or export-backed token examples are captured."
+    },
+    {
+      "name": "addWorkHours",
+      "category": "date",
+      "observedIn": "BDB9E882-A50F-41CD-A067-DDD261A9D81A.png:functionTab",
+      "supportLevel": "observed_in_expression_editor_ui_metadata_pending",
+      "generationSafe": false,
+      "notes": "Visible in the Expression Editor Function tab, but not included in the parsed function knowledge base; do not generate until parameter metadata or export-backed token examples are captured."
+    }
+  ],
+  "inconsistencies": [
+    {
+      "item": "strIndex",
+      "status": "baseline_only",
+      "notes": "The first pass included runtime name strIndex, but the second function knowledge base omits it. Preserve camel-case strIndex from the baseline and do not rename to strindex."
+    },
+    {
+      "item": "datePicker",
+      "status": "primitive_param_placeholder",
+      "notes": "The second knowledge base call_format includes a primitive boolean placeholder for showTime. Validator should continue warning on primitive params unless export-backed for the target property."
+    },
+    {
+      "item": "addWorkDays/addWorkHours",
+      "status": "screenshot_observed_only",
+      "notes": "Visible in Function tab screenshot but absent from both normalized baselines; keep as deferred metadata pending."
+    }
+  ]
 }

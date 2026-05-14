@@ -24,6 +24,16 @@ Prove the expression generation standards in a small Yeeflow app after this foun
 5. Workflow transition: route to Finance Review when Total Amount >= 5000.
 6. Request number generation: `dateFormat(now(), "YYYYMMDD") + UniqueID()`.
 
+Second-pass enrichment keeps this first runtime test focused on proven functions. Do not include screenshot-observed `addWorkDays` or `addWorkHours` until their parameter metadata is export-backed.
+
+Expression-editor UI contexts to prove:
+
+- Calculation control expression field.
+- Dynamic display rule on a control.
+- Custom validation rule on a field.
+- Lookup/data filter condition.
+- Workflow transition condition.
+
 ## Validation
 
 - `node --check` generator.
