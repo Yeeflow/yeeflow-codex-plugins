@@ -7,6 +7,7 @@ Sources:
 - `docs/ai-training-approval-form-control-study.md`
 - `docs/generated-approval-form-controls-test-baseline.md`
 - `docs/generated-approval-form-controls-test-v2-baseline.md`
+- `docs/generated-approval-form-controls-test-v3-baseline.md`
 - `control-configurations.normalized.json`
 - `field-configurations.normalized.json`
 
@@ -38,8 +39,8 @@ This matrix separates export-backed control anatomy from generated runtime proof
 | `datepicker` | `date` | Yes | Yes | Proven | Date rendered and persisted. |
 | `daterange` | `date` | Yes | Yes | Partially proven | v2 accepted from/to values and displayed them on the approval task; a later package should expose both mapped date fields in the list view. |
 | `time` | `date` | Yes | No | Proven | v2 accepted `10:30:00`, displayed it on the approval task, and persisted it to the list view. |
-| `file-upload` | `file` | Yes | Yes | Partially proven | Upload button rendered; no file was uploaded. Stage 3 tests actual upload. |
-| `icon-upload` | `img` | Yes | No | Runtime-sensitive | Requires focused upload/media proof. Stage 3 after file upload. |
+| `file-upload` | `file` | Yes | Yes | Proven | v3 rendered, uploaded `yeeflow-upload-stage3-test.txt`, submitted, displayed the uploaded file on submitted/reviewer pages, approved, and created the text persistence record. Binary list persistence remains deferred. |
+| `icon-upload` | `img` | Yes | No | Proven | v3 rendered, uploaded `yeeflow-upload-stage3-test.png`, displayed the image preview on submitted/reviewer pages, approved, and created the text persistence record. Binary list persistence remains deferred. |
 | `identity-picker` | `user` | Yes | Yes | Proven | Current user resolved and reviewer task assignment worked. |
 | `organization-picker` | `groupselect` | Yes | No | Runtime-sensitive | Depends on tenant organization tree. Stage 4. |
 | `location-picker` | `location` | Yes | No | Runtime-sensitive | Depends on tenant location metadata. Stage 4. |
@@ -98,13 +99,36 @@ It partially proved:
 
 - `daterange` value entry and review rendering. A later package should expose both mapped date fields in the list view before promoting it to fully proven persistence.
 
-## Remaining Staged Runtime Tests
+## V3 Proven Set
 
-The next package should be Stage 3: upload and media controls.
-
-It should isolate:
+`Approval Form Controls Test v3 - Upload and Media Controls` proved:
 
 - `file-upload`
 - `icon-upload`
 
-Later stages should not start until upload/media behavior is documented.
+Runtime evidence:
+
+- Imported `Approval Form Controls Test v3.generated.yap` successfully.
+- Opened the imported app and `Upload Media Test Requests` without `datas/query` 400.
+- Published and opened `Approval Form Controls Test v3`.
+- Uploaded a tiny safe text file: `yeeflow-upload-stage3-test.txt`.
+- Uploaded a tiny safe image file: `yeeflow-upload-stage3-test.png`.
+- Submitted the form successfully.
+- Submitted request detail showed the uploaded file name and image preview.
+- Reviewer task opened and displayed both uploaded values.
+- Approval completed successfully.
+- `ContentList` created a new `Upload Media Test Requests` row with the expected text summary.
+
+Scope note: v3 proves workflow-form upload/media usage through render, upload, submit, task display, and approval completion. Binary file/image persistence into a data-list field was intentionally out of scope and remains deferred.
+
+## Remaining Staged Runtime Tests
+
+The next package should be Stage 4: people and organization picker controls.
+
+It should isolate:
+
+- `organization-picker`
+- `location-picker`
+- `cost-center-picker`
+
+Later stages should not start until picker behavior is documented.
