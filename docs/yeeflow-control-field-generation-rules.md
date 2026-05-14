@@ -17,6 +17,26 @@ This document operationalizes the normalized control and field references for Ye
 - Image/icon upload in Runtime V2 uses `attrs.controlmultiple = true`; generated `icon-upload` should follow that or fall back.
 - Detect calculated-looking fields. Use native `calculated` controls for patterns such as `Subtotal = Quantity * Unit Price`; do not generate editable input controls for formulas without an explicit reason.
 
+### AI Training Approval Control Reference
+
+`docs/ai-training-approval-form-control-study.md` documents the focused `AI Training.yap` approval form export. Use it as an export-backed anatomy reference for broad approval-form controls, not as a complete generated-app runtime baseline.
+
+Observed control-to-variable rules:
+
+- `input`, `textarea`, `richtext`, `radio`, and `checkbox` bind text variables.
+- `input_number`, `percent`, and `currency` bind number variables.
+- `switch` binds boolean variables.
+- `datepicker`, `daterange`, and `time` bind date variables.
+- `file-upload`, `icon-upload`, `identity-picker`, `organization-picker`, `location-picker`, `cost-center-picker`, `metadata`, `mutiple-metadata`, `lookup`, and `list` bind their corresponding advanced variable types.
+- `daterange` uses the From variable as `binding` and stores the To variable in `attrs["binding-date-range"]`.
+- `list` controls require a matching `variables.basic[]` list variable whose `value` points to a `variables.listref[]` entry; list child controls use `attrs.list_field`, `attrs.list_field_binding`, and `attrs.list_control_id`.
+
+Generation posture:
+
+- The sample improves schema knowledge for `percent`, `checkbox`, `richtext`, file/image upload, pickers, metadata, lookup-list, sublists, tabs, action buttons, and data-list display controls.
+- These patterns remain runtime-sensitive for generated packages until each is proven by a focused generated import test.
+- For generator final mode, unresolved lookup sources, metadata category IDs, picker dependencies, or listref structures are stop conditions.
+
 ## Data List Fields
 
 - Consult `field-configurations.normalized.json` before using a field/control type.

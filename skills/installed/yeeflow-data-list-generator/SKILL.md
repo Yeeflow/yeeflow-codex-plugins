@@ -79,6 +79,7 @@ Load only the relevant reference:
 - In the active generator workspace, use `control-configurations.normalized.json`, `docs/yeeflow-control-to-field-mapping.md`, and `yeeflow-control-field-schema-utils.js` when translating approval-form controls into persisted data-list fields.
 - In the active generator workspace, use `docs/yeeflow-form-design-quality-rules.md` when data-list custom forms need to align with rich approval-form section/grid/text/icon standards.
 - For generated data-list persistence, prefer Text fallback for requester/user values unless a focused native data-list identity/user field export proves the persisted shape.
+- When app-level approval forms use advanced native controls, read `docs/ai-training-approval-form-control-study.md` for export-backed approval variable/control anatomy before choosing persisted data-list field fallbacks. It improves mapping context for file/image, user/department/location/cost center, metadata, lookup, lookup-list, and sublist controls, but those persisted field shapes remain runtime-sensitive unless a focused data-list export proves them.
 - `references/metadata-guide.md`: `.ydl` and `.yap` metadata lessons.
 - `references/examples-summary.md`: proven examples and intentionally omitted bulky artifacts.
 

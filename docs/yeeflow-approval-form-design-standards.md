@@ -117,3 +117,9 @@ For native Text controls, use `docs/yeeflow-text-control-generation-standards.md
 ## Validator Guidance
 
 Warn for missing full width, zero padding, missing page-level background on rich full-page forms, background on `Main`, missing `Main`, missing `Content`, missing `Form body`, missing `Form bottom`, missing `Form header` when a request summary exists, workflow controls outside `Form bottom`, text/icon controls without inline width, field sections without grids, calculated-looking editable fields, runtime-sensitive picker/image attrs, and excessive arbitrary decision/status colors.
+
+## Advanced Control Reference
+
+Use `docs/ai-training-approval-form-control-study.md` when a generated approval form needs broader native controls beyond the current proven-safe set. That export shows many control types in one app-level approval form, including tabs, `flex_grid`, rich text, checkbox multi-choice, percent, file/image upload, user/department/location/cost center pickers, metadata, lookup, lookup-list, sublists, data-list display, action buttons, Action Panel, and Flow History.
+
+Treat the AI Training export as a read-only control anatomy reference. It is not a final generated-app baseline because it contains only a submission page and intentionally exercises controls that are still runtime-sensitive for generation. Promote its patterns only through staged generation and import testing.

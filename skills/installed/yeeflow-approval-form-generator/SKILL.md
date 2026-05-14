@@ -165,6 +165,8 @@ Before generating approval form controls, check the normalized control reference
 
 Generated value-entry controls should have `binding` when the value must persist. Use `attrs.control_validation` for validation rules, `attrs.control_display` for dynamic display/style only when copied from a studied export, and `attrs.control_event_rule` only after the target action shape is modeled and validated. File upload, icon upload, signer, metadata, multi-metadata, lookup-list, and environment pickers are schema-supported but runtime-unproven unless a focused export/import proves the exact shape.
 
+AI Training control-study update: when the active workspace includes `docs/ai-training-approval-form-control-study.md`, use it as the broad approval-control anatomy reference. It confirms `binding -> variables.basic[].id`, type-compatible variables for text/number/boolean/date/file/img/user/groupselect/location/costcenter/metadata/lookup/list controls, `daterange` From/To binding via `attrs["binding-date-range"]`, `radio` dropdown via `attrs.displayStyle = "dropdown"`, `checkbox` multi-choice/dropdown via `attrs.choices` plus `attrs.color_choices`, `currency` number attrs, file/icon upload attrs, picker multiple attrs, metadata `source/categoryId`, lookup source/search/display attrs, and sublist `variables.listref` plus list-field child-control wiring. Treat advanced controls from this export as runtime-sensitive until a focused generated package imports and opens successfully.
+
 ## Field Type Rules
 
 Use the Visitor Access Management v11 baseline as the current generated proof for richer approval form fields.
