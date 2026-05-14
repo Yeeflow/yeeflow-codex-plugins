@@ -37,6 +37,41 @@ Generation posture:
 - These patterns remain runtime-sensitive for generated packages until each is proven by a focused generated import test.
 - For generator final mode, unresolved lookup sources, metadata category IDs, picker dependencies, or listref structures are stop conditions.
 
+### Runtime Coverage Consolidation
+
+Use `approval-form-control-runtime-coverage.json` and `docs/approval-form-control-runtime-coverage-matrix.md` as the current control safety matrix.
+
+Runtime-proven generated controls now include:
+
+- `input`, `textarea`, `input_number`, `currency`, `checkbox`, `switch`, `datepicker`
+- `percent`, `time`, `hyperlink`, `rate`, `calculated`
+- `file-upload` and `icon-upload` for workflow-form upload/display, with binary list persistence still deferred
+- editable single-select `identity-picker`, with text-summary persistence
+- internal packaged single-select `lookup`
+- workflow-form `list` / `listref` row capture and review display
+- `workflowControlPanel` and `workflowHistory`
+
+Partial or environment-dependent controls:
+
+- `richtext`, `radio`, and `daterange` need focused persistence checks.
+- `organization-picker`, `location-picker`, and `cost-center-picker` render/open but depend on tenant metadata and retention behavior.
+
+Deferred controls:
+
+- Stage 5 metadata/tag controls are intentionally skipped for now: `metadata`, `mutiple-metadata`, and `tag`.
+- `lookup-list`, embedded `data-list`, `signer`, and tab/layout-only controls need separate isolated packages.
+
+Lookup persistence rule:
+
+- A raw lookup variable mapped into a plain text data-list field persisted the internal local row ID in v6.
+- Use `attrs.addition[]` autofill variables or explicit summary variables when generated apps need readable lookup text such as product name, code, category, or price.
+- Store the raw lookup row ID only when downstream logic intentionally needs the row ID or the target field is a proven lookup-compatible data-list field.
+
+List/listref persistence rule:
+
+- Generated list/listref controls can render a row table, add/edit child values, submit, show values on reviewer tasks, and complete approval.
+- Direct child-row-to-data-list persistence is not proven. Persist a text summary or model a separate child list until row persistence is export-proven.
+
 ## Data List Fields
 
 - Consult `field-configurations.normalized.json` before using a field/control type.
@@ -55,7 +90,7 @@ Generation posture:
 - Prefer Text fallback for user, organization, location, cost center, tag, metadata, hyperlink, signer, and file/image display values until native runtime is proven.
 - For data-list persistence, prefer Text fallback for requester/user values unless a focused data-list identity/user field export proves the native persisted field shape. Approval forms may still use identity-picker for current-user workflow assignment when that pattern is proven.
 - Prefer Decimal fallback for percent and rate until native display behavior is proven.
-- Defer file upload, icon upload, signer, metadata tree, lookup-list, and sublist persistence unless a focused export/import proves the shape. If explicitly generating native file/image controls, follow the Runtime V2 attrs and flag the package as needing runtime proof.
+- Defer signer, metadata tree, lookup-list, embedded data-list display, and sublist row persistence unless a focused export/import proves the shape. If explicitly generating native file/image controls, follow the Runtime V2/v3 attrs, use workflow-form usage as proven, and keep binary data-list persistence deferred.
 - Do not guess enum values, picker max-selection settings, lookup metadata, or calculated-column formulas.
 
 ## Validator Policy

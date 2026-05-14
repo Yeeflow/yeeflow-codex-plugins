@@ -175,6 +175,8 @@ Approval Form Controls Test v4 runtime update: the generated picker package prov
 
 Approval Form Controls Test v6 runtime update: the generated lookup/list package proved internal packaged single-select `lookup` and workflow-form `list` / `listref` controls through import, app open, source and target lists opening without `datas/query` 400, lookup picker open, packaged product selection, lookup display, `attrs.addition[]` autofill into readonly variables, list row add/edit, submit, submitted-page display, reviewer-task display, approval completion, and `ContentList` target row creation. Generate business lookups with the source list packaged in the same `.yap` when possible, and validate source list/display/search/addition fields before build. Do not map a raw lookup variable directly into a plain text field when the expected value is the display name: v6 showed that plain text persistence stores the internal local row ID. Persist readable values through lookup addition/autofill variables or explicit summary variables unless storing the row ID is intentional. For list/listref controls, workflow-form render/add/edit/review is proven, but direct child-row-to-data-list persistence is still deferred; persist a text summary or use a separately modeled child list until direct row persistence is export-proven.
 
+Before broad control generation, consult `approval-form-control-runtime-coverage.json` and `docs/approval-form-control-runtime-coverage-matrix.md` when present. They are the current source of truth for proven, partial, environment-dependent, deferred, persistence-safe, and summary/autofill-required controls.
+
 ## Field Type Rules
 
 Use the Visitor Access Management v11 baseline as the current generated proof for richer approval form fields.

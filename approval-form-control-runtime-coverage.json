@@ -15,6 +15,86 @@
     "runtime_sensitive": "Export-backed anatomy exists but depends on environment metadata, uploads, advanced sources, or unresolved runtime behavior.",
     "deferred": "Do not generate by default until a focused export/import proof exists."
   },
+  "consolidatedCoverage": {
+    "runtimeProvenControls": [
+      "input",
+      "textarea",
+      "input_number",
+      "currency",
+      "percent",
+      "checkbox",
+      "switch",
+      "datepicker",
+      "time",
+      "file-upload",
+      "icon-upload",
+      "identity-picker",
+      "lookup",
+      "list",
+      "rate",
+      "hyperlink",
+      "calculated",
+      "workflowControlPanel",
+      "workflowHistory"
+    ],
+    "partiallyProvenControls": [
+      "richtext",
+      "radio",
+      "daterange",
+      "organization-picker",
+      "location-picker",
+      "cost-center-picker"
+    ],
+    "deferredControls": [
+      "metadata",
+      "mutiple-metadata",
+      "lookup-list",
+      "data-list",
+      "signer",
+      "tag",
+      "aktabs"
+    ],
+    "persistenceSafeControls": [
+      "input",
+      "textarea",
+      "input_number",
+      "currency",
+      "percent",
+      "checkbox",
+      "switch",
+      "datepicker",
+      "time",
+      "identity-picker as text-summary",
+      "lookup via addition/summary variables",
+      "list via text summary",
+      "rate",
+      "hyperlink",
+      "calculated",
+      "file-upload/icon-upload as text-summary proof only"
+    ],
+    "renderOnlyOrSelectionOnlyControls": [
+      "richtext",
+      "radio",
+      "daterange list-view persistence",
+      "organization-picker",
+      "location-picker",
+      "cost-center-picker",
+      "file-upload binary list persistence",
+      "icon-upload binary list persistence"
+    ],
+    "requiresAutofillOrSummaryVariables": [
+      "lookup",
+      "list/listref",
+      "file-upload",
+      "icon-upload",
+      "identity/organization/location/cost-center pickers when direct native persistence is not proven"
+    ],
+    "notes": [
+      "Stage 5 metadata/tag controls were intentionally skipped.",
+      "Stage 6 proved raw lookup-to-text persistence stores the internal local row ID; use attrs.addition[] or explicit summary variables for readable persistence.",
+      "Direct list/listref child-row persistence is not proven; persist a summary or generate a separate child list after export-backed proof."
+    ]
+  },
   "controls": [
     { "controlType": "input", "variableType": "text", "foundInAITraining": true, "includedInV1": true, "runtimeStatus": "proven", "reason": "Submitted Request Title and persisted it to Title.", "requiredFutureTest": "None for basic single-line text.", "recommendedFallback": null },
     { "controlType": "textarea", "variableType": "text", "foundInAITraining": true, "includedInV1": true, "runtimeStatus": "proven", "reason": "Rendered on submit and review pages; reviewer notes textarea rendered.", "requiredFutureTest": "Exercise persistence of long text in a later form-focused package if needed.", "recommendedFallback": "input for short text only." },

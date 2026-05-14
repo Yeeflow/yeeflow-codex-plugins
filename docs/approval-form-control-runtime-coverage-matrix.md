@@ -64,6 +64,40 @@ This matrix separates export-backed control anatomy from generated runtime proof
 
 The machine-readable version is `approval-form-control-runtime-coverage.json`.
 
+## Consolidated Coverage Summary
+
+Runtime-proven for generated packages:
+
+- Basic values and layout: `input`, `textarea`, `input_number`, `currency`, `checkbox`, `switch`, `datepicker`, `workflowControlPanel`, `workflowHistory`
+- Advanced inputs: `percent`, `time`, `hyperlink`, `rate`, `calculated`
+- Upload/media workflow-form usage: `file-upload`, `icon-upload`
+- People picker: editable single-select `identity-picker`
+- Lookup/list controls: internal packaged single-select `lookup`, workflow-form `list` / `listref`
+
+Partially proven:
+
+- `richtext`: editor rendered, but formatted value persistence is not proven.
+- `radio`: dropdown rendered, but selected value persistence still needs a focused choice proof.
+- `daterange`: from/to values rendered and reviewed, but both mapped fields still need list-view persistence proof.
+- `organization-picker`, `location-picker`, `cost-center-picker`: controls rendered/opened, but usable selection depends on tenant metadata and retention attrs.
+
+Skipped/deferred:
+
+- Stage 5 was intentionally skipped: `metadata`, `mutiple-metadata`, `tag`.
+- `lookup-list`, embedded `data-list`, `signer`, and `aktabs` remain separate future packages.
+
+Persistence-safe posture:
+
+- Use direct `ContentList` mappings for proven primitive fields such as text, textarea, number, currency, percent, checkbox-as-text, switch, date/time, hyperlink, rate, and calculated values.
+- Use text-summary persistence for file/image uploads unless binary list-field persistence is explicitly proven.
+- Use text-summary persistence for identity/picker controls unless direct native picker fields are explicitly proven.
+- Use `attrs.addition[]` autofill variables or explicit summary variables for lookup display text and related readable values.
+- Use list/listref for workflow-form row capture and review display, but persist a text summary until direct child-row persistence is export-proven.
+
+Render-only or selection-only posture:
+
+- Do not claim runtime-safe persistence for `richtext`, `radio`, `daterange`, organization/location/cost-center pickers, metadata, tags, lookup-list, embedded data-list, signer, tabs, or direct sublist row persistence until an isolated generated package proves the exact behavior.
+
 ## V1 Proven Set
 
 `Approval Form Controls Test v1` proved:
