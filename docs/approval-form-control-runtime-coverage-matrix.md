@@ -9,6 +9,7 @@ Sources:
 - `docs/generated-approval-form-controls-test-v2-baseline.md`
 - `docs/generated-approval-form-controls-test-v3-baseline.md`
 - `docs/generated-approval-form-controls-test-v4-baseline.md`
+- `docs/generated-approval-form-controls-test-v6-baseline.md`
 - `control-configurations.normalized.json`
 - `field-configurations.normalized.json`
 
@@ -46,14 +47,14 @@ This matrix separates export-backed control anatomy from generated runtime proof
 | `organization-picker` | `groupselect` | Yes | No | Partially proven | v4 rendered and opened the department selector with `Default` visible; selection did not retain after OK in this sandbox, so value behavior remains environment-sensitive. |
 | `location-picker` | `location` | Yes | No | Partially proven | v4 rendered and opened the location picker; sandbox returned no matching location data. |
 | `cost-center-picker` | `costcenter` | Yes | No | Partially proven | v4 rendered and opened the cost center selector; sandbox returned no cost center rows. |
-| `metadata` | `metadata` | Yes | No | Deferred | Requires known `source` and `categoryId`; do not guess. Stage 5 only with resolved metadata. |
-| `mutiple-metadata` | `mutiple-metadata` | Yes | No | Deferred | Same metadata source risk plus multi-value shape. |
-| `lookup` | `lookup` | Yes | Yes | Partially proven | Internal lookup rendered in v1 but no value was selected. Stage 6 will test selection/persistence. |
-| `lookup-list` | `lookup` | Yes | No | Runtime-sensitive | Relation-name addition shape needs an isolated generated proof. |
-| `list` / `listref` | `list` | Yes | No | Runtime-sensitive | Requires `variables.listref` and child-control wiring. |
-| `data-list` | n/a | Yes | No | Runtime-sensitive | Needs resolved source metadata and display proof. |
+| `metadata` | `metadata` | Yes | No | Deferred | Stage 5 intentionally skipped for now; requires known `source` and `categoryId`; do not guess metadata category IDs. |
+| `mutiple-metadata` | `mutiple-metadata` | Yes | No | Deferred | Stage 5 intentionally skipped for now; same metadata source risk plus multi-value shape. |
+| `lookup` | `lookup` | Yes | Yes | Proven | v6 proved packaged internal lookup selection, display, addition/autofill mappings, review display, approval completion, and target record creation. Raw lookup-to-text persistence stored the local row ID, so use addition/summary fields for readable persistence. |
+| `lookup-list` | `lookup` | Yes | No | Deferred | Not included in v6; relation-name addition shape still needs an isolated generated proof. |
+| `list` / `listref` | `list` | Yes | No | Proven | v6 proved table render, add row, edit row, submitted/reviewer display, approval completion, and text-summary persistence. Direct child-row persistence remains deferred. |
+| `data-list` | n/a | Yes | No | Deferred | Not included in v6; embedded display should be isolated after lookup/listref proof. |
 | `signer` | `signer` | No | No | Deferred | Schema-supported but not in AI Training; needs focused signer export. |
-| `tag` | `tag` | No | No | Schema-supported but untested | Use text/checkbox fallback until a generated package proves it. |
+| `tag` | `tag` | No | No | Deferred | Stage 5 intentionally skipped for now; use text/checkbox fallback until a generated package proves tag source behavior. |
 | `rate` | `number` | No | No | Proven | v2 rendered the star rating, accepted `3.5`, displayed it on review, and persisted it to the list view. |
 | `hyperlink` | `text` | No | No | Proven | v2 accepted a URL, displayed it as an open link on review, and persisted it as a list-view link. |
 | `calculated` | `number` | No | Yes | Proven | v1 proved subtotal and v2 proved percent-based calculation: `200 * 25% = 50`. |
@@ -151,14 +152,40 @@ Runtime evidence:
 
 Scope note: v4 proves identity-picker workflow-form usage and partial render/open behavior for tenant-metadata pickers. Direct picker-value persistence and organization/cost-center/location selection remain deferred until the tenant has selectable metadata or a focused working export proves the required retention attrs.
 
+## V6 Runtime Set
+
+`Approval Form Controls Test v6 - Lookup and List Controls` proved:
+
+- `lookup`
+- `list` / `listref`
+
+Runtime evidence:
+
+- Imported `Approval Form Controls Test v6.generated.yap` successfully.
+- Opened the imported app, `Reference Products`, and `Lookup List Test Requests` without `datas/query` 400.
+- `Reference Products` loaded packaged sample rows for `27-inch Monitor`, `Docking Station`, and `Standard Laptop`.
+- Opened `Approval Form Controls Test v6` approval form.
+- Lookup picker opened and showed packaged source records.
+- Selected `Standard Laptop`; submit page displayed the selected lookup value.
+- Lookup `attrs.addition` mappings populated `Product Code = LAP-STD`, `Product Category = Hardware`, and `Unit Price = USD 1,250.00`.
+- Added one list/sublist row and edited `Product`, `Quantity`, `Unit Price`, and `Line Note`.
+- Submitted the form successfully.
+- Submitted request detail and reviewer task displayed the lookup value and list row values.
+- Reviewer approval completed successfully.
+- `ContentList` created a new `Lookup List Test Requests` row.
+
+Generator rule learned: a raw lookup variable mapped into a plain text data-list field persisted the internal local row ID (`2054943200723742740`) rather than the display text. For business-readable persistence, map addition/autofill values or explicit text summary variables; use direct lookup persistence only when storing the local row ID is intentional or the target field is a proven lookup-compatible field.
+
+Scope note: v6 did not include `lookup-list` or embedded `data-list` display. Those remain deferred for isolated packages.
+
 ## Remaining Staged Runtime Tests
 
-The next package should be Stage 5: metadata and tag controls.
-
-It should isolate:
+Stage 5 is intentionally skipped for now:
 
 - `metadata`
 - `mutiple-metadata`
 - `tag`
 
-Later stages should not start until metadata/tag behavior is documented.
+The next package should be Stage 7: signer and special controls, unless lookup-list or embedded data-list display becomes higher priority.
+
+Later metadata/tag work should resume only with export-backed source/category/tag behavior.
