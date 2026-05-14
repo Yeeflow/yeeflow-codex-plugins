@@ -132,6 +132,13 @@ function validateControlAgainstSchema(control, schemas, options = {}) {
   const type = safeString(control && (control.type || control.controlType || control.Type)).trim();
   if (!type || !schemas || !schemas.hasControlReference) return [];
   const entry = schemas.control.byControlType[type];
+  if (!entry && type === "calculated") {
+    return [{
+      code: "EXPORT_BACKED_CONTROL_TYPE",
+      message: "Control type calculated is export-backed by IT Hardware CAPEX Runtime V2 but not present in control-configurations.normalized.json; validate attrs.calculated before generator promotion.",
+      detail: { type, supportLevel: "export-backed-runtime-v2" },
+    }];
+  }
   if (!entry) {
     return [{
       code: "UNKNOWN_CONTROL_TYPE",
@@ -186,6 +193,7 @@ function isGeneratedValueControl(controlType) {
     "cost-center-picker",
     "lookup",
     "lookup-list",
+    "calculated",
     "signer",
     "tag",
     "metadata",

@@ -11,6 +11,11 @@ This document operationalizes the normalized control and field references for Ye
 - Use `attrs.control_display` for dynamic show/hide/readonly/style only when the rule shape is copied from a studied export.
 - Use `attrs.control_event_rule` only when the action is explicitly modeled and validated.
 - Yeeflow page/control JSON often stores style and config values as `[null, value]`; schema validators should unwrap that representation before checking primitive value type or enum membership.
+- For generated form design quality, use `docs/yeeflow-form-design-quality-rules.md`: page background on `formdef.attrs.background`, `Form header` for request summaries, inline text/icon widths, square icon badges, and two-column `flex_grid` field sections.
+- Runtime V2 repaired some environment-sensitive controls by re-adding native controls with minimal attrs. Treat `location-picker`, department/organization picker, `cost-center-picker`, `metadata`, and `icon-upload` as runtime-sensitive unless a focused export proves the exact generated shape.
+- File upload controls in the Runtime V2 export include `attrs.ver = 1`; generated file uploads should include this until another export proves otherwise.
+- Image/icon upload in Runtime V2 uses `attrs.controlmultiple = true`; generated `icon-upload` should follow that or fall back.
+- Detect calculated-looking fields. Use native `calculated` controls for patterns such as `Subtotal = Quantity * Unit Price`; do not generate editable input controls for formulas without an explicit reason.
 
 ## Data List Fields
 
@@ -30,7 +35,7 @@ This document operationalizes the normalized control and field references for Ye
 - Prefer Text fallback for user, organization, location, cost center, tag, metadata, hyperlink, signer, and file/image display values until native runtime is proven.
 - For data-list persistence, prefer Text fallback for requester/user values unless a focused data-list identity/user field export proves the native persisted field shape. Approval forms may still use identity-picker for current-user workflow assignment when that pattern is proven.
 - Prefer Decimal fallback for percent and rate until native display behavior is proven.
-- Defer file upload, icon upload, signer, metadata tree, lookup-list, and sublist persistence unless a focused export/import proves the shape.
+- Defer file upload, icon upload, signer, metadata tree, lookup-list, and sublist persistence unless a focused export/import proves the shape. If explicitly generating native file/image controls, follow the Runtime V2 attrs and flag the package as needing runtime proof.
 - Do not guess enum values, picker max-selection settings, lookup metadata, or calculated-column formulas.
 
 ## Validator Policy

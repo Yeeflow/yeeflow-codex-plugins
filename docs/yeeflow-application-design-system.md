@@ -128,12 +128,25 @@ Submission pages and task pages should use:
 
 - `attrs.container.cw = "2"`
 - zero padding
+- page-level background for full-page form backgrounds
 - `Main`
 - `Content`
 - `Form body`
 - `Form bottom`
 
 `Form body` contains requester fields, readonly mirrored fields, reviewer decision fields, and section containers.
+
+When a submission form has a top request summary, use a `Form header` container above the main field sections. `Form header` should provide background, border, rounded corners, and overflow clipping. Put `Request summary panel` and `Request metric row` inside it.
+
+The manually improved IT Hardware CAPEX Runtime V2 export proved these additional form-quality defaults:
+
+- use `page.formdef.attrs.background` for full-page background instead of `Main.attrs.common.background`
+- use `attrs.common.css` on a specific container when a gradient/background image is needed and native settings cannot express it
+- generate `heading` and `text-editor` controls with inline width positioning by default
+- wrap section icons in square centered badge containers
+- put normal fields inside two-column `flex_grid` controls
+- keep textarea, rich text, and list/sublist controls full row
+- use native `calculated` controls for calculated values such as `Subtotal = Quantity * Unit Price`
 
 `Form bottom` appears at the end of `Content` and contains by default:
 
@@ -194,6 +207,7 @@ Use consistent `nv_label` names:
 
 - `Main`
 - `Content`
+- `Form header`
 - `Page header`
 - `Summary section`
 - `Body section`

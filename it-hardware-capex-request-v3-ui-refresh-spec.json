@@ -1,0 +1,92 @@
+{
+  "name": "IT Hardware CAPEX Request v3 UI Refresh",
+  "sourceBaseline": {
+    "generator": "generate-it-hardware-capex-request-v2.mjs",
+    "runtimeStudy": "docs/it-hardware-capex-request-runtime-v2-ui-study.md",
+    "designRules": "docs/yeeflow-form-design-quality-rules.md"
+  },
+  "generationPolicy": {
+    "generateNow": false,
+    "freshIdFamilyRequired": true,
+    "freshFlowKeyRequired": true,
+    "dataFormsListId": 0,
+    "preserveNativeTitleMetadata": true,
+    "noCustomCode": true,
+    "noExternalIntegrations": true
+  },
+  "uiRules": {
+    "pageBackground": {
+      "path": "page.formdef.attrs.background",
+      "defaultColor": "var(--c--neutral-light)",
+      "mainContainerBackgroundAllowed": false
+    },
+    "shell": ["Main", "Content", "Form body", "Form bottom"],
+    "header": {
+      "requiredOnSubmission": true,
+      "nvLabel": "Form header",
+      "children": ["Request summary panel", "Request metric row"],
+      "overflow": "hidden",
+      "borderRadius": 12
+    },
+    "textControls": {
+      "defaultInlineWidthPath": "attrs.common.positioning.widthtype",
+      "defaultInlineWidthValue": [null, "2"],
+      "requireMeaningfulNvLabel": true
+    },
+    "iconBadges": {
+      "wrapperWidthPx": 46,
+      "wrapperHeightPx": 46,
+      "iconSizePx": 16,
+      "centered": true
+    },
+    "fieldGrids": {
+      "controlType": "flex_grid",
+      "desktopColumns": 2,
+      "tabletColumns": 2,
+      "mobileColumns": 1,
+      "longControlsFullRow": ["textarea", "richtext", "list"]
+    }
+  },
+  "controlRules": {
+    "runtimeSensitive": [
+      "location-picker",
+      "organization-picker",
+      "cost-center-picker",
+      "metadata",
+      "mutiple-metadata",
+      "icon-upload"
+    ],
+    "fileUpload": {
+      "requiredAttrs": {
+        "ver": 1
+      }
+    },
+    "iconUpload": {
+      "requiredAttrs": {
+        "controlmultiple": true
+      },
+      "fallback": "file-upload or text display field if native image upload is not explicitly requested"
+    }
+  },
+  "calculatedFields": [
+    {
+      "label": "Sub total",
+      "binding": "subtotal",
+      "controlType": "calculated",
+      "formula": "quantity * unit_price",
+      "sourceVariables": ["quantity", "unit_price"]
+    }
+  ],
+  "validation": {
+    "warningsExpected": [
+      "runtime-sensitive native picker controls may warn until focused runtime proof exists"
+    ],
+    "commands": [
+      "node --check generate-it-hardware-capex-request-v3.mjs",
+      "node validate-yap-package.js <v3-app-def> --mode generator --stage final",
+      "node validate-yap-graph.js <v3-app-def> --mode generator --stage final",
+      "node validate-ywf-def.js <v3-approval-def> --mode final",
+      "node validate-ydl-list.js <v3-list-def> --mode generator --stage final"
+    ]
+  }
+}

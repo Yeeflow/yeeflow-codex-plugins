@@ -5,6 +5,7 @@ Use this table when planning app-level persistence from approval form controls t
 | Approval/control type | Data-list field type | Data-list control | Support | Fallback / notes |
 | --- | --- | --- | --- | --- |
 | calculated-column | Calculated | calculated-column | data-list-only |  |
+| calculated | Decimal | calculated / readonly display | generation-safe-with-export-backed-expression | Use for approval-form calculated display values such as Subtotal = Quantity * Unit Price. Persist calculated result only when ContentList mapping is type-compatible or store source values and recalculate downstream. |
 | checkbox | Text | checkbox | schema-supported-runtime-unproven | radio or text label |
 | cost-center-picker | Text | input | fallback |  |
 | currency | Decimal | currency | generation-safe-with-rules |  |
@@ -39,3 +40,4 @@ Use this table when planning app-level persistence from approval form controls t
 - Fallback mappings should store a simple display value in Text or Decimal until the native field runtime is proven.
 - Deferred mappings must stop generation unless the user explicitly asks for research or provides an export proving the shape.
 - `calculated-column` is data-list only; do not model it as an approval variable unless a real export proves the workflow interaction.
+- Approval-form `calculated` controls are display/calculation controls, not normal editable inputs. Use them for calculated-looking fields when the expression can be safely built from known workflow variables.

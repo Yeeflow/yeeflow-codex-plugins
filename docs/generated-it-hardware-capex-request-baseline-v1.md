@@ -100,6 +100,7 @@ Every review/task has a rejection path to End with Rejection. InclusiveGateway c
 - `text-editor` and `icon` controls are schema-supported/unclassified.
 - `richtext`, `checkbox`, file upload, icon upload, signer, identity picker, location picker, and cost-center picker are runtime-unproven or environment-dependent in this generated package.
 - File, image, and signer values are not persisted through `ContentList` in v1.
+- Later manual Runtime V2 UI refinement proved that v1/v2 form layout quality was not yet the default standard. Future regeneration should apply `docs/yeeflow-form-design-quality-rules.md`, including page-level background, `Form header`, request metric row, inline text/icon widths, square icon badge wrappers, two-column `flex_grid` field sections, runtime-sensitive picker/image handling, and native calculated controls for formula fields.
 
 ## Runtime Status
 

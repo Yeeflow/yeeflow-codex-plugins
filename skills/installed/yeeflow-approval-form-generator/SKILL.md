@@ -61,6 +61,8 @@ Use `docs/yeeflow-root-style-token-reference.md` for approval-form token guidanc
 
 Generated approval forms should apply the design system by default: business content in `Form body`, Action Panel and Flow History in `Form bottom`, readonly task-page mirroring where useful, meaningful `nv_label`, and token-aligned colors and spacing without changing core workflow logic.
 
+For higher-quality generated forms, also use the Runtime V2 CAPEX form rules in `docs/yeeflow-form-design-quality-rules.md` when present. Put page background on `page.formdef.attrs.background`, keep `Main` structural, add `Form header` for request summaries, use inline text/icon widths, square icon badge wrappers, two-column `flex_grid` field sections, and native calculated controls for formula fields such as `Subtotal = Quantity * Unit Price`.
+
 ## Hard Stop Conditions
 
 Stop and report blockers. Do not build final `.ywf` when:
@@ -120,6 +122,7 @@ Load only the reference needed for the task:
 - `references/validation-guide.md`: structural and app-context validator usage.
 - In the active generator workspace, also use `docs/workflow-action-configuration-reference.md`, `docs/workflow-action-generation-rules.md`, and `workflow-action-configurations.normalized.json` as the official workflow action configuration reference when present.
 - In the active generator workspace, use `control-configurations.normalized.json`, `docs/yeeflow-control-configuration-reference.md`, and `docs/yeeflow-control-field-generation-rules.md` as the approval form control schema reference.
+- In the active generator workspace, use `docs/yeeflow-form-design-quality-rules.md` and `docs/it-hardware-capex-request-runtime-v2-ui-study.md` as the latest approval-form design quality baseline when generating rich request forms.
 - Yeeflow page/control JSON may store config values as `[null, value]`; validator logic should unwrap that representation before primitive or enum checks.
 - `references/metadata-and-wrapper-guide.md`: metadata replacement and wrapper build usage.
 - `references/data-list-approval-integration-pattern.md`: staged generated data list plus approval form persistence integration.

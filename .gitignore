@@ -39,6 +39,7 @@ coverage/
 !README.md
 !CHANGELOG.md
 !dashboard-collection-first-generation-test-plan.md
+!it-hardware-capex-request-v3-ui-refresh-plan.md
 !docs/
 !docs/**/*.md
 !generated/README.md
@@ -82,6 +83,7 @@ yeeflow-data-list-generator/
 *.json
 !dashboard-collection-first-generation-test-spec.json
 !it-hardware-capex-request-ui-generation-spec.json
+!it-hardware-capex-request-v3-ui-refresh-spec.json
 !workflow-action-configurations.normalized.json
 !control-configurations.normalized.json
 !field-configurations.normalized.json

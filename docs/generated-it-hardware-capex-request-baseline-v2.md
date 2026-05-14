@@ -78,3 +78,23 @@ Full request submission and downstream approval task completion were not exhaust
 - `richtext`, `checkbox`, file upload, icon upload, signer, identity picker, location picker, and cost-center picker are runtime-unproven or environment-dependent in this generated package.
 - File, image, and signer values are not persisted through `ContentList` in v2.
 - InclusiveGateway conditional routing remains deferred to a future isolated workflow-routing package.
+
+## Runtime V2 Manual UI Learning
+
+The user manually improved the v2 submission form and exported it as `IT Hardware CAPEX Request Runtime V2.yap`. That export is now the form-design quality reference for future CAPEX regeneration.
+
+Manual V2 proved:
+
+- full-page form background belongs at `page.formdef.attrs.background`
+- request summary should be wrapped by a `Form header` container with background, border, radius, and overflow hidden
+- gradients can be applied through `attrs.common.css` on the relevant container
+- headings and text-editor controls need explicit inline width and typography settings
+- section icons should be placed inside square centered badge containers
+- normal fields should be organized through two-column `flex_grid` controls
+- runtime-sensitive controls such as location, cost center, and icon-upload need export-backed native attrs or fallback
+- `Sub total` should be a native `calculated` control with `Quantity * Unit Price`
+
+See:
+
+- `docs/it-hardware-capex-request-runtime-v2-ui-study.md`
+- `docs/yeeflow-form-design-quality-rules.md`

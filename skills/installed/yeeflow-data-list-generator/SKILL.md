@@ -76,6 +76,7 @@ Load only the relevant reference:
 - `references/validation-guide.md`: validator and builder usage.
 - In the active generator workspace, use `docs/workflow-action-configuration-reference.md`, `docs/workflow-action-generation-rules.md`, and `workflow-action-configurations.normalized.json` as the official workflow action configuration reference when validating list workflows.
 - In the active generator workspace, use `field-configurations.normalized.json`, `docs/yeeflow-field-configuration-reference.md`, and `docs/yeeflow-control-field-generation-rules.md` as the data-list field schema reference.
+- In the active generator workspace, use `docs/yeeflow-form-design-quality-rules.md` when data-list custom forms need to align with rich approval-form section/grid/text/icon standards.
 - For generated data-list persistence, prefer Text fallback for requester/user values unless a focused native data-list identity/user field export proves the persisted shape.
 - `references/metadata-guide.md`: `.ydl` and `.yap` metadata lessons.
 - `references/examples-summary.md`: proven examples and intentionally omitted bulky artifacts.
@@ -89,6 +90,7 @@ Load only the relevant reference:
 - Business concepts such as "Request No.", "Name", "Equipment Name", or "Center / Department Name" may be displayed on `Title`, but the underlying `Title` metadata must remain native/system/indexed. Use `Text1`, `Text2`, etc. for additional business text fields.
 - Use `Decimal` + `input_number` fields for persisted numbers; `Decimal1` is the proven generated slot in Visitor Access Management v11.
 - Use `Bit` + `switch` fields for persisted booleans; `Bit1` is the proven generated slot in Visitor Access Management v11.
+- Use calculated data-list fields only when the field formula is export-backed. When an approval form has calculated display values such as `Subtotal = Quantity * Unit Price`, prefer persisting the source quantity/unit price plus a Decimal result only if `ContentList` mapping is type-compatible and validated.
 - Use text/radio-compatible fields for single-select storage; selected option values are stored as text.
 - Custom forms must follow the Asset Inventory v5 pattern:
   - `Layout.Type = 1`

@@ -79,6 +79,18 @@ function zeroPadding(padding) {
   return ["top", "right", "bottom", "left"].every((side) => value[side] === "--sp--s0" || value[side] === 0 || value[side] === "0" || value[side] === "");
 }
 
+function configValue(value) {
+  return Array.isArray(value) && value.length === 2 && value[0] === null ? value[1] : value;
+}
+
+function controlName(control) {
+  return control && (control.nv_label || control.label || control.title || control.binding || control.id || control.type || "control");
+}
+
+function controlWidthType(control) {
+  return configValue(control && control.attrs && control.attrs.common && control.attrs.common.positioning && control.attrs.common.positioning.widthtype);
+}
+
 function isSequenceFlow(shape) {
   return shape && shape.stencil && shape.stencil.id === "SequenceFlow";
 }
@@ -397,6 +409,12 @@ function validateDecodedDef(def, options = {}) {
     const content = findControlByLabel(formdef, "Content");
     if (!main) addIssue(warnings, "UI_STANDARD_MAIN_CONTAINER_MISSING", "Approval pages should have a container with nv_label \"Main\"", `${pagePath}.formdef.children`);
     if (!content) addIssue(warnings, "UI_STANDARD_CONTENT_CONTAINER_MISSING", "Approval pages should have a container with nv_label \"Content\"", `${pagePath}.formdef.children`);
+    if (page.type === 1 && !(formdef.attrs && formdef.attrs.background)) {
+      addIssue(warnings, "FORM_PAGE_BACKGROUND_MISSING", "Generated full-page submission forms should set page-level formdef.attrs.background instead of relying on Main/Content backgrounds", `${pagePath}.formdef.attrs.background`);
+    }
+    if (main && main.attrs && main.attrs.common && main.attrs.common.background) {
+      addIssue(warnings, "MAIN_CONTAINER_PAGE_BACKGROUND", "Main should stay primarily structural; put full-page form background on formdef.attrs.background", `${pagePath}.formdef.children`);
+    }
     if (main && content && !controlContains(main, content)) {
       addIssue(warnings, "UI_STANDARD_CONTENT_NOT_INSIDE_MAIN", "Approval page Content container should be inside Main", `${pagePath}.formdef.children`);
     }
@@ -410,9 +428,22 @@ function validateDecodedDef(def, options = {}) {
     });
     const formBody = findControlByLabel(formdef, "Form body");
     const formBottom = findControlByLabel(formdef, "Form bottom");
+    const formHeader = findControlByLabel(formdef, "Form header");
+    const requestSummary = findControlByLabel(formdef, "Request summary panel");
     if (panels.length || histories.length || page.type === 1 || page.type === 2) {
       if (!formBody) addIssue(warnings, "UI_STANDARD_FORM_BODY_MISSING", "Approval pages should place main fields in a container with nv_label \"Form body\"", `${pagePath}.formdef.children`);
       if (!formBottom) addIssue(warnings, "UI_STANDARD_FORM_BOTTOM_MISSING", "Approval pages should place Action Panel and Flow History in a container with nv_label \"Form bottom\"", `${pagePath}.formdef.children`);
+    }
+    if (page.type === 1 && requestSummary && !formHeader) {
+      addIssue(warnings, "FORM_HEADER_CONTAINER_MISSING", "Submission form request summary should be wrapped by a Form header container so background, border, radius, and overflow are controlled together", `${pagePath}.formdef.children`);
+    }
+    if (formHeader) {
+      const overflow = configValue(formHeader.attrs && formHeader.attrs.style && formHeader.attrs.style.overflow);
+      const normalBorder = formHeader.attrs && formHeader.attrs.common && formHeader.attrs.common.border && formHeader.attrs.common.border.normal;
+      const normalBackground = formHeader.attrs && formHeader.attrs.common && formHeader.attrs.common.background && formHeader.attrs.common.background.normal;
+      if (overflow !== "hidden") addIssue(warnings, "FORM_HEADER_OVERFLOW_NOT_HIDDEN", "Form header containers should set attrs.style.overflow = [null, \"hidden\"] when they carry rounded borders or gradient panels", `${pagePath}.formdef.children`);
+      if (!normalBackground) addIssue(warnings, "FORM_HEADER_BACKGROUND_MISSING", "Form header containers should carry an explicit background", `${pagePath}.formdef.children`);
+      if (!normalBorder || !normalBorder.radius) addIssue(warnings, "FORM_HEADER_BORDER_RADIUS_MISSING", "Form header containers should carry border radius on attrs.common.border.normal.radius", `${pagePath}.formdef.children`);
     }
     if (formBottom) {
       panels.forEach((panel) => {
@@ -436,6 +467,7 @@ function validateDecodedDef(def, options = {}) {
       }
       validateControlSchema(control, controlPath);
       validateApprovalFormUsabilityControl(control, controlPath, context.page);
+      validateFormDesignQualityControl(control, controlPath);
 
       if (control.type === "list") {
         validateListControl(control, controlPath);
@@ -467,6 +499,70 @@ function validateDecodedDef(def, options = {}) {
         });
       }
     });
+  }
+
+  function validateFormDesignQualityControl(control, controlPath) {
+    if (!control || !control.type) return;
+    const name = controlName(control);
+    const attrs = control.attrs || {};
+
+    if ((control.type === "heading" || control.type === "text-editor") && controlWidthType(control) !== "2") {
+      addIssue(warnings, "TEXT_CONTROL_INLINE_WIDTH_MISSING", "Generated text and heading controls should default to inline width via attrs.common.positioning.widthtype = [null, \"2\"] unless intentionally full-row", controlPath, {
+        control: name,
+        type: control.type,
+      });
+    }
+
+    if (control.type === "icon" && controlWidthType(control) !== "2") {
+      addIssue(warnings, "ICON_CONTROL_INLINE_WIDTH_MISSING", "Generated icon controls used as visual badges should default to inline width and be centered inside a square wrapper container", controlPath, {
+        control: name,
+      });
+    }
+
+    if (control.type === "container" && String(control.nv_label || "").endsWith(" fields")) {
+      const children = asArray(control.children);
+      const hasGrid = children.some((child) => child && child.type === "flex_grid");
+      const hasValueControls = children.some((child) => child && isGeneratedValueControl(child.type));
+      if (hasValueControls && !hasGrid) {
+        addIssue(warnings, "FIELD_SECTION_GRID_MISSING", "Generated field sections should place normal value-entry controls in a flex_grid, usually two columns; long controls may sit outside the grid as full-row controls", controlPath, {
+          control: name,
+        });
+      }
+    }
+
+    if (control.type === "flex_grid") {
+      const desktopColumns = attrs.columns && attrs.columns["1"] && attrs.columns["1"].list;
+      if (!Array.isArray(desktopColumns) || desktopColumns.length !== 2) {
+        addIssue(warnings, "FIELD_GRID_NOT_TWO_COLUMNS", "Standard generated form field grids should use two desktop columns unless a studied export proves another layout", `${controlPath}.attrs.columns`);
+      }
+    }
+
+    if ((control.type === "location-picker" || control.type === "cost-center-picker") && (attrs.placeholder !== undefined || attrs.required !== undefined)) {
+      addIssue(warnings, "PICKER_CONTROL_RUNTIME_SENSITIVE_ATTRS", "Runtime V2 repaired environment picker controls by re-adding native controls with minimal attrs; generated picker placeholder/required attrs should be export-backed before use", controlPath, {
+        control: name,
+        type: control.type,
+      });
+    }
+
+    if (control.type === "file-upload" && attrs.ver !== 1) {
+      addIssue(warnings, "FILE_UPLOAD_VERSION_MISSING", "Runtime V2 export stores working file-upload controls with attrs.ver = 1; generated file uploads should include it until another export proves otherwise", `${controlPath}.attrs.ver`, {
+        control: name,
+      });
+    }
+
+    if (control.type === "icon-upload" && attrs.controlmultiple !== true) {
+      addIssue(warnings, "ICON_UPLOAD_CONTROL_MULTIPLE_MISSING", "Runtime V2 repaired image/icon upload with attrs.controlmultiple = true; generated icon-upload controls should use the export-backed pattern or fallback", `${controlPath}.attrs.controlmultiple`, {
+        control: name,
+      });
+    }
+
+    const maybeCalculated = /\\b(sub\\s*total|subtotal|total|amount|balance|difference|duration)\\b/i.test(String(control.label || control.nv_label || control.binding || ""));
+    if (maybeCalculated && ["input", "input_number", "currency"].includes(control.type) && attrs.readonly !== true && attrs.disabled !== true) {
+      addIssue(warnings, "CALCULATED_LOOKING_FIELD_EDITABLE", "Fields that read like calculated values should not default to editable input controls; use a calculated control or readonly display when the requirement implies a formula", controlPath, {
+        control: name,
+        type: control.type,
+      });
+    }
   }
 
   function validateControlSchema(control, controlPath) {

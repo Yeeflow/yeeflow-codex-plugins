@@ -8,10 +8,26 @@ Submission and task pages use:
 
 - `attrs.container.cw = "2"`
 - zero padding
+- page-level background when a full-page background is required
 - `Main`
 - `Content`
 - `Form body`
 - `Form bottom`
+
+`Main` should remain primarily structural. Do not put full-page background color on `Main`; set it on `page.formdef.attrs.background`.
+
+## Form Header
+
+Submission forms with a top request summary should place that area inside a `Form header` container.
+
+`Form header` should carry:
+
+- background
+- border
+- border radius
+- `attrs.style.overflow = [null, "hidden"]`
+
+Use `Request summary panel` and `Request metric row` inside `Form header`. If a gradient is required, use native background first and then `attrs.common.css` on the target container when Yeeflow native background settings cannot express it.
 
 ## Form Body
 
@@ -83,6 +99,18 @@ Use:
 
 Let native Action Panel and Flow History styling apply unless a studied export proves a safe override.
 
+Text and icon controls should be generated with explicit positioning:
+
+- `heading` / `text-editor`: default to `attrs.common.positioning.widthtype = [null, "2"]`
+- `icon`: default to `attrs.common.positioning.widthtype = [null, "2"]`
+- section icons should usually be wrapped in square badge containers with centered alignment
+
+Standard field sections should use a `flex_grid` with two desktop/tablet columns and one mobile column. Place long controls such as `textarea`, `richtext`, and `list` outside the grid or make them span the full row after span behavior is export-proven.
+
+Generated forms should detect calculated-looking fields. `Subtotal` should not be a normal editable field when quantity and unit price exist; use a native `calculated` control when safe, or a readonly display with the formula documented as deferred.
+
+For detailed patterns from the manually improved CAPEX export, see `docs/yeeflow-form-design-quality-rules.md` and `docs/it-hardware-capex-request-runtime-v2-ui-study.md`.
+
 ## Validator Guidance
 
-Warn for missing full width, zero padding, missing `Main`, missing `Content`, missing `Form body`, missing `Form bottom`, workflow controls outside `Form bottom`, and excessive arbitrary decision/status colors.
+Warn for missing full width, zero padding, missing page-level background on rich full-page forms, background on `Main`, missing `Main`, missing `Content`, missing `Form body`, missing `Form bottom`, missing `Form header` when a request summary exists, workflow controls outside `Form bottom`, text/icon controls without inline width, field sections without grids, calculated-looking editable fields, runtime-sensitive picker/image attrs, and excessive arbitrary decision/status colors.

@@ -41,6 +41,8 @@ For root style/token learning, study `root_styles.txt` read-only, preserve token
 
 For Yeeflow Application Design System learning, consolidate the focused UI/UX export, root tokens, design-system alignment guidance, and proven generated-app baselines into `docs/yeeflow-application-design-system.md` plus layout/style/dashboard/list/form/control-naming standards. Keep validator checks warning-first until a generated design-system package has runtime import/open/export-back proof.
 
+For manual form-design correction learning, study the exported-back `.yap` read-only, compare the improved form Def against the generated baseline, extract exact property paths, update `docs/yeeflow-form-design-quality-rules.md`, add warning-first validators, and update approval/application/data-list generator skills. Do not regenerate the app in the same pass unless the user explicitly requests it.
+
 ## What To Load
 
 - For the full lifecycle, read `references/feature-learning-workflow.md`.
