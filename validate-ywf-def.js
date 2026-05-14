@@ -3,6 +3,11 @@
 const fs = require("fs");
 const path = require("path");
 const { validateWorkflowActionShapes } = require("./workflow-action-config-validator");
+const {
+  isGeneratedValueControl,
+  loadControlFieldSchemas,
+  validateControlAgainstSchema,
+} = require("./yeeflow-control-field-schema-utils");
 
 const PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
 const NUMERIC_OPS = new Set(["n.>", "n.>=", "n.<", "n.<=", "n.=", "n.!=", ">", ">=", "<", "<="]);
@@ -168,6 +173,7 @@ function validateDecodedDef(def, options = {}) {
   const controls = [];
   const controlEntries = [];
   const placeholders = collectPlaceholders(def);
+  const controlFieldSchemas = loadControlFieldSchemas(__dirname);
 
   summary.variables = basicVars.length;
   summary.listrefs = listrefs.length;
@@ -428,6 +434,7 @@ function validateDecodedDef(def, options = {}) {
       if (typeof control.binding === "string") {
         validateBinding(control.binding, controlPath, context.listContext);
       }
+      validateControlSchema(control, controlPath);
       validateApprovalFormUsabilityControl(control, controlPath, context.page);
 
       if (control.type === "list") {
@@ -443,6 +450,7 @@ function validateDecodedDef(def, options = {}) {
             if (typeof field.control.binding === "string") {
               validateBinding(field.control.binding, `${fieldPath}.control`, listContext);
             }
+            validateControlSchema(field.control, `${fieldPath}.control`);
             validateCalculationExpressions(field.control.attrs && field.control.attrs.calculated, `${fieldPath}.control.attrs.calculated`, listContext);
           }
         });
@@ -459,6 +467,33 @@ function validateDecodedDef(def, options = {}) {
         });
       }
     });
+  }
+
+  function validateControlSchema(control, controlPath) {
+    const schemaIssues = validateControlAgainstSchema(control, controlFieldSchemas);
+    for (const schemaIssue of schemaIssues) {
+      addIssue(
+        warnings,
+        `CONTROL_${schemaIssue.code}`,
+        schemaIssue.message,
+        schemaIssue.detail && schemaIssue.detail.path ? `${controlPath}.${schemaIssue.detail.path}` : controlPath,
+        schemaIssue.detail
+      );
+    }
+    if (
+      mode === "final" &&
+      isGeneratedValueControl(control && control.type) &&
+      control.readonly !== true &&
+      !control.binding
+    ) {
+      addIssue(
+        warnings,
+        "CONTROL_BINDING_MISSING_FOR_VALUE_CONTROL",
+        "Generated value-entry controls should usually include a binding unless intentionally display-only.",
+        controlPath,
+        { controlType: control.type, label: control.label || control.nv_label || null }
+      );
+    }
   }
 
   function childControlCollections(control) {

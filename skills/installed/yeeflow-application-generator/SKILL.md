@@ -248,12 +248,17 @@ Load only the relevant reference:
 - `references/build-yap-wrapper.md`: wrapper builder usage and safety rules.
 - `references/examples-summary.md`: proven baseline and quick pattern reminders.
 - In the active generator workspace, use `docs/workflow-action-configuration-reference.md`, `docs/workflow-action-generation-rules.md`, and `workflow-action-configurations.normalized.json` as the official workflow action configuration reference when generating or validating workflow nodes.
+- In the active generator workspace, use `control-configurations.normalized.json`, `field-configurations.normalized.json`, `docs/yeeflow-control-to-field-mapping.md`, and `docs/yeeflow-control-field-generation-rules.md` when planning approval-form controls, data-list persistence, custom list forms, and app-level control-to-field mappings.
 
 ## Workflow Action Configuration Reference
 
 The app validator stack should validate workflow nodes against the normalized action reference when present. Stop before wrapper build on missing required node properties, invalid enum values, invalid value types, invalid `ContentList` mappings, invalid `QueryData` filters, invalid `SequenceFlow` conditions, invalid `Loop`/`Delay` condition shapes, and unsafe external or credential-related actions.
 
 Treat `GenerateDocument`, `ConvertToPdf`, `AddWatermark`, and `DocumentRecognition` as partially supported until template/document-library dependencies are proven. Treat `AI`, `AzureOpenAI`, `Connector`, `HttpRequest`, `AcrobatSign`, `DocuSign`, and `PandaDoc` as external/credential-sensitive; do not bundle secrets, tokens, passwords, API keys, connection IDs, or tenant-specific credential values.
+
+## Control-To-Field Mapping Rules
+
+Use generation-safe mappings first: `input` to Text, `textarea` to Text, `input_number` to Decimal, `currency` to Decimal, `radio` to Text choice, `switch` to Bit, `datepicker` to Datetime, and resolved local `lookup` to a lookup field. Use fallback mappings for rich text, percent, checkbox, identity/organization/location/cost-center pickers, tag, metadata, hyperlink, and rate until runtime proof exists. Defer file uploads, icon uploads, signer, lookup-list, nested list persistence, and calculated-column approval variables unless a focused export/import proves the structure.
 
 ## Output Expectations
 

@@ -4,6 +4,12 @@ const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
 const { validateWorkflowActionShapes } = require("./workflow-action-config-validator");
+const {
+  isGeneratedValueControl,
+  loadControlFieldSchemas,
+  validateControlAgainstSchema,
+  validateFieldAgainstSchema,
+} = require("./yeeflow-control-field-schema-utils");
 
 const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
@@ -405,6 +411,7 @@ function validate(inputPath, mode, stage) {
       modules: [],
     },
     _largeNumbers: new Set(),
+    _controlFieldSchemas: loadControlFieldSchemas(__dirname),
   };
 
   const decoded = decodeInput(inputPath, report);
@@ -964,6 +971,15 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
       );
     }
     if (field.Rules && !tryParseJson(field.Rules)) issue(report, "warning", "FIELD_RULES_JSON_INVALID", "Field Rules is not valid JSON.", { list: title, field: displayName || fieldName });
+    validateFieldAgainstSchema(field, report._controlFieldSchemas).forEach((schemaIssue) => {
+      issue(report, "warning", `FIELD_SCHEMA_${schemaIssue.code}`, schemaIssue.message, {
+        list: title,
+        path: fp,
+        field: displayName || fieldName || null,
+        fieldType: field.Type || null,
+        ...(schemaIssue.detail || {}),
+      });
+    });
     if (normalizeType(field) === "unknown") issue(report, "warning", "FIELD_TYPE_UNKNOWN", "Field type could not be normalized.", { list: title, field: displayName || fieldName, fieldType: field.FieldType, controlType: field.Type });
   }
   if (listId) fieldsByList.set(listId, fieldsByName);
@@ -1076,6 +1092,11 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "CUSTOM_FORM_EMPTY_CHILDREN", "Assigned custom form has no controls.", { title: layout.Title });
   }
   asArray(form.children).forEach((child, index) => walkControls(child, (control, pointer) => {
+    validateEmbeddedControlSchema(control, report, {
+      title: layout.Title,
+      path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}`,
+      surface: "custom list form",
+    });
     const binding = control.binding;
     if (binding && !fieldsByName.has(String(binding))) {
       issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_BINDING_NOT_FOUND", "Custom form control binding does not resolve to a field.", { title: layout.Title, binding, path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}` });
@@ -1084,6 +1105,33 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
       issue(report, "warning", "CUSTOM_FORM_FIELDID_NOT_FOUND", "Custom form control fieldID does not resolve to a field.", { title: layout.Title, fieldID: control.fieldID });
     }
   }));
+}
+
+function validateEmbeddedControlSchema(control, report, context) {
+  validateControlAgainstSchema(control, report._controlFieldSchemas).forEach((schemaIssue) => {
+    issue(report, "warning", `CONTROL_SCHEMA_${schemaIssue.code}`, schemaIssue.message, {
+      surface: context.surface,
+      title: context.title,
+      path: schemaIssue.detail && schemaIssue.detail.path ? `${context.path}.${schemaIssue.detail.path}` : context.path,
+      controlType: control && control.type || null,
+      ...(schemaIssue.detail || {}),
+    });
+  });
+  if (
+    report.mode === "generator" &&
+    report.stage === "final" &&
+    isGeneratedValueControl(control && control.type) &&
+    control.readonly !== true &&
+    !control.binding
+  ) {
+    issue(report, "warning", "CONTROL_BINDING_MISSING_FOR_VALUE_CONTROL", "Generated value-entry controls should usually include a binding unless intentionally display-only.", {
+      surface: context.surface,
+      title: context.title,
+      path: context.path,
+      controlType: control.type,
+      label: control.label || control.nv_label || null,
+    });
+  }
 }
 
 function validateReplaceIds(replaceIds, localIds, report) {
@@ -1162,6 +1210,15 @@ function validateApprovalDef(def, form, report) {
     if (isObject(formdef)) {
       validateUiStandardFormRoot(formdef, report, { surface: "approval form page", title: page.title || page.name || page.id, form: form.Name });
       validateUiStandardContainers(formdef, report, { surface: "approval form page", title: page.title || page.name || page.id, form: form.Name, requireFormBody: true });
+      asArray(formdef.children).forEach((child, childIndex) => {
+        walkControls(child, (control, pointer) => {
+          validateEmbeddedControlSchema(control, report, {
+            title: page.title || page.name || page.id,
+            path: `Data.Forms[${form.Name || form.Key}].pageurls[${index}].formdef.children[${childIndex}]${pointer.slice(1)}`,
+            surface: "approval form page",
+          });
+        });
+      });
     }
   });
   collectShapes(def).forEach((shape) => {
@@ -1401,6 +1458,7 @@ function validatePlaceholders(root, report) {
 
 function finish(report) {
   delete report._largeNumbers;
+  delete report._controlFieldSchemas;
   if (report.errors.length) report.status = "fail";
   else if (report.warnings.length || report.dependencies.length) report.status = "pass_with_warnings";
   else report.status = "pass";

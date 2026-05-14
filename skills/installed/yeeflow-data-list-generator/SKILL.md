@@ -75,6 +75,7 @@ Load only the relevant reference:
 - `references/knowledge-base-list-pattern.md`: Knowledge Base category/article list and lookup pattern.
 - `references/validation-guide.md`: validator and builder usage.
 - In the active generator workspace, use `docs/workflow-action-configuration-reference.md`, `docs/workflow-action-generation-rules.md`, and `workflow-action-configurations.normalized.json` as the official workflow action configuration reference when validating list workflows.
+- In the active generator workspace, use `field-configurations.normalized.json`, `docs/yeeflow-field-configuration-reference.md`, and `docs/yeeflow-control-field-generation-rules.md` as the data-list field schema reference.
 - `references/metadata-guide.md`: `.ydl` and `.yap` metadata lessons.
 - `references/examples-summary.md`: proven examples and intentionally omitted bulky artifacts.
 
@@ -116,6 +117,12 @@ New and Edit display settings should use `Edit Item`; View should use `View Item
 Use `docs/yeeflow-root-style-token-reference.md` for custom form token guidance. Prefer `--c--background`, `--c--neutral-light-active`, `--c--neutral-light-hover`, `--fs--base`, and spacing tokens such as `--sp--s150` and `--sp--s200` where the form schema supports style values. Avoid arbitrary custom colors and do not inject the full root stylesheet.
 
 Generated list forms should use meaningful `nv_label` names for `Main`, `Content`, `Field group`, and `Readonly section`. Keep `Edit Item` input-optimized and `View Item` display-optimized unless the user explicitly scopes out custom forms.
+
+## Field Schema Rules
+
+Before generating data-list fields, check the normalized field reference. Safe default field/control types are `input`, `textarea`, `input_number`, `currency`, `radio`, `switch`, `datepicker`, and `lookup` when the lookup target is local and resolved.
+
+Always preserve the native `Title` field metadata: `FieldName: Title`, `Status: 0`, `IsSystem: true`, and `IsIndex: true`. Keep choice options non-empty for `radio`/`checkbox`; keep switch defaults boolean-like; keep lookup `Rules` complete with app/listset/list/display-field metadata. Use fallback Text/Decimal fields for environment-dependent pickers, tag, metadata, hyperlink, rate, and rich text until native runtime proof exists. Defer file/image uploads, signer, lookup-list, nested list persistence, and calculated-column generation unless a focused export/import proves the shape.
 
 ## Field Type And Sample Rules
 

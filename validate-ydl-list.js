@@ -3,6 +3,10 @@
 const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
+const {
+  loadControlFieldSchemas,
+  validateFieldAgainstSchema,
+} = require("./yeeflow-control-field-schema-utils");
 
 const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
@@ -456,6 +460,7 @@ function validateFields(item, report) {
   const internalNames = new Set();
   const displayNames = new Set();
   const lookupRelationships = [];
+  const controlFieldSchemas = loadControlFieldSchemas(__dirname);
 
   fields.forEach((field, index) => {
     const location = `Item.Defs[${index}]`;
@@ -498,6 +503,14 @@ function validateFields(item, report) {
     }
 
     const rules = parsedRulesForField(field, index, report);
+    validateFieldAgainstSchema(field, controlFieldSchemas).forEach((schemaIssue) => {
+      issue(report, "warning", `FIELD_SCHEMA_${schemaIssue.code}`, schemaIssue.message, {
+        location,
+        fieldName: field.FieldName || null,
+        fieldType: field.Type || null,
+        ...(schemaIssue.detail || {}),
+      });
+    });
     const normalizedType = normalizeType(field, rules);
     if (normalizedType === "unknown") {
       issue(report, "warning", "UNKNOWN_FIELD_CONTROL_TYPE", "Could not determine normalized field type.", {

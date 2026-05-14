@@ -4,6 +4,10 @@ const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
 const { validateWorkflowActionShapes } = require("./workflow-action-config-validator");
+const {
+  loadControlFieldSchemas,
+  validateFieldAgainstSchema,
+} = require("./yeeflow-control-field-schema-utils");
 
 const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
@@ -410,6 +414,7 @@ function validate(inputPath, mode, stage) {
       },
     },
     _largeNumbers: new Set(),
+    _controlFieldSchemas: loadControlFieldSchemas(__dirname),
   };
 
   const decoded = decodeInput(inputPath, report);
@@ -579,6 +584,16 @@ function inventoryResources(context) {
           }
         );
       }
+      validateFieldAgainstSchema(field, report._controlFieldSchemas).forEach((schemaIssue) => {
+        addIssue(report, "warning", `FIELD_SCHEMA_${schemaIssue.code}`, schemaIssue.message, {
+          list: title,
+          listId,
+          fieldId,
+          fieldName: fieldName || null,
+          fieldType: field.Type || null,
+          ...(schemaIssue.detail || {}),
+        });
+      });
       if (listId && (fieldName || fieldId)) {
         const nodeId = `field:${listId}:${fieldName || fieldId}`;
         addNode(graph, makeNode(nodeId, "field", label, {
@@ -1237,6 +1252,7 @@ function detectListCycles(context) {
 
 function finish(report) {
   delete report._largeNumbers;
+  delete report._controlFieldSchemas;
   if (report.errors.length) report.status = "fail";
   else if (report.warnings.length || report.dependencies.length) report.status = "pass_with_warnings";
   else report.status = "pass";

@@ -61,7 +61,7 @@ Also read the relevant installed feature skills when the task touches their area
 3. Inventory feature resources and dependencies. Identify where the feature lives in `Data.Item`, `Data.Childs`, `Data.Forms`, `DataReports`, `FormReports`, dashboards, document libraries, agents, knowledges, connections, or `OtherModules`.
 4. Compare with known baselines from the app, list, and approval-form skills. Mark what is known, new, similar, risky, or externally dependent.
 5. Extract a reusable feature pattern: location, required fields, IDs, `ReplaceIds`, navigation/menu links, related child resources, data sources, runtime dependencies, and export-back behavior.
-6. Update or design validator rules before generating. For workflow actions, first normalize the official action configuration reference into `workflow-action-configurations.normalized.json` and document it in `docs/workflow-action-configuration-reference.md` plus `docs/workflow-action-generation-rules.md`.
+6. Update or design validator rules before generating. For workflow actions, first normalize the official action configuration reference into `workflow-action-configurations.normalized.json` and document it in `docs/workflow-action-configuration-reference.md` plus `docs/workflow-action-generation-rules.md`. For control/field schema references, first normalize `control-configurations.json` and `field-configurations.json`, document approval control rules, data-list field rules, and control-to-field mappings, then update validators and generator skills before app generation.
 7. Write a dedicated study doc such as `docs/dashboard-feature-pattern-study.md`, `docs/document-library-feature-pattern-study.md`, `docs/report-feature-pattern-study.md`, or `docs/ai-agent-feature-pattern-study.md`.
 8. Generate only the smallest possible test package, using fresh local ID families and minimal dependencies.
 9. Run component and package validators. Build wrappers only after validators pass.
@@ -77,6 +77,10 @@ Also read the relevant installed feature skills when the task touches their area
 When learning workflow actions from `node-configurations.json`, treat the uploaded JSON as read-only source evidence. Extract control types, required/optional properties, value types, enums, nested schemas, and conditional applicability. Update validators before generating new workflow packages.
 
 Validation should cover missing required node properties, invalid enum values, invalid value types, invalid `ContentList` mappings, invalid `QueryData` filters, invalid `SequenceFlow` conditions, invalid `Loop`/`Delay` condition shapes, and unsafe external or credential-related actions. Do not bundle sensitive values.
+
+## Control And Field Schema Learning Rules
+
+When learning Yeeflow approval control or data-list field schemas from `control-configurations.json` and `field-configurations.json`, treat them as read-only schema evidence rather than runtime proof. Preserve large IDs as strings, redact sensitive values, produce normalized references and docs, make validator checks warning-first for runtime-unproven shapes, and update approval-form, data-list, and application generator skills. Do not create a standalone schema skill unless it adds a clearly distinct workflow beyond those existing generators.
 
 ## Validation Commands To Prefer
 

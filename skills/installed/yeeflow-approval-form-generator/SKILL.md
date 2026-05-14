@@ -118,6 +118,7 @@ Load only the reference needed for the task:
 - `references/field-type-pattern-study.md`: number, radio/dropdown, switch, conditional display, and v11 generated `.yap` proof.
 - `references/validation-guide.md`: structural and app-context validator usage.
 - In the active generator workspace, also use `docs/workflow-action-configuration-reference.md`, `docs/workflow-action-generation-rules.md`, and `workflow-action-configurations.normalized.json` as the official workflow action configuration reference when present.
+- In the active generator workspace, use `control-configurations.normalized.json`, `docs/yeeflow-control-configuration-reference.md`, and `docs/yeeflow-control-field-generation-rules.md` as the approval form control schema reference.
 - `references/metadata-and-wrapper-guide.md`: metadata replacement and wrapper build usage.
 - `references/data-list-approval-integration-pattern.md`: staged generated data list plus approval form persistence integration.
 - `references/examples-summary.md`: proven examples and what each demonstrates.
@@ -147,6 +148,12 @@ For additional field mappings:
 - each target must be a workflow/form variable
 - displayed derived target controls should usually be readonly
 - validate lookup source, display field, sort field, additional source fields, and target variables against metadata before wrapper build
+
+## Control Schema Rules
+
+Before generating approval form controls, check the normalized control reference. Safe default controls are `input`, `textarea`, `input_number`, `currency`, `radio`, `switch`, `datepicker`, `lookup`, `list`, `container`, `section`, `heading`, `workflowControlPanel`, and `workflowHistory`.
+
+Generated value-entry controls should have `binding` when the value must persist. Use `attrs.control_validation` for validation rules, `attrs.control_display` for dynamic display/style only when copied from a studied export, and `attrs.control_event_rule` only after the target action shape is modeled and validated. File upload, icon upload, signer, metadata, multi-metadata, lookup-list, and environment pickers are schema-supported but runtime-unproven unless a focused export/import proves the exact shape.
 
 ## Field Type Rules
 
