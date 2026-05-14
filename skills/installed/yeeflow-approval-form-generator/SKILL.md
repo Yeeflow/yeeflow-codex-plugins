@@ -65,6 +65,8 @@ For higher-quality generated forms, also use the Runtime V2/V3 CAPEX form rules 
 
 Global page background rule: for every generated approval submission page and task page, put any full-page background on `page.formdef.attrs.background`. Do not set full-page background color on the `Main` container. Use backgrounds on `Form header`, cards, sections, summary panels, or field groups only when those specific containers should be visible surfaces.
 
+CAPEX runtime baseline: `IT Hardware CAPEX Request v4 Text Standard` is the latest rich generated approval-form proof. It preserves the working CAPEX workflow and ContentList persistence shape, uses Runtime V2 form design rules, replaces old generated Text controls with Text Style Sample patterns, and passed import/open/designer verification for the Text Typography and Text shadow popups. Use `docs/generated-it-hardware-capex-request-text-standard-baseline.md` plus `docs/it-hardware-capex-request-runtime-v2-ui-study.md` before generating similar enterprise request forms.
+
 ## Hard Stop Conditions
 
 Stop and report blockers. Do not build final `.ywf` when:
@@ -124,6 +126,7 @@ Load only the reference needed for the task:
 - `references/validation-guide.md`: structural and app-context validator usage.
 - In the active generator workspace, also use `docs/workflow-action-configuration-reference.md`, `docs/workflow-action-generation-rules.md`, and `workflow-action-configurations.normalized.json` as the official workflow action configuration reference when present.
 - In the active generator workspace, use `control-configurations.normalized.json`, `docs/yeeflow-control-configuration-reference.md`, and `docs/yeeflow-control-field-generation-rules.md` as the approval form control schema reference.
+- In the active generator workspace, use `yeeflow-control-field-schema-utils.js`, `field-configurations.normalized.json`, and `docs/yeeflow-control-to-field-mapping.md` when approval controls must persist into data-list fields.
 - In the active generator workspace, use `docs/yeeflow-text-control-generation-standards.md`, `docs/yeeflow-form-design-quality-rules.md`, and `docs/it-hardware-capex-request-runtime-v2-ui-study.md` as the latest approval-form design quality baseline when generating rich request forms.
 - Yeeflow page/control JSON may store config values as `[null, value]`; validator logic should unwrap that representation before primitive or enum checks.
 - `references/metadata-and-wrapper-guide.md`: metadata replacement and wrapper build usage.

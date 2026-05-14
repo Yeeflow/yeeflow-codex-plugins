@@ -47,6 +47,8 @@ For focused Text control learning, treat a small `.ywf` sample as authoritative.
 
 For global page-background learning, apply the rule across all generated Yeeflow visual surfaces: dashboard pages, data-list custom forms, approval submission pages, and approval/task pages should set full-page background color on the page/form background property, not on the top-level `Main` container. Keep `Main` structural and reserve container backgrounds for specific sections, cards, headers, summary panels, and content surfaces.
 
+After a generated application reaches a runtime baseline, sync the relevant project skill mirrors and active `~/.codex/skills` installs. The CAPEX Runtime V2/V3/V4 learning promoted manual form corrections into generator standards: page-level backgrounds, Form header/request summary/metric row, inline Text/Icon controls, icon badge wrappers, two-column field grids, runtime-sensitive control fallback rules, calculated fields, workflow-action schema validation, and control/field schema mapping. Use `docs/generated-it-hardware-capex-request-text-standard-baseline.md` as the latest CAPEX runtime evidence.
+
 ## What To Load
 
 - For the full lifecycle, read `references/feature-learning-workflow.md`.

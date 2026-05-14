@@ -76,6 +76,7 @@ Load only the relevant reference:
 - `references/validation-guide.md`: validator and builder usage.
 - In the active generator workspace, use `docs/workflow-action-configuration-reference.md`, `docs/workflow-action-generation-rules.md`, and `workflow-action-configurations.normalized.json` as the official workflow action configuration reference when validating list workflows.
 - In the active generator workspace, use `field-configurations.normalized.json`, `docs/yeeflow-field-configuration-reference.md`, and `docs/yeeflow-control-field-generation-rules.md` as the data-list field schema reference.
+- In the active generator workspace, use `control-configurations.normalized.json`, `docs/yeeflow-control-to-field-mapping.md`, and `yeeflow-control-field-schema-utils.js` when translating approval-form controls into persisted data-list fields.
 - In the active generator workspace, use `docs/yeeflow-form-design-quality-rules.md` when data-list custom forms need to align with rich approval-form section/grid/text/icon standards.
 - For generated data-list persistence, prefer Text fallback for requester/user values unless a focused native data-list identity/user field export proves the persisted shape.
 - `references/metadata-guide.md`: `.ydl` and `.yap` metadata lessons.
@@ -122,6 +123,8 @@ Global page background rule: for generated `Edit Item` and `View Item` custom fo
 Use `docs/yeeflow-root-style-token-reference.md` for custom form token guidance. Prefer `--c--background`, `--c--neutral-light-active`, `--c--neutral-light-hover`, `--fs--base`, and spacing tokens such as `--sp--s150` and `--sp--s200` where the form schema supports style values. Avoid arbitrary custom colors and do not inject the full root stylesheet.
 
 When the workspace includes `docs/yeeflow-text-control-generation-standards.md`, generated data-list custom form headings, helper text, card titles, and empty states must follow the Text Style Sample standard: native `heading` Text controls, inline width, `attrs.heads.ty = [null, token]` or a custom typography object, and plain string `attrs.heads.color`.
+
+CAPEX design carry-forward: the `IT Hardware CAPEX Request v4 Text Standard` baseline confirms that generated app packages should keep data-list custom forms aligned with the same page-background, `Main`/`Content`, Text, icon, and field-grid rules used by rich approval forms. Keep normal fields in clear grouped layouts and use Text/Decimal/Bit fallback persistence for runtime-sensitive controls unless native field proof exists.
 
 Generated list forms should use meaningful `nv_label` names for `Main`, `Content`, `Field group`, and `Readonly section`. Keep `Edit Item` input-optimized and `View Item` display-optimized unless the user explicitly scopes out custom forms.
 
