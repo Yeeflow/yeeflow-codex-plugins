@@ -63,6 +63,8 @@ For Yeeflow Form Actions Phase 1 learning, study the manually updated export bef
 
 The first generated Form Actions Phase 1 runtime app proved button styles, button-click actions, page-load actions, temp variable display, `setvar`, `confirm`, submit, reviewer task open, and approval completion after correcting an invalid generated direct-user assignee. The root cause was a hardcoded `method: "users"` assignment with a tenant-local user id/title. Promote this as a generator rule: do not hardcode direct users unless the mapping is export-backed and valid for the target tenant; use requester/current-user expression assignment by default. ContentList persistence remained pending in that first package, so keep it separate from the form-action proof until a regenerated package proves it.
 
+For Yeeflow Form Actions Phase 2 query/submit learning, study the manually updated runtime export before generating. Extract `querydata` steps, query multiple vs single modes, source list metadata, selected fields, field maps, result count variables, temp collection variables, mapping to form list variables, `arraySum` over query collections, `JSONStringfy` collection display, submit steps, and Save changes mode. Treat `vLookup` as deferred when it appears only in labels. Do not document or generate `arraySub`; the learned aggregate is `arraySum`. Create the focused `Form Actions Phase 2 Query Submit Test v1` plan before generation.
+
 ## What To Load
 
 - For the full lifecycle, read `references/feature-learning-workflow.md`.

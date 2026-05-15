@@ -183,15 +183,17 @@ Before broad control generation, consult `approval-form-control-runtime-coverage
 
 Form Actions Phase 1 update: the manually updated `Expression Sublist Summary Workflow Test v1.yap` export proves the first approval-form form-action structures. Use `docs/form-actions-phase-1-study.md`, `docs/yeeflow-form-action-generation-rules.md`, and `docs/yeeflow-temp-variable-generation-rules.md` before generating form actions. Form actions live on `page.formdef.actions[]`; page load wiring uses `page.formdef.formAction.onLoad`; button click wiring uses `action_button.attrs.control_action`; temp variables live in `variables.tempVars[]` and are referenced in expression tokens as `__temp_<id>`. Phase 1 safe study patterns include `setvar` and `confirm` steps. Treat `listitem` form action steps as observed but deferred until a focused generated runtime test proves them. Form action buttons should use inline width, meaningful `nv_label`, and native button style codes (`"2"` primary, `"3"` soft secondary, `"4"` outline primary, `"5"` neutral outline, `"6"` dashed utility).
 
+Form Actions Phase 2 query/submit update: the manually updated `Form Actions Phase 1 Test v1 Runtime.yap` export proves approval-form `querydata` and `submit` step structures. Query multiple can map selected source fields into a form list variable with `querydata_fieldmap`, store total count in a temp variable, or store selected fields in a temp collection variable. Query single can map selected source fields directly into workflow variables. Query collections can be aggregated with `arraySum`; the export-backed JSON display function is spelled `JSONStringfy`; `vLookup` was only seen in labels and remains deferred. Submit steps use `type: "submit"`; Save changes is `attrs.submitType = "3"`. Do not use `arraySub`.
+
 ## Expression Rules
 
 Generated approval forms must use Yeeflow expression editor token arrays for formulas and rule conditions. Variables must use the exact token shape `exprType: "variable"`, `type: "expr"`, `id`, `name`, and `valueType`; allowed value types are only `number`, `text`, `date`, and `boolean`. Use only functions/operators from the normalized expression references. Do not generate JavaScript formulas, invented functions, or raw lookup display assumptions. Run `node scripts/smoke-expression-validation.mjs` when expression helpers or references change, and run `validate-ywf-def.js` on generated form definitions.
 
 For sub list row calculations, use `exprType: "variable_ctx"` current-object tokens rather than top-level workflow variable tokens. Use the parent list variable id as `ctx` and the row field id as `id`.
 
-## Form Actions Phase 1
+## Form Actions Phase 1/2
 
-For generated form actions, use the Phase 1 runtime baseline rules from `docs/yeeflow-form-action-generation-rules.md`: action buttons use `attrs.control_action`, page load uses `formdef.formAction.onLoad`, temp variables live under `variables.tempVars[]`, and temp variable expression tokens use `__temp_` ids. Phase 1 generated-safe steps are `setvar` and `confirm`.
+For generated form actions, use the runtime/export-backed rules from `docs/yeeflow-form-action-generation-rules.md`: action buttons use `attrs.control_action`, page load uses `formdef.formAction.onLoad`, temp variables live under `variables.tempVars[]`, and temp variable expression tokens use `__temp_` ids. Phase 1 generated-safe steps are `setvar` and `confirm`; Phase 2 export-backed steps are `querydata` and `submit`.
 
 Runtime baseline status: button styles, button-click triggers, page-load triggers, temp variable display, `setvar`, `confirm`, submit, task open, and approval completion are proven. ContentList persistence in the first form-action package remains pending and should use proven workflow-variable button mappings in the next test.
 

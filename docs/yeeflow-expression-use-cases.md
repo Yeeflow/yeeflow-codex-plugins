@@ -158,3 +158,41 @@ Workflow branch example:
 - `TotalAmount <= 5000` routes to line manager approval.
 
 Use the export-backed workflow `conditioninfo` wrapper with numeric operators such as `n.>` and `n.<=`.
+
+## Query Data Form Action Results
+
+The manually updated `Form Actions Phase 1 Test v1 Runtime.yap` export proves query-result expressions in form actions.
+
+Use cases:
+
+- Load multiple data-list records into a form list variable.
+- Load one source record into workflow variables.
+- Store a query result count in a temp variable for display.
+- Store selected query fields in a temp collection variable for aggregation.
+- Use `arraySum` to total a numeric selected field in the temp collection.
+- Use `JSONStringfy` to display/debug the temp collection.
+
+Safe aggregate recipe:
+
+```json
+[
+  {
+    "type": "func",
+    "func": "arraySum",
+    "params": [
+      [{ "exprType": "variable", "valueType": "string", "id": "__temp_var_CollectionofQueryItems", "type": "expr", "name": "var_CollectionofQueryItems" }],
+      [{ "type": "str", "value": "Amount" }],
+      [],
+      []
+    ]
+  }
+]
+```
+
+Generation notes:
+
+- Select the source fields explicitly in the preceding `querydata` step.
+- Use the selected field display/key, such as `"Amount"`, as the `arraySum` column parameter.
+- Store the aggregate in a workflow number variable when it must be submitted, persisted, or used by workflow.
+- Do not use `arraySub`.
+- Do not generate `vLookup` yet; the function label was observed, but the function token was not present in the export.

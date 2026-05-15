@@ -298,6 +298,38 @@ Use `docs/yeeflow-text-control-generation-standards.md` for all generated approv
 
 Avoid old generated shapes that store `attrs.heads.color` as `[null, color]`, because they can render but leave designer style popups unresponsive.
 
+## Shared Form Action Standard
+
+Use `docs/yeeflow-form-action-generation-rules.md` for generated approval-form front-end actions.
+
+Phase 1 runtime-proven capabilities:
+
+- action buttons
+- button click triggers
+- page load triggers
+- temp variables
+- Set variable steps
+- Show confirm dialog steps
+
+Phase 2 export-backed capabilities:
+
+- Query data steps
+- query multiple and query single modes
+- query result count variables
+- query result collections
+- query result mapping into form list variables and workflow variables
+- Submit form steps
+- Save changes submit mode
+
+Keep the boundary clear:
+
+- form actions are front-end form logic
+- workflow actions are backend/process graph logic
+- temp variables are form-runtime state and should not be treated as persisted business data
+- Submit form / Save changes belongs to approval, data-list, and public forms, not dashboards
+- Query data output should use explicit selected fields and explicit mapping
+- query aggregates should use `arraySum`, not `arraySub`
+
 ## Generation Boundary
 
 Do not generate a new app from this document alone. Start from a small focused package, validate it, import-test only when explicitly requested, publish imported approval forms when Yeeflow marks them unpublished, export back when useful, and then promote proven rules from warning to stronger generator behavior.

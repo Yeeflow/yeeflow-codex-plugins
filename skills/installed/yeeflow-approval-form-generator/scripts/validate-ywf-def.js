@@ -429,6 +429,92 @@ function validateDecodedDef(def, options = {}) {
     }
   }
 
+  function variableNamespaceHasTarget(parent, id) {
+    if (!id) return false;
+    if (parent === "__temp_") return tempVarIds.has(id) || tempExprIds.has(id) || tempExprIds.has(`__temp_${id}`);
+    if (parent === "__variables_") return variableById.has(id);
+    if (parent === "" || parent === undefined || parent === null) return variableById.has(id) || tempVarIds.has(id);
+    return false;
+  }
+
+  function validateQueryDataStep(step, stepPath) {
+    const attrs = step.attrs || {};
+    if (!isObject(attrs.querydata_list)) {
+      addIssue(warnings, "FORM_ACTION_QUERYDATA_SOURCE_MISSING", "Query data step should include attrs.querydata_list source metadata", `${stepPath}.attrs.querydata_list`);
+    } else {
+      for (const key of ["AppID", "ListSetID", "ListID", "ListType"]) {
+        if (attrs.querydata_list[key] === undefined || attrs.querydata_list[key] === null || attrs.querydata_list[key] === "") {
+          addIssue(warnings, "FORM_ACTION_QUERYDATA_SOURCE_INCOMPLETE", `Query data source is missing ${key}`, `${stepPath}.attrs.querydata_list.${key}`);
+        }
+      }
+    }
+
+    if (!["multiple", "single"].includes(attrs.querydata_type)) {
+      addIssue(warnings, "FORM_ACTION_QUERYDATA_TYPE_UNKNOWN", "Query data step should use querydata_type single or multiple", `${stepPath}.attrs.querydata_type`, {
+        querydata_type: attrs.querydata_type,
+      });
+    }
+
+    if (attrs.querydata_totalcount && !variableNamespaceHasTarget(attrs.querydata_totalparent, attrs.querydata_totalcount)) {
+      addIssue(warnings, "FORM_ACTION_QUERYDATA_COUNT_TARGET_MISSING", `Query data total count target ${attrs.querydata_totalparent || ""}${attrs.querydata_totalcount} is not declared`, `${stepPath}.attrs.querydata_totalcount`);
+    }
+
+    if (attrs.querydata_type === "multiple") {
+      const parent = attrs.querydata_listname_parent;
+      const target = attrs.querydata_listname;
+      if (!target) {
+        addIssue(warnings, "FORM_ACTION_QUERYDATA_RESULT_TARGET_MISSING", "Multiple query data step should include querydata_listname when results are needed", `${stepPath}.attrs.querydata_listname`);
+      } else if (!variableNamespaceHasTarget(parent, target)) {
+        addIssue(warnings, "FORM_ACTION_QUERYDATA_RESULT_TARGET_UNKNOWN", `Multiple query data target ${parent || ""}${target} is not a known workflow or temp variable`, `${stepPath}.attrs.querydata_listname`);
+      }
+      if (parent === "__variables_" && target && variableById.has(target)) {
+        const variable = variableById.get(target);
+        if (variable.type !== "list") {
+          addIssue(warnings, "FORM_ACTION_QUERYDATA_RESULT_TARGET_NOT_LIST", "Multiple query data mapped to workflow variables should target a list variable", `${stepPath}.attrs.querydata_listname`, { target });
+        }
+      }
+    }
+
+    if (isObject(attrs.querydata_fieldmap)) {
+      for (const [sourceField, targetField] of Object.entries(attrs.querydata_fieldmap)) {
+        if (!sourceField || !targetField) {
+          addIssue(warnings, "FORM_ACTION_QUERYDATA_FIELDMAP_BAD_ENTRY", "Query data field map entries should map source fields to target variables/row fields", `${stepPath}.attrs.querydata_fieldmap`);
+          continue;
+        }
+        if (attrs.querydata_type === "multiple" && attrs.querydata_listname_parent === "__variables_" && rowFieldsByListVar.has(attrs.querydata_listname)) {
+          const rowFields = rowFieldsByListVar.get(attrs.querydata_listname);
+          if (!rowFields.has(targetField)) {
+            addIssue(warnings, "FORM_ACTION_QUERYDATA_ROW_FIELD_MISSING", `Query data maps ${sourceField} to missing list row field ${targetField}`, `${stepPath}.attrs.querydata_fieldmap.${sourceField}`);
+          }
+        } else if (attrs.querydata_type === "single" && !variableById.has(targetField) && !tempVarIds.has(targetField)) {
+          addIssue(warnings, "FORM_ACTION_QUERYDATA_VARIABLE_TARGET_MISSING", `Query data maps ${sourceField} to missing variable ${targetField}`, `${stepPath}.attrs.querydata_fieldmap.${sourceField}`);
+        }
+      }
+    } else if (attrs.querydata_type === "single") {
+      addIssue(warnings, "FORM_ACTION_QUERYDATA_SINGLE_FIELDMAP_MISSING", "Single query data steps should map selected fields into variables", `${stepPath}.attrs.querydata_fieldmap`);
+    }
+
+    if (attrs.querydata_listname_parent === "__temp_" && attrs.querydata_type === "multiple") {
+      const fields = attrs.querydata_fields;
+      if (!Array.isArray(fields) || fields.length === 0) {
+        addIssue(warnings, "FORM_ACTION_QUERYDATA_SELECTED_FIELDS_MISSING", "Temp collection query results should include explicit querydata_fields[]", `${stepPath}.attrs.querydata_fields`);
+      }
+    }
+  }
+
+  function validateSubmitStep(step, stepPath, page) {
+    const attrs = step.attrs || {};
+    if (page && page.type === 103) {
+      addIssue(warnings, "FORM_ACTION_SUBMIT_ON_DASHBOARD", "Submit form steps are not supported on dashboard pages", stepPath);
+    }
+    if (attrs.submitType !== undefined && !["1", "2", "3", "4", "5", "6"].includes(String(attrs.submitType))) {
+      addIssue(warnings, "FORM_ACTION_SUBMIT_TYPE_UNKNOWN", "Submit form step uses an unknown submitType", `${stepPath}.attrs.submitType`, { submitType: attrs.submitType });
+    }
+    if (String(attrs.submitType) === "3" && attrs.ignoreValid === true) {
+      addIssue(warnings, "FORM_ACTION_SAVE_CHANGES_IGNORE_VALID", "Save changes action ignores validation; generate only for intentional draft/save behavior", `${stepPath}.attrs.ignoreValid`);
+    }
+  }
+
   function validateFormActions(page, pagePath) {
     const formdef = page && page.formdef;
     if (!formdef) return;
@@ -505,6 +591,10 @@ function validateDecodedDef(def, options = {}) {
             validateActionExpression(attrs.confirm_qs, `${stepPath}.attrs.confirm_qs`);
           }
           validateSetvarTarget(attrs.confirm_rs, `${stepPath}.attrs.confirm_rs`);
+        } else if (step.type === "querydata") {
+          validateQueryDataStep(step, stepPath);
+        } else if (step.type === "submit") {
+          validateSubmitStep(step, stepPath, page);
         } else if (step.type && !["listitem"].includes(step.type)) {
           addIssue(warnings, "FORM_ACTION_STEP_TYPE_UNCLASSIFIED", "Form action step type is not covered by current Phase 1 validation rules", `${stepPath}.type`, {
             type: step.type,

@@ -3140,6 +3140,53 @@
       "sourceReferences": [
         "Expression Runtime Test v1 Patch.yap:user-profile-expression-export"
       ]
+    },
+    "JSONStringfy": {
+      "name": "JSONStringfy",
+      "category": "conversion",
+      "bilingualDescription": "将值或查询结果集合序列化为 JSON 文本 | Serialize a value or query-result collection to JSON text.",
+      "callFormat": {
+        "type": "func",
+        "func": "JSONStringfy",
+        "params": [
+          []
+        ]
+      },
+      "parameters": [
+        {
+          "index": 0,
+          "name": "value/值",
+          "type": "any",
+          "description": "要序列化的值或查询结果集合 | Value or query-result collection to serialize"
+        }
+      ],
+      "returnType": "text",
+      "examples": [
+        {
+          "description": "显示查询结果集合 | Display a query result collection",
+          "expression": "JSONStringfy(var_CollectionofQueryItems)"
+        }
+      ],
+      "businessScenarios": [
+        "调试查询结果集合 | Debug query result collections",
+        "显示临时集合内容 | Display temp collection contents"
+      ],
+      "keywords": [
+        "JSON",
+        "JSONStringfy",
+        "stringify",
+        "query collection",
+        "temp variable"
+      ],
+      "generationNotes": [
+        "Use the exact export-backed spelling JSONStringfy from the Form Actions Phase 2 export."
+      ],
+      "safetyNotes": [
+        "Treat JSONStringify spelling as unproven until an export-backed token is available."
+      ],
+      "sourceReferences": [
+        "Form Actions Phase 1 Test v1 Runtime.yap:form action query collection display"
+      ]
     }
   },
   "screenshotObservedFunctions": [
@@ -3176,6 +3223,9 @@
       "status": "screenshot_observed_only",
       "notes": "Visible in Function tab screenshot but absent from both normalized baselines; keep as deferred metadata pending."
     },
-    "Expression Runtime Test v1 Patch user notes mentioned getDeptAttr, but the decoded export uses getOrgAttr for department/organization attributes. Preserve getOrgAttr until getDeptAttr is export-backed."
+    "Expression Runtime Test v1 Patch user notes mentioned getDeptAttr, but the decoded export uses getOrgAttr for department/organization attributes. Preserve getOrgAttr until getDeptAttr is export-backed.",
+    {
+      "note": "Form Actions Phase 2 export uses function token JSONStringfy. User-facing notes may spell JSONStringify, but that alias was not found as an expression token in the export."
+    }
   ]
 }

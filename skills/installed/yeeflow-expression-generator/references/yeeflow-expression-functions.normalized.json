@@ -2924,6 +2924,48 @@
       "safetyNotes": [
         "Location data may be tenant-dependent; provide fallback values."
       ]
+    },
+    "JSONStringfy": {
+      "category": "conversion",
+      "minParams": 1,
+      "maxParams": 1,
+      "optionalParams": [],
+      "returnValueType": "text",
+      "description": "Serialize a value or query-result collection to JSON text. Export-backed spelling from Form Actions Phase 2 is JSONStringfy.",
+      "parameters": [
+        {
+          "index": 0,
+          "name": "value",
+          "type": "any",
+          "description": "Value or query-result collection to serialize."
+        }
+      ],
+      "returnType": "text",
+      "examples": [
+        {
+          "description": "Display a query result temp collection as JSON text.",
+          "expression": "JSONStringfy(var_CollectionofQueryItems)"
+        }
+      ],
+      "businessScenarios": [
+        "Debug/display query result collections",
+        "Inspect temporary query data in a form action test"
+      ],
+      "keywords": [
+        "json",
+        "stringify",
+        "query result",
+        "collection display"
+      ],
+      "sourceReferences": [
+        "Form Actions Phase 1 Test v1 Runtime.yap:form action query collection display"
+      ],
+      "generationNotes": [
+        "Use exact export-backed function spelling JSONStringfy. Do not rename to JSONStringify until an export proves that alias."
+      ],
+      "safetyNotes": [
+        "Use for display/debugging of query collections; do not persist raw JSON unless the business requirement explicitly asks for serialized query data."
+      ]
     }
   },
   "categories": {
@@ -2989,7 +3031,8 @@
     ],
     "conversion": [
       "number",
-      "text"
+      "text",
+      "JSONStringfy"
     ],
     "user/system": [
       "UniqueID",

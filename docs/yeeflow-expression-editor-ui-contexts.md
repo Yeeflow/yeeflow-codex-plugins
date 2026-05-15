@@ -314,7 +314,7 @@ Generator guidance:
 
 ## Form Actions
 
-Observed in manually updated `Expression Sublist Summary Workflow Test v1.yap`.
+Observed in manually updated `Expression Sublist Summary Workflow Test v1.yap` and `Form Actions Phase 1 Test v1 Runtime.yap`.
 
 Entry points:
 
@@ -322,12 +322,15 @@ Entry points:
 - Page form definition: `page.formdef.formAction.onLoad` binds a page-load action.
 - Form action steps: Set variable steps use expression-token arrays for values and optional conditions.
 - Confirm dialog steps use expression-token arrays for the dialog message and a variable token for the result target.
+- Query data steps can write count and collection outputs into temp variables.
+- Submit form steps progress or save the active form and are not expression wrappers unless an execution condition is configured.
 
 Typical variables:
 
 - workflow variables from `variables.basic[]`
 - temp variables declared in `variables.tempVars[]` and referenced as `__temp_<id>`
 - context/profile functions such as `currentUser`, `getUserAttr`, and `now` when export-backed
+- query result collections stored in temp variables such as `__temp_var_CollectionofQueryItems`
 
 Generator guidance:
 
@@ -335,3 +338,6 @@ Generator guidance:
 - use workflow graph actions for backend/process behavior
 - validate temp variable references separately from workflow variables
 - keep generated action buttons inline and named with meaningful `nv_label`
+- for query-result aggregates, use `arraySum` against an explicit selected field from the preceding query step
+- preserve export-backed `JSONStringfy` spelling for query collection display/debugging
+- keep `vLookup` deferred until an export provides its function token shape

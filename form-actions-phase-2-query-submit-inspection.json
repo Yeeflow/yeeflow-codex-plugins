@@ -1,0 +1,1239 @@
+{
+  "source": "/Users/Renger/Downloads/Form Actions Phase 1 Test v1 Runtime.yap",
+  "studiedReadOnly": true,
+  "app": {
+    "title": "Form Actions Phase 1 Test v1 Runtime",
+    "appId": 41,
+    "listSetId": "2055176306075381761"
+  },
+  "approvalForm": {
+    "name": "Form Actions Phase 1 Test v1",
+    "key": "2055176313546620939",
+    "listId": 0,
+    "workflowType": 2,
+    "requestPage": {
+      "id": "21ecabde-8534-4f54-b592-71760518ad06",
+      "title": "Submit Form Actions Test",
+      "onLoad": "d84c0093-1fe4-4d50-bc45-db8902b19626",
+      "actionCount": 10
+    }
+  },
+  "variables": {
+    "basic": [
+      {
+        "idx": "fap1-var-request-title",
+        "id": "RequestTitle",
+        "name": "Request Title",
+        "type": "text",
+        "editable": true
+      },
+      {
+        "idx": "fap1-var-notes",
+        "id": "Notes",
+        "name": "Final Notes",
+        "type": "text",
+        "editable": true
+      },
+      {
+        "idx": "2f1d7eb5-5fdd-48f1-87b1-03b9240a71b7",
+        "id": "FormActions",
+        "name": "Form Actions",
+        "type": "list",
+        "editable": true,
+        "value": "listref_1"
+      },
+      {
+        "idx": "27ed35a1-0fd0-4b13-afed-1bf410e8c8a1",
+        "id": "QueryTitle",
+        "name": "Query Title",
+        "type": "text",
+        "editable": true
+      },
+      {
+        "idx": "6e4440ff-d127-4588-a547-e8bc3538861b",
+        "id": "QueryRequestTitle",
+        "name": "Query Request Title",
+        "type": "text",
+        "editable": true
+      },
+      {
+        "idx": "2dec7f8d-b736-4258-b5fc-a9a99d4a4b4a",
+        "id": "QueryApprovalStatus",
+        "name": "Query Approval Status",
+        "type": "text",
+        "editable": true
+      },
+      {
+        "idx": "58c87eda-19cf-481e-b139-4a94b34731ae",
+        "id": "QueryFinalNotes",
+        "name": "Query Final Notes",
+        "type": "text",
+        "editable": true
+      },
+      {
+        "idx": "fb741305-3a45-46d0-ad4e-9ea87fb83d37",
+        "id": "Sum_Amount_QueryItems",
+        "name": "Sum Amount Query Items",
+        "type": "number",
+        "editable": true
+      }
+    ],
+    "listref": [
+      {
+        "id": "listref_1",
+        "name": "Listref_1",
+        "fields": [
+          {
+            "idx": "2c0d04a7-77f6-4e8a-8725-fbe4c8b47de6",
+            "id": "field_Title",
+            "name": "Title",
+            "type": "text",
+            "editable": true
+          },
+          {
+            "idx": "20873338-5e7b-4c96-8a19-16aeac9d0a33",
+            "id": "field_RequestTitle",
+            "name": "Request Title",
+            "type": "text",
+            "editable": true
+          },
+          {
+            "idx": "1377c6a6-5cc9-42dd-966d-324d5381c50e",
+            "id": "field_Approvalstatus",
+            "name": "Approval status",
+            "type": "text",
+            "editable": true
+          }
+        ],
+        "idx": "16f5b807-01db-4278-a52d-ef0d5fdae443"
+      }
+    ],
+    "tempVars": [
+      {
+        "idx": "fap1-temp-status",
+        "id": "var_TempStatus"
+      },
+      {
+        "idx": "fap1-temp-click-count",
+        "id": "var_ClickCount"
+      },
+      {
+        "idx": "fap1-temp-dialog-result",
+        "id": "var_DialogResult"
+      },
+      {
+        "idx": "fap1-temp-page-load-status",
+        "id": "var_PageLoadStatus"
+      },
+      {
+        "idx": "f7b0b0df-f3fd-4501-a586-be723a467a18",
+        "id": "var_TotalQueryItems"
+      },
+      {
+        "idx": "bf69a796-c204-4174-8096-3a60c49d3040",
+        "id": "var_CollectionofQueryItems"
+      }
+    ]
+  },
+  "actionButtons": [
+    {
+      "id": "0b859815-c81a-4be8-83a8-8ed12ecbc9ec",
+      "label": "Start",
+      "nv_label": "Primary start sample button",
+      "buttonStyle": "2",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[0].children[2].children[1].children[0]"
+    },
+    {
+      "id": "38e03283-f746-44f0-a6f1-bc8bf4c3c376",
+      "label": "On hold",
+      "nv_label": "Soft secondary on hold sample button",
+      "buttonStyle": "3",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[0].children[2].children[1].children[1]"
+    },
+    {
+      "id": "5fa6ba9f-83af-45b0-9b58-eddfbe0cb6ff",
+      "label": "Save",
+      "nv_label": "Outline save sample button",
+      "buttonStyle": "4",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[0].children[2].children[1].children[2]"
+    },
+    {
+      "id": "3a364adc-30fb-431e-83dd-998eba20fc19",
+      "label": "Verify",
+      "nv_label": "Neutral verify sample button",
+      "buttonStyle": "5",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[0].children[2].children[1].children[3]"
+    },
+    {
+      "id": "8f8f0515-1e1a-4fc2-900f-5301f44ba965",
+      "label": "Import",
+      "nv_label": "Dashed import sample button",
+      "buttonStyle": "6",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[0].children[2].children[1].children[4]"
+    },
+    {
+      "id": "e9292eed-0ed3-41ef-b01c-74e5ac78a496",
+      "label": "New item",
+      "nv_label": "Dashed new item sample button",
+      "buttonStyle": "6",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[0].children[2].children[1].children[5]"
+    },
+    {
+      "id": "745c8229-83b1-4897-8810-1e3e2633907e",
+      "label": "Next",
+      "nv_label": "Dashed next sample button",
+      "buttonStyle": "6",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[0].children[2].children[1].children[6]"
+    },
+    {
+      "id": "fd389401-a0ba-49f2-9e28-10b247b1d3b1",
+      "label": "Toggle temp status",
+      "nv_label": "Toggle temp status action button",
+      "actionId": "f7c28e68-8976-4ec0-9168-8999fff6d8f2",
+      "buttonStyle": "2",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[0].children[3].children[1].children[0]"
+    },
+    {
+      "id": "b2dd3e94-78be-4fa6-86a9-ff596788a95a",
+      "label": "Set default request title",
+      "nv_label": "Set default request title action button",
+      "actionId": "547e42bd-df1a-42f7-a48b-fce13b7b208e",
+      "buttonStyle": "3",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[0].children[3].children[1].children[1]"
+    },
+    {
+      "id": "d5b08ff4-9a56-429d-8b05-5ad1ef153bbc",
+      "label": "Show confirmation",
+      "nv_label": "Show confirmation dialog action button",
+      "actionId": "b8be9e1a-17d1-4b27-85da-970c8ccacbdf",
+      "buttonStyle": "4",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[0].children[3].children[1].children[2]"
+    },
+    {
+      "id": "be5ab045-18fe-416f-b7ab-b8564997645f",
+      "label": "Reset temp status",
+      "nv_label": "Reset temp status action button",
+      "actionId": "34f5785a-8046-47dc-8d51-1bc662ad5123",
+      "buttonStyle": "6",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[0].children[3].children[1].children[3]"
+    },
+    {
+      "id": "fdc49407-003e-4496-b685-e6f264e2d83c",
+      "label": "Load Multiple Test Requests",
+      "nv_label": "Toggle temp status action button",
+      "actionId": "32207e8d-7e4f-4bc1-98a0-b5292af5bb78",
+      "buttonStyle": "2",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[0].children[5].children[2].children[0]"
+    },
+    {
+      "id": "fae37114-8fd6-469a-9da1-03db9715496c",
+      "label": "Load Single Test Request",
+      "nv_label": "Toggle temp status action button",
+      "actionId": "a6e1ee5d-1586-40b3-a667-742126abe49b",
+      "buttonStyle": "2",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[0].children[5].children[2].children[1]"
+    },
+    {
+      "id": "ca9911f2-b3c1-4a25-8564-60a4791b9194",
+      "label": "Calculate with vLookup function",
+      "nv_label": "Toggle temp status action button",
+      "actionId": "d31c0019-fb65-4d6a-8b5e-b2a89c7dbaab",
+      "buttonStyle": "2",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[0].children[5].children[2].children[2]"
+    },
+    {
+      "id": "899c1c8b-1d7f-4946-9e06-c6664d832ea6",
+      "label": "Submit form for testing",
+      "nv_label": "Toggle temp status action button",
+      "actionId": "7b90c927-fee9-4028-9f65-09f741eb5473",
+      "buttonStyle": "2",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[1].children[0].children[0].children[0]"
+    },
+    {
+      "id": "0b275e9e-0b4a-4c0b-ad38-e3d8510d4620",
+      "label": "Save as draft",
+      "nv_label": "Toggle temp status action button",
+      "actionId": "0a2f14b9-07bd-4090-b8f2-bfc859849ac0",
+      "buttonStyle": "3",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "children[0].children[0].children[1].children[0].children[0].children[1]"
+    }
+  ],
+  "actions": [
+    {
+      "id": "d84c0093-1fe4-4d50-bc45-db8902b19626",
+      "name": "Page Load Initialize",
+      "steps": [
+        {
+          "type": "setvar",
+          "name": "Initialize temp display values",
+          "attrs": {
+            "setvar_multi": true,
+            "setvar_array": [
+              {
+                "var": {
+                  "exprType": "variable",
+                  "valueType": "string",
+                  "id": "__temp_var_PageLoadStatus",
+                  "type": "expr",
+                  "name": "var_PageLoadStatus"
+                },
+                "value": [
+                  {
+                    "type": "str",
+                    "value": "Page load action initialized"
+                  }
+                ]
+              },
+              {
+                "var": {
+                  "exprType": "variable",
+                  "valueType": "string",
+                  "id": "__temp_var_TempStatus",
+                  "type": "expr",
+                  "name": "var_TempStatus"
+                },
+                "value": [
+                  {
+                    "type": "str",
+                    "value": "Ready"
+                  }
+                ]
+              },
+              {
+                "var": {
+                  "exprType": "variable",
+                  "valueType": "string",
+                  "id": "__temp_var_ClickCount",
+                  "type": "expr",
+                  "name": "var_ClickCount"
+                },
+                "value": [
+                  {
+                    "type": "num",
+                    "value": "0"
+                  }
+                ]
+              },
+              {
+                "var": {
+                  "exprType": "variable",
+                  "valueType": "string",
+                  "id": "__temp_var_DialogResult",
+                  "type": "expr",
+                  "name": "var_DialogResult"
+                },
+                "value": [
+                  {
+                    "type": "str",
+                    "value": "No confirmation yet"
+                  }
+                ]
+              },
+              {
+                "var": {
+                  "exprType": "variable",
+                  "valueType": "text",
+                  "id": "Notes",
+                  "type": "expr",
+                  "name": "Workflow Variables:Final Notes"
+                },
+                "value": [
+                  {
+                    "type": "str",
+                    "value": "Initialized by the page load form action."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "547e42bd-df1a-42f7-a48b-fce13b7b208e",
+      "name": "Set Default Request Title",
+      "steps": [
+        {
+          "type": "setvar",
+          "name": "Set request title when empty",
+          "attrs": {
+            "setvar_var": {
+              "exprType": "variable",
+              "valueType": "text",
+              "id": "RequestTitle",
+              "type": "expr",
+              "name": "Workflow Variables:Request Title"
+            },
+            "setvar_val": [
+              {
+                "type": "str",
+                "value": "Form Actions Phase 1 Runtime Test"
+              }
+            ]
+          },
+          "condition": [
+            {
+              "type": "func",
+              "func": "isNullOrEmpty",
+              "params": [
+                [
+                  {
+                    "exprType": "variable",
+                    "valueType": "text",
+                    "id": "RequestTitle",
+                    "type": "expr",
+                    "name": "Workflow Variables:Request Title"
+                  }
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "type": "setvar",
+          "name": "Mark temp status for title update",
+          "attrs": {
+            "setvar_var": {
+              "exprType": "variable",
+              "valueType": "string",
+              "id": "__temp_var_TempStatus",
+              "type": "expr",
+              "name": "var_TempStatus"
+            },
+            "setvar_val": [
+              {
+                "type": "str",
+                "value": "Default title action ran"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "f7c28e68-8976-4ec0-9168-8999fff6d8f2",
+      "name": "Toggle Temp Status",
+      "steps": [
+        {
+          "type": "setvar",
+          "name": "Toggle click count",
+          "attrs": {
+            "setvar_var": {
+              "exprType": "variable",
+              "valueType": "string",
+              "id": "__temp_var_ClickCount",
+              "type": "expr",
+              "name": "var_ClickCount"
+            },
+            "setvar_val": [
+              {
+                "type": "func",
+                "func": "iif",
+                "params": [
+                  [
+                    {
+                      "exprType": "variable",
+                      "valueType": "string",
+                      "id": "__temp_var_ClickCount",
+                      "type": "expr",
+                      "name": "var_ClickCount"
+                    },
+                    {
+                      "type": "op",
+                      "op": "=="
+                    },
+                    {
+                      "type": "num",
+                      "value": "0"
+                    }
+                  ],
+                  [
+                    {
+                      "type": "num",
+                      "value": "1"
+                    }
+                  ],
+                  [
+                    {
+                      "type": "num",
+                      "value": "0"
+                    }
+                  ]
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "setvar",
+          "name": "Set temp status clicked",
+          "attrs": {
+            "setvar_var": {
+              "exprType": "variable",
+              "valueType": "string",
+              "id": "__temp_var_TempStatus",
+              "type": "expr",
+              "name": "var_TempStatus"
+            },
+            "setvar_val": [
+              {
+                "type": "str",
+                "value": "Clicked by action button"
+              }
+            ]
+          },
+          "condition": [
+            {
+              "exprType": "variable",
+              "valueType": "string",
+              "id": "__temp_var_ClickCount",
+              "type": "expr",
+              "name": "var_ClickCount"
+            },
+            {
+              "type": "op",
+              "op": "=="
+            },
+            {
+              "type": "num",
+              "value": "0"
+            }
+          ],
+          "continue": true
+        },
+        {
+          "type": "setvar",
+          "name": "Set temp status unclicked",
+          "attrs": {
+            "setvar_var": {
+              "exprType": "variable",
+              "valueType": "string",
+              "id": "__temp_var_TempStatus",
+              "type": "expr",
+              "name": "var_TempStatus"
+            },
+            "setvar_val": [
+              {
+                "type": "str",
+                "value": "Unclicked by action button"
+              }
+            ]
+          },
+          "condition": [
+            {
+              "exprType": "variable",
+              "valueType": "string",
+              "id": "__temp_var_ClickCount",
+              "type": "expr",
+              "name": "var_ClickCount"
+            },
+            {
+              "type": "op",
+              "op": "=="
+            },
+            {
+              "type": "num",
+              "value": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b8be9e1a-17d1-4b27-85da-970c8ccacbdf",
+      "name": "Show Confirmation Dialog",
+      "steps": [
+        {
+          "type": "confirm",
+          "name": "Confirm Phase 1 action",
+          "attrs": {
+            "confirm_qs": [
+              {
+                "type": "str",
+                "value": "Confirm this Phase 1 form action test?"
+              }
+            ],
+            "confirm_rs": {
+              "exprType": "variable",
+              "valueType": "string",
+              "id": "__temp_var_DialogResult",
+              "type": "expr",
+              "name": "var_DialogResult"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "34f5785a-8046-47dc-8d51-1bc662ad5123",
+      "name": "Reset Temp Status",
+      "steps": [
+        {
+          "type": "setvar",
+          "name": "Reset temp status",
+          "attrs": {
+            "setvar_var": {
+              "exprType": "variable",
+              "valueType": "string",
+              "id": "__temp_var_TempStatus",
+              "type": "expr",
+              "name": "var_TempStatus"
+            },
+            "setvar_val": [
+              {
+                "type": "str",
+                "value": "Reset to default"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "32207e8d-7e4f-4bc1-98a0-b5292af5bb78",
+      "name": "Load Multiple Test Requests",
+      "steps": [
+        {
+          "type": "querydata",
+          "name": "Query Multiple items",
+          "attrs": {
+            "querydata_list": {
+              "AppID": 41,
+              "ListSetID": "2055176306075381761",
+              "ListID": "2055176313546620929",
+              "ListType": 1
+            },
+            "querydata_sorts": [
+              {
+                "SortName": "Created",
+                "SortByDesc": true
+              }
+            ],
+            "querydata_type": "multiple",
+            "querydata_fieldmap": {
+              "Title": "field_Title",
+              "Text1": "field_RequestTitle",
+              "Text3": "field_Approvalstatus"
+            },
+            "querydata_listname": "FormActions",
+            "querydata_vartype": "list",
+            "querydata_listname_parent": "__variables_",
+            "querydata_fields": null,
+            "querydata_totalcount": "var_TotalQueryItems",
+            "querydata_totalparent": "__temp_",
+            "querydata_pagesize": 200
+          }
+        }
+      ]
+    },
+    {
+      "id": "a6e1ee5d-1586-40b3-a667-742126abe49b",
+      "name": "Load Single Test Request",
+      "steps": [
+        {
+          "type": "querydata",
+          "name": "Query Single items",
+          "attrs": {
+            "querydata_list": {
+              "AppID": 41,
+              "ListSetID": "2055176306075381761",
+              "ListID": "2055176313546620929",
+              "ListType": 1
+            },
+            "querydata_sorts": [
+              {
+                "SortName": "Created",
+                "SortByDesc": true
+              }
+            ],
+            "querydata_type": "single",
+            "querydata_fieldmap": {
+              "Title": "QueryTitle",
+              "Text1": "QueryRequestTitle",
+              "Text2": "QueryFinalNotes",
+              "Text3": "QueryApprovalStatus"
+            },
+            "querydata_listname": "",
+            "querydata_vartype": "",
+            "querydata_listname_parent": "",
+            "querydata_fields": null,
+            "querydata_totalcount": "var_TotalQueryItems",
+            "querydata_totalparent": "__temp_",
+            "querydata_pagesize": 200
+          }
+        }
+      ]
+    },
+    {
+      "id": "d31c0019-fb65-4d6a-8b5e-b2a89c7dbaab",
+      "name": "Query to get the sum of total amount from data list",
+      "steps": [
+        {
+          "type": "querydata",
+          "name": "Query data and save to temp variable",
+          "attrs": {
+            "querydata_list": {
+              "AppID": 41,
+              "ListSetID": "2055176306075381761",
+              "ListID": "2055176313546620929",
+              "ListType": 1
+            },
+            "querydata_type": "multiple",
+            "querydata_fieldmap": null,
+            "querydata_listname": "var_CollectionofQueryItems",
+            "querydata_vartype": "text",
+            "querydata_listname_parent": "__temp_",
+            "querydata_fields": [
+              {
+                "FieldName": "Title",
+                "Type": "input",
+                "DisplayName": "Title"
+              },
+              {
+                "FieldName": "Decimal1",
+                "Type": "input_number",
+                "DisplayName": "Amount"
+              }
+            ],
+            "querydata_totalcount": "var_TotalQueryItems",
+            "querydata_totalparent": "__temp_",
+            "querydata_pagesize": 300
+          }
+        },
+        {
+          "type": "setvar",
+          "name": "Sum value with vLookup",
+          "attrs": {
+            "setvar_var": {
+              "exprType": "variable",
+              "valueType": "number",
+              "id": "Sum_Amount_QueryItems",
+              "type": "expr",
+              "name": "Workflow Variables:Sum Amount Query Items"
+            },
+            "setvar_val": [
+              {
+                "type": "func",
+                "func": "arraySum",
+                "params": [
+                  [
+                    {
+                      "exprType": "variable",
+                      "valueType": "string",
+                      "id": "__temp_var_CollectionofQueryItems",
+                      "type": "expr",
+                      "name": "var_CollectionofQueryItems"
+                    }
+                  ],
+                  [
+                    {
+                      "type": "str",
+                      "value": "Amount"
+                    }
+                  ],
+                  [],
+                  []
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "7b90c927-fee9-4028-9f65-09f741eb5473",
+      "name": "Submit form with comments",
+      "steps": [
+        {
+          "type": "submit"
+        }
+      ]
+    },
+    {
+      "id": "0a2f14b9-07bd-4090-b8f2-bfc859849ac0",
+      "name": "Save as draft",
+      "steps": [
+        {
+          "type": "submit",
+          "name": "Submit with draft",
+          "attrs": {
+            "submitType": "3",
+            "closeForm": true,
+            "ignoreValid": true
+          }
+        }
+      ]
+    }
+  ],
+  "queryActions": [
+    {
+      "id": "32207e8d-7e4f-4bc1-98a0-b5292af5bb78",
+      "name": "Load Multiple Test Requests",
+      "steps": [
+        {
+          "type": "querydata",
+          "name": "Query Multiple items",
+          "attrs": {
+            "querydata_list": {
+              "AppID": 41,
+              "ListSetID": "2055176306075381761",
+              "ListID": "2055176313546620929",
+              "ListType": 1
+            },
+            "querydata_sorts": [
+              {
+                "SortName": "Created",
+                "SortByDesc": true
+              }
+            ],
+            "querydata_type": "multiple",
+            "querydata_fieldmap": {
+              "Title": "field_Title",
+              "Text1": "field_RequestTitle",
+              "Text3": "field_Approvalstatus"
+            },
+            "querydata_listname": "FormActions",
+            "querydata_vartype": "list",
+            "querydata_listname_parent": "__variables_",
+            "querydata_fields": null,
+            "querydata_totalcount": "var_TotalQueryItems",
+            "querydata_totalparent": "__temp_",
+            "querydata_pagesize": 200
+          }
+        }
+      ]
+    },
+    {
+      "id": "a6e1ee5d-1586-40b3-a667-742126abe49b",
+      "name": "Load Single Test Request",
+      "steps": [
+        {
+          "type": "querydata",
+          "name": "Query Single items",
+          "attrs": {
+            "querydata_list": {
+              "AppID": 41,
+              "ListSetID": "2055176306075381761",
+              "ListID": "2055176313546620929",
+              "ListType": 1
+            },
+            "querydata_sorts": [
+              {
+                "SortName": "Created",
+                "SortByDesc": true
+              }
+            ],
+            "querydata_type": "single",
+            "querydata_fieldmap": {
+              "Title": "QueryTitle",
+              "Text1": "QueryRequestTitle",
+              "Text2": "QueryFinalNotes",
+              "Text3": "QueryApprovalStatus"
+            },
+            "querydata_listname": "",
+            "querydata_vartype": "",
+            "querydata_listname_parent": "",
+            "querydata_fields": null,
+            "querydata_totalcount": "var_TotalQueryItems",
+            "querydata_totalparent": "__temp_",
+            "querydata_pagesize": 200
+          }
+        }
+      ]
+    },
+    {
+      "id": "d31c0019-fb65-4d6a-8b5e-b2a89c7dbaab",
+      "name": "Query to get the sum of total amount from data list",
+      "steps": [
+        {
+          "type": "querydata",
+          "name": "Query data and save to temp variable",
+          "attrs": {
+            "querydata_list": {
+              "AppID": 41,
+              "ListSetID": "2055176306075381761",
+              "ListID": "2055176313546620929",
+              "ListType": 1
+            },
+            "querydata_type": "multiple",
+            "querydata_fieldmap": null,
+            "querydata_listname": "var_CollectionofQueryItems",
+            "querydata_vartype": "text",
+            "querydata_listname_parent": "__temp_",
+            "querydata_fields": [
+              {
+                "FieldName": "Title",
+                "Type": "input",
+                "DisplayName": "Title"
+              },
+              {
+                "FieldName": "Decimal1",
+                "Type": "input_number",
+                "DisplayName": "Amount"
+              }
+            ],
+            "querydata_totalcount": "var_TotalQueryItems",
+            "querydata_totalparent": "__temp_",
+            "querydata_pagesize": 300
+          }
+        },
+        {
+          "type": "setvar",
+          "name": "Sum value with vLookup",
+          "attrs": {
+            "setvar_var": {
+              "exprType": "variable",
+              "valueType": "number",
+              "id": "Sum_Amount_QueryItems",
+              "type": "expr",
+              "name": "Workflow Variables:Sum Amount Query Items"
+            },
+            "setvar_val": [
+              {
+                "type": "func",
+                "func": "arraySum",
+                "params": [
+                  [
+                    {
+                      "exprType": "variable",
+                      "valueType": "string",
+                      "id": "__temp_var_CollectionofQueryItems",
+                      "type": "expr",
+                      "name": "var_CollectionofQueryItems"
+                    }
+                  ],
+                  [
+                    {
+                      "type": "str",
+                      "value": "Amount"
+                    }
+                  ],
+                  [],
+                  []
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "submitActions": [
+    {
+      "id": "7b90c927-fee9-4028-9f65-09f741eb5473",
+      "name": "Submit form with comments",
+      "steps": [
+        {
+          "type": "submit"
+        }
+      ]
+    },
+    {
+      "id": "0a2f14b9-07bd-4090-b8f2-bfc859849ac0",
+      "name": "Save as draft",
+      "steps": [
+        {
+          "type": "submit",
+          "name": "Submit with draft",
+          "attrs": {
+            "submitType": "3",
+            "closeForm": true,
+            "ignoreValid": true
+          }
+        }
+      ]
+    }
+  ],
+  "queryPatterns": {
+    "multipleToSublist": {
+      "id": "32207e8d-7e4f-4bc1-98a0-b5292af5bb78",
+      "name": "Load Multiple Test Requests",
+      "steps": [
+        {
+          "type": "querydata",
+          "name": "Query Multiple items",
+          "attrs": {
+            "querydata_list": {
+              "AppID": 41,
+              "ListSetID": "2055176306075381761",
+              "ListID": "2055176313546620929",
+              "ListType": 1
+            },
+            "querydata_sorts": [
+              {
+                "SortName": "Created",
+                "SortByDesc": true
+              }
+            ],
+            "querydata_type": "multiple",
+            "querydata_fieldmap": {
+              "Title": "field_Title",
+              "Text1": "field_RequestTitle",
+              "Text3": "field_Approvalstatus"
+            },
+            "querydata_listname": "FormActions",
+            "querydata_vartype": "list",
+            "querydata_listname_parent": "__variables_",
+            "querydata_fields": null,
+            "querydata_totalcount": "var_TotalQueryItems",
+            "querydata_totalparent": "__temp_",
+            "querydata_pagesize": 200
+          }
+        }
+      ]
+    },
+    "singleToWorkflowVariables": {
+      "id": "a6e1ee5d-1586-40b3-a667-742126abe49b",
+      "name": "Load Single Test Request",
+      "steps": [
+        {
+          "type": "querydata",
+          "name": "Query Single items",
+          "attrs": {
+            "querydata_list": {
+              "AppID": 41,
+              "ListSetID": "2055176306075381761",
+              "ListID": "2055176313546620929",
+              "ListType": 1
+            },
+            "querydata_sorts": [
+              {
+                "SortName": "Created",
+                "SortByDesc": true
+              }
+            ],
+            "querydata_type": "single",
+            "querydata_fieldmap": {
+              "Title": "QueryTitle",
+              "Text1": "QueryRequestTitle",
+              "Text2": "QueryFinalNotes",
+              "Text3": "QueryApprovalStatus"
+            },
+            "querydata_listname": "",
+            "querydata_vartype": "",
+            "querydata_listname_parent": "",
+            "querydata_fields": null,
+            "querydata_totalcount": "var_TotalQueryItems",
+            "querydata_totalparent": "__temp_",
+            "querydata_pagesize": 200
+          }
+        }
+      ]
+    },
+    "multipleToTempCollectionThenArraySum": {
+      "id": "d31c0019-fb65-4d6a-8b5e-b2a89c7dbaab",
+      "name": "Query to get the sum of total amount from data list",
+      "steps": [
+        {
+          "type": "querydata",
+          "name": "Query data and save to temp variable",
+          "attrs": {
+            "querydata_list": {
+              "AppID": 41,
+              "ListSetID": "2055176306075381761",
+              "ListID": "2055176313546620929",
+              "ListType": 1
+            },
+            "querydata_type": "multiple",
+            "querydata_fieldmap": null,
+            "querydata_listname": "var_CollectionofQueryItems",
+            "querydata_vartype": "text",
+            "querydata_listname_parent": "__temp_",
+            "querydata_fields": [
+              {
+                "FieldName": "Title",
+                "Type": "input",
+                "DisplayName": "Title"
+              },
+              {
+                "FieldName": "Decimal1",
+                "Type": "input_number",
+                "DisplayName": "Amount"
+              }
+            ],
+            "querydata_totalcount": "var_TotalQueryItems",
+            "querydata_totalparent": "__temp_",
+            "querydata_pagesize": 300
+          }
+        },
+        {
+          "type": "setvar",
+          "name": "Sum value with vLookup",
+          "attrs": {
+            "setvar_var": {
+              "exprType": "variable",
+              "valueType": "number",
+              "id": "Sum_Amount_QueryItems",
+              "type": "expr",
+              "name": "Workflow Variables:Sum Amount Query Items"
+            },
+            "setvar_val": [
+              {
+                "type": "func",
+                "func": "arraySum",
+                "params": [
+                  [
+                    {
+                      "exprType": "variable",
+                      "valueType": "string",
+                      "id": "__temp_var_CollectionofQueryItems",
+                      "type": "expr",
+                      "name": "var_CollectionofQueryItems"
+                    }
+                  ],
+                  [
+                    {
+                      "type": "str",
+                      "value": "Amount"
+                    }
+                  ],
+                  [],
+                  []
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "expressionFunctionNames": [
+    "JSONStringfy",
+    "arraySum",
+    "iif",
+    "isNullOrEmpty"
+  ],
+  "expressionFindings": {
+    "arraySum": "Export-backed in setvar after a querydata multiple step storing selected fields in __temp_var_CollectionofQueryItems.",
+    "JSONStringfy": "Export token uses JSONStringfy spelling in a Text/heading dynamic expression to display the temp collection. Treat as exact export-backed spelling; JSONStringify spelling was not found as a token in this export.",
+    "vLookup": "Button/action label mentions vLookup, but no vLookup function token was found in this export. Treat as UI-observed only, not generation-safe from this file."
+  },
+  "sourceList": {
+    "listId": "2055176313546620929",
+    "fields": [
+      {
+        "FieldName": "Title",
+        "DisplayName": "Title",
+        "FieldType": "Text",
+        "Type": "input",
+        "Status": 0,
+        "IsSystem": true,
+        "IsIndex": true
+      },
+      {
+        "FieldName": "Text1",
+        "DisplayName": "Request Title",
+        "FieldType": "Text",
+        "Type": "input",
+        "Status": 1,
+        "IsSystem": false,
+        "IsIndex": false
+      },
+      {
+        "FieldName": "Text2",
+        "DisplayName": "Final Notes",
+        "FieldType": "Text",
+        "Type": "textarea",
+        "Status": 1,
+        "IsSystem": false,
+        "IsIndex": false
+      },
+      {
+        "FieldName": "Text3",
+        "DisplayName": "Approval Status",
+        "FieldType": "Text",
+        "Type": "input",
+        "Status": 1,
+        "IsSystem": false,
+        "IsIndex": false
+      },
+      {
+        "FieldName": "Text4",
+        "DisplayName": "Created From Workflow",
+        "FieldType": "Text",
+        "Type": "input",
+        "Status": 1,
+        "IsSystem": false,
+        "IsIndex": false
+      },
+      {
+        "FieldName": "Decimal1",
+        "DisplayName": "Amount",
+        "FieldType": "Decimal",
+        "Type": "input_number",
+        "Status": 1,
+        "IsSystem": false,
+        "IsIndex": false
+      }
+    ]
+  },
+  "notes": [
+    "querydata_fields is null when mapping directly to the form list variable; fieldmap maps source FieldName to sub list field id.",
+    "querydata_fields is explicit when storing multiple query results to a temp collection variable; arraySum then uses display column label Amount.",
+    "Submit form default submit step may be only { type: \"submit\" }; Save changes uses attrs.submitType = \"3\", closeForm true, ignoreValid true."
+  ]
+}

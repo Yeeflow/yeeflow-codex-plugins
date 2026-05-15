@@ -151,6 +151,9 @@ function validateFunctionToken(token, context = {}) {
     issue(issues, "error", "EXPRESSION_FUNCTION_MISSING_NAME", "Function token must include func.", `${tokenPath}.func`);
     return issues;
   }
+  if (token.func === "arraySub") {
+    issue(issues, "warning", "EXPRESSION_FUNCTION_ARRAYSUB_TYPO", "arraySub is not export-backed for Yeeflow aggregate totals. Use arraySum.", `${tokenPath}.func`, { func: token.func, recommended: "arraySum" });
+  }
   const meta = references.functions[token.func];
   if (!meta) {
     issue(issues, "error", "EXPRESSION_FUNCTION_UNKNOWN", "Function name is not present in the normalized expression reference.", `${tokenPath}.func`, { func: token.func });
@@ -261,7 +264,148 @@ function buildCalculatedExpressionFromSpec(spec = {}) {
   if (spec.kind === "subtotal") {
     return [buildVariableToken(spec.quantity), { type: "op", op: "*" }, buildVariableToken(spec.unitPrice)];
   }
+  if (spec.kind === "sublist-row-subtotal") {
+    return buildSublistRowCalculationExpression({
+      listVariableId: spec.listVariableId,
+      quantityField: spec.quantityField,
+      unitPriceField: spec.unitPriceField,
+    });
+  }
   throw new Error(`Unsupported calculated expression spec kind: ${spec.kind || "unknown"}`);
+}
+
+function buildCurrentObjectFieldToken(field = {}) {
+  if (!field.id || !field.name || !field.valueType || !field.ctx) {
+    throw new Error("buildCurrentObjectFieldToken requires id, name, valueType, and ctx");
+  }
+  if (!VARIABLE_VALUE_TYPES.has(field.valueType)) {
+    throw new Error("buildCurrentObjectFieldToken valueType must be number/text/date/boolean/string/user");
+  }
+  return {
+    exprType: "variable_ctx",
+    valueType: field.valueType,
+    id: field.id,
+    ctx: field.ctx,
+    type: "expr",
+    name: field.name.startsWith("Current object:") ? field.name : `Current object:${field.name}`,
+  };
+}
+
+function buildSublistRowCalculationExpression({ listVariableId, quantityField, unitPriceField } = {}) {
+  if (!listVariableId || !quantityField || !unitPriceField) {
+    throw new Error("buildSublistRowCalculationExpression requires listVariableId, quantityField, and unitPriceField");
+  }
+  return [
+    buildCurrentObjectFieldToken({
+      id: quantityField.id,
+      name: quantityField.name || "Quantity",
+      valueType: "number",
+      ctx: listVariableId,
+    }),
+    { type: "op", op: "*" },
+    buildCurrentObjectFieldToken({
+      id: unitPriceField.id,
+      name: unitPriceField.name || "Unit Price",
+      valueType: "number",
+      ctx: listVariableId,
+    }),
+  ];
+}
+
+function buildNumericWorkflowCondition(variable = {}, operator, threshold) {
+  if (!variable.id || !variable.valueType || variable.valueType !== "number") {
+    throw new Error("buildNumericWorkflowCondition requires a number variable");
+  }
+  const opMap = new Map([
+    [">", "n.>"],
+    [">=", "n.>="],
+    ["<", "n.<"],
+    ["<=", "n.<="],
+    ["==", "n.="],
+    ["!=", "n.!="],
+    ["n.>", "n.>"],
+    ["n.>=", "n.>="],
+    ["n.<", "n.<"],
+    ["n.<=", "n.<="],
+    ["n.=", "n.="],
+    ["n.!=", "n.!="],
+  ]);
+  if (!opMap.has(operator)) throw new Error(`Unsupported numeric workflow operator: ${operator}`);
+  if (threshold === "" || threshold === null || threshold === undefined || Number.isNaN(Number(threshold))) {
+    throw new Error("buildNumericWorkflowCondition threshold must be numeric");
+  }
+  return {
+    key: variable.key || undefined,
+    pre: "and",
+    left: {
+      type: 1,
+      value: {
+        exprType: "variable",
+        valueType: "number",
+        id: variable.id,
+        type: "expr",
+      },
+    },
+    op: opMap.get(operator),
+    right: {
+      type: 2,
+      value: [{ type: "num", value: String(threshold) }],
+    },
+    group: "number",
+  };
+}
+
+function validateSublistCurrentObjectExpression(expr, options = {}) {
+  const report = validateExpressionTokens(expr, options);
+  const issues = [...report.issues];
+  const expression = normalizeExpression(expr);
+  const allowedFields = new Set(options.allowedFields || []);
+  const expectedCtx = options.ctx || null;
+  if (Array.isArray(expression)) {
+    deepWalkExpression(expression, (token, pointer) => {
+      if (!isObject(token) || token.exprType !== "variable_ctx") return;
+      if (expectedCtx && token.ctx !== expectedCtx) {
+        issue(issues, "error", "SUBLIST_CURRENT_OBJECT_BAD_CTX", "Current object token ctx must match the parent list variable.", `${options.path || "$"}${pointer.slice(1)}`, { ctx: token.ctx, expectedCtx });
+      }
+      if (allowedFields.size && !allowedFields.has(token.id)) {
+        issue(issues, "error", "SUBLIST_CURRENT_OBJECT_UNKNOWN_FIELD", "Current object token references a row field that is not in the listref.", `${options.path || "$"}${pointer.slice(1)}`, { field: token.id });
+      }
+    });
+  }
+  return {
+    valid: !issues.some((entry) => entry.level === "error"),
+    issues,
+    variables: report.variables,
+    inferredValueType: report.inferredValueType,
+  };
+}
+
+function validateWorkflowNumericCondition(condition = {}, options = {}) {
+  const issues = [];
+  const basePath = options.path || "$";
+  const allowedVariables = new Set(options.allowedVariables || []);
+  const leftValue = condition.left && (condition.left.value || condition.left);
+  const rightValue = condition.right && (Object.prototype.hasOwnProperty.call(condition.right, "value") ? condition.right.value : condition.right);
+  if (!condition.group || condition.group !== "number") issue(issues, "warning", "WORKFLOW_NUMERIC_CONDITION_MISSING_GROUP", "Numeric workflow condition should include group: number.", `${basePath}.group`);
+  if (!["n.>", "n.>=", "n.<", "n.<=", "n.=", "n.!="].includes(condition.op)) issue(issues, "error", "WORKFLOW_NUMERIC_CONDITION_BAD_OP", "Numeric workflow condition uses an unsupported operator.", `${basePath}.op`, { op: condition.op });
+  if (!leftValue || leftValue.exprType !== "variable" || leftValue.valueType !== "number" || !leftValue.id) {
+    issue(issues, "error", "WORKFLOW_NUMERIC_CONDITION_BAD_LEFT", "Numeric workflow condition left side must be a number variable token.", `${basePath}.left`);
+  } else if (allowedVariables.size && !allowedVariables.has(leftValue.id)) {
+    issue(issues, "error", "WORKFLOW_NUMERIC_CONDITION_UNKNOWN_VARIABLE", "Numeric workflow condition references a variable outside the workflow.", `${basePath}.left.value.id`, { id: leftValue.id });
+  }
+  const rightTokens = Array.isArray(rightValue) ? rightValue : [rightValue];
+  const rightNumeric = rightTokens.length === 1 && isObject(rightTokens[0]) && rightTokens[0].type === "num" && !Number.isNaN(Number(rightTokens[0].value));
+  const rightPrimitiveNumeric = (typeof rightValue === "number") || (typeof rightValue === "string" && rightValue.trim() !== "" && !Number.isNaN(Number(rightValue)));
+  if (!rightNumeric && !rightPrimitiveNumeric) {
+    issue(issues, "error", "WORKFLOW_NUMERIC_CONDITION_BAD_RIGHT", "Numeric workflow condition right side must be a numeric literal or single numeric expression token.", `${basePath}.right`);
+  }
+  return { valid: !issues.some((entry) => entry.level === "error"), issues };
+}
+
+function deepWalkExpression(value, visitor, pointer = "$") {
+  visitor(value, pointer);
+  if (Array.isArray(value)) value.forEach((item, index) => deepWalkExpression(item, visitor, `${pointer}[${index}]`));
+  else if (isObject(value)) Object.entries(value).forEach(([key, child]) => deepWalkExpression(child, visitor, `${pointer}.${key}`));
 }
 
 module.exports = {
@@ -279,4 +423,9 @@ module.exports = {
   buildFunctionToken,
   buildComparison,
   buildCalculatedExpressionFromSpec,
+  buildCurrentObjectFieldToken,
+  buildSublistRowCalculationExpression,
+  buildNumericWorkflowCondition,
+  validateSublistCurrentObjectExpression,
+  validateWorkflowNumericCondition,
 };

@@ -55,6 +55,7 @@ ok("dateFormat", [buildFunctionToken("dateFormat", [[buildFunctionToken("now", [
 ok("iif", [buildFunctionToken("iif", [[amount, { type: "op", op: ">" }, { type: "num", value: "5000" }], [{ type: "str", value: "Finance Review" }], [{ type: "str", value: "Manager Review" }]])]);
 ok("isNullOrEmpty", [buildFunctionToken("isNullOrEmpty", [[status]])]);
 ok("arraySum", [buildFunctionToken("arraySum", [[lineItems], [{ type: "str", value: "LineTotal" }], [], []])]);
+ok("JSONStringfy query collection", [buildFunctionToken("JSONStringfy", [[{ exprType: "variable", valueType: "string", id: "__temp_var_CollectionofQueryItems", type: "expr", name: "var_CollectionofQueryItems" }]])]);
 ok("formatNumber", [buildFunctionToken("formatNumber", [[amount], [{ type: "num", value: "2" }], [{ type: "num", value: "1" }]])]);
 ok("UniqueID", [buildFunctionToken("UniqueID", [])]);
 ok("current user name", [getUserAttr(currentUser, "Name_CN", "Name")]);

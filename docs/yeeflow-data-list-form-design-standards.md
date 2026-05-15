@@ -73,3 +73,17 @@ Generated lists must preserve native `Title` metadata. Business labels may be di
 Warn for missing Edit/View forms, incorrect display settings, missing `Main` / `Content`, non-full-width form pages, non-zero padding, `Main` carrying full-page-like background, missing page-level background when `Main` has a background, and excessive arbitrary colors.
 
 Data-list custom form headings, helper text, card labels, and empty-state text should follow the shared Text control standard in `docs/yeeflow-text-control-generation-standards.md`. Default to native `heading` Text controls with inline width, `[null, token]` typography presets, plain string colors, and meaningful `nv_label`.
+
+## Form Actions
+
+Approval-form exports prove that Yeeflow form actions can use page load, button click, temp variables, Set variable, Confirm dialog, Query data, Submit form, and Save changes patterns. Data-list custom forms may use the same conceptual front-end form action model, but generator output should wait for a data-list custom form export or focused runtime test for the exact wrapper.
+
+When a data-list custom form uses form actions in the future:
+
+- use page-level background, not Main background
+- keep action buttons inline width
+- use meaningful `nv_label`
+- use temp variables only for front-end/runtime state
+- do not rely on temp variables for backend persistence unless values are copied into real fields
+- use Query data with explicit selected fields and mappings
+- use Submit form / Save changes only in form contexts, never dashboard contexts

@@ -80,6 +80,7 @@ Use only:
 - Runtime-proven workflow numeric conditions for summary variables use `conditioninfo[]` wrappers with `op` values such as `n.>` and `n.<=`, `left.value` as a number variable token, and `right.value` as a numeric expression token array such as `[{ "type": "num", "value": "5000" }]`.
 - Form Actions Phase 1 export-backed: form action `setvar` values, multi-set values, step conditions, and confirm dialog messages use Yeeflow expression-token arrays. Temp variables are declared in `variables.tempVars[]` and referenced as variable tokens with `id: "__temp_<tempVarId>"`, such as `__temp_var_DialogResult`. Keep form action `setvar` distinct from workflow graph `SetVariableTask`; their wrappers differ.
 - Form Actions Phase 1 generated runtime: `setvar` and `confirm` tokens rendered and executed. When a form-action test also includes approval tasks, use requester/current-user expression assignment rather than tenant-specific direct-user IDs; invalid direct-user assignments can block publish before expression behavior can be tested.
+- Form Actions Phase 2 export-backed: Query data steps can store selected multiple-query results in temp collection variables and then aggregate them with `arraySum`. The export-backed query collection display function is spelled `JSONStringfy`; do not rename it to `JSONStringify` until an export proves that alias. `vLookup` was only seen in labels and remains deferred. Do not use `arraySub`; use `arraySum`.
 
 ## Editor Contexts
 
@@ -94,7 +95,7 @@ Use the context-specific wrapper only when export-backed. The nested expression 
 - Sub list summary binding: list control Summary Editor binds aggregate values to workflow variables, which can then be used by dynamic display, validation, ContentList, and workflow conditions.
 - Function tab: categories include All, String, Logical, Date, Mathematical, and Other.
 - Variable selector: observed groups include Context, Workflow Variables, Static Variables, Temp variables, and Filter variables.
-- Form actions: button click actions use `action_button.attrs.control_action`, page load actions use `page.formdef.formAction.onLoad`, Set variable steps store expressions in `setvar_val` or `setvar_array[].value`, and Confirm steps store message tokens in `confirm_qs`.
+- Form actions: button click actions use `action_button.attrs.control_action`, page load actions use `page.formdef.formAction.onLoad`, Set variable steps store expressions in `setvar_val` or `setvar_array[].value`, Confirm steps store message tokens in `confirm_qs`, and Phase 2 Query data result expressions can read temp query collections such as `__temp_var_CollectionofQueryItems`.
 
 ## User/Profile Expression Recipes
 

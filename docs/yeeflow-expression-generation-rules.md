@@ -234,6 +234,63 @@ Generation rules:
 - Validate form action expressions with the same expression utility used for calculated controls and workflow conditions.
 - Do not confuse form action `setvar` steps with workflow graph `SetVariableTask` nodes; their JSON shapes are different.
 
+## Query Result Expressions
+
+Form Actions Phase 2 proves query-result expressions in form action flows.
+
+Export-backed aggregate recipe:
+
+```json
+[
+  {
+    "type": "func",
+    "func": "arraySum",
+    "params": [
+      [
+        {
+          "exprType": "variable",
+          "valueType": "string",
+          "id": "__temp_var_CollectionofQueryItems",
+          "type": "expr",
+          "name": "var_CollectionofQueryItems"
+        }
+      ],
+      [{ "type": "str", "value": "Amount" }],
+      [],
+      []
+    ]
+  }
+]
+```
+
+Use this when a `querydata` step stores selected fields into a temp collection and the aggregate result is copied into a workflow number variable.
+
+For debugging/display of a temp query collection, the Phase 2 export uses the exact function token `JSONStringfy`:
+
+```json
+[
+  {
+    "type": "func",
+    "func": "JSONStringfy",
+    "params": [
+      [
+        {
+          "exprType": "variable",
+          "valueType": "string",
+          "id": "__temp_var_CollectionofQueryItems",
+          "type": "expr",
+          "name": "var_CollectionofQueryItems"
+        }
+      ]
+    ]
+  }
+]
+```
+
+Do not rename this function to `JSONStringify` unless a future export proves that exact spelling as a function token. Do not use `arraySub`; use `arraySum`.
+
+`vLookup` remains deferred because the Phase 2 export contains it only in labels, not in expression tokens.
+
 ## Validation Standard
 
 Run expression smoke tests after changing helpers or references:

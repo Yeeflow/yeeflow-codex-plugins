@@ -141,7 +141,19 @@ Phase 1 export-backed patterns:
 - Set variable steps use `type: "setvar"`
 - Show confirm dialog steps use `type: "confirm"`
 
-Keep form actions distinct from workflow actions. Form actions are front-end form logic; workflow actions are process graph/backend logic. Use form actions for UI state, defaults, confirmation, and safe client-side initialization. Do not use temp variables as the only source for persisted business data.
+Phase 2 export-backed patterns:
+
+- Query data steps use `type: "querydata"`
+- Query multiple can map records into a form `list` variable
+- Query single can map selected fields into workflow variables
+- Query result counts and temp collections use `__temp_` variable targets
+- Query result aggregates can use `arraySum`
+- Submit form steps use `type: "submit"`
+- Save changes is a submit mode with `attrs.submitType = "3"`
+
+Keep form actions distinct from workflow actions. Form actions are front-end form logic; workflow actions are process graph/backend logic. Use form actions for UI state, defaults, confirmation, query-assisted UI, and safe client-side initialization. Do not use temp variables as the only source for persisted business data.
+
+Use `docs/yeeflow-form-action-query-data-step-rules.md` and `docs/yeeflow-form-action-submit-step-rules.md` before generating Phase 2 form actions.
 
 ## Validator Guidance
 

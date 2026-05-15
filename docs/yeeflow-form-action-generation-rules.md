@@ -1,6 +1,10 @@
 # Yeeflow Form Action Generation Rules
 
-These rules cover Phase 1 Yeeflow Form Actions learned from the manually updated `Expression Sublist Summary Workflow Test v1.yap` export.
+These rules cover Yeeflow Form Actions learned from manually updated runtime exports.
+
+Phase 1 source: `Expression Sublist Summary Workflow Test v1.yap`.
+
+Phase 2 source: `Form Actions Phase 1 Test v1 Runtime.yap`.
 
 ## Scope
 
@@ -14,6 +18,18 @@ Phase 1 covers:
 - `confirm` action steps
 
 Phase 1 does not yet promote `listitem` action steps to general generation, although the export contains one example.
+
+Phase 2 covers:
+
+- `querydata` action steps
+- query multiple items
+- query single item
+- query result count temp variables
+- query result collection temp variables
+- query result mapping to form `list` variables
+- `arraySum` over query result collections
+- `submit` action steps
+- Save changes submit mode
 
 ## Form Action Location
 
@@ -138,6 +154,83 @@ Rules:
 - Show the result with a Text/heading control using `attrs.headc.title.variable`.
 - Runtime result semantics need the focused Phase 1 generated test before broad promises.
 
+## Query Data Step
+
+Use the detailed rules in `docs/yeeflow-form-action-query-data-step-rules.md`.
+
+Export-backed `querydata` step shape:
+
+```json
+{
+  "type": "querydata",
+  "attrs": {
+    "querydata_list": { "AppID": 41, "ListSetID": "2055176306075381761", "ListID": "2055176313546620929", "ListType": 1 },
+    "querydata_type": "multiple",
+    "querydata_fieldmap": { "Title": "field_Title" },
+    "querydata_listname": "FormActions",
+    "querydata_vartype": "list",
+    "querydata_listname_parent": "__variables_",
+    "querydata_fields": null,
+    "querydata_totalcount": "var_TotalQueryItems",
+    "querydata_totalparent": "__temp_",
+    "querydata_pagesize": 200
+  }
+}
+```
+
+Rules:
+
+- Use `querydata_type = "multiple"` when mapping rows into a form list/sub list or temp collection.
+- Use `querydata_type = "single"` when mapping the first matching item into workflow/temp variables.
+- Use explicit `querydata_fieldmap` and verify every mapped target variable or list row field exists.
+- Store display-only counts in temp variables via `querydata_totalcount` and `querydata_totalparent = "__temp_"`.
+- Store transient query collections in temp variables only when they are used for display or client-side expressions.
+- Copy business-relevant values into workflow variables before submit when persistence or workflow routing is required.
+
+## Query Result Expressions
+
+Phase 2 export-backed:
+
+- `arraySum(__temp_var_CollectionofQueryItems, "Amount", [], [])`
+- `JSONStringfy(__temp_var_CollectionofQueryItems)`
+
+The export-backed collection display function is spelled `JSONStringfy`. Do not silently rename it to `JSONStringify` until another export proves that spelling as a runtime function token.
+
+The export labels a button/action as `Calculate with vLookup function`, but no `vLookup` function token appears in the export. Treat `vLookup` as UI-observed only.
+
+The aggregate function is `arraySum`, not `arraySub`.
+
+## Submit Form Step
+
+Use the detailed rules in `docs/yeeflow-form-action-submit-step-rules.md`.
+
+Default submit:
+
+```json
+{ "type": "submit" }
+```
+
+Save changes:
+
+```json
+{
+  "type": "submit",
+  "name": "Submit with draft",
+  "attrs": {
+    "submitType": "3",
+    "closeForm": true,
+    "ignoreValid": true
+  }
+}
+```
+
+Rules:
+
+- Use default submit for normal form submit / task approve / task complete.
+- Use Save changes for draft-like behavior, not workflow progression.
+- Do not generate Submit form steps on dashboards.
+- Keep Reject, Task forward, and Add task assignee submit modes deferred until export-backed.
+
 ## Button Style Defaults
 
 Observed `action_button.attrs["button-style"]` values:
@@ -168,6 +261,13 @@ Use warnings first:
 - missing Confirm dialog message
 - missing temp variable declaration
 - action button without meaningful `nv_label`
+- Query data step missing source list
+- Query data step missing or invalid query type
+- Query data field mapping references missing variables or list row fields
+- Query result target variable missing
+- Submit form step used in dashboard context
+- Save changes step generated without a draft/save purpose
+- accidental `arraySub` expression usage; use `arraySum`
 
 Only promote these to hard errors after generated runtime proof.
 
@@ -186,3 +286,5 @@ Only promote these to hard errors after generated runtime proof.
 The same runtime found an assignment-generation rule: do not hardcode tenant-specific direct-user assignees such as `method: "users"` with a local user ID and `title: "User:Renger"`. Use a requester/current-user expression assignment unless an export-backed valid user mapping is intentionally supplied for the target tenant.
 
 ContentList persistence remained pending in the first runtime app; the regenerated package switches to the proven workflow-variable button mapping pattern for the next persistence test.
+
+The manually updated `Form Actions Phase 1 Test v1 Runtime.yap` export proves Phase 2 query/submit structures, but a Codex-generated Phase 2 runtime package is still the next proof step.

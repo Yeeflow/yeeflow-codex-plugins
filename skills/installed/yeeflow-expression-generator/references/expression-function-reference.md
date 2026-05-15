@@ -113,6 +113,20 @@ Choose functions by business intent before choosing by name:
 | `currentUser` | 0 | text | Current user ID. |
 | `UniqueID` | 0 | text | Unique ID. |
 | `getAttr` | 2-3 | unknown | Object path lookup with optional default. |
+| `JSONStringfy` | 1 | text | Export-backed Phase 2 spelling for serializing a value or query-result collection to JSON text. |
+
+## Query Result Functions
+
+These functions are used with Yeeflow Form Actions Phase 2 Query data steps.
+
+| Function | Params | Returns | Notes |
+| --- | --- | --- | --- |
+| `arraySum` | 1-4 | number | Runtime-known array aggregate. Phase 2 export uses it against a temp query collection and selected column label `"Amount"`. |
+| `JSONStringfy` | 1 | text | Export-backed collection display/debug function. Preserve this exact spelling until another export proves `JSONStringify` as a valid alias. |
+
+Do not use `arraySub`; the aggregate function learned for query-result totals is `arraySum`.
+
+`vLookup` remains deferred. The Phase 2 export contains `vLookup` only in button/action labels, not as an expression token.
 
 ## User, Department, And Location Attributes
 
