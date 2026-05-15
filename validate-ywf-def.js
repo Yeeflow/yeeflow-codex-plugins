@@ -1103,6 +1103,11 @@ function validateDecodedDef(def, options = {}) {
       if (!props.approveway) addIssue(errors, "APPROVAL_MISSING_APPROVEWAY", "Approval task must have approveway", `${p}.properties.approveway`);
       if (props.approvepercentage === undefined) addIssue(errors, "APPROVAL_MISSING_PERCENTAGE", "Approval task must have approvepercentage", `${p}.properties.approvepercentage`);
       if (!Array.isArray(props.usertaskassignment)) addIssue(errors, "APPROVAL_ASSIGNMENT_NOT_ARRAY", "usertaskassignment must be an array", `${p}.properties.usertaskassignment`);
+      for (const [assignmentIndex, assignment] of asArray(props.usertaskassignment).entries()) {
+        if (assignment && assignment.method === "users" && Array.isArray(assignment.value) && assignment.value.length > 0) {
+          addIssue(warnings, "APPROVAL_DIRECT_USER_ASSIGNMENT_TENANT_SENSITIVE", "Direct user assignee IDs are tenant-sensitive and can fail publish after import. Prefer requester/current-user expression assignment unless an export-backed valid user mapping is intentionally supplied.", `${p}.properties.usertaskassignment[${assignmentIndex}]`);
+        }
+      }
       if (!props.taskurl) addIssue(errors, "APPROVAL_MISSING_TASKURL", "Approval task must have taskurl", `${p}.properties.taskurl`);
 
       let approved = false;

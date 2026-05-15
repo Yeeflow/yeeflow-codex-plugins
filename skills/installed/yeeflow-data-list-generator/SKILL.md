@@ -192,6 +192,8 @@ When a generated data list will store records created by a generated approval fo
 
 Do not let the approval form target pre-import generated list IDs for production-like testing.
 
+For app-level generated runtime packages, local generated list IDs can be used inside the same `.yap` and should be included in the package replacement set. For production-like standalone approval/list integration, patch `ContentList` from exported-back list metadata. The Form Actions Phase 1 runtime test proved front-end form actions but did not yet prove ContentList persistence in that package; keep persistence claims tied to actual target-list row evidence.
+
 ## Staged Integration Checklist
 
 - data list final validation passed

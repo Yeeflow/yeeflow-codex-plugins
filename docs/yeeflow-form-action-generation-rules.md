@@ -170,3 +170,19 @@ Use warnings first:
 - action button without meaningful `nv_label`
 
 Only promote these to hard errors after generated runtime proof.
+
+## Runtime Baseline Status
+
+`Form Actions Phase 1 Test v1 Runtime` proved the Phase 1 form-action surface after the workflow assignee was manually corrected in the designer:
+
+- button style gallery renders
+- button click `control_action` triggers fire
+- page-load `formAction.onLoad` runs
+- temp variables display and update
+- `setvar` updates temp variables and workflow text variables
+- `confirm` opens a dialog and stores the result in a temp variable
+- submit, reviewer task open, and approval complete
+
+The same runtime found an assignment-generation rule: do not hardcode tenant-specific direct-user assignees such as `method: "users"` with a local user ID and `title: "User:Renger"`. Use a requester/current-user expression assignment unless an export-backed valid user mapping is intentionally supplied for the target tenant.
+
+ContentList persistence remained pending in the first runtime app; the regenerated package switches to the proven workflow-variable button mapping pattern for the next persistence test.

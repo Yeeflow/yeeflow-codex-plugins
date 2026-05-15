@@ -189,6 +189,14 @@ Generated approval forms must use Yeeflow expression editor token arrays for for
 
 For sub list row calculations, use `exprType: "variable_ctx"` current-object tokens rather than top-level workflow variable tokens. Use the parent list variable id as `ctx` and the row field id as `id`.
 
+## Form Actions Phase 1
+
+For generated form actions, use the Phase 1 runtime baseline rules from `docs/yeeflow-form-action-generation-rules.md`: action buttons use `attrs.control_action`, page load uses `formdef.formAction.onLoad`, temp variables live under `variables.tempVars[]`, and temp variable expression tokens use `__temp_` ids. Phase 1 generated-safe steps are `setvar` and `confirm`.
+
+Runtime baseline status: button styles, button-click triggers, page-load triggers, temp variable display, `setvar`, `confirm`, submit, task open, and approval completion are proven. ContentList persistence in the first form-action package remains pending and should use proven workflow-variable button mappings in the next test.
+
+Do not hardcode tenant-specific direct-user assignees in generated approval tasks. Avoid `method: "users"` with local user IDs/titles such as `User:Renger` unless the user explicitly supplies a target-tenant-valid mapping. Prefer requester/current-user expression assignment from an export-backed workflow variable.
+
 ## Field Type Rules
 
 Use the Visitor Access Management v11 baseline as the current generated proof for richer approval form fields.

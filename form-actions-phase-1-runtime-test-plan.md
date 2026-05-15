@@ -75,6 +75,12 @@ Actions:
 13. Approval completes.
 14. ContentList creates target record.
 
+## Current Runtime Evidence
+
+The first imported runtime app passed items 1-13 after the assignment task assignee was manually corrected from invalid `User:Renger` to a valid tenant user. Item 14 is still pending: the target data list did not show a new ContentList row after approval.
+
+The regenerated local package now uses requester-expression assignment and workflow-variable button mappings for ContentList. Re-import that package before marking Phase 1 as a full runtime pass.
+
 ## Stop Conditions
 
 Stop and inspect export/runtime evidence if:
