@@ -297,7 +297,10 @@ ContentList persistence remained pending in the first runtime app; the regenerat
 - Custom Submit form action submitted the workflow.
 - Reviewer task opened, approval completed, and ContentList created a readable target-list record.
 
-Known partial:
+Filter correction:
 
-- Query data `Active == true` filter was ignored by runtime and returned inactive `SRC-003`. Keep Query data filters runtime-sensitive until a follow-up export proves the exact filter shape.
+- Query data `Active == true` filter was ignored by runtime in the generated package because the generator wrote `attrs.querydata_filter`, which did not populate the Query data step's actual `Data filter -> Condition` setting.
+- User follow-up confirmed that manually setting the Query data step `Data filter -> Condition` to `Active Equals ON` filters the result correctly.
+- The patched export proves the working JSON path is `attrs.querydata_filters` plural. For an Active Bit field, the exported working condition is `{ "left": "Bit1", "op": "0", "right": "true", "pre": "and", "showCus": true }`.
+- Do not generate `attrs.querydata_filter` singular as the final filter implementation.
 - `vLookup` remains deferred because only labels, not function tokens, have been observed.

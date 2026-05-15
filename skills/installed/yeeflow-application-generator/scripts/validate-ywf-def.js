@@ -459,6 +459,26 @@ function validateDecodedDef(def, options = {}) {
       addIssue(warnings, "FORM_ACTION_QUERYDATA_COUNT_TARGET_MISSING", `Query data total count target ${attrs.querydata_totalparent || ""}${attrs.querydata_totalcount} is not declared`, `${stepPath}.attrs.querydata_totalcount`);
     }
 
+    if (Array.isArray(attrs.querydata_filter) && !Array.isArray(attrs.querydata_filters)) {
+      addIssue(warnings, "FORM_ACTION_QUERYDATA_FILTER_SINGULAR_IGNORED", "Query data filters should use attrs.querydata_filters; attrs.querydata_filter is ignored by runtime", `${stepPath}.attrs.querydata_filter`);
+    }
+
+    if (Array.isArray(attrs.querydata_filters)) {
+      attrs.querydata_filters.forEach((filter, index) => {
+        const filterPath = `${stepPath}.attrs.querydata_filters.${index}`;
+        if (!isObject(filter)) {
+          addIssue(warnings, "FORM_ACTION_QUERYDATA_FILTER_BAD_ENTRY", "Query data filter entries should be objects", filterPath);
+          return;
+        }
+        if (!filter.left || filter.op === undefined || filter.op === null || filter.right === undefined || filter.right === null) {
+          addIssue(warnings, "FORM_ACTION_QUERYDATA_FILTER_INCOMPLETE", "Query data filter entries should include left, op, and right", filterPath);
+        }
+        if (filter.right === "ON" || filter.right === "OFF") {
+          addIssue(warnings, "FORM_ACTION_QUERYDATA_FILTER_BOOLEAN_LABEL", "Boolean Query data filters should use true/false string values, not ON/OFF labels", `${filterPath}.right`, { right: filter.right });
+        }
+      });
+    }
+
     if (attrs.querydata_type === "multiple") {
       const parent = attrs.querydata_listname_parent;
       const target = attrs.querydata_listname;

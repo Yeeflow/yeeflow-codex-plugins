@@ -426,14 +426,14 @@ function queryListRef() {
   };
 }
 
-function queryActiveFilter() {
+function queryActiveFilters() {
   return [
     {
-      key: "fap2-query-active-only-filter",
+      key: uuid(),
       pre: "and",
       left: "Bit1",
       op: "0",
-      right: "ON",
+      right: "true",
       showCus: true
     }
   ];
@@ -454,7 +454,7 @@ function queryActions() {
           name: "Load active source requests into sublist",
           attrs: {
             querydata_list: queryListRef(),
-            querydata_filter: queryActiveFilter(),
+            querydata_filters: queryActiveFilters(),
             querydata_sorts: [{ SortName: "Created", SortByDesc: true }],
             querydata_type: "multiple",
             querydata_fieldmap: {
@@ -499,7 +499,7 @@ function queryActions() {
           name: "Load one active source request into workflow variables",
           attrs: {
             querydata_list: queryListRef(),
-            querydata_filter: queryActiveFilter(),
+            querydata_filters: queryActiveFilters(),
             querydata_sorts: [{ SortName: "Created", SortByDesc: true }],
             querydata_type: "single",
             querydata_fieldmap: {
@@ -529,7 +529,7 @@ function queryActions() {
           name: "Load active source amounts into temp collection",
           attrs: {
             querydata_list: queryListRef(),
-            querydata_filter: queryActiveFilter(),
+            querydata_filters: queryActiveFilters(),
             querydata_type: "multiple",
             querydata_fieldmap: null,
             querydata_listname: "var_CollectionofQueryItems",
@@ -1012,6 +1012,12 @@ fs.writeFileSync(outReportPath, `${JSON.stringify({
   ],
   expressionFunctions: ["arraySum", "JSONStringfy"],
   deferredFunctions: ["vLookup"],
+  queryDataFilterPattern: {
+    status: "export-backed from Form Actions Phase 2 Query Submit Test v1 Filter Patch.yap",
+    property: "attrs.querydata_filters",
+    note: "Do not use attrs.querydata_filter singular; runtime reads querydata_filters plural.",
+    activeCondition: { left: "Bit1", op: "0", right: "true", pre: "and", showCus: true }
+  },
   resources: {
     dataLists: ["Source Requests", "Phase 2 Query Submit Requests"],
     approvalForms: ["Form Actions Phase 2 Query Submit Test v1"],
@@ -1020,7 +1026,8 @@ fs.writeFileSync(outReportPath, `${JSON.stringify({
   notes: [
     "uses requester/current-user expression assignment rather than hardcoded tenant user",
     "uses arraySum, not arraySub",
-    "uses export-backed JSONStringfy spelling"
+    "uses export-backed JSONStringfy spelling",
+    "uses export-backed attrs.querydata_filters plural for Query data Data filter condition"
   ]
 }, null, 2)}\n`);
 

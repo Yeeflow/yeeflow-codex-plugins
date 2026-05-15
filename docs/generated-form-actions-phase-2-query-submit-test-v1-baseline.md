@@ -38,7 +38,7 @@ Validator result summary:
 
 Runtime target: `https://codex.yeeflow.com/`
 
-Result: partial pass with one known deferred issue.
+Result: partial pass during Codex runtime testing; user follow-up identified the missing filter wiring.
 
 Passed:
 
@@ -61,11 +61,32 @@ Passed:
 - ContentList creates a readable target-list record
 - Text controls remained editor-safe and inline-width
 
-Deferred / partial:
+Deferred / partial from the generated package:
 
-- The Query data `Active == true` filter is still ignored by runtime. Multiple query returned all three source rows, including inactive `SRC-003`; single query selected `SRC-003`.
+- The Query data `Active == true` filter was ignored by runtime because the generated package did not configure the actual Query data step `Data filter -> Condition` setting. The generator wrote an `attrs.querydata_filter` helper array, but the designer/runtime did not treat that as the Query data step's Data filter condition.
 - `vLookup` remains deferred because no safe export-backed expression token shape has been proven.
 - Query Amount Sum was runtime-proven in the action test but was not persisted in the final submitted record because the final submit path did not rerun the arraySum action before submit.
+
+User follow-up with patched export:
+
+- Manually opening the Query data step and setting `Data filter -> Condition` to `Active Equals ON` made the filter work.
+- The filter behavior itself is runtime-proven once configured in the correct step setting.
+- The patched export stores the working condition in `attrs.querydata_filters` plural:
+
+```json
+{
+  "querydata_filters": [
+    {
+      "key": "d7bf4cd0-0b69-47f6-9fbd-fc6cee84c78e",
+      "pre": "and",
+      "left": "Bit1",
+      "op": "0",
+      "right": "true",
+      "showCus": true
+    }
+  ]
+}
+```
 
 ## Runtime Evidence
 
@@ -128,7 +149,9 @@ Runtime-proven for generated approval forms:
 - `submit` with default attrs can submit the form/workflow from an action button.
 - `submit` with `attrs.submitType = "3"` can Save changes without progressing workflow.
 
-Runtime-sensitive:
+Filter correction:
 
-- Query filters remain runtime-sensitive until the ignored Active-filter behavior is root-caused from the designer/runtime.
-- Generated apps should avoid claiming filter proof until a follow-up export proves the exact filter shape.
+- Query filters belong in the Query data step's `Data filter -> Condition` configuration.
+- Generate `attrs.querydata_filters` plural.
+- Do not rely on the generated `attrs.querydata_filter` singular helper path; runtime ignored it in this baseline.
+- For Bit/Yes-No source fields, use `right: "true"` for ON, not `right: "ON"`.

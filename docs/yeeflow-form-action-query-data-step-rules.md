@@ -26,9 +26,8 @@ Generated-runtime-proven by `Form Actions Phase 2 Query Submit Test v1`:
 - temp query collection aggregation with `arraySum`
 - temp query collection display with `JSONStringfy`
 
-Still runtime-sensitive / deferred:
+Still deferred:
 
-- filters
 - document library sources
 - form report sources
 - data report sources
@@ -36,7 +35,7 @@ Still runtime-sensitive / deferred:
 - empty-result handling
 - `vLookup` function token shape
 
-The first generated runtime test attempted an `Active == true` filter. Runtime still returned the inactive `SRC-003` record, so do not mark Query data filters as proven yet. Generate filters only when required and document them as runtime-sensitive until the exact designer/runtime shape is resolved.
+The first generated runtime test attempted an `Active == true` filter by writing `attrs.querydata_filter`. Runtime still returned the inactive `SRC-003` record because that singular helper attribute did not populate the Query data step's actual `Data filter -> Condition` setting. User follow-up and the patched export confirmed the fix: the runtime filter is stored in `attrs.querydata_filters` (plural).
 
 ## Step Type
 
@@ -185,6 +184,54 @@ Rules:
 - Use explicit sort for deterministic single-item query behavior.
 - Keep page sizes modest for generated runtime tests.
 
+## Data Filter Condition
+
+Correct UI location:
+
+```text
+Form actions -> Query data step -> Data filter -> Condition
+```
+
+Runtime-proven behavior:
+
+- `Active Equals ON` filters the Query data step result correctly when configured through the `Data filter -> Condition` editor.
+- The patched export stores the condition in `attrs.querydata_filters`.
+
+Export-backed shape:
+
+```json
+{
+  "querydata_filters": [
+    {
+      "key": "d7bf4cd0-0b69-47f6-9fbd-fc6cee84c78e",
+      "pre": "and",
+      "left": "Bit1",
+      "op": "0",
+      "right": "true",
+      "showCus": true
+    }
+  ]
+}
+```
+
+Field meanings:
+
+- `left`: source list `FieldName`.
+- `op`: comparison operator; `0` is the exported Equals operator.
+- `right`: comparison value. For Bit/Yes-No fields, the working exported value is `"true"`, not `"ON"`.
+- `pre`: condition joiner. Use `and` for the first simple filter.
+- `key`: generated UUID-like condition key.
+
+Known generator mistake:
+
+- `attrs.querydata_filter` singular was generated in the first Phase 2 package but did not populate the designer's Data filter condition and was ignored by runtime.
+
+Generation rule:
+
+- Use `attrs.querydata_filters` plural for Query data Data filter conditions.
+- Do not use `attrs.querydata_filter` singular as the final filter implementation.
+- For an Active/Bit field, generate `right: "true"` for ON.
+
 ## Validation Recommendations
 
 Warn when:
@@ -201,7 +248,7 @@ Use errors only for structurally invalid JSON.
 
 ## Runtime Baseline Status
 
-`Form Actions Phase 2 Query Submit Test v1` proved the generated query data surface except filters:
+`Form Actions Phase 2 Query Submit Test v1` plus the patched export proved the generated query data surface and filter property:
 
 - Source list and target list opened without `datas/query` 400.
 - `Load Multiple Test Requests` populated a form sub list with three selected-field rows and set Loaded Count to `3`.
@@ -209,7 +256,8 @@ Use errors only for structurally invalid JSON.
 - `arraySum(__temp_var_CollectionofQueryItems, "Amount", [], [])` returned `2300`.
 - `JSONStringfy(__temp_var_CollectionofQueryItems)` displayed the returned collection JSON.
 
-Known partial:
+Filter follow-up:
 
-- The `Active == true` Query data filter was ignored by runtime. The result included inactive `SRC-003`, so filter shape remains a follow-up learning item.
+- The generated `attrs.querydata_filter` singular path was ignored by runtime.
+- The patched export confirms the correct path is `attrs.querydata_filters` plural.
 - `vLookup` remains UI-observed only and is not generation-safe.
