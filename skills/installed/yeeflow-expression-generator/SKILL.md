@@ -69,6 +69,10 @@ Use only:
 - Preserve exact runtime function names. Do not rename `strIndex`, `UniqueID`, or `subString`.
 - Treat `addWorkDays` and `addWorkHours` as screenshot-observed but metadata-pending. Do not generate them until parameter metadata or export-backed token examples are available.
 - Runtime-proven in `Expression Runtime Test v1 Patch`: calculated controls, dynamic display rules, lookup filters, lookup addition/autofill variables, FlowNo request numbers, simple approval tasks, and ContentList persistence can work together in one generated app.
+- Runtime-proven in `Expression User Profile Test v1`: user/profile expressions can render in generated approval submission pages and task pages, approval can complete, and readable calculated/profile summary variables can be persisted through ContentList. Use `getUserAttr`, `getOrgAttr`, and `getLocAttr` exactly as exported; the department/organization function is `getOrgAttr`, not `getDeptAttr`.
+- For current-user expressions, use the export-backed application token `{ "id": "CurrentUser", "exprType": "application", "valueType": "string", "type": "expr", "name": "Context:Current User" }`.
+- For profile attribute functions, attribute parameters are descriptor objects such as `{ "key": "Email", "label": "Email" }`, and fallback/default parameters are expression arrays such as `[{ "type": "str", "value": "N/A" }]`.
+- User/profile values can be tenant-data dependent. Generate safe fallbacks for optional location, phone, office, manager, and boarding-date fields; document when runtime proof used a tenant where those values were blank.
 - Do not serialize expression token arrays directly into `SetVariableTask` text values for request-number generation. Runtime displayed raw JSON literally. Use the proven FlowNo expression-button value shape until a SetVariable expression-token wrapper is export-backed.
 - Treat workflow transition branch conditions as wrapper-sensitive. Locally valid numeric condition tokens are not enough; use simple workflow routing unless the exact transition condition wrapper is studied from a successful export/runtime package.
 
@@ -83,6 +87,20 @@ Use the context-specific wrapper only when export-backed. The nested expression 
 - Workflow transition: selected sequence/transition arrow `Condition`.
 - Function tab: categories include All, String, Logical, Date, Mathematical, and Other.
 - Variable selector: observed groups include Context, Workflow Variables, Static Variables, Temp variables, and Filter variables.
+
+## User/Profile Expression Recipes
+
+Use these only with export-backed token shapes:
+
+- current user email: `getUserAttr(Context:Current User, Email, N/A)`
+- current user display name: `getUserAttr(Context:Current User, Name, N/A)` using the exported `Name_CN` key
+- department name: `getOrgAttr(getUserAttr(Context:Current User, Department, N/A), Name, N/A)`
+- parent department name: `getOrgAttr(getOrgAttr(getUserAttr(Context:Current User, Department, N/A), Parent, N/A), Name, N/A)`
+- line manager name: `getUserAttr(getUserAttr(Context:Current User, Line Manager, N/A), Name, N/A)`
+- location name: `getLocAttr(getUserAttr(Context:Current User, Location, N/A), Name, N/A)`
+- boarding anniversary: `dateFormat(dateAdd(getUserAttr(Context:Current User, Boarding Date, N/A), "year", 1), "MMM DD, YYYY")`
+
+When persisting profile-derived output, persist readable summary variables. Do not write object-shaped user, organization, or location values directly to text fields.
 
 ## Stop Conditions
 

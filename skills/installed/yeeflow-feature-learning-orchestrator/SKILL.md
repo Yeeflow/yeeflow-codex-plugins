@@ -55,6 +55,8 @@ After a generated application reaches a runtime baseline, sync the relevant proj
 
 For Yeeflow expression-editor learning, treat uploaded training references and screenshots as read-only schema/UI evidence. Extract the exact token model, variable shape, allowed operators, allowed function names, function parameter counts, enriched function metadata, and editor entry points into normalized JSON references and docs. Add helper validation before generation. Expressions are used across calculated controls, dynamic display rules, custom validation rules, lookup/data filters, workflow transition/action conditions, default values, request numbers, and subtotal/total/date/string formulas. Preserve exact runtime function names; if a function is only visible in a screenshot and lacks parameter metadata, document it as observed but not generation-safe. Create or update a dedicated expression skill when the expression layer becomes a reusable cross-feature capability. Do not generate an app during the foundation pass.
 
+For expression export-back enrichment, compare user notes against decoded runtime names before promoting functions. `Expression Runtime Test v1 Patch.yap` proved that department/organization attribute expressions use `getOrgAttr`; the noted `getDeptAttr` name was not present in the export. After learning user/profile expression patterns, generate the smallest focused runtime package, validate with expression utilities and app/form/list validators, import-test only when requested, then update docs and skills with actual runtime evidence and tenant-data caveats.
+
 ## What To Load
 
 - For the full lifecycle, read `references/feature-learning-workflow.md`.

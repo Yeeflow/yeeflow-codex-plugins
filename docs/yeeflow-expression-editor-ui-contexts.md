@@ -119,6 +119,20 @@ Generator guidance:
 - set `name` to the correct group-qualified label when known
 - do not reference unresolved filter/temp variables outside the context where they exist
 
+Export-backed current-user context tokens use a different application-token shape:
+
+```json
+{
+  "id": "CurrentUser",
+  "exprType": "application",
+  "valueType": "string",
+  "type": "expr",
+  "name": "Context:Current User"
+}
+```
+
+Use this context token with `getUserAttr` only after the target page is an approval-form expression context. Attribute selector parameters are descriptor objects such as `{ "key": "Email", "label": "Email" }`.
+
 ## Dynamic Display Rules
 
 Entry point:
@@ -214,3 +228,19 @@ Generator guidance:
 - generate workflow conditions only when the transition-condition wrapper is export-backed
 - keep approve/reject outcome transitions in the proven simple condition pattern
 - use `iif` for conditional values, but use direct boolean comparisons for routing decisions
+
+## User/Profile Expression Display
+
+Observed in `Expression Runtime Test v1 Patch.yap`:
+
+- text-like expression display can be stored under native heading/Text controls at `attrs.headc.title.variable`
+- generated runtime proof used calculated controls bound to text variables so values could render on submission/task pages and also participate in ContentList persistence
+- profile image display can use `getUserAttr(Context:Current User, Photo, ...)`, but generated image/profile controls remain runtime-sensitive unless a focused media expression test is requested
+
+Generator guidance:
+
+- use `getUserAttr`, `getOrgAttr`, and `getLocAttr` with export-backed descriptor parameters
+- use `getOrgAttr`, not `getDeptAttr`, for department/organization attributes
+- add safe fallback arrays for optional profile values
+- for persistence, prefer calculated/text summary variables and map those to ContentList; do not directly persist object-shaped user, department, or location values into text fields
+- document tenant-data dependency when Location, Boarding Date, Phone, or manager-related values are blank

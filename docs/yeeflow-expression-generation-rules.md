@@ -7,7 +7,8 @@ Use `yeeflow-expression-functions.normalized.json`, `yeeflow-expression-function
 - Generate expression arrays, not raw JavaScript.
 - Use exact token keys from the reference: `exprType`, `valueType`, `id`, `type`, `name`, `op`, `func`, `params`, and `value`.
 - Use variable tokens with `exprType: "variable"` and `type: "expr"`.
-- Use only these variable `valueType` values: `number`, `text`, `date`, `boolean`.
+- Use workflow variable tokens with `exprType: "variable"` and value types `number`, `text`, `date`, or `boolean`.
+- User/profile context exports may use application variable tokens such as `exprType: "application"`, `id: "CurrentUser"`, `valueType: "string"`, `type: "expr"`, and `name: "Context:Current User"`. Use only export-backed context tokens.
 - Do not invent function names or operators.
 - Use `iif` for conditional values.
 - Use `isNullOrEmpty` for empty checks.
@@ -20,6 +21,7 @@ Use `yeeflow-expression-functions.normalized.json`, `yeeflow-expression-function
 - Treat screenshot-observed functions such as `addWorkDays` and `addWorkHours` as metadata-pending until export-backed parameters are available.
 - Runtime note from `Expression Runtime Test v1`: do not assign raw serialized expression token arrays directly to `SetVariableTask` text values for request numbers. Yeeflow displayed the raw JSON literally. Use an export-backed value shape such as the FlowNo expression-button pattern until a real SetVariable expression-token assignment is studied.
 - Runtime note from `Expression Runtime Test v1`: workflow transition conditions need their exact outer wrapper from a working export. A locally valid numeric token array is not enough to claim workflow branch routing is runtime-proven.
+- Runtime note from `Expression User Profile Test v1`: `getUserAttr`, `getOrgAttr`, `getLocAttr`, `dateFormat`, and nested `dateAdd` can render in generated approval forms and task pages. Tenant-missing profile values should use safe fallbacks. The decoded export used `getOrgAttr` for department/organization attributes; do not generate `getDeptAttr` until it is export-backed.
 
 ## Function Selection By Business Intent
 
@@ -34,6 +36,10 @@ Use `yeeflow-expression-functions.normalized.json`, `yeeflow-expression-function
 | List total | `arraySum(lineItems, "LineTotal")` | Resolve list variable and column names first. |
 | List count | `arrayCount(lineItems)` | Use optional column/filter params only when column names are proven. |
 | Safe object lookup | `getAttr(object, "path.to.value", defaultValue)` | Useful for nested objects, but only when object-shaped values are proven. |
+| Current user email/name/profile | `getUserAttr(Context:Current User, attr, fallback)` | Attribute params are descriptor objects such as `{ "key": "Email", "label": "Email" }`. |
+| Department/parent department | `getOrgAttr(getUserAttr(Context:Current User, Department, fallback), attr, fallback)` | Exact exported function is `getOrgAttr`, not `getDeptAttr`. |
+| Location name/manager | `getLocAttr(getUserAttr(Context:Current User, Location, fallback), attr, fallback)` | Environment-dependent when tenant location data is empty. |
+| Boarding anniversary | `dateFormat(dateAdd(getUserAttr(Context:Current User, Boarding Date, fallback), "year", 1), "MMM DD, YYYY")` | Runtime-tested shape; value quality depends on the current user's Boarding Date data. |
 | Text cleanup | `trim`, `replace`, `lower`, `upper` | Use for normalized summaries and comparisons. |
 | Duplicate removal | `removeDuplicates(arrayValue)` | Use after the array variable is resolved. |
 
@@ -126,6 +132,38 @@ Text cleanup:
 ```json
 [
   { "type": "func", "func": "upper", "params": [[{ "type": "func", "func": "trim", "params": [[{ "exprType": "variable", "valueType": "text", "id": "ProductCode", "type": "expr", "name": "Workflow Variables:Product Code" }]] }]] }
+]
+```
+
+Current user email:
+
+```json
+[
+  {
+    "type": "func",
+    "func": "getUserAttr",
+    "params": [
+      [{ "id": "CurrentUser", "exprType": "application", "valueType": "string", "type": "expr", "name": "Context:Current User" }],
+      [{ "key": "Email", "label": "Email" }],
+      [{ "type": "str", "value": "N/A" }]
+    ]
+  }
+]
+```
+
+Current user department name:
+
+```json
+[
+  {
+    "type": "func",
+    "func": "getOrgAttr",
+    "params": [
+      [{ "type": "func", "func": "getUserAttr", "params": [[{ "id": "CurrentUser", "exprType": "application", "valueType": "string", "type": "expr", "name": "Context:Current User" }], [{ "key": "DepartmentID", "label": "Department" }], [{ "type": "str", "value": "N/A" }]] }],
+      [{ "key": "Name", "label": "Name" }],
+      [{ "type": "str", "value": "N/A" }]
+    ]
+  }
 ]
 ```
 

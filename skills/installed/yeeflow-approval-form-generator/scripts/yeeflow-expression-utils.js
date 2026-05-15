@@ -5,7 +5,7 @@ const path = require("path");
 
 const DEFAULT_FUNCTIONS_PATH = path.join(__dirname, "yeeflow-expression-functions.normalized.json");
 const DEFAULT_OPERATORS_PATH = path.join(__dirname, "yeeflow-expression-operators.normalized.json");
-const VARIABLE_VALUE_TYPES = new Set(["number", "text", "date", "boolean"]);
+const VARIABLE_VALUE_TYPES = new Set(["number", "text", "date", "boolean", "string", "user"]);
 
 let cachedReferences = null;
 
@@ -82,7 +82,9 @@ function validateExpressionToken(token, context = {}) {
   }
 
   if (token.exprType === "variable") return validateVariableToken(token, { issues, path: tokenPath });
+  if (token.exprType === "application") return validateApplicationVariableToken(token, { issues, path: tokenPath });
   if (token.exprType === "variable_ctx") return validateContextVariableToken(token, { issues, path: tokenPath });
+  if (Object.prototype.hasOwnProperty.call(token, "key") && Object.prototype.hasOwnProperty.call(token, "label") && Object.keys(token).every((key) => ["key", "label"].includes(key))) return issues;
   if (token.type === "func") return validateFunctionToken(token, { references, issues, path: tokenPath });
   if (token.type === "op") return validateOperatorToken(token, { references, issues, path: tokenPath });
 
@@ -113,7 +115,7 @@ function validateVariableToken(token, context = {}) {
   }
   if (token.exprType !== "variable") issue(issues, "error", "EXPRESSION_VARIABLE_BAD_EXPRTYPE", "Variable token exprType must be variable.", `${tokenPath}.exprType`);
   if (token.type !== "expr") issue(issues, "error", "EXPRESSION_VARIABLE_BAD_TYPE", "Variable token type must be expr.", `${tokenPath}.type`);
-  if (!VARIABLE_VALUE_TYPES.has(token.valueType)) issue(issues, "error", "EXPRESSION_VARIABLE_BAD_VALUETYPE", "Variable token valueType must be number, text, date, or boolean.", `${tokenPath}.valueType`, { valueType: token.valueType });
+  if (!VARIABLE_VALUE_TYPES.has(token.valueType)) issue(issues, "error", "EXPRESSION_VARIABLE_BAD_VALUETYPE", "Variable token valueType must be number, text, date, boolean, string, or user.", `${tokenPath}.valueType`, { valueType: token.valueType });
   const extra = Object.keys(token).filter((key) => !required.includes(key));
   if (extra.length) issue(issues, "warning", "EXPRESSION_VARIABLE_EXTRA_PROPERTIES", "Training reference says variable tokens should not include extra properties.", tokenPath, { properties: extra });
   return issues;
@@ -125,7 +127,19 @@ function validateContextVariableToken(token, context = {}) {
   for (const key of ["exprType", "valueType", "id", "type", "name", "ctx"]) {
     if (!Object.prototype.hasOwnProperty.call(token, key) || token[key] === "") issue(issues, "error", "EXPRESSION_CONTEXT_VARIABLE_MISSING_PROPERTY", "Context variable token is missing a required property.", `${tokenPath}.${key}`, { property: key });
   }
-  if (!VARIABLE_VALUE_TYPES.has(token.valueType)) issue(issues, "error", "EXPRESSION_CONTEXT_VARIABLE_BAD_VALUETYPE", "Context variable valueType must be number, text, date, or boolean.", `${tokenPath}.valueType`, { valueType: token.valueType });
+  if (!VARIABLE_VALUE_TYPES.has(token.valueType)) issue(issues, "error", "EXPRESSION_CONTEXT_VARIABLE_BAD_VALUETYPE", "Context variable valueType must be number, text, date, boolean, string, or user.", `${tokenPath}.valueType`, { valueType: token.valueType });
+  return issues;
+}
+
+function validateApplicationVariableToken(token, context = {}) {
+  const issues = context.issues || [];
+  const tokenPath = context.path || "$";
+  for (const key of ["exprType", "valueType", "id", "type", "name"]) {
+    if (!Object.prototype.hasOwnProperty.call(token, key) || token[key] === "") issue(issues, "error", "EXPRESSION_APPLICATION_VARIABLE_MISSING_PROPERTY", "Application/context token is missing a required property.", `${tokenPath}.${key}`, { property: key });
+  }
+  if (token.exprType !== "application") issue(issues, "error", "EXPRESSION_APPLICATION_VARIABLE_BAD_EXPRTYPE", "Application/context token exprType must be application.", `${tokenPath}.exprType`);
+  if (token.type !== "expr") issue(issues, "error", "EXPRESSION_APPLICATION_VARIABLE_BAD_TYPE", "Application/context token type must be expr.", `${tokenPath}.type`);
+  if (!VARIABLE_VALUE_TYPES.has(token.valueType)) issue(issues, "error", "EXPRESSION_APPLICATION_VARIABLE_BAD_VALUETYPE", "Application/context token valueType must be number, text, date, boolean, string, or user.", `${tokenPath}.valueType`, { valueType: token.valueType });
   return issues;
 }
 
@@ -194,7 +208,16 @@ function collectExpressionVariables(expr) {
   function walk(value) {
     if (Array.isArray(value)) return value.forEach(walk);
     if (!isObject(value)) return;
-    if (value.exprType === "variable" || value.exprType === "variable_ctx") {
+  if (value.exprType === "variable" || value.exprType === "variable_ctx") {
+      variables.push({
+        id: value.id,
+        name: value.name,
+        valueType: value.valueType,
+        exprType: value.exprType,
+        ctx: value.ctx,
+      });
+    }
+    if (value.exprType === "application") {
       variables.push({
         id: value.id,
         name: value.name,
@@ -211,7 +234,7 @@ function collectExpressionVariables(expr) {
 
 function buildVariableToken(variable) {
   if (!variable || !variable.id || !variable.name || !VARIABLE_VALUE_TYPES.has(variable.valueType)) {
-    throw new Error("buildVariableToken requires id, name, and valueType number/text/date/boolean");
+    throw new Error("buildVariableToken requires id, name, and valueType number/text/date/boolean/string/user");
   }
   return {
     exprType: "variable",
@@ -247,6 +270,7 @@ module.exports = {
   validateExpressionTokens,
   validateExpressionToken,
   validateVariableToken,
+  validateApplicationVariableToken,
   validateFunctionToken,
   validateOperatorToken,
   inferExpressionValueType,

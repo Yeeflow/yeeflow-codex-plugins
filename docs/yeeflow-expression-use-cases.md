@@ -106,6 +106,26 @@ Runtime caution from `Expression Runtime Test v1`: a request-number expression r
 
 Workflow transition branching by numeric expression remains deferred because the first isolation package did not route as expected. Treat workflow branch conditions as export-wrapper-sensitive.
 
+## User/Profile Expressions
+
+`Expression Runtime Test v1 Patch.yap` and the generated `Expression User Profile Test v1` package prove a focused user/profile expression family in approval forms:
+
+- `getUserAttr(Context:Current User, Name, N/A)` and related current-user attributes render on submission and task pages.
+- `getOrgAttr(getUserAttr(Context:Current User, Department, N/A), Name, N/A)` renders the current user's department name.
+- Nested `getOrgAttr(..., Parent, ...)` can render the parent department name when tenant organization data exists.
+- `getUserAttr(getUserAttr(Context:Current User, Line Manager, N/A), Name, N/A)` can render line manager display text.
+- `getLocAttr(getUserAttr(Context:Current User, Location, N/A), Name, N/A)` is valid but environment-dependent when the tenant user has no location value.
+- `dateFormat(getUserAttr(Context:Current User, Created Time, N/A), "MMM DD, YYYY")` rendered a formatted current-user Created Time.
+- `dateFormat(dateAdd(getUserAttr(Context:Current User, Boarding Date, N/A), "year", 1), "MMM DD, YYYY")` rendered with the generated nested shape, but in the tested tenant the Boarding Date value itself was blank, so treat populated boarding-date arithmetic as data-dependent until tested with a profile that has that attribute.
+
+Generation notes:
+
+- Preserve exact function name `getOrgAttr`; do not generate `getDeptAttr` from the user-facing label.
+- Attribute parameters are descriptor objects with `key` and `label`, not plain string literals.
+- Context current-user tokens are application tokens, not workflow variable tokens.
+- Use fallback arrays such as `[{ "type": "str", "value": "N/A" }]` for optional tenant profile fields.
+- Persist readable profile summary values through variables and ContentList only after render proof; do not persist object-shaped profile values directly to text fields.
+
 ## List/Sublist Summaries
 
 Use `arraySum`, `arrayCount`, `arrayAverage`, `arrayMin`, and `arrayMax` for list/sublist summary formulas when the list variable and column names are resolved.

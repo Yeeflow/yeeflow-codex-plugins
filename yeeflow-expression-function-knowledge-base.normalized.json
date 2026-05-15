@@ -2912,6 +2912,234 @@
       "sourceReferences": [
         "expression training data generator_2.txt:functionKnowledgeBase"
       ]
+    },
+    "getUserAttr": {
+      "name": "getUserAttr",
+      "category": "user/profile",
+      "bilingualDescription": "读取用户或当前用户上下文的属性 | Read an attribute from a user value or the current user context.",
+      "callFormat": {
+        "type": "func",
+        "func": "getUserAttr",
+        "params": [
+          [],
+          {},
+          []
+        ]
+      },
+      "parameters": [
+        {
+          "index": 0,
+          "name": "userOrContext/用户或上下文",
+          "type": "user/application expression",
+          "description": "User variable, nested user expression, or Context:Current User token."
+        },
+        {
+          "index": 1,
+          "name": "attribute/属性",
+          "type": "attribute descriptor object",
+          "description": "Export-backed object such as { key: \"Email\", label: \"Email\" }."
+        },
+        {
+          "index": 2,
+          "name": "defaultValue/默认值",
+          "type": "expression token array",
+          "description": "Fallback token array, commonly [{ type: \"str\", value: \"N/A\" }] or [] for blank fallback."
+        }
+      ],
+      "returnType": "text",
+      "examples": [
+        {
+          "description": "Current user email",
+          "expression": "getUserAttr(Context:Current User, Email, N/A)"
+        },
+        {
+          "description": "Current user manager name",
+          "expression": "getUserAttr(getUserAttr(Context:Current User, Line Manager, N/A), Name, N/A)"
+        }
+      ],
+      "businessScenarios": [
+        "Show current requester profile fields",
+        "Pre-fill user profile summary",
+        "Persist readable requester metadata after workflow approval"
+      ],
+      "keywords": [
+        "current user",
+        "profile",
+        "requester",
+        "manager",
+        "email",
+        "employee number",
+        "job title"
+      ],
+      "observedAttributes": [
+        "Name_CN",
+        "SPAccount",
+        "DepartmentID",
+        "LineManager",
+        "EmployeeNo",
+        "Email",
+        "IsAdmin",
+        "Photo",
+        "JobTitle",
+        "JobGrade",
+        "OfficeAddress",
+        "Phone",
+        "Mobile",
+        "Telephone",
+        "Remark",
+        "LocationID",
+        "LastLoginTime",
+        "ServiceStartDate",
+        "LatestHireDate",
+        "Created",
+        "CreatedBy"
+      ],
+      "generationNotes": [
+        "Use the exact exported attribute descriptor object shape for the second parameter. Prefer Context:Current User token for current-login-user profile display."
+      ],
+      "safetyNotes": [
+        "Export-backed for display Text controls. Persistence through calculated variables needs generated runtime proof."
+      ],
+      "sourceReferences": [
+        "Expression Runtime Test v1 Patch.yap:user-profile-expression-export"
+      ]
+    },
+    "getOrgAttr": {
+      "name": "getOrgAttr",
+      "category": "user/profile",
+      "bilingualDescription": "读取组织或部门值的属性 | Read an attribute from an organization or department value.",
+      "callFormat": {
+        "type": "func",
+        "func": "getOrgAttr",
+        "params": [
+          [],
+          {},
+          []
+        ]
+      },
+      "parameters": [
+        {
+          "index": 0,
+          "name": "orgValue/组织值",
+          "type": "organization expression",
+          "description": "Department/organization value, often from getUserAttr(..., Department, ...)."
+        },
+        {
+          "index": 1,
+          "name": "attribute/属性",
+          "type": "attribute descriptor object",
+          "description": "Export-backed object such as { key: \"Name\", label: \"Name\" }."
+        },
+        {
+          "index": 2,
+          "name": "defaultValue/默认值",
+          "type": "expression token array",
+          "description": "Fallback token array or [] for blank fallback."
+        }
+      ],
+      "returnType": "text",
+      "examples": [
+        {
+          "description": "Current user department name",
+          "expression": "getOrgAttr(getUserAttr(Context:Current User, Department, N/A), Name, N/A)"
+        },
+        {
+          "description": "Current user parent department name",
+          "expression": "getOrgAttr(getOrgAttr(getUserAttr(Context:Current User, Department, N/A), Parent, N/A), Name, N/A)"
+        }
+      ],
+      "businessScenarios": [
+        "Display department name",
+        "Display parent department",
+        "Find department manager for a profile summary"
+      ],
+      "keywords": [
+        "department",
+        "organization",
+        "parent department",
+        "manager"
+      ],
+      "observedAttributes": [
+        "Name",
+        "ParentID",
+        "Manager"
+      ],
+      "generationNotes": [
+        "The exported runtime function name is getOrgAttr, not getDeptAttr. Preserve getOrgAttr in generated tokens."
+      ],
+      "safetyNotes": [
+        "Do not generate getDeptAttr unless a future export proves that exact runtime function name."
+      ],
+      "sourceReferences": [
+        "Expression Runtime Test v1 Patch.yap:user-profile-expression-export"
+      ]
+    },
+    "getLocAttr": {
+      "name": "getLocAttr",
+      "category": "user/profile",
+      "bilingualDescription": "读取地点/位置值的属性 | Read an attribute from a location value.",
+      "callFormat": {
+        "type": "func",
+        "func": "getLocAttr",
+        "params": [
+          [],
+          {},
+          []
+        ]
+      },
+      "parameters": [
+        {
+          "index": 0,
+          "name": "locationValue/位置值",
+          "type": "location expression",
+          "description": "Location value, often from getUserAttr(..., Location, ...)."
+        },
+        {
+          "index": 1,
+          "name": "attribute/属性",
+          "type": "attribute descriptor object",
+          "description": "Export-backed object such as { key: \"Name\", label: \"Name\" }."
+        },
+        {
+          "index": 2,
+          "name": "defaultValue/默认值",
+          "type": "expression token array",
+          "description": "Fallback token array or [] for blank fallback."
+        }
+      ],
+      "returnType": "text",
+      "examples": [
+        {
+          "description": "Current user location name",
+          "expression": "getLocAttr(getUserAttr(Context:Current User, Location, N/A), Name, N/A)"
+        },
+        {
+          "description": "Current user location manager",
+          "expression": "getLocAttr(getUserAttr(Context:Current User, Location, N/A), Manager, N/A)"
+        }
+      ],
+      "businessScenarios": [
+        "Display requester office/location",
+        "Route or document location manager where tenant data exists"
+      ],
+      "keywords": [
+        "location",
+        "office",
+        "location manager"
+      ],
+      "observedAttributes": [
+        "Name",
+        "Manager"
+      ],
+      "generationNotes": [
+        "Use only observed location attributes until more exports prove additional keys."
+      ],
+      "safetyNotes": [
+        "Location data may be tenant-dependent; provide fallback values."
+      ],
+      "sourceReferences": [
+        "Expression Runtime Test v1 Patch.yap:user-profile-expression-export"
+      ]
     }
   },
   "screenshotObservedFunctions": [
@@ -2947,6 +3175,7 @@
       "item": "addWorkDays/addWorkHours",
       "status": "screenshot_observed_only",
       "notes": "Visible in Function tab screenshot but absent from both normalized baselines; keep as deferred metadata pending."
-    }
+    },
+    "Expression Runtime Test v1 Patch user notes mentioned getDeptAttr, but the decoded export uses getOrgAttr for department/organization attributes. Preserve getOrgAttr until getDeptAttr is export-backed."
   ]
 }

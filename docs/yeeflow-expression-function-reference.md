@@ -22,6 +22,7 @@ Choose functions by business intent before choosing by name:
 | Request number generation | `concat` or `&`, `dateFormat`, `now`, `UniqueID` | Preserve exact `UniqueID` capitalization. |
 | List/sublist totals | `arraySum`, `arrayCount`, `arrayAverage`, `arrayMin`, `arrayMax` | Only generate after the list variable and column names are resolved. |
 | Safe object attribute access | `getAttr` | Use when nested object path access is proven for the target context. |
+| Current user/profile attributes | `getUserAttr`, `getOrgAttr`, `getLocAttr` | Export-backed from `Expression Runtime Test v1 Patch`; use exact exported `getOrgAttr` for department/organization attributes. |
 | Text cleanup | `trim`, `replace`, `lower`, `upper` | Useful for normalization and generated summaries. |
 | Duplicate removal | `removeDuplicates` | Use for arrays after the array variable is resolved. |
 
@@ -31,6 +32,7 @@ Choose functions by business intent before choosing by name:
 - `strIndex` is baseline-only in the second pass. Keep the exact camel-case name and do not rename it to `strindex`.
 - The Function tab screenshot shows `addWorkDays` and `addWorkHours`, but the second file does not provide parameter metadata. Treat them as observed but not generation-safe yet.
 - Function examples in the knowledge base are human-readable expression strings. Generated packages must convert them to Yeeflow JSON token arrays.
+- `Expression Runtime Test v1 Patch.yap` adds export-backed user/profile attribute functions. The user notes mentioned `getDeptAttr`, but the decoded export uses `getOrgAttr`; preserve `getOrgAttr` until `getDeptAttr` is proven by an export.
 
 ## Math
 
@@ -111,3 +113,76 @@ Choose functions by business intent before choosing by name:
 | `currentUser` | 0 | text | Current user ID. |
 | `UniqueID` | 0 | text | Unique ID. |
 | `getAttr` | 2-3 | unknown | Object path lookup with optional default. |
+
+## User, Department, And Location Attributes
+
+These functions are export-backed from `Expression Runtime Test v1 Patch.yap` and runtime-tested in `Expression User Profile Test v1`.
+
+| Function | Params | Returns | Notes |
+| --- | --- | --- | --- |
+| `getUserAttr` | 3 | unknown/text/date/object | `getUserAttr(userOrContext, attrDescriptor, defaultValue)`. The current-user context token uses `exprType: "application"`, `id: "CurrentUser"`, `valueType: "string"`, `type: "expr"`, and `name: "Context:Current User"`. |
+| `getOrgAttr` | 3 | unknown/text/object | `getOrgAttr(departmentValue, attrDescriptor, defaultValue)`. Use this exact function for department/organization values; do not generate `getDeptAttr` yet. |
+| `getLocAttr` | 3 | unknown/text/object | `getLocAttr(locationValue, attrDescriptor, defaultValue)`. Use only for location values returned from user attributes or other export-backed location expressions. |
+
+Attribute parameters are descriptor objects, not plain strings:
+
+```json
+{ "key": "Email", "label": "Email" }
+```
+
+Fallback/default parameters are expression arrays, usually:
+
+```json
+[{ "type": "str", "value": "N/A" }]
+```
+
+Observed `getUserAttr` attributes include `Name_CN`, `SPAccount`, `Email`, `DepartmentID`, `LineManager`, `EmployeeNo`, `IsAdmin`, `Photo`, `JobTitle`, `JobGrade`, `OfficeAddress`, `Phone`, `Mobile`, `Telephone`, `Remark`, `LocationID`, `LastLoginTime`, `ServiceStartDate`, `LatestHireDate`, `Created`, and `CreatedBy`.
+
+Observed `getOrgAttr` attributes include `Name`, `ParentID`, and `Manager`.
+
+Observed `getLocAttr` attributes include `Name` and `Manager`.
+
+Common recipes:
+
+```json
+[
+  {
+    "type": "func",
+    "func": "getUserAttr",
+    "params": [
+      [{ "id": "CurrentUser", "exprType": "application", "valueType": "string", "type": "expr", "name": "Context:Current User" }],
+      [{ "key": "Email", "label": "Email" }],
+      [{ "type": "str", "value": "N/A" }]
+    ]
+  }
+]
+```
+
+```json
+[
+  {
+    "type": "func",
+    "func": "getOrgAttr",
+    "params": [
+      [{ "type": "func", "func": "getUserAttr", "params": [[{ "id": "CurrentUser", "exprType": "application", "valueType": "string", "type": "expr", "name": "Context:Current User" }], [{ "key": "DepartmentID", "label": "Department" }], [{ "type": "str", "value": "N/A" }]] }],
+      [{ "key": "Name", "label": "Name" }],
+      [{ "type": "str", "value": "N/A" }]
+    ]
+  }
+]
+```
+
+Boarding anniversary recipe:
+
+```json
+[
+  {
+    "type": "func",
+    "func": "dateFormat",
+    "params": [
+      [{ "type": "func", "func": "dateAdd", "params": [[{ "type": "func", "func": "getUserAttr", "params": [[{ "id": "CurrentUser", "exprType": "application", "valueType": "string", "type": "expr", "name": "Context:Current User" }], [{ "key": "LatestHireDate", "label": "Boarding Date" }], [{ "type": "str", "value": "N/A" }]] }], [{ "type": "str", "value": "year" }], [{ "type": "num", "value": "1" }]] }],
+      [{ "type": "str", "value": "MMM DD, YYYY" }]
+    ]
+  }
+]
+```
