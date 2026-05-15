@@ -1,8 +1,8 @@
 # Yeeflow Requirement-to-YAP Generation Lifecycle
 
-Use this lifecycle whenever the user provides Yeeflow application requirements, screenshots, sample forms, or exports and asks Codex to build, implement, create, generate, test, or output an application package or `.yap`.
+Use this lifecycle whenever the user provides Yeeflow application requirements, screenshots, sample forms, SOPs, process documents, sample exports, or app ideas and asks Codex to build, implement, create, generate, test, or output an application package or `.yap`.
 
-The orchestrator is the main controller. Coordinate the application, data-list, approval-form, dashboard, and expression generator skills as needed. Do not require the user to paste a long generation prompt when the intent is clear.
+The builder is the main controller. Coordinate the application, data-list, approval-form, dashboard, and expression generator skills as needed. Use proven knowledge first; send genuinely unknown platform behavior to `yeeflow-feature-learning-orchestrator`.
 
 ## Trigger Behavior
 
@@ -45,7 +45,20 @@ Extract:
 
 If supplied exports or manually improved samples contain reusable patterns, study them read-only before generation. Preserve original files.
 
-## 2. Requirement Study And App Planning
+## 2. Business Process Understanding
+
+Before designing resources, summarize:
+
+- the operational process
+- start/end states
+- actors and handoffs
+- approval/review gates
+- exceptions and rejection/rework paths
+- data that must be captured, calculated, persisted, or reported
+
+Document reasonable assumptions instead of blocking unnecessarily. Ask only when a missing answer would materially change the app architecture.
+
+## 3. Requirement Study And App Planning
 
 Create:
 
@@ -73,7 +86,7 @@ The plan must include:
 
 Validate the spec with a JSON parse check before using it for generation.
 
-## 3. Decide Safe V1 Scope
+## 4. Decide Safe V1 Scope
 
 Choose the safest first working version.
 
@@ -88,7 +101,7 @@ Default v1 scope:
 
 If the requirement is large, defer advanced features to v2/v3. Prefer a working, importable, testable v1 over a large all-at-once package.
 
-## 4. Generate V1 Package
+## 5. Generate V1 Package
 
 Generate:
 
@@ -130,7 +143,7 @@ Use current proven feature foundations:
 - Submit form / Save changes
 - `arraySum` and `JSONStringfy` where export-backed
 
-## 5. Local Validation
+## 6. Local Validation
 
 Run the relevant local checks:
 
@@ -149,7 +162,7 @@ Also run JSON parse checks for generated specs and decoded/package JSON.
 
 Do not import if validation has blocking errors. Warning-level findings may be acceptable when documented and understood.
 
-## 6. Runtime Test
+## 7. Runtime Test
 
 Use:
 
@@ -176,7 +189,7 @@ Runtime checklist:
 
 Runtime testing requires explicit user intent to test/import or an app-generation request that asks for end-to-end testing. Do not operate Yeeflow UI for study-only tasks.
 
-## 7. Fix Runtime Issues
+## 8. Fix Runtime Issues
 
 If runtime fails:
 
@@ -198,7 +211,7 @@ Known root-cause checks:
 - `Main` container should not carry page-level background
 - `Data.Forms[].ListID` must be `0` for app-level approval forms
 
-## 8. Documentation
+## 9. Documentation
 
 Create:
 
@@ -218,7 +231,7 @@ Include:
 - known limitations
 - v2 recommendations
 
-## 9. Skill Updates
+## 10. Skill Updates
 
 If new reusable Yeeflow patterns are learned:
 
@@ -230,7 +243,7 @@ If new reusable Yeeflow patterns are learned:
 
 Do not update skills for app-specific content unless it is reusable.
 
-## 10. Git
+## 11. Git
 
 After success or honest partial result:
 
@@ -245,7 +258,7 @@ Suggested commit message:
 Generate <App Name> v1 baseline
 ```
 
-## 11. Final Output
+## 12. Final Output
 
 Report:
 
