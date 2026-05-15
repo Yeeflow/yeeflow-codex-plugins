@@ -15,6 +15,30 @@ This is an orchestration skill. It does not replace:
 
 Use those feature skills for proven generation work. Use this skill when a feature area is not yet proven or when a new resource pattern must be learned from real exports.
 
+## Requirement-To-YAP Default Trigger
+
+When the user provides a Yeeflow app requirement and asks Codex to build, implement, create, generate, test, or output an application/package/`.yap`, treat this orchestrator as the main controller and automatically run the Yeeflow Requirement-to-YAP Generation Lifecycle.
+
+Trigger examples include:
+
+- "Build this Yeeflow app from the uploaded requirement."
+- "Implement this application."
+- "Generate the .yap for this process."
+- "Create the Yeeflow application based on this document."
+- "Use the current skills to build this app."
+- "Here is the requirement. Please generate the final app package."
+- "Create the app and test it in Yeeflow."
+
+For those requests, load `references/requirement-to-yap-generation-lifecycle.md` and coordinate the relevant generator skills:
+
+- `yeeflow-application-generator`
+- `yeeflow-data-list-generator`
+- `yeeflow-approval-form-generator`
+- `yeeflow-dashboard-generator`
+- `yeeflow-expression-generator`
+
+Default behavior: study all supplied requirements and reference exports, create an app plan/spec, choose a safe v1 scope, generate a fresh-ID `.yap`, validate locally, runtime-test only when requested or when the user asks for an end-to-end app/test, fix with evidence and fresh IDs, document the baseline, update reusable skills only for reusable learning, then commit/push safe files.
+
 ## Core Principle
 
 Do not start by generating.
@@ -71,12 +95,15 @@ For Yeeflow Form Actions Phase 2 query/submit learning, study the manually updat
 - Before any Yeeflow import/runtime test, read `references/runtime-testing.md`.
 - Before generation or validation, read `references/hard-rules.md`.
 - Before updating or creating a feature skill, read `references/feature-skill-map.md`.
+- For user requirement to full app/package generation, read `references/requirement-to-yap-generation-lifecycle.md`.
 
 Also read the relevant installed feature skills when the task touches their area:
 
 - `.yap` app shell, navigation, app-level resources: `yeeflow-application-generator`
 - data lists and `.ydl`: `yeeflow-data-list-generator`
 - approval forms and `.ywf`: `yeeflow-approval-form-generator`
+- dashboards and app pages: `yeeflow-dashboard-generator`
+- expressions, calculations, filters, and workflow conditions: `yeeflow-expression-generator`
 
 ## Standard Operating Workflow
 
