@@ -15,6 +15,14 @@ Configured and studied in this export:
 - Form Submit / Task Approve / Task Complete
 - Save changes
 
+Generated-runtime-proven by `Form Actions Phase 2 Query Submit Test v1`:
+
+- default `submit` step triggered from an `action_button` submits the approval workflow
+- reviewer task opens for a requester/current-user expression assignment
+- approval completes
+- workflow ContentList persistence creates a target-list record
+- Save changes mode returns success and does not advance the workflow
+
 Designer-visible but not configured/proven in this export:
 
 - Execute form validation
@@ -110,3 +118,14 @@ Warn when:
 - action button triggering submit has missing or generic `nv_label`.
 
 Use errors only for structurally invalid JSON.
+
+## Runtime Baseline Status
+
+`Form Actions Phase 2 Query Submit Test v1` proved both submit modes in a generated package:
+
+- `Submit form for testing` used a default `type: "submit"` form action step and created workflow instance `20552123947196252162026051500001`.
+- The reviewer task opened for `Renger from Yeeflow`, was approved, and the workflow completed.
+- The ContentList step created a target-list row with readable values including Request Title, Loaded Count, Selected Query Title, Selected Query Status, Approval Status, and Created From Workflow.
+- `Save as draft` used `attrs.submitType = "3"` and returned a success toast without progressing the workflow.
+
+Keep `Save changes` for draft/intermediate save behavior only. Use default submit when the button is intended to move the workflow forward.

@@ -287,4 +287,17 @@ The same runtime found an assignment-generation rule: do not hardcode tenant-spe
 
 ContentList persistence remained pending in the first runtime app; the regenerated package switches to the proven workflow-variable button mapping pattern for the next persistence test.
 
-The manually updated `Form Actions Phase 1 Test v1 Runtime.yap` export proves Phase 2 query/submit structures, but a Codex-generated Phase 2 runtime package is still the next proof step.
+`Form Actions Phase 2 Query Submit Test v1` proved the generated Phase 2 package runtime path:
+
+- Query data multiple button action populated a form sub list and count value.
+- Query data single button action mapped selected fields into workflow/display variables.
+- `arraySum` over the temp query collection returned `2300`.
+- `JSONStringfy` displayed the temp query collection.
+- Save changes returned success without advancing workflow.
+- Custom Submit form action submitted the workflow.
+- Reviewer task opened, approval completed, and ContentList created a readable target-list record.
+
+Known partial:
+
+- Query data `Active == true` filter was ignored by runtime and returned inactive `SRC-003`. Keep Query data filters runtime-sensitive until a follow-up export proves the exact filter shape.
+- `vLookup` remains deferred because only labels, not function tokens, have been observed.

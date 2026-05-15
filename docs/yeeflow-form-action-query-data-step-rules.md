@@ -16,7 +16,17 @@ Export-backed from `Form Actions Phase 1 Test v1 Runtime.yap`:
 - store selected multiple-query fields in a temp collection variable
 - use `arraySum` against the temp query collection
 
-Not yet generated-runtime-proven by Codex:
+Generated-runtime-proven by `Form Actions Phase 2 Query Submit Test v1`:
+
+- query multiple from a packaged data list
+- query multiple result collection mapped into a form list/sub list variable
+- query result count copied into a display/workflow variable
+- query single from a packaged data list
+- query single selected-field mapping into workflow variables
+- temp query collection aggregation with `arraySum`
+- temp query collection display with `JSONStringfy`
+
+Still runtime-sensitive / deferred:
 
 - filters
 - document library sources
@@ -25,6 +35,8 @@ Not yet generated-runtime-proven by Codex:
 - paging beyond `querydata_pagesize`
 - empty-result handling
 - `vLookup` function token shape
+
+The first generated runtime test attempted an `Active == true` filter. Runtime still returned the inactive `SRC-003` record, so do not mark Query data filters as proven yet. Generate filters only when required and document them as runtime-sensitive until the exact designer/runtime shape is resolved.
 
 ## Step Type
 
@@ -186,3 +198,18 @@ Warn when:
 - result count target variable is missing.
 
 Use errors only for structurally invalid JSON.
+
+## Runtime Baseline Status
+
+`Form Actions Phase 2 Query Submit Test v1` proved the generated query data surface except filters:
+
+- Source list and target list opened without `datas/query` 400.
+- `Load Multiple Test Requests` populated a form sub list with three selected-field rows and set Loaded Count to `3`.
+- `Load Single Test Request` mapped the first returned item into display/workflow variables.
+- `arraySum(__temp_var_CollectionofQueryItems, "Amount", [], [])` returned `2300`.
+- `JSONStringfy(__temp_var_CollectionofQueryItems)` displayed the returned collection JSON.
+
+Known partial:
+
+- The `Active == true` Query data filter was ignored by runtime. The result included inactive `SRC-003`, so filter shape remains a follow-up learning item.
+- `vLookup` remains UI-observed only and is not generation-safe.
