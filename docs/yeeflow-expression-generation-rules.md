@@ -203,6 +203,37 @@ Current user department name:
 ]
 ```
 
+## Form Action Expressions
+
+Form Actions Phase 1 proves that form action steps use the same expression-token array model for Set variable values, step conditions, and confirm dialog messages.
+
+Export-backed contexts:
+
+- `setvar.attrs.setvar_val`: expression-token array for the value assigned to one target variable
+- `setvar.attrs.setvar_array[].value`: expression-token array for a multi-set value
+- `step.condition`: expression-token array controlling whether a step runs
+- `confirm.attrs.confirm_qs`: expression-token array for the confirmation message
+- `heading.attrs.headc.title.variable`: expression-token array for displaying temp-variable results
+
+Temp variables are referenced as normal variable tokens with the generated temp prefix:
+
+```json
+{
+  "exprType": "variable",
+  "valueType": "string",
+  "id": "__temp_var_DialogResult",
+  "type": "expr",
+  "name": "var_DialogResult"
+}
+```
+
+Generation rules:
+
+- Declare temp variables in `variables.tempVars[]` before referencing `__temp_` tokens.
+- Keep workflow variables unprefixed.
+- Validate form action expressions with the same expression utility used for calculated controls and workflow conditions.
+- Do not confuse form action `setvar` steps with workflow graph `SetVariableTask` nodes; their JSON shapes are different.
+
 ## Validation Standard
 
 Run expression smoke tests after changing helpers or references:

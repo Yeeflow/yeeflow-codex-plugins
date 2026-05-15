@@ -127,6 +127,22 @@ Use `docs/yeeflow-expression-editor-reference.md`, `docs/yeeflow-expression-gene
 
 Expressions should be Yeeflow expression-token arrays. Do not generate raw JavaScript formulas. Use only known functions/operators from the normalized references and keep variable tokens in the exact required shape.
 
+## Form Actions
+
+Use `docs/yeeflow-form-action-generation-rules.md` and `docs/yeeflow-temp-variable-generation-rules.md` before generating front-end form actions.
+
+Phase 1 export-backed patterns:
+
+- form actions live at `page.formdef.actions[]`
+- page load trigger lives at `page.formdef.formAction.onLoad`
+- button click trigger lives at `action_button.attrs.control_action`
+- temp variable declarations live at `variables.tempVars[]`
+- temp expression tokens use `id: "__temp_<tempVarId>"`
+- Set variable steps use `type: "setvar"`
+- Show confirm dialog steps use `type: "confirm"`
+
+Keep form actions distinct from workflow actions. Form actions are front-end form logic; workflow actions are process graph/backend logic. Use form actions for UI state, defaults, confirmation, and safe client-side initialization. Do not use temp variables as the only source for persisted business data.
+
 ## Validator Guidance
 
 Warn for missing full width, zero padding, missing page-level background on rich full-page forms, background on `Main`, missing `Main`, missing `Content`, missing `Form body`, missing `Form bottom`, missing `Form header` when a request summary exists, workflow controls outside `Form bottom`, text/icon controls without inline width, field sections without grids, calculated-looking editable fields, runtime-sensitive picker/image attrs, and excessive arbitrary decision/status colors.

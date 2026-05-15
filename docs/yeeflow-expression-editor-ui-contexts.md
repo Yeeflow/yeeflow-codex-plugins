@@ -311,3 +311,27 @@ Generator guidance:
 - use summary-bound variables for totals that drive workflow routes
 - display the bound variable through a readonly number control when users need to see it outside the list
 - keep summary binding target types compatible with the row field and summary type
+
+## Form Actions
+
+Observed in manually updated `Expression Sublist Summary Workflow Test v1.yap`.
+
+Entry points:
+
+- Button control: `attrs.control_action` binds a click action to an action id in `page.formdef.actions[]`.
+- Page form definition: `page.formdef.formAction.onLoad` binds a page-load action.
+- Form action steps: Set variable steps use expression-token arrays for values and optional conditions.
+- Confirm dialog steps use expression-token arrays for the dialog message and a variable token for the result target.
+
+Typical variables:
+
+- workflow variables from `variables.basic[]`
+- temp variables declared in `variables.tempVars[]` and referenced as `__temp_<id>`
+- context/profile functions such as `currentUser`, `getUserAttr`, and `now` when export-backed
+
+Generator guidance:
+
+- use form actions for client-side form behavior and initialization
+- use workflow graph actions for backend/process behavior
+- validate temp variable references separately from workflow variables
+- keep generated action buttons inline and named with meaningful `nv_label`

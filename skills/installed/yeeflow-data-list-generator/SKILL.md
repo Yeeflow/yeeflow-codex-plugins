@@ -130,6 +130,8 @@ When the workspace includes `docs/yeeflow-text-control-generation-standards.md`,
 
 CAPEX design carry-forward: the `IT Hardware CAPEX Request v4 Text Standard` baseline confirms that generated app packages should keep data-list custom forms aligned with the same page-background, `Main`/`Content`, Text, icon, and field-grid rules used by rich approval forms. Keep normal fields in clear grouped layouts and use Text/Decimal/Bit fallback persistence for runtime-sensitive controls unless native field proof exists.
 
+Form Actions Phase 1 carry-forward: approval-form exports prove initial front-end form action concepts such as action buttons, page-load actions, temp variables, Set variable, and Confirm dialog. Data-list custom forms may use similar concepts, but do not generate custom-form actions from approval-form evidence alone. Wait for a data-list custom form export that proves the exact custom-form action wrapper before promoting the pattern.
+
 Generated list forms should use meaningful `nv_label` names for `Main`, `Content`, `Field group`, and `Readonly section`. Keep `Edit Item` input-optimized and `View Item` display-optimized unless the user explicitly scopes out custom forms.
 
 ## Field Schema Rules

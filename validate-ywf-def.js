@@ -181,6 +181,8 @@ function validateDecodedDef(def, options = {}) {
   const variableById = new Map();
   const listrefById = new Map();
   const rowFieldsByListVar = new Map();
+  const tempVarIds = new Set(asArray(def.variables && def.variables.tempVars).map((item) => item && item.id).filter(Boolean));
+  const tempExprIds = new Set([...tempVarIds].map((id) => `__temp_${id}`));
   const requestPageIds = new Set();
   const approvalPageIds = new Set();
   const controls = [];
@@ -362,6 +364,7 @@ function validateDecodedDef(def, options = {}) {
         addIssue(errors, "FORMDEF_EXTS_NOT_ARRAY", "formdef.exts must be an array when present", `${pagePath}.formdef.exts`);
       }
       validateUiUxStandardPage(page, pagePath);
+      validateFormActions(page, pagePath);
       walkControls(page.formdef.children, { page, pagePath, listContext: null });
       if (page.type === 1) {
         deepWalk(page.formdef.children, (node) => {
@@ -395,6 +398,120 @@ function validateDecodedDef(def, options = {}) {
         controlIds.set(controlId, entry.path);
       }
     }
+  }
+
+  function isKnownFormVariableToken(token) {
+    if (!isObject(token) || token.exprType !== "variable") return true;
+    if (!token.id) return false;
+    return variableById.has(token.id) || tempExprIds.has(token.id) || tempVarIds.has(token.id);
+  }
+
+  function validateActionExpression(expr, exprPath) {
+    if (!Array.isArray(expr)) return;
+    validateExpressionStructure(expr, exprPath);
+    deepWalk(expr, (node, pointer) => {
+      if (!isObject(node) || node.exprType !== "variable") return;
+      if (!isKnownFormVariableToken(node)) {
+        addIssue(warnings, "FORM_ACTION_EXPRESSION_UNKNOWN_VARIABLE", `Form action expression references unknown variable ${node.id}`, `${exprPath}${pointer.slice(1)}`);
+      }
+    });
+  }
+
+  function validateSetvarTarget(target, targetPath) {
+    if (!isObject(target)) {
+      addIssue(warnings, "FORM_ACTION_SETVAR_TARGET_MISSING", "Set variable form action step should include attrs.setvar_var or setvar_array[].var", targetPath);
+      return;
+    }
+    if (!isKnownFormVariableToken(target)) {
+      addIssue(warnings, "FORM_ACTION_SETVAR_UNKNOWN_TARGET", `Set variable form action target ${target.id} is not a known workflow or temp variable`, targetPath, {
+        target,
+      });
+    }
+  }
+
+  function validateFormActions(page, pagePath) {
+    const formdef = page && page.formdef;
+    if (!formdef) return;
+    const actions = asArray(formdef.actions);
+    const actionIds = new Set(actions.map((action) => action && action.id).filter(Boolean));
+    const buttonActionRefs = new Map();
+
+    deepWalk(formdef.children, (node, pointer) => {
+      if (!isObject(node)) return;
+      if (node.type === "action_button") {
+        const actionRef = node.attrs && node.attrs.control_action;
+        const controlPath = `${pagePath}.formdef.children${pointer.slice(1)}`;
+        if (actionRef) {
+          buttonActionRefs.set(actionRef, controlPath);
+          if (!actionIds.has(actionRef)) {
+            addIssue(warnings, "FORM_ACTION_BUTTON_TARGET_MISSING", `Action button references missing form action ${actionRef}`, `${controlPath}.attrs.control_action`);
+          }
+        }
+        if (actionRef && !node.nv_label && !(node.attrs && node.attrs.nv_label)) {
+          addIssue(warnings, "FORM_ACTION_BUTTON_NV_LABEL_MISSING", "Generated action buttons should have meaningful nv_label names when they trigger form actions", controlPath);
+        }
+      }
+    });
+
+    const onLoad = formdef.formAction && formdef.formAction.onLoad;
+    if (onLoad && !actionIds.has(onLoad)) {
+      addIssue(warnings, "FORM_ACTION_ONLOAD_TARGET_MISSING", `Page load action references missing form action ${onLoad}`, `${pagePath}.formdef.formAction.onLoad`);
+    }
+
+    actions.forEach((action, actionIndex) => {
+      const actionPath = `${pagePath}.formdef.actions[${actionIndex}]`;
+      if (!action || typeof action !== "object") {
+        addIssue(warnings, "FORM_ACTION_BAD_SHAPE", "Form action entries should be objects", actionPath);
+        return;
+      }
+      if (!action.id) addIssue(warnings, "FORM_ACTION_ID_MISSING", "Form action should include id", `${actionPath}.id`);
+      if (!action.name) addIssue(warnings, "FORM_ACTION_NAME_MISSING", "Form action should include a business-readable name", `${actionPath}.name`);
+      if (!Array.isArray(action.steps) || action.steps.length === 0) {
+        addIssue(warnings, "FORM_ACTION_STEPS_EMPTY", "Form action should include at least one step", `${actionPath}.steps`);
+        return;
+      }
+      if (!buttonActionRefs.has(action.id) && onLoad !== action.id) {
+        addIssue(warnings, "FORM_ACTION_UNTRIGGERED", "Form action is not referenced by an action button or page-load trigger", actionPath, {
+          actionName: action.name,
+        });
+      }
+
+      action.steps.forEach((step, stepIndex) => {
+        const stepPath = `${actionPath}.steps[${stepIndex}]`;
+        if (!step || typeof step !== "object") {
+          addIssue(warnings, "FORM_ACTION_STEP_BAD_SHAPE", "Form action step should be an object", stepPath);
+          return;
+        }
+        if (!step.type) addIssue(warnings, "FORM_ACTION_STEP_TYPE_MISSING", "Form action step should include type", `${stepPath}.type`);
+        if (step.condition) validateActionExpression(step.condition, `${stepPath}.condition`);
+        if (step.type === "setvar") {
+          const attrs = step.attrs || {};
+          if (attrs.setvar_multi === true) {
+            const entries = asArray(attrs.setvar_array);
+            if (!entries.length) addIssue(warnings, "FORM_ACTION_SETVAR_ARRAY_EMPTY", "Multi set variable action should include attrs.setvar_array entries", `${stepPath}.attrs.setvar_array`);
+            entries.forEach((entry, entryIndex) => {
+              validateSetvarTarget(entry && entry.var, `${stepPath}.attrs.setvar_array[${entryIndex}].var`);
+              validateActionExpression(entry && entry.value, `${stepPath}.attrs.setvar_array[${entryIndex}].value`);
+            });
+          } else {
+            validateSetvarTarget(attrs.setvar_var, `${stepPath}.attrs.setvar_var`);
+            validateActionExpression(attrs.setvar_val, `${stepPath}.attrs.setvar_val`);
+          }
+        } else if (step.type === "confirm") {
+          const attrs = step.attrs || {};
+          if (!Array.isArray(attrs.confirm_qs) || attrs.confirm_qs.length === 0) {
+            addIssue(warnings, "FORM_ACTION_CONFIRM_MESSAGE_MISSING", "Show confirm dialog step should include attrs.confirm_qs message tokens", `${stepPath}.attrs.confirm_qs`);
+          } else {
+            validateActionExpression(attrs.confirm_qs, `${stepPath}.attrs.confirm_qs`);
+          }
+          validateSetvarTarget(attrs.confirm_rs, `${stepPath}.attrs.confirm_rs`);
+        } else if (step.type && !["listitem"].includes(step.type)) {
+          addIssue(warnings, "FORM_ACTION_STEP_TYPE_UNCLASSIFIED", "Form action step type is not covered by current Phase 1 validation rules", `${stepPath}.type`, {
+            type: step.type,
+          });
+        }
+      });
+    });
   }
 
   function validateUiUxStandardPage(page, pagePath) {

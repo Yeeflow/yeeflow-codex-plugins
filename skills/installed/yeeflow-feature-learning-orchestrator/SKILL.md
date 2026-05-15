@@ -59,6 +59,8 @@ For expression export-back enrichment, compare user notes against decoded runtim
 
 For sub list/listref summary expression learning, study the updated export first and extract three layers separately: row-level current-object expressions (`exprType: "variable_ctx"`), parent list summary configuration (`attrs["list-fields-summary"]`), and workflow transition wrappers (`conditioninfo[]` with numeric `n.*` operators). Then generate the smallest focused runtime app to prove row calculations, summary display, summary-to-variable binding, and both high/normal workflow branches before promoting the pattern as generator-safe. Document runtime entry behavior such as summaries recalculating after row input blur/commit.
 
+For Yeeflow Form Actions Phase 1 learning, study the manually updated export before generating. Extract action buttons, button style codes, `action_button.attrs.control_action`, `page.formdef.formAction.onLoad`, `page.formdef.actions[]`, `variables.tempVars[]`, temp variable expression prefixes, and Phase 1 step types (`setvar`, `confirm`). Keep terminology clear: form actions are front-end form logic; workflow actions are process/backend graph logic; temp variables are form-runtime state. Treat new step types such as `listitem` as observed/deferred until a focused generated runtime test proves them.
+
 ## What To Load
 
 - For the full lifecycle, read `references/feature-learning-workflow.md`.

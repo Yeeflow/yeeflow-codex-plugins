@@ -218,6 +218,28 @@ Use warnings first for design-quality findings:
 - text/icon controls without inline width
 - field sections without a `flex_grid`
 - grids not using two desktop columns
+
+## Action Buttons
+
+The Form Actions Phase 1 export proves native `action_button` controls as a reusable form UI pattern.
+
+Default generated action buttons should use:
+
+- `type: "action_button"`
+- `attrs.common.positioning.widthtype = [null, "2"]`
+- meaningful visible label
+- meaningful `nv_label`
+- `attrs["button-style"]` chosen by purpose
+
+Observed style codes:
+
+- `"2"`: primary action
+- `"3"`: soft secondary action
+- `"4"`: outline primary/save action
+- `"5"`: neutral outline/verify action
+- `"6"`: dashed utility action such as import, add, or next
+
+For icon buttons, use export-backed Font Awesome values such as `fa-regular fa-plus` and `fa-regular fa-arrow-right`, with `attrs["icon-type"] = "3"` and `attrs["icon-posi"]` set to `1` for before-text or `2` for after-text.
 - runtime-sensitive controls using unproven attrs
 - calculated-looking fields generated as editable inputs
 

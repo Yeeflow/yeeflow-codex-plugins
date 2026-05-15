@@ -168,6 +168,21 @@ The manually improved IT Hardware CAPEX Runtime V2 export proved these additiona
 
 Task pages should mirror submitted request fields as readonly where appropriate. Workflow logic should not be changed by visual-improvement work unless explicitly requested.
 
+### Form Actions
+
+Generated approval forms may use native form actions when an export-backed pattern exists.
+
+Form Actions Phase 1 proves:
+
+- inline `action_button` controls with native style codes
+- `action_button.attrs.control_action` for button click actions
+- `page.formdef.formAction.onLoad` for page load initialization
+- `page.formdef.actions[]` as the form action definition list
+- temp variables under `variables.tempVars[]`
+- `setvar` and `confirm` action steps
+
+Use form actions for front-end form behavior such as default values, confirmation dialogs, and temporary UI state. Keep workflow actions for process/backend behavior. Apply the same design rules to action buttons: inline width by default, meaningful `nv_label`, token-aligned styling, and no page background on `Main`.
+
 ## Token Standards
 
 Use root style tokens as design guidance. Preserve token names exactly:

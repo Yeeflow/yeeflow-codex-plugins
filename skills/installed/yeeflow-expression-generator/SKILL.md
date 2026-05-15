@@ -78,6 +78,7 @@ Use only:
 - Runtime-proven in `Expression Sublist Summary Workflow Test v1`: generated sub list row expressions can use `exprType: "variable_ctx"` with `ctx` equal to the parent list variable id and `id` equal to the row field id. Use this for current-object row formulas such as `Current object:Quantity * Current object:Unit Price`.
 - Runtime-proven in `Expression Sublist Summary Workflow Test v1`: sub list summaries configured on `attrs["list-fields-summary"]` can bind numeric totals to top-level number variables with `{ "prefix": "__variables_", "value": "TotalAmount" }`, and those summary-bound variables can drive workflow branch conditions.
 - Runtime-proven workflow numeric conditions for summary variables use `conditioninfo[]` wrappers with `op` values such as `n.>` and `n.<=`, `left.value` as a number variable token, and `right.value` as a numeric expression token array such as `[{ "type": "num", "value": "5000" }]`.
+- Form Actions Phase 1 export-backed: form action `setvar` values, multi-set values, step conditions, and confirm dialog messages use Yeeflow expression-token arrays. Temp variables are declared in `variables.tempVars[]` and referenced as variable tokens with `id: "__temp_<tempVarId>"`, such as `__temp_var_DialogResult`. Keep form action `setvar` distinct from workflow graph `SetVariableTask`; their wrappers differ.
 
 ## Editor Contexts
 
@@ -92,6 +93,7 @@ Use the context-specific wrapper only when export-backed. The nested expression 
 - Sub list summary binding: list control Summary Editor binds aggregate values to workflow variables, which can then be used by dynamic display, validation, ContentList, and workflow conditions.
 - Function tab: categories include All, String, Logical, Date, Mathematical, and Other.
 - Variable selector: observed groups include Context, Workflow Variables, Static Variables, Temp variables, and Filter variables.
+- Form actions: button click actions use `action_button.attrs.control_action`, page load actions use `page.formdef.formAction.onLoad`, Set variable steps store expressions in `setvar_val` or `setvar_array[].value`, and Confirm steps store message tokens in `confirm_qs`.
 
 ## User/Profile Expression Recipes
 

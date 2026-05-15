@@ -1,0 +1,742 @@
+{
+  "source": "/Users/Renger/Downloads/Expression Sublist Summary Workflow Test v1.yap",
+  "form": {
+    "name": "Expression Sublist Summary Workflow Test v1",
+    "key": "2055125390325596175",
+    "listId": 0
+  },
+  "submitPage": {
+    "title": "Submit Purchase Line Items",
+    "id": "642fcf3b-8677-42a1-86ba-3c78e5e9fd02",
+    "name": "",
+    "formAction": {
+      "onLoad": "28687bbc-31cc-443c-8285-b0ac7dfbbfc0"
+    }
+  },
+  "tempVariables": [
+    {
+      "ref": {
+        "idx": "8b87913a-c5e0-48d6-9df9-453dece7d7c9",
+        "id": "var_Value1"
+      },
+      "variable": null
+    },
+    {
+      "ref": {
+        "idx": "4b55c928-5621-4d37-a0b8-0672608977c5",
+        "id": "var_StartBtnClickCount"
+      },
+      "variable": null
+    },
+    {
+      "ref": {
+        "idx": "a32c09de-6d10-465e-bb7d-27d5adad1aa7",
+        "id": "var_DialogResult"
+      },
+      "variable": null
+    }
+  ],
+  "actions": [
+    {
+      "id": "05bc684c-e435-44a5-818e-b1a953175385",
+      "name": "change value1",
+      "steps": [
+        {
+          "type": "setvar",
+          "attrs": {
+            "setvar_var": {
+              "exprType": "variable",
+              "valueType": "string",
+              "id": "__temp_var_StartBtnClickCount",
+              "type": "expr",
+              "name": "var_StartBtnClickCount"
+            },
+            "setvar_val": [
+              {
+                "type": "func",
+                "func": "iif",
+                "params": [
+                  [
+                    {
+                      "exprType": "variable",
+                      "valueType": "string",
+                      "id": "__temp_var_StartBtnClickCount",
+                      "type": "expr",
+                      "name": "var_StartBtnClickCount"
+                    },
+                    {
+                      "type": "op",
+                      "op": "=="
+                    },
+                    {
+                      "type": "num",
+                      "value": "0"
+                    }
+                  ],
+                  [
+                    {
+                      "type": "num",
+                      "value": "1"
+                    }
+                  ],
+                  [
+                    {
+                      "type": "num",
+                      "value": "0"
+                    }
+                  ]
+                ]
+              }
+            ]
+          },
+          "name": "Set click counting number"
+        },
+        {
+          "type": "setvar",
+          "attrs": {
+            "setvar_var": {
+              "exprType": "variable",
+              "valueType": "string",
+              "id": "__temp_var_Value1",
+              "type": "expr",
+              "name": "var_Value1"
+            },
+            "setvar_val": [
+              {
+                "type": "str",
+                "value": "Clicked by Start Button"
+              }
+            ]
+          },
+          "condition": [
+            {
+              "exprType": "variable",
+              "valueType": "string",
+              "id": "__temp_var_StartBtnClickCount",
+              "type": "expr",
+              "name": "var_StartBtnClickCount"
+            },
+            {
+              "type": "op",
+              "op": "=="
+            },
+            {
+              "type": "num",
+              "value": "0"
+            }
+          ],
+          "continue": true,
+          "name": "Set button clicked"
+        },
+        {
+          "type": "setvar",
+          "attrs": {
+            "setvar_var": {
+              "exprType": "variable",
+              "valueType": "string",
+              "id": "__temp_var_Value1",
+              "type": "expr",
+              "name": "var_Value1"
+            },
+            "setvar_val": [
+              {
+                "type": "str",
+                "value": "Unclicked by Start Button"
+              }
+            ]
+          },
+          "condition": [
+            {
+              "exprType": "variable",
+              "valueType": "string",
+              "id": "__temp_var_StartBtnClickCount",
+              "type": "expr",
+              "name": "var_StartBtnClickCount"
+            },
+            {
+              "type": "op",
+              "op": "=="
+            },
+            {
+              "type": "num",
+              "value": "1"
+            }
+          ],
+          "name": "Set button unclicked"
+        }
+      ]
+    },
+    {
+      "id": "34df076d-d801-4159-840c-48cb1e7533f7",
+      "name": "Change request title",
+      "steps": [
+        {
+          "type": "setvar",
+          "condition": [
+            {
+              "type": "func",
+              "func": "isNullOrEmpty",
+              "params": [
+                [
+                  {
+                    "exprType": "variable",
+                    "valueType": "text",
+                    "id": "RequestTitle",
+                    "type": "expr",
+                    "name": "Workflow Variables:Request Title"
+                  }
+                ]
+              ]
+            }
+          ],
+          "attrs": {
+            "setvar_var": {
+              "exprType": "variable",
+              "valueType": "text",
+              "id": "RequestTitle",
+              "type": "expr",
+              "name": "Workflow Variables:Request Title"
+            },
+            "setvar_val": [
+              {
+                "type": "str",
+                "value": "Request from "
+              },
+              {
+                "type": "op",
+                "op": "&"
+              },
+              {
+                "type": "func",
+                "func": "getUserAttr",
+                "params": [
+                  [
+                    {
+                      "type": "func",
+                      "func": "currentUser",
+                      "params": []
+                    }
+                  ],
+                  {
+                    "key": "Name_CN",
+                    "label": "Name"
+                  },
+                  []
+                ]
+              },
+              {
+                "type": "op",
+                "op": "&"
+              },
+              {
+                "type": "str",
+                "value": " at "
+              },
+              {
+                "type": "op",
+                "op": "&"
+              },
+              {
+                "type": "func",
+                "func": "now",
+                "params": []
+              }
+            ]
+          },
+          "name": "Set request title"
+        }
+      ]
+    },
+    {
+      "id": "c988aa6a-7505-4bb5-b405-b24e955e6e15",
+      "name": "Show confirmation dialog",
+      "steps": [
+        {
+          "type": "confirm",
+          "attrs": {
+            "confirm_qs": [
+              {
+                "type": "str",
+                "value": "This is an important operation, please confirm!"
+              }
+            ],
+            "confirm_rs": {
+              "exprType": "variable",
+              "valueType": "string",
+              "id": "__temp_var_DialogResult",
+              "type": "expr",
+              "name": "var_DialogResult"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "28687bbc-31cc-443c-8285-b0ac7dfbbfc0",
+      "name": "Page Load Action",
+      "steps": [
+        {
+          "type": "setvar",
+          "attrs": {
+            "setvar_multi": true,
+            "setvar_array": [
+              {
+                "var": {
+                  "exprType": "variable",
+                  "valueType": "number",
+                  "id": "AverageUnitPrice",
+                  "type": "expr",
+                  "name": "Workflow Variables:Average Unit Price"
+                },
+                "value": [
+                  {
+                    "type": "num",
+                    "value": "100"
+                  }
+                ]
+              },
+              {
+                "var": {
+                  "exprType": "variable",
+                  "valueType": "text",
+                  "id": "Notes",
+                  "type": "expr",
+                  "name": "Workflow Variables:Notes"
+                },
+                "value": [
+                  {
+                    "type": "str",
+                    "value": "show decision notes here. this is the default info."
+                  }
+                ]
+              }
+            ]
+          },
+          "name": "Set default values"
+        }
+      ]
+    },
+    {
+      "id": "51aec2a8-3d41-4c64-a47e-c231626e7184",
+      "name": "Add new data list item",
+      "steps": [
+        {
+          "type": "listitem",
+          "attrs": {
+            "data": {
+              "list": {
+                "AppID": 41,
+                "ListSetID": "2055125379930927104",
+                "ListID": "2055125390325596162"
+              }
+            },
+            "passvalues": [
+              {
+                "Name": "Title",
+                "Value": [
+                  {
+                    "exprType": "variable",
+                    "valueType": "text",
+                    "id": "RequestTitle",
+                    "type": "expr",
+                    "name": "Workflow Variables:Request Title"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "buttonControls": [
+    {
+      "id": "a22211c2-7602-4ded-a90f-14dd224c25ee",
+      "label": "Start",
+      "style": "2",
+      "controlAction": null,
+      "icon": null,
+      "iconType": null,
+      "iconPosi": null,
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "nv_label": "",
+      "path": "formdef.children[0].children[0].children[0].children[2].children[0].children[1].children[0]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    },
+    {
+      "id": "0676e1cf-40bf-4aaa-8614-cd37fd6a9d67",
+      "label": "On hold",
+      "style": "3",
+      "controlAction": null,
+      "icon": null,
+      "iconType": null,
+      "iconPosi": null,
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "nv_label": "",
+      "path": "formdef.children[0].children[0].children[0].children[2].children[0].children[1].children[1]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    },
+    {
+      "id": "180988e6-2e73-4650-8b03-f53aeee66f13",
+      "label": "Save",
+      "style": "4",
+      "controlAction": null,
+      "icon": null,
+      "iconType": null,
+      "iconPosi": null,
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "nv_label": "",
+      "path": "formdef.children[0].children[0].children[0].children[2].children[0].children[1].children[2]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    },
+    {
+      "id": "6a06caad-709f-444d-b814-14adf8b507b3",
+      "label": "Verify",
+      "style": "5",
+      "controlAction": null,
+      "icon": null,
+      "iconType": null,
+      "iconPosi": null,
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "nv_label": "",
+      "path": "formdef.children[0].children[0].children[0].children[2].children[0].children[1].children[3]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    },
+    {
+      "id": "0d342344-4381-424a-a88f-6d4591c11e98",
+      "label": "Import",
+      "style": "6",
+      "controlAction": null,
+      "icon": null,
+      "iconType": null,
+      "iconPosi": null,
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "nv_label": "",
+      "path": "formdef.children[0].children[0].children[0].children[2].children[0].children[1].children[4]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    },
+    {
+      "id": "7c67e494-18f7-4042-b18f-3f5a9c37e50e",
+      "label": "New item",
+      "style": "6",
+      "controlAction": null,
+      "icon": "fa-regular fa-plus",
+      "iconType": "3",
+      "iconPosi": "1",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "nv_label": "",
+      "path": "formdef.children[0].children[0].children[0].children[2].children[0].children[1].children[5]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    },
+    {
+      "id": "635034ae-9545-4d3b-abb1-a6ff9f895a00",
+      "label": "Next",
+      "style": "6",
+      "controlAction": null,
+      "icon": "fa-regular fa-arrow-right",
+      "iconType": "3",
+      "iconPosi": "2",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "nv_label": "",
+      "path": "formdef.children[0].children[0].children[0].children[2].children[0].children[1].children[6]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    },
+    {
+      "id": "a4a62d4c-4784-48e3-b6b6-6e9ad63c675b",
+      "label": "Click button action",
+      "style": "2",
+      "controlAction": "05bc684c-e435-44a5-818e-b1a953175385",
+      "icon": null,
+      "iconType": null,
+      "iconPosi": null,
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "nv_label": "",
+      "path": "formdef.children[0].children[0].children[0].children[2].children[1].children[1].children[0]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    },
+    {
+      "id": "e41726eb-d928-4698-b5bf-bc1b403e4ad1",
+      "label": "Set default request title",
+      "style": "3",
+      "controlAction": "34df076d-d801-4159-840c-48cb1e7533f7",
+      "icon": null,
+      "iconType": null,
+      "iconPosi": null,
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "nv_label": "",
+      "path": "formdef.children[0].children[0].children[0].children[2].children[1].children[1].children[1]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    },
+    {
+      "id": "4b2ab918-53d4-4b9b-92e1-a9cdfc54069e",
+      "label": "Save",
+      "style": "4",
+      "controlAction": "c988aa6a-7505-4bb5-b405-b24e955e6e15",
+      "icon": null,
+      "iconType": null,
+      "iconPosi": null,
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "nv_label": "",
+      "path": "formdef.children[0].children[0].children[0].children[2].children[1].children[1].children[2]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    },
+    {
+      "id": "1801426e-5e0c-4cab-adb0-0d8e00431f6c",
+      "label": "New item",
+      "style": "6",
+      "controlAction": "51aec2a8-3d41-4c64-a47e-c231626e7184",
+      "icon": "fa-regular fa-plus",
+      "iconType": "3",
+      "iconPosi": "1",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "nv_label": "",
+      "path": "formdef.children[0].children[0].children[0].children[2].children[1].children[1].children[3]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    }
+  ],
+  "headings": [
+    {
+      "id": "efb066a5-b961-41c0-b60c-921309c89905",
+      "title": {
+        "value": "Submit Purchase Line Items",
+        "variable": null
+      },
+      "nv_label": "Submit Purchase Line Items heading",
+      "ty": [
+        null,
+        "h4-medium"
+      ],
+      "color": "var(--c--text)",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "formdef.children[0].children[0].children[0].children[0]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    },
+    {
+      "id": "810f95dc-7ce9-4c4d-ac14-9a90acb45b4f",
+      "title": {
+        "value": "Add line items to calculate subtotals and route the workflow by total amount.",
+        "variable": null
+      },
+      "nv_label": "Submit Purchase Line Items helper",
+      "ty": [
+        null,
+        "s-regular"
+      ],
+      "color": "var(--c--neutral-dark-hover)",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "formdef.children[0].children[0].children[0].children[1]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    },
+    {
+      "id": "1f551169-9cbe-45c9-bac8-38a853c4d53f",
+      "title": {
+        "value": "Styles of buttons",
+        "variable": null
+      },
+      "nv_label": "",
+      "ty": [
+        null,
+        "h6-medium"
+      ],
+      "color": "var(--c--text)",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "formdef.children[0].children[0].children[0].children[2].children[0].children[0]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    },
+    {
+      "id": "085177ea-ee02-4f95-bdf7-1c343498568b",
+      "title": {
+        "value": "Call actions with button click",
+        "variable": null
+      },
+      "nv_label": "",
+      "ty": [
+        null,
+        "h6-medium"
+      ],
+      "color": "var(--c--text)",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "formdef.children[0].children[0].children[0].children[2].children[1].children[0]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    },
+    {
+      "id": "016ec128-96da-472a-b879-41e1427199f0",
+      "title": {
+        "value": null,
+        "variable": [
+          {
+            "exprType": "variable",
+            "valueType": "string",
+            "id": "__temp_var_Value1",
+            "type": "expr",
+            "name": "var_Value1"
+          }
+        ]
+      },
+      "nv_label": "",
+      "ty": [
+        null,
+        "base-light"
+      ],
+      "color": "var(--c--text)",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "formdef.children[0].children[0].children[0].children[2].children[1].children[2].children[0]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    },
+    {
+      "id": "cd881a05-1366-48d2-8db2-9d4589ca46f6",
+      "title": {
+        "value": null,
+        "variable": [
+          {
+            "type": "str",
+            "value": "The result of confirmation is "
+          },
+          {
+            "type": "op",
+            "op": "&"
+          },
+          {
+            "exprType": "variable",
+            "valueType": "string",
+            "id": "__temp_var_DialogResult",
+            "type": "expr",
+            "name": "var_DialogResult"
+          }
+        ]
+      },
+      "nv_label": "",
+      "ty": [
+        null,
+        "base-light"
+      ],
+      "color": "var(--c--text)",
+      "widthtype": [
+        null,
+        "2"
+      ],
+      "path": "formdef.children[0].children[0].children[0].children[2].children[1].children[2].children[1]",
+      "section": [
+        "Container",
+        "Container",
+        "Container"
+      ]
+    }
+  ],
+  "triggerIntegrity": {
+    "missingButtonActionRefs": [],
+    "unreferencedActions": []
+  }
+}

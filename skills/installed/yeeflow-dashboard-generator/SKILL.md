@@ -74,6 +74,8 @@ When the workspace includes `docs/yeeflow-text-control-generation-standards.md`,
 
 Dashboard expressions must use Yeeflow expression-token arrays. Dashboard Collection item expressions may use export-backed context variables such as `exprType: "variable_ctx"` with `ctx: "__ctx_coll"`; validate those against the collection source list before build. Do not invent expression functions or operators for chart filters, text expressions, or data filters. Treat `addWorkDays` and `addWorkHours` as expression-editor UI-observed but metadata-pending until export-backed parameter examples are captured.
 
+Form Actions Phase 1 carry-forward: approval-form exports prove the initial front-end form action model (`formdef.actions[]`, `action_button.attrs.control_action`, `formAction.onLoad`, temp variables, `setvar`, and `confirm`). Dashboard actions may share concepts, but dashboard generation must not assume the same wrapper until a dashboard export proves the exact dashboard action location and trigger shape. Reuse button style guidance only as visual guidance.
+
 For app-shell navigation around dashboards, keep the menu readable by inverting the root header colors: `navigator-menu.bgc` should equal `appearance.color`, and `navigator-menu.color` should equal `appearance.bgc`.
 
 ## Minimal Proven Baseline
