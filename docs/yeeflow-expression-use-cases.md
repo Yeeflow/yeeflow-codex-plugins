@@ -90,6 +90,22 @@ Common recipes:
 - normalized text: `upper(trim(value))`
 - cleanup: `replace(value, " ", "-", 1)` when all spaces should be replaced
 
+Runtime caution from `Expression Runtime Test v1`: a request-number expression recipe is not automatically a valid `SetVariableTask` value. Serializing the token array into a text variable caused Yeeflow to display the raw JSON. Until a working export proves the SetVariable expression assignment wrapper, use the proven FlowNo expression-button pattern for workflow-generated request numbers.
+
+## Runtime-Proven v1 Contexts
+
+`Expression Runtime Test v1 Patch` proved these contexts together in Yeeflow:
+
+- calculated control: `Quantity * Unit Price`
+- dynamic display: show High Value Reason when Total Amount is greater than 10000
+- lookup data filter: Active products only
+- lookup addition/autofill into readable summary variables
+- FlowNo request number generation
+- simple Finance Review task
+- ContentList persistence of readable request values
+
+Workflow transition branching by numeric expression remains deferred because the first isolation package did not route as expected. Treat workflow branch conditions as export-wrapper-sensitive.
+
 ## List/Sublist Summaries
 
 Use `arraySum`, `arrayCount`, `arrayAverage`, `arrayMin`, and `arrayMax` for list/sublist summary formulas when the list variable and column names are resolved.

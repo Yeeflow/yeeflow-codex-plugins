@@ -68,6 +68,9 @@ Use only:
 - Use enriched `businessScenarios`, `keywords`, parameter names, and bilingual descriptions from the function knowledge base to select among known functions.
 - Preserve exact runtime function names. Do not rename `strIndex`, `UniqueID`, or `subString`.
 - Treat `addWorkDays` and `addWorkHours` as screenshot-observed but metadata-pending. Do not generate them until parameter metadata or export-backed token examples are available.
+- Runtime-proven in `Expression Runtime Test v1 Patch`: calculated controls, dynamic display rules, lookup filters, lookup addition/autofill variables, FlowNo request numbers, simple approval tasks, and ContentList persistence can work together in one generated app.
+- Do not serialize expression token arrays directly into `SetVariableTask` text values for request-number generation. Runtime displayed raw JSON literally. Use the proven FlowNo expression-button value shape until a SetVariable expression-token wrapper is export-backed.
+- Treat workflow transition branch conditions as wrapper-sensitive. Locally valid numeric condition tokens are not enough; use simple workflow routing unless the exact transition condition wrapper is studied from a successful export/runtime package.
 
 ## Editor Contexts
 

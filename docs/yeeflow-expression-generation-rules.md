@@ -18,6 +18,8 @@ Use `yeeflow-expression-functions.normalized.json`, `yeeflow-expression-function
 - Use explicit readable lookup summary variables for user-facing output. Do not persist raw lookup row IDs into text fields unless the row ID is intentional.
 - Use enriched `businessScenarios` and `keywords` only to select from known functions. They do not authorize inventing new functions or unsupported token shapes.
 - Treat screenshot-observed functions such as `addWorkDays` and `addWorkHours` as metadata-pending until export-backed parameters are available.
+- Runtime note from `Expression Runtime Test v1`: do not assign raw serialized expression token arrays directly to `SetVariableTask` text values for request numbers. Yeeflow displayed the raw JSON literally. Use an export-backed value shape such as the FlowNo expression-button pattern until a real SetVariable expression-token assignment is studied.
+- Runtime note from `Expression Runtime Test v1`: workflow transition conditions need their exact outer wrapper from a working export. A locally valid numeric token array is not enough to claim workflow branch routing is runtime-proven.
 
 ## Function Selection By Business Intent
 
@@ -80,6 +82,8 @@ Generated request number:
   { "type": "func", "func": "UniqueID", "params": [] }
 ]
 ```
+
+For app-level request numbers in workflow actions, this token recipe is only the expression logic. Do not serialize this array into a `SetVariableTask` value unless that exact assignment shape has been proven by export/runtime. In the first runtime test, the safe generated package used Yeeflow's FlowNo expression-button value shape for `Request No`.
 
 Overdue check:
 
