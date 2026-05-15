@@ -287,12 +287,14 @@ The same runtime found an assignment-generation rule: do not hardcode tenant-spe
 
 ContentList persistence remained pending in the first runtime app; the regenerated package switches to the proven workflow-variable button mapping pattern for the next persistence test.
 
-`Form Actions Phase 2 Query Submit Test v1` proved the generated Phase 2 package runtime path:
+`Form Actions Phase 2 Query Submit Test v1` proved the generated Phase 2 package runtime path. The final corrected retest used `attrs.querydata_filters` plural for Query data filters:
 
 - Query data multiple button action populated a form sub list and count value.
 - Query data single button action mapped selected fields into workflow/display variables.
-- `arraySum` over the temp query collection returned `2300`.
-- `JSONStringfy` displayed the temp query collection.
+- Query data `Active == true` filters excluded inactive source rows.
+- Loaded Count was `2` from two active rows out of three source rows.
+- `arraySum` over the filtered temp query collection returned `2000`.
+- `JSONStringfy` displayed the filtered temp query collection.
 - Save changes returned success without advancing workflow.
 - Custom Submit form action submitted the workflow.
 - Reviewer task opened, approval completed, and ContentList created a readable target-list record.
@@ -301,6 +303,6 @@ Filter correction:
 
 - Query data `Active == true` filter was ignored by runtime in the generated package because the generator wrote `attrs.querydata_filter`, which did not populate the Query data step's actual `Data filter -> Condition` setting.
 - User follow-up confirmed that manually setting the Query data step `Data filter -> Condition` to `Active Equals ON` filters the result correctly.
-- The patched export proves the working JSON path is `attrs.querydata_filters` plural. For an Active Bit field, the exported working condition is `{ "left": "Bit1", "op": "0", "right": "true", "pre": "and", "showCus": true }`.
+- The patched export and corrected generated retest prove the working JSON path is `attrs.querydata_filters` plural. For an Active Bit field, the exported working condition is `{ "left": "Bit1", "op": "0", "right": "true", "pre": "and", "showCus": true }`.
 - Do not generate `attrs.querydata_filter` singular as the final filter implementation.
 - `vLookup` remains deferred because only labels, not function tokens, have been observed.

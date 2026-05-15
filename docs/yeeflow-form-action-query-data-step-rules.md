@@ -21,6 +21,7 @@ Generated-runtime-proven by `Form Actions Phase 2 Query Submit Test v1`:
 - query multiple from a packaged data list
 - query multiple result collection mapped into a form list/sub list variable
 - query result count copied into a display/workflow variable
+- Query data `Data filter -> Condition` using `attrs.querydata_filters`
 - query single from a packaged data list
 - query single selected-field mapping into workflow variables
 - temp query collection aggregation with `arraySum`
@@ -248,16 +249,18 @@ Use errors only for structurally invalid JSON.
 
 ## Runtime Baseline Status
 
-`Form Actions Phase 2 Query Submit Test v1` plus the patched export proved the generated query data surface and filter property:
+`Form Actions Phase 2 Query Submit Test v1` plus the patched export and corrected generator retest proved the generated query data surface and filter property:
 
 - Source list and target list opened without `datas/query` 400.
-- `Load Multiple Test Requests` populated a form sub list with three selected-field rows and set Loaded Count to `3`.
-- `Load Single Test Request` mapped the first returned item into display/workflow variables.
-- `arraySum(__temp_var_CollectionofQueryItems, "Amount", [], [])` returned `2300`.
-- `JSONStringfy(__temp_var_CollectionofQueryItems)` displayed the returned collection JSON.
+- Source list contained three sample rows: two active rows and one inactive row.
+- `Load Multiple Test Requests` with `attrs.querydata_filters` populated a form sub list with only the two active rows and set Loaded Count to `2`.
+- `Load Single Test Request` mapped an active returned item into display/workflow variables.
+- `arraySum(__temp_var_CollectionofQueryItems, "Amount", [], [])` returned `2000` from the active rows only.
+- `JSONStringfy(__temp_var_CollectionofQueryItems)` displayed the filtered collection JSON.
+- Submit, reviewer task open, approval completion, and ContentList persistence passed with filtered values.
 
 Filter follow-up:
 
 - The generated `attrs.querydata_filter` singular path was ignored by runtime.
-- The patched export confirms the correct path is `attrs.querydata_filters` plural.
+- The patched export and corrected generated retest confirm the correct path is `attrs.querydata_filters` plural.
 - `vLookup` remains UI-observed only and is not generation-safe.
