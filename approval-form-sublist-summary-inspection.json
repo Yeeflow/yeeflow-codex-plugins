@@ -1,0 +1,1389 @@
+{
+  "source": "/Users/Renger/Downloads/Approval Form Controls Test v6.yap",
+  "app": {},
+  "form": {
+    "name": "Approval Form Controls Test v6",
+    "key": "2054943200723742745",
+    "defkey": "2054943200723742745",
+    "listId": 0,
+    "pages": [
+      {
+        "id": "a2f7d411-6c8e-41bc-b50a-787876c982d6",
+        "title": "Submit Lookup/List Test",
+        "type": 1
+      },
+      {
+        "id": "579e496e-a7a9-454f-bda0-12acdfc33a6f",
+        "title": "Review Lookup/List Test",
+        "type": 2
+      }
+    ]
+  },
+  "variables": {
+    "basic": [
+      {
+        "idx": "2054943200723742745-var-request-title",
+        "id": "RequestTitle",
+        "name": "Request Title",
+        "type": "text",
+        "editable": true
+      },
+      {
+        "idx": "2054943200723742745-var-requester",
+        "id": "Requester",
+        "name": "Requester",
+        "type": "user",
+        "editable": true
+      },
+      {
+        "idx": "2054943200723742745-var-selected-product",
+        "id": "SelectedProduct",
+        "name": "Selected Product",
+        "type": "lookup",
+        "editable": true,
+        "value": {
+          "AppID": 41,
+          "ListID": "2054943200723742721",
+          "ListSetID": "2054943196075274240"
+        }
+      },
+      {
+        "idx": "2054943200723742745-var-product-code",
+        "id": "ProductCode",
+        "name": "Product Code",
+        "type": "text",
+        "editable": true
+      },
+      {
+        "idx": "2054943200723742745-var-product-category",
+        "id": "ProductCategory",
+        "name": "Product Category",
+        "type": "text",
+        "editable": true
+      },
+      {
+        "idx": "2054943200723742745-var-unit-price",
+        "id": "UnitPrice",
+        "name": "Unit Price",
+        "type": "number",
+        "editable": true
+      },
+      {
+        "idx": "2054943200723742745-var-line-items",
+        "id": "LineItems",
+        "name": "Line Items",
+        "type": "list",
+        "editable": true,
+        "value": "2054943200723742745-listref-line-items"
+      },
+      {
+        "idx": "2054943200723742745-var-line-items-summary",
+        "id": "LineItemsSummary",
+        "name": "Line Items Summary",
+        "type": "text",
+        "editable": true
+      },
+      {
+        "idx": "2054943200723742745-var-notes",
+        "id": "Notes",
+        "name": "Notes",
+        "type": "text",
+        "editable": true
+      },
+      {
+        "idx": "2054943200723742745-var-decision-notes",
+        "id": "DecisionNotes",
+        "name": "Decision Notes",
+        "type": "text",
+        "editable": true
+      },
+      {
+        "idx": "7adad576-a87e-4913-8322-b3ad9109e0e7",
+        "id": "TotalAmount",
+        "name": "Total Amount",
+        "type": "number",
+        "editable": true
+      }
+    ],
+    "listref": [
+      {
+        "id": "2054943200723742745-listref-line-items",
+        "name": "LineItems",
+        "idx": "2054943200723742745-listref-line-items-idx",
+        "fields": [
+          {
+            "idx": "2054943200723742745-row-product",
+            "id": "LineProduct",
+            "name": "Product",
+            "type": "text",
+            "editable": true
+          },
+          {
+            "idx": "2054943200723742745-row-quantity",
+            "id": "LineQuantity",
+            "name": "Quantity",
+            "type": "number",
+            "editable": true
+          },
+          {
+            "idx": "2054943200723742745-row-unit-price",
+            "id": "LineUnitPrice",
+            "name": "Unit Price",
+            "type": "number",
+            "editable": true
+          },
+          {
+            "idx": "2054943200723742745-row-note",
+            "id": "LineNote",
+            "name": "Line Note",
+            "type": "text",
+            "editable": true
+          },
+          {
+            "idx": "3cfc7738-271b-4c4b-b142-cea02423c5f5",
+            "id": "LineSubTotal",
+            "name": "Sub Total",
+            "type": "number",
+            "editable": true
+          }
+        ]
+      }
+    ]
+  },
+  "listControls": [
+    {
+      "path": "Submit Lookup/List Test.children.0.children.0.children.0.children.3.children.0",
+      "id": "2054943200723742745-control-LineItems-submit",
+      "type": "list",
+      "label": "Line Items",
+      "binding": "LineItems",
+      "nv_label": "Line items sublist",
+      "attrs": {
+        "list-fields": [
+          {
+            "idx": "2054943200723742745-row-product",
+            "id": "LineProduct",
+            "name": "Product",
+            "type": "text",
+            "editable": true,
+            "control": {
+              "id": "2054943200723742745-list-LineProduct-control-submit",
+              "label": "Product",
+              "binding": "LineProduct",
+              "displayLabel": [
+                null,
+                true
+              ],
+              "attrs": {
+                "list_field": true,
+                "list_field_binding": "LineItems",
+                "list_control_id": "2054943200723742745-control-LineItems-submit",
+                "placeholder": "Enter product"
+              },
+              "nv_label": "Product line item control",
+              "type": "input"
+            },
+            "attrs": {
+              "table": {
+                "cw": [
+                  null,
+                  220
+                ]
+              }
+            },
+            "Order": 0
+          },
+          {
+            "idx": "2054943200723742745-row-quantity",
+            "id": "LineQuantity",
+            "name": "Quantity",
+            "type": "number",
+            "editable": true,
+            "control": {
+              "id": "2054943200723742745-list-LineQuantity-control-submit",
+              "label": "Quantity",
+              "binding": "LineQuantity",
+              "displayLabel": [
+                null,
+                true
+              ],
+              "attrs": {
+                "list_field": true,
+                "list_field_binding": "LineItems",
+                "list_control_id": "2054943200723742745-control-LineItems-submit",
+                "displayThousandths": "1",
+                "rounded-to": 0,
+                "number_min": 1
+              },
+              "nv_label": "Quantity line item control",
+              "type": "input_number"
+            },
+            "attrs": {
+              "table": {
+                "cw": [
+                  null,
+                  120
+                ]
+              }
+            },
+            "Order": 1
+          },
+          {
+            "idx": "2054943200723742745-row-unit-price",
+            "id": "LineUnitPrice",
+            "name": "Unit Price",
+            "type": "number",
+            "editable": true,
+            "control": {
+              "id": "2054943200723742745-list-LineUnitPrice-control-submit",
+              "label": "Unit Price",
+              "binding": "LineUnitPrice",
+              "displayLabel": [
+                null,
+                true
+              ],
+              "attrs": {
+                "list_field": true,
+                "list_field_binding": "LineItems",
+                "list_control_id": "2054943200723742745-control-LineItems-submit",
+                "displayThousandths": "1",
+                "rounded-to": 2
+              },
+              "nv_label": "Unit Price line item control",
+              "type": "input_number"
+            },
+            "attrs": {
+              "table": {
+                "cw": [
+                  null,
+                  120
+                ]
+              }
+            },
+            "Order": 2
+          },
+          {
+            "idx": "3cfc7738-271b-4c4b-b142-cea02423c5f5",
+            "id": "LineSubTotal",
+            "name": "Sub Total",
+            "type": "number",
+            "editable": true,
+            "control": {
+              "id": "08cfcf01-6db6-4ecd-9e05-871528d3cf1d",
+              "label": "Sub Total",
+              "binding": "LineSubTotal",
+              "displayLabel": [
+                null,
+                true
+              ],
+              "type": "calculated",
+              "attrs": {
+                "list_field": true,
+                "list_field_binding": "LineItems",
+                "list_control_id": "2054943200723742745-control-LineItems-submit",
+                "calculated": [
+                  {
+                    "exprType": "variable_ctx",
+                    "valueType": "number",
+                    "id": "LineQuantity",
+                    "ctx": "LineItems",
+                    "type": "expr",
+                    "name": "Current object:Quantity"
+                  },
+                  {
+                    "type": "op",
+                    "op": "*"
+                  },
+                  {
+                    "exprType": "variable_ctx",
+                    "valueType": "number",
+                    "id": "LineUnitPrice",
+                    "ctx": "LineItems",
+                    "type": "expr",
+                    "name": "Current object:Unit Price"
+                  }
+                ]
+              },
+              "value": ""
+            }
+          },
+          {
+            "idx": "2054943200723742745-row-note",
+            "id": "LineNote",
+            "name": "Line Note",
+            "type": "text",
+            "editable": true,
+            "control": {
+              "id": "2054943200723742745-list-LineNote-control-submit",
+              "label": "Line Note",
+              "binding": "LineNote",
+              "displayLabel": [
+                null,
+                true
+              ],
+              "attrs": {
+                "list_field": true,
+                "list_field_binding": "LineItems",
+                "list_control_id": "2054943200723742745-control-LineItems-submit",
+                "placeholder": "Enter line note"
+              },
+              "nv_label": "Line Note line item control",
+              "type": "textarea"
+            },
+            "attrs": {
+              "table": {
+                "cw": [
+                  null,
+                  260
+                ]
+              }
+            },
+            "Order": 3
+          }
+        ],
+        "list-variables": [
+          {
+            "idx": "2054943200723742745-row-product",
+            "id": "LineProduct",
+            "name": "Product",
+            "type": "text",
+            "editable": true
+          },
+          {
+            "idx": "2054943200723742745-row-quantity",
+            "id": "LineQuantity",
+            "name": "Quantity",
+            "type": "number",
+            "editable": true
+          },
+          {
+            "idx": "2054943200723742745-row-unit-price",
+            "id": "LineUnitPrice",
+            "name": "Unit Price",
+            "type": "number",
+            "editable": true
+          },
+          {
+            "idx": "2054943200723742745-row-note",
+            "id": "LineNote",
+            "name": "Line Note",
+            "type": "text",
+            "editable": true
+          },
+          {
+            "idx": "3cfc7738-271b-4c4b-b142-cea02423c5f5",
+            "id": "LineSubTotal",
+            "name": "Sub Total",
+            "type": "number",
+            "editable": true
+          }
+        ],
+        "list-fields-summary": [
+          {
+            "id": "92f63858-b44e-4381-b842-8b4170627d6a",
+            "field": "LineQuantity",
+            "type": "total",
+            "display": true,
+            "binding": null
+          },
+          {
+            "id": "61cc95aa-214d-40b9-864a-0f5c2fae55b7",
+            "field": "LineSubTotal",
+            "type": "total",
+            "display": true,
+            "binding": {
+              "prefix": "__variables_",
+              "value": "TotalAmount"
+            }
+          },
+          {
+            "id": "a09b358f-1b38-46c5-b007-ad13a7d0b5eb",
+            "field": "LineUnitPrice",
+            "type": "avg",
+            "display": true,
+            "binding": null
+          }
+        ],
+        "operation": true
+      },
+      "readonly": false,
+      "displayLabel": [
+        null,
+        true
+      ]
+    },
+    {
+      "path": "Review Lookup/List Test.children.0.children.0.children.0.children.3.children.0",
+      "id": "2054943200723742745-control-LineItems-review",
+      "type": "list",
+      "label": "Line Items",
+      "binding": "LineItems",
+      "nv_label": "Line items sublist",
+      "attrs": {
+        "list-fields": [
+          {
+            "idx": "2054943200723742745-row-product",
+            "id": "LineProduct",
+            "name": "Product",
+            "type": "text",
+            "editable": true,
+            "control": {
+              "id": "2054943200723742745-list-LineProduct-control-review",
+              "label": "Product",
+              "binding": "LineProduct",
+              "displayLabel": [
+                null,
+                true
+              ],
+              "attrs": {
+                "list_field": true,
+                "list_field_binding": "LineItems",
+                "list_control_id": "2054943200723742745-control-LineItems-review",
+                "placeholder": "Enter product"
+              },
+              "nv_label": "Product line item control",
+              "type": "input",
+              "readonly": true
+            },
+            "attrs": {
+              "table": {
+                "cw": [
+                  null,
+                  220
+                ]
+              }
+            },
+            "Order": 0
+          },
+          {
+            "idx": "2054943200723742745-row-quantity",
+            "id": "LineQuantity",
+            "name": "Quantity",
+            "type": "number",
+            "editable": true,
+            "control": {
+              "id": "2054943200723742745-list-LineQuantity-control-review",
+              "label": "Quantity",
+              "binding": "LineQuantity",
+              "displayLabel": [
+                null,
+                true
+              ],
+              "attrs": {
+                "list_field": true,
+                "list_field_binding": "LineItems",
+                "list_control_id": "2054943200723742745-control-LineItems-review",
+                "displayThousandths": "1",
+                "rounded-to": 0,
+                "number_min": 1
+              },
+              "nv_label": "Quantity line item control",
+              "type": "input_number",
+              "readonly": true
+            },
+            "attrs": {
+              "table": {
+                "cw": [
+                  null,
+                  120
+                ]
+              }
+            },
+            "Order": 1
+          },
+          {
+            "idx": "2054943200723742745-row-unit-price",
+            "id": "LineUnitPrice",
+            "name": "Unit Price",
+            "type": "number",
+            "editable": true,
+            "control": {
+              "id": "2054943200723742745-list-LineUnitPrice-control-review",
+              "label": "Unit Price",
+              "binding": "LineUnitPrice",
+              "displayLabel": [
+                null,
+                true
+              ],
+              "attrs": {
+                "list_field": true,
+                "list_field_binding": "LineItems",
+                "list_control_id": "2054943200723742745-control-LineItems-review",
+                "displayThousandths": "1",
+                "rounded-to": 2
+              },
+              "nv_label": "Unit Price line item control",
+              "type": "input_number",
+              "readonly": true
+            },
+            "attrs": {
+              "table": {
+                "cw": [
+                  null,
+                  120
+                ]
+              }
+            },
+            "Order": 2
+          },
+          {
+            "idx": "2054943200723742745-row-note",
+            "id": "LineNote",
+            "name": "Line Note",
+            "type": "text",
+            "editable": true,
+            "control": {
+              "id": "2054943200723742745-list-LineNote-control-review",
+              "label": "Line Note",
+              "binding": "LineNote",
+              "displayLabel": [
+                null,
+                true
+              ],
+              "attrs": {
+                "list_field": true,
+                "list_field_binding": "LineItems",
+                "list_control_id": "2054943200723742745-control-LineItems-review",
+                "placeholder": "Enter line note"
+              },
+              "nv_label": "Line Note line item control",
+              "type": "textarea",
+              "readonly": true
+            },
+            "attrs": {
+              "table": {
+                "cw": [
+                  null,
+                  260
+                ]
+              }
+            },
+            "Order": 3
+          }
+        ],
+        "list-variables": [
+          {
+            "idx": "2054943200723742745-row-product",
+            "id": "LineProduct",
+            "name": "Product",
+            "type": "text",
+            "editable": true
+          },
+          {
+            "idx": "2054943200723742745-row-quantity",
+            "id": "LineQuantity",
+            "name": "Quantity",
+            "type": "number",
+            "editable": true
+          },
+          {
+            "idx": "2054943200723742745-row-unit-price",
+            "id": "LineUnitPrice",
+            "name": "Unit Price",
+            "type": "number",
+            "editable": true
+          },
+          {
+            "idx": "2054943200723742745-row-note",
+            "id": "LineNote",
+            "name": "Line Note",
+            "type": "text",
+            "editable": true
+          }
+        ],
+        "list-fields-summary": [],
+        "operation": false
+      },
+      "readonly": true,
+      "displayLabel": [
+        null,
+        true
+      ]
+    }
+  ],
+  "currentObjectExpressions": [
+    {
+      "page": "Submit Lookup/List Test",
+      "listControlId": "2054943200723742745-control-LineItems-submit",
+      "field": {
+        "id": "LineSubTotal",
+        "name": "Sub Total",
+        "type": "number",
+        "idx": "3cfc7738-271b-4c4b-b142-cea02423c5f5"
+      },
+      "control": {
+        "id": "08cfcf01-6db6-4ecd-9e05-871528d3cf1d",
+        "label": "Sub Total",
+        "binding": "LineSubTotal",
+        "displayLabel": [
+          null,
+          true
+        ],
+        "type": "calculated",
+        "attrs": {
+          "list_field": true,
+          "list_field_binding": "LineItems",
+          "list_control_id": "2054943200723742745-control-LineItems-submit",
+          "calculated": [
+            {
+              "exprType": "variable_ctx",
+              "valueType": "number",
+              "id": "LineQuantity",
+              "ctx": "LineItems",
+              "type": "expr",
+              "name": "Current object:Quantity"
+            },
+            {
+              "type": "op",
+              "op": "*"
+            },
+            {
+              "exprType": "variable_ctx",
+              "valueType": "number",
+              "id": "LineUnitPrice",
+              "ctx": "LineItems",
+              "type": "expr",
+              "name": "Current object:Unit Price"
+            }
+          ]
+        },
+        "value": ""
+      },
+      "expression": [
+        {
+          "exprType": "variable_ctx",
+          "valueType": "number",
+          "id": "LineQuantity",
+          "ctx": "LineItems",
+          "type": "expr",
+          "name": "Current object:Quantity"
+        },
+        {
+          "type": "op",
+          "op": "*"
+        },
+        {
+          "exprType": "variable_ctx",
+          "valueType": "number",
+          "id": "LineUnitPrice",
+          "ctx": "LineItems",
+          "type": "expr",
+          "name": "Current object:Unit Price"
+        }
+      ]
+    }
+  ],
+  "summaries": [
+    {
+      "page": "Submit Lookup/List Test",
+      "listControlId": "2054943200723742745-control-LineItems-submit",
+      "binding": "LineItems",
+      "readonly": false,
+      "summaries": [
+        {
+          "id": "92f63858-b44e-4381-b842-8b4170627d6a",
+          "field": "LineQuantity",
+          "type": "total",
+          "display": true,
+          "binding": null
+        },
+        {
+          "id": "61cc95aa-214d-40b9-864a-0f5c2fae55b7",
+          "field": "LineSubTotal",
+          "type": "total",
+          "display": true,
+          "binding": {
+            "prefix": "__variables_",
+            "value": "TotalAmount"
+          }
+        },
+        {
+          "id": "a09b358f-1b38-46c5-b007-ad13a7d0b5eb",
+          "field": "LineUnitPrice",
+          "type": "avg",
+          "display": true,
+          "binding": null
+        }
+      ],
+      "fields": [
+        {
+          "id": "LineProduct",
+          "name": "Product",
+          "type": "text",
+          "controlType": "input",
+          "controlId": "2054943200723742745-list-LineProduct-control-submit",
+          "attrs": {
+            "table": {
+              "cw": [
+                null,
+                220
+              ]
+            }
+          }
+        },
+        {
+          "id": "LineQuantity",
+          "name": "Quantity",
+          "type": "number",
+          "controlType": "input_number",
+          "controlId": "2054943200723742745-list-LineQuantity-control-submit",
+          "attrs": {
+            "table": {
+              "cw": [
+                null,
+                120
+              ]
+            }
+          }
+        },
+        {
+          "id": "LineUnitPrice",
+          "name": "Unit Price",
+          "type": "number",
+          "controlType": "input_number",
+          "controlId": "2054943200723742745-list-LineUnitPrice-control-submit",
+          "attrs": {
+            "table": {
+              "cw": [
+                null,
+                120
+              ]
+            }
+          }
+        },
+        {
+          "id": "LineSubTotal",
+          "name": "Sub Total",
+          "type": "number",
+          "controlType": "calculated",
+          "controlId": "08cfcf01-6db6-4ecd-9e05-871528d3cf1d",
+          "calculated": [
+            {
+              "exprType": "variable_ctx",
+              "valueType": "number",
+              "id": "LineQuantity",
+              "ctx": "LineItems",
+              "type": "expr",
+              "name": "Current object:Quantity"
+            },
+            {
+              "type": "op",
+              "op": "*"
+            },
+            {
+              "exprType": "variable_ctx",
+              "valueType": "number",
+              "id": "LineUnitPrice",
+              "ctx": "LineItems",
+              "type": "expr",
+              "name": "Current object:Unit Price"
+            }
+          ]
+        },
+        {
+          "id": "LineNote",
+          "name": "Line Note",
+          "type": "text",
+          "controlType": "textarea",
+          "controlId": "2054943200723742745-list-LineNote-control-submit",
+          "attrs": {
+            "table": {
+              "cw": [
+                null,
+                260
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "page": "Review Lookup/List Test",
+      "listControlId": "2054943200723742745-control-LineItems-review",
+      "binding": "LineItems",
+      "readonly": true,
+      "summaries": [],
+      "fields": [
+        {
+          "id": "LineProduct",
+          "name": "Product",
+          "type": "text",
+          "controlType": "input",
+          "controlId": "2054943200723742745-list-LineProduct-control-review",
+          "attrs": {
+            "table": {
+              "cw": [
+                null,
+                220
+              ]
+            }
+          }
+        },
+        {
+          "id": "LineQuantity",
+          "name": "Quantity",
+          "type": "number",
+          "controlType": "input_number",
+          "controlId": "2054943200723742745-list-LineQuantity-control-review",
+          "attrs": {
+            "table": {
+              "cw": [
+                null,
+                120
+              ]
+            }
+          }
+        },
+        {
+          "id": "LineUnitPrice",
+          "name": "Unit Price",
+          "type": "number",
+          "controlType": "input_number",
+          "controlId": "2054943200723742745-list-LineUnitPrice-control-review",
+          "attrs": {
+            "table": {
+              "cw": [
+                null,
+                120
+              ]
+            }
+          }
+        },
+        {
+          "id": "LineNote",
+          "name": "Line Note",
+          "type": "text",
+          "controlType": "textarea",
+          "controlId": "2054943200723742745-list-LineNote-control-review",
+          "attrs": {
+            "table": {
+              "cw": [
+                null,
+                260
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "totalAmountControls": [
+    {
+      "path": "Submit Lookup/List Test.children.0.children.0.children.0.children.2.children.6",
+      "id": "2f2b4801-9e11-4e43-88e6-1f16009e7f22",
+      "type": "input_number",
+      "label": "Total Amount",
+      "binding": "TotalAmount",
+      "attrs": {
+        "displayThousandths": "1"
+      },
+      "readonly": true
+    }
+  ],
+  "workflow": {
+    "nodes": [
+      {
+        "id": "2054943200723742745-node-review-0002",
+        "type": "MultiAssignmentTask",
+        "name": "Reviewer Approval",
+        "taskurl": "579e496e-a7a9-454f-bda0-12acdfc33a6f",
+        "incoming": [
+          {
+            "id": "2054943200723742745-flow-0001",
+            "resourceid": "2054943200723742745-flow-0001"
+          }
+        ],
+        "outgoing": [
+          {
+            "id": "2054943200723742745-flow-0002",
+            "resourceid": "2054943200723742745-flow-0002"
+          },
+          {
+            "id": "2054943200723742745-flow-0003",
+            "resourceid": "2054943200723742745-flow-0003"
+          }
+        ],
+        "position": {
+          "x": -50,
+          "y": 230
+        }
+      },
+      {
+        "id": "2054943200723742745-node-start-0001",
+        "type": "StartNoneEvent",
+        "name": "Start",
+        "taskurl": "a2f7d411-6c8e-41bc-b50a-787876c982d6",
+        "incoming": [],
+        "outgoing": [
+          {
+            "id": "2054943200723742745-flow-0001",
+            "resourceid": "2054943200723742745-flow-0001"
+          }
+        ],
+        "position": {
+          "x": -50,
+          "y": 95
+        }
+      },
+      {
+        "id": "s_90671816815",
+        "type": "InclusiveGateway",
+        "name": "Inclusive Gateway",
+        "incoming": [
+          {
+            "id": "2054943200723742745-flow-0002",
+            "resourceid": "2054943200723742745-flow-0002"
+          }
+        ],
+        "outgoing": [
+          {
+            "id": "s_90671816817",
+            "resourceid": "s_90671816817"
+          },
+          {
+            "id": "s_90671816820",
+            "resourceid": "s_90671816820"
+          }
+        ],
+        "position": {
+          "x": 285,
+          "y": 230
+        }
+      },
+      {
+        "id": "2054943200723742745-node-persist-0003",
+        "type": "ContentList",
+        "name": "Create Lookup/List Test Record",
+        "incoming": [
+          {
+            "id": "s_90671816821",
+            "resourceid": "s_90671816821"
+          },
+          {
+            "id": "s_90671816822",
+            "resourceid": "s_90671816822"
+          }
+        ],
+        "outgoing": [
+          {
+            "id": "2054943200723742745-flow-0004",
+            "resourceid": "2054943200723742745-flow-0004"
+          }
+        ],
+        "position": {
+          "x": 740,
+          "y": 225
+        }
+      },
+      {
+        "id": "2054943200723742745-node-end-0004",
+        "type": "EndNoneEvent",
+        "name": "End",
+        "incoming": [
+          {
+            "id": "2054943200723742745-flow-0004",
+            "resourceid": "2054943200723742745-flow-0004"
+          }
+        ],
+        "outgoing": [],
+        "position": {
+          "x": 1030,
+          "y": 225
+        }
+      },
+      {
+        "id": "2054943200723742745-node-reject-0005",
+        "type": "EndRejectEvent",
+        "name": "Rejected",
+        "incoming": [
+          {
+            "id": "2054943200723742745-flow-0003",
+            "resourceid": "2054943200723742745-flow-0003"
+          }
+        ],
+        "outgoing": [],
+        "position": {
+          "x": -50,
+          "y": 385
+        }
+      },
+      {
+        "id": "s_90671816818",
+        "type": "MultiAssignmentTask",
+        "name": "Assignment Task_1",
+        "taskurl": "579e496e-a7a9-454f-bda0-12acdfc33a6f",
+        "incoming": [
+          {
+            "id": "s_90671816820",
+            "resourceid": "s_90671816820"
+          }
+        ],
+        "outgoing": [
+          {
+            "id": "s_90671816822",
+            "resourceid": "s_90671816822"
+          },
+          {
+            "id": "s_90671816824",
+            "resourceid": "s_90671816824"
+          }
+        ],
+        "position": {
+          "x": 445,
+          "y": 270
+        }
+      },
+      {
+        "id": "s_90671816823",
+        "type": "EndRejectEvent",
+        "name": "Rejected",
+        "incoming": [
+          {
+            "id": "s_90671816824",
+            "resourceid": "s_90671816824"
+          }
+        ],
+        "outgoing": [],
+        "position": {
+          "x": 445,
+          "y": 385
+        }
+      },
+      {
+        "id": "s_90671816825",
+        "type": "EndRejectEvent",
+        "name": "Rejected",
+        "incoming": [
+          {
+            "id": "s_90671816826",
+            "resourceid": "s_90671816826"
+          }
+        ],
+        "outgoing": [],
+        "position": {
+          "x": 445,
+          "y": 35
+        }
+      },
+      {
+        "id": "s_90671816816",
+        "type": "MultiAssignmentTask",
+        "name": "Assignment Task_1",
+        "taskurl": "579e496e-a7a9-454f-bda0-12acdfc33a6f",
+        "incoming": [
+          {
+            "id": "s_90671816817",
+            "resourceid": "s_90671816817"
+          }
+        ],
+        "outgoing": [
+          {
+            "id": "s_90671816821",
+            "resourceid": "s_90671816821"
+          },
+          {
+            "id": "s_90671816826",
+            "resourceid": "s_90671816826"
+          }
+        ],
+        "position": {
+          "x": 445,
+          "y": 185
+        }
+      }
+    ],
+    "numericConditionFlows": [
+      {
+        "id": "s_90671816817",
+        "resourceid": "s_90671816817",
+        "name": "Sequence flow_4",
+        "documentation": "Amount > 5000",
+        "conditioninfo": [
+          {
+            "key": "85b416d5-1777-4c56-a779-f1f5a3bea00d",
+            "pre": "and",
+            "left": {
+              "type": 1,
+              "value": {
+                "exprType": "variable",
+                "valueType": "number",
+                "id": "TotalAmount",
+                "type": "expr"
+              }
+            },
+            "op": "n.>",
+            "right": {
+              "type": 2,
+              "value": [
+                {
+                  "type": "num",
+                  "value": "5000"
+                }
+              ]
+            },
+            "group": "number"
+          }
+        ],
+        "source": "s_90671816815",
+        "target": "s_90671816816"
+      },
+      {
+        "id": "s_90671816820",
+        "resourceid": "s_90671816820",
+        "name": "Sequence flow_6",
+        "documentation": "Amount <= 5000",
+        "conditioninfo": [
+          {
+            "key": "41c1d212-6893-4e36-bfb3-de2b09cd59c2",
+            "pre": "and",
+            "left": {
+              "type": 1,
+              "value": {
+                "exprType": "variable",
+                "valueType": "number",
+                "id": "TotalAmount",
+                "type": "expr"
+              }
+            },
+            "op": "n.<=",
+            "right": {
+              "type": 2,
+              "value": [
+                {
+                  "type": "num",
+                  "value": "5000"
+                }
+              ]
+            },
+            "group": "number"
+          }
+        ],
+        "source": "s_90671816815",
+        "target": "s_90671816818"
+      }
+    ],
+    "allConditionFlows": [
+      {
+        "id": "2054943200723742745-flow-0002",
+        "resourceid": "2054943200723742745-flow-0002",
+        "name": "Reviewer Approved",
+        "documentation": "Approved",
+        "conditioninfo": [
+          {
+            "key": "2054943200723742745-cond-approved",
+            "pre": "and",
+            "left": "<input type=\"button\" data=\"${&quot;type&quot;:&quot;task&quot;,&quot;param&quot;:{&quot;defid&quot;:&quot;2054943200723742745-node-review-0002&quot;}, &quot;prop&quot;:&quot;Outcome&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Reviewer Approval:Outcome\">",
+            "op": "s.=",
+            "right": "<input type=\"button\" data=\"Approved\" expr=\"__\" tabindex=\"-1\" value=\"Task outcome:Approved\">"
+          }
+        ],
+        "source": "2054943200723742745-node-review-0002",
+        "target": "s_90671816815"
+      },
+      {
+        "id": "2054943200723742745-flow-0003",
+        "resourceid": "2054943200723742745-flow-0003",
+        "name": "Reviewer Rejected",
+        "documentation": "Rejected",
+        "conditioninfo": [
+          {
+            "key": "2054943200723742745-cond-rejected",
+            "pre": "and",
+            "left": "<input type=\"button\" data=\"${&quot;type&quot;:&quot;task&quot;,&quot;param&quot;:{&quot;defid&quot;:&quot;2054943200723742745-node-review-0002&quot;}, &quot;prop&quot;:&quot;Outcome&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Reviewer Approval:Outcome\">",
+            "op": "s.=",
+            "right": "<input type=\"button\" data=\"Rejected\" expr=\"__\" tabindex=\"-1\" value=\"Task outcome:Rejected\">"
+          }
+        ],
+        "source": "2054943200723742745-node-review-0002",
+        "target": "2054943200723742745-node-reject-0005"
+      },
+      {
+        "id": "s_90671816817",
+        "resourceid": "s_90671816817",
+        "name": "Sequence flow_4",
+        "documentation": "Amount > 5000",
+        "conditioninfo": [
+          {
+            "key": "85b416d5-1777-4c56-a779-f1f5a3bea00d",
+            "pre": "and",
+            "left": {
+              "type": 1,
+              "value": {
+                "exprType": "variable",
+                "valueType": "number",
+                "id": "TotalAmount",
+                "type": "expr"
+              }
+            },
+            "op": "n.>",
+            "right": {
+              "type": 2,
+              "value": [
+                {
+                  "type": "num",
+                  "value": "5000"
+                }
+              ]
+            },
+            "group": "number"
+          }
+        ],
+        "source": "s_90671816815",
+        "target": "s_90671816816"
+      },
+      {
+        "id": "s_90671816820",
+        "resourceid": "s_90671816820",
+        "name": "Sequence flow_6",
+        "documentation": "Amount <= 5000",
+        "conditioninfo": [
+          {
+            "key": "41c1d212-6893-4e36-bfb3-de2b09cd59c2",
+            "pre": "and",
+            "left": {
+              "type": 1,
+              "value": {
+                "exprType": "variable",
+                "valueType": "number",
+                "id": "TotalAmount",
+                "type": "expr"
+              }
+            },
+            "op": "n.<=",
+            "right": {
+              "type": 2,
+              "value": [
+                {
+                  "type": "num",
+                  "value": "5000"
+                }
+              ]
+            },
+            "group": "number"
+          }
+        ],
+        "source": "s_90671816815",
+        "target": "s_90671816818"
+      },
+      {
+        "id": "s_90671816821",
+        "resourceid": "s_90671816821",
+        "name": "Sequence flow_7",
+        "documentation": "Approved",
+        "conditioninfo": [
+          {
+            "key": "d5715a17-777a-429e-84cd-6626a51d5bfe",
+            "pre": "and",
+            "left": "<input type=\"button\"  data=\"${&quot;type&quot;:&quot;task&quot;,&quot;param&quot;:{&quot;defid&quot;:&quot;s_90671816816&quot;}, &quot;prop&quot;:&quot;Outcome&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Assignment Task_1:Outcome\">",
+            "op": "s.=",
+            "right": "<input type=\"button\" data=\"Approved\" expr=\"__\" tabindex=\"-1\" value=\"Task outcome:Approved\">"
+          }
+        ],
+        "source": "s_90671816816",
+        "target": "2054943200723742745-node-persist-0003"
+      },
+      {
+        "id": "s_90671816822",
+        "resourceid": "s_90671816822",
+        "name": "Sequence flow_8",
+        "documentation": "Approved",
+        "conditioninfo": [
+          {
+            "key": "3a63ab81-1e22-4ab1-a297-90c66fc15086",
+            "pre": "and",
+            "left": "<input type=\"button\"  data=\"${&quot;type&quot;:&quot;task&quot;,&quot;param&quot;:{&quot;defid&quot;:&quot;s_90671816818&quot;}, &quot;prop&quot;:&quot;Outcome&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Assignment Task_1:Outcome\">",
+            "op": "s.=",
+            "right": "<input type=\"button\" data=\"Approved\" expr=\"__\" tabindex=\"-1\" value=\"Task outcome:Approved\">"
+          }
+        ],
+        "source": "s_90671816818",
+        "target": "2054943200723742745-node-persist-0003"
+      },
+      {
+        "id": "s_90671816824",
+        "resourceid": "s_90671816824",
+        "name": "Sequence flow_9",
+        "documentation": "Rejected",
+        "conditioninfo": [
+          {
+            "key": "e99952cc-b0fc-45e2-b8cc-9dfa60804526",
+            "pre": "and",
+            "left": "<input type=\"button\"  data=\"${&quot;type&quot;:&quot;task&quot;,&quot;param&quot;:{&quot;defid&quot;:&quot;s_90671816818&quot;}, &quot;prop&quot;:&quot;Outcome&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Assignment Task_1:Outcome\">",
+            "op": "s.=",
+            "right": "<input type=\"button\" data=\"Rejected\" expr=\"__\" tabindex=\"-1\" value=\"Task outcome:Rejected\">"
+          }
+        ],
+        "source": "s_90671816818",
+        "target": "s_90671816823"
+      },
+      {
+        "id": "s_90671816826",
+        "resourceid": "s_90671816826",
+        "name": "Sequence flow_10",
+        "documentation": "Rejected",
+        "conditioninfo": [
+          {
+            "key": "328f6cc9-db10-48d8-bcb6-ad2afec0b4ef",
+            "pre": "and",
+            "left": "<input type=\"button\"  data=\"${&quot;type&quot;:&quot;task&quot;,&quot;param&quot;:{&quot;defid&quot;:&quot;s_90671816816&quot;}, &quot;prop&quot;:&quot;Outcome&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Assignment Task_1:Outcome\">",
+            "op": "s.=",
+            "right": "<input type=\"button\" data=\"Rejected\" expr=\"__\" tabindex=\"-1\" value=\"Task outcome:Rejected\">"
+          }
+        ],
+        "source": "s_90671816816",
+        "target": "s_90671816825"
+      }
+    ]
+  },
+  "contentListNodes": [
+    {
+      "id": "2054943200723742745-node-persist-0003",
+      "name": "Create Lookup/List Test Record",
+      "listdatas": [
+        {
+          "Per": "0",
+          "Columns": "Title",
+          "Data": "<input type=\"button\" data=\"${&quot;type&quot;:&quot;variable&quot;, &quot;param&quot;:{&quot;id&quot;:&quot;RequestTitle&quot;}}\" expr=\"__\" tabindex=\"-1\" value=\"Workflow Variables:Request Title\">"
+        },
+        {
+          "Per": "0",
+          "Columns": "Text1",
+          "Data": "<input type=\"button\" data=\"${&quot;type&quot;:&quot;variable&quot;, &quot;param&quot;:{&quot;id&quot;:&quot;SelectedProduct&quot;}}\" expr=\"__\" tabindex=\"-1\" value=\"Workflow Variables:Selected Product\">"
+        },
+        {
+          "Per": "0",
+          "Columns": "Text2",
+          "Data": "<input type=\"button\" data=\"${&quot;type&quot;:&quot;variable&quot;, &quot;param&quot;:{&quot;id&quot;:&quot;ProductCode&quot;}}\" expr=\"__\" tabindex=\"-1\" value=\"Workflow Variables:Product Code\">"
+        },
+        {
+          "Per": "0",
+          "Columns": "Text3",
+          "Data": "<input type=\"button\" data=\"${&quot;type&quot;:&quot;variable&quot;, &quot;param&quot;:{&quot;id&quot;:&quot;ProductCategory&quot;}}\" expr=\"__\" tabindex=\"-1\" value=\"Workflow Variables:Product Category\">"
+        },
+        {
+          "Per": "0",
+          "Columns": "Decimal1",
+          "Data": "<input type=\"button\" data=\"${&quot;type&quot;:&quot;variable&quot;, &quot;param&quot;:{&quot;id&quot;:&quot;UnitPrice&quot;}}\" expr=\"__\" tabindex=\"-1\" value=\"Workflow Variables:Unit Price\">"
+        },
+        {
+          "Per": "0",
+          "Columns": "Text4",
+          "Data": "<input type=\"button\" data=\"${&quot;type&quot;:&quot;variable&quot;, &quot;param&quot;:{&quot;id&quot;:&quot;LineItemsSummary&quot;}}\" expr=\"__\" tabindex=\"-1\" value=\"Workflow Variables:Line Items Summary\">"
+        },
+        {
+          "Per": "0",
+          "Columns": "Text5",
+          "Data": "Approved"
+        },
+        {
+          "Per": "0",
+          "Columns": "Bit1",
+          "Data": "1"
+        }
+      ],
+      "wheres": [],
+      "listid": "2054943200723742722",
+      "listsetid": "2054943196075274240"
+    }
+  ]
+}

@@ -94,6 +94,7 @@ Load only the relevant reference:
 - Use `Decimal` + `input_number` fields for persisted numbers; `Decimal1` is the proven generated slot in Visitor Access Management v11.
 - Use `Bit` + `switch` fields for persisted booleans; `Bit1` is the proven generated slot in Visitor Access Management v11.
 - Use calculated data-list fields only when the field formula is export-backed. When an approval form has calculated display values such as `Subtotal = Quantity * Unit Price`, prefer persisting the source quantity/unit price plus a Decimal result only if `ContentList` mapping is type-compatible and validated.
+- For approval-form sub list/listref totals, prefer persisting summary-bound top-level variables such as `TotalAmount`, `TotalQuantity`, and `AverageUnitPrice` into Decimal fields. `Expression Sublist Summary Workflow Test v1` proved this path for generated app packages. Direct child-row-to-data-list persistence remains deferred until a focused export/runtime proof exists.
 - Use Yeeflow expression-token arrays for calculated/default/filter formulas. Do not generate JavaScript formulas or invented expression function names.
 - Use text/radio-compatible fields for single-select storage; selected option values are stored as text.
 - Custom forms must follow the Asset Inventory v5 pattern:
@@ -136,6 +137,8 @@ Generated list forms should use meaningful `nv_label` names for `Main`, `Content
 Before generating data-list fields, check the normalized field reference. Safe default field/control types are `input`, `textarea`, `input_number`, `currency`, `radio`, `switch`, `datepicker`, and `lookup` when the lookup target is local and resolved.
 
 Always preserve the native `Title` field metadata: `FieldName: Title`, `Status: 0`, `IsSystem: true`, and `IsIndex: true`. Keep choice options non-empty for `radio`/`checkbox`; keep switch defaults boolean-like; keep lookup `Rules` complete with app/listset/list/display-field metadata. Approval Form Controls Test v2 proves data-list persistence/display for `Decimal` fields with `percent` and `rate` control types, `Datetime` fields with `time`, and `Text` fields with `hyperlink` in generated app packages. Approval Form Controls Test v6 proves that readable approval-form lookup persistence should use `attrs.addition[]`/autofill variables or explicit summary text: raw lookup variables mapped into plain Text fields store the internal local row ID. Use fallback Text/Decimal fields for environment-dependent pickers, tag, metadata, and rich text until native runtime proof exists. Defer direct file/image binary fields, signer, lookup-list, nested list row persistence, embedded data-list display, and calculated-column generation unless a focused export/import proves the shape.
+
+Sublist summary persistence update: generated approval apps can persist list summary aggregates into Decimal fields through ContentList after binding list summaries to top-level number variables. This is the preferred v1 storage pattern for totals and averages from line-item controls.
 
 ## Field Type And Sample Rules
 

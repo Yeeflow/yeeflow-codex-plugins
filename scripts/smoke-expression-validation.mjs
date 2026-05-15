@@ -5,9 +5,14 @@ import expressionUtils from "../yeeflow-expression-utils.js";
 
 const {
   buildComparison,
+  buildCurrentObjectFieldToken,
   buildFunctionToken,
+  buildNumericWorkflowCondition,
+  buildSublistRowCalculationExpression,
   buildVariableToken,
   validateExpressionTokens,
+  validateSublistCurrentObjectExpression,
+  validateWorkflowNumericCondition,
 } = expressionUtils;
 
 function v(id, name, valueType) {
@@ -57,5 +62,25 @@ ok("current user department name", [getOrgAttr(getUserAttr(currentUser, "Departm
 ok("current user manager name", [getUserAttr(getUserAttr(currentUser, "LineManager", "Line Manager"), "Name_CN", "Name", "")]);
 ok("boarding date formatted", [buildFunctionToken("dateFormat", [[getUserAttr(currentUser, "LatestHireDate", "Boarding Date")], [{ type: "str", value: "MMM DD, YYYY" }]])]);
 ok("boarding date plus one year", [buildFunctionToken("dateAdd", [[getUserAttr(currentUser, "LatestHireDate", "Boarding Date")], [{ type: "str", value: "year" }], [{ type: "num", value: "1" }]])]);
+const rowQuantity = buildCurrentObjectFieldToken({ id: "LineQuantity", name: "Quantity", valueType: "number", ctx: "LineItems" });
+const rowUnitPrice = buildCurrentObjectFieldToken({ id: "LineUnitPrice", name: "Unit Price", valueType: "number", ctx: "LineItems" });
+ok("sublist row current object subtotal", [rowQuantity, { type: "op", op: "*" }, rowUnitPrice]);
+const rowSubtotal = buildSublistRowCalculationExpression({
+  listVariableId: "LineItems",
+  quantityField: { id: "LineQuantity", name: "Quantity" },
+  unitPriceField: { id: "LineUnitPrice", name: "Unit Price" },
+});
+const rowReport = validateSublistCurrentObjectExpression(rowSubtotal, {
+  ctx: "LineItems",
+  allowedFields: ["LineProduct", "LineQuantity", "LineUnitPrice", "LineSubTotal", "LineNote"],
+  path: "sublist subtotal",
+});
+assert.equal(rowReport.valid, true, `sublist subtotal: ${JSON.stringify(rowReport.issues, null, 2)}`);
+const highValueCondition = buildNumericWorkflowCondition({ id: "TotalAmount", valueType: "number" }, ">", 5000);
+const highValueReport = validateWorkflowNumericCondition(highValueCondition, { allowedVariables: ["TotalAmount"], path: "amount > 5000" });
+assert.equal(highValueReport.valid, true, `amount > 5000: ${JSON.stringify(highValueReport.issues, null, 2)}`);
+const normalValueCondition = buildNumericWorkflowCondition({ id: "TotalAmount", valueType: "number" }, "<=", 5000);
+const normalValueReport = validateWorkflowNumericCondition(normalValueCondition, { allowedVariables: ["TotalAmount"], path: "amount <= 5000" });
+assert.equal(normalValueReport.valid, true, `amount <= 5000: ${JSON.stringify(normalValueReport.issues, null, 2)}`);
 
 console.log("Expression validation smoke tests passed.");

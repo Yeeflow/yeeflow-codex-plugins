@@ -228,6 +228,7 @@ Generator guidance:
 - generate workflow conditions only when the transition-condition wrapper is export-backed
 - keep approve/reject outcome transitions in the proven simple condition pattern
 - use `iif` for conditional values, but use direct boolean comparisons for routing decisions
+- for numeric workflow routes from list summaries, use the export-backed `conditioninfo` wrapper with `group: "number"`, `n.>` / `n.<=` operators, and a summary-bound number variable such as `TotalAmount`
 
 ## User/Profile Expression Display
 
@@ -244,3 +245,69 @@ Generator guidance:
 - add safe fallback arrays for optional profile values
 - for persistence, prefer calculated/text summary variables and map those to ContentList; do not directly persist object-shaped user, department, or location values into text fields
 - document tenant-data dependency when Location, Boarding Date, Phone, or manager-related values are blank
+
+## Sub List Current Object Expressions
+
+Observed in updated `Approval Form Controls Test v6.yap`.
+
+Entry point:
+
+- select a field inside a Sub list/List control
+- set `Control type` to `Calculation`
+- open the calculation expression editor for that sub list field
+
+Expected expression:
+
+- row-level calculated value evaluated against the current sub list row
+
+Observed variable scope:
+
+- `Current object:<Row Field Name>` entries are available inside the expression editor
+- export token shape uses `exprType: "variable_ctx"`
+- `ctx` is the parent list variable id, for example `LineItems`
+- `id` is the row field id, for example `LineQuantity`
+
+Common use cases:
+
+- `Sub Total = Current object:Quantity * Current object:Unit Price`
+- row amount, score, duration, or difference calculations
+
+Generator guidance:
+
+- add the calculated row field to `variables.listref[].fields[]`
+- render the row field as a `calculated` control inside the submit-page list control
+- store the expression at `control.attrs.calculated`
+- validate every `variable_ctx` token against the listref row fields
+
+## Sub List Summary Editor
+
+Observed in updated `Approval Form Controls Test v6.yap`.
+
+Entry point:
+
+- select a Sub list/List control
+- open Summary settings from the control panel
+
+Expected configuration:
+
+- list control summary metadata, not a normal expression token array
+
+Observed structure:
+
+- summaries live in `attrs["list-fields-summary"]`
+- summary field references use row field ids
+- `type: "total"` renders as Sum
+- `type: "avg"` renders as Average
+- optional binding uses `{ "prefix": "__variables_", "value": "<WorkflowVariableId>" }`
+
+Common use cases:
+
+- quantity sum
+- unit price average
+- subtotal sum bound to a top-level `TotalAmount` number variable
+
+Generator guidance:
+
+- use summary-bound variables for totals that drive workflow routes
+- display the bound variable through a readonly number control when users need to see it outside the list
+- keep summary binding target types compatible with the row field and summary type

@@ -131,3 +131,30 @@ Generation notes:
 Use `arraySum`, `arrayCount`, `arrayAverage`, `arrayMin`, and `arrayMax` for list/sublist summary formulas when the list variable and column names are resolved.
 
 For nested objects, use `getAttr(object, "path.to.value", defaultValue)` only after object-shaped values are proven in the target export. For duplicate cleanup, use `removeDuplicates(arrayValue)` only after the array variable is resolved.
+
+## Sub List Current Object And Bound Summaries
+
+The updated `Approval Form Controls Test v6` export proves the native list summary pattern for approval forms.
+
+Use it when an approval form has line items and each row needs a calculated value:
+
+- Row fields: Product, Quantity, Unit Price, Sub Total, Line Note
+- Row expression: `Current object:Quantity * Current object:Unit Price`
+- Quantity summary: `field = LineQuantity`, `type = total`
+- Unit price summary: `field = LineUnitPrice`, `type = avg`
+- Total amount summary: `field = LineSubTotal`, `type = total`, bound to `TotalAmount`
+
+Generation notes:
+
+- Current row values use `exprType: "variable_ctx"` and `ctx` equal to the parent list variable id.
+- Summary values live in the parent list control `attrs["list-fields-summary"]`.
+- Bind summary values to top-level workflow variables when they need to drive display, validation, ContentList persistence, or workflow routing.
+- Prefer list summary binding for totals instead of manually recalculating line items with a top-level formula.
+- Persist a readable line item summary plus numeric total fields until direct row-to-child-list persistence is separately proven.
+
+Workflow branch example:
+
+- `TotalAmount > 5000` routes to department manager approval.
+- `TotalAmount <= 5000` routes to line manager approval.
+
+Use the export-backed workflow `conditioninfo` wrapper with numeric operators such as `n.>` and `n.<=`.

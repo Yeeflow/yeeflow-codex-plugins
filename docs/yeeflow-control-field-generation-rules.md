@@ -74,6 +74,16 @@ List/listref persistence rule:
 - Generated list/listref controls can render a row table, add/edit child values, submit, show values on reviewer tasks, and complete approval.
 - Direct child-row-to-data-list persistence is not proven. Persist a text summary or model a separate child list until row persistence is export-proven.
 
+Sublist calculated field and summary rule:
+
+- Updated `Approval Form Controls Test v6` proves row-level calculated fields inside a list control using `exprType: "variable_ctx"` current-object tokens.
+- Add calculated row fields to both `variables.listref[].fields[]` and the submit-page list control `attrs["list-fields"][]`.
+- Store row formulas in the child control at `control.attrs.calculated`.
+- Use `attrs["list-fields-summary"]` on the parent list control for Sum/Average summaries.
+- Bind numeric summaries to top-level number variables with `{ "prefix": "__variables_", "value": "<VariableId>" }`.
+- Use summary-bound variables such as `TotalAmount` for display, ContentList persistence, and workflow routing.
+- Keep direct child-row-to-data-list persistence deferred; summary values and text summaries are the safe durable persistence path.
+
 ## Data List Fields
 
 - Consult `field-configurations.normalized.json` before using a field/control type.

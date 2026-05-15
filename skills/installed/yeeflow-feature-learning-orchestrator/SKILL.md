@@ -57,6 +57,8 @@ For Yeeflow expression-editor learning, treat uploaded training references and s
 
 For expression export-back enrichment, compare user notes against decoded runtime names before promoting functions. `Expression Runtime Test v1 Patch.yap` proved that department/organization attribute expressions use `getOrgAttr`; the noted `getDeptAttr` name was not present in the export. After learning user/profile expression patterns, generate the smallest focused runtime package, validate with expression utilities and app/form/list validators, import-test only when requested, then update docs and skills with actual runtime evidence and tenant-data caveats.
 
+For sub list/listref summary expression learning, study the updated export first and extract three layers separately: row-level current-object expressions (`exprType: "variable_ctx"`), parent list summary configuration (`attrs["list-fields-summary"]`), and workflow transition wrappers (`conditioninfo[]` with numeric `n.*` operators). Then generate the smallest focused runtime app to prove row calculations, summary display, summary-to-variable binding, and both high/normal workflow branches before promoting the pattern as generator-safe. Document runtime entry behavior such as summaries recalculating after row input blur/commit.
+
 ## What To Load
 
 - For the full lifecycle, read `references/feature-learning-workflow.md`.

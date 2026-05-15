@@ -777,12 +777,55 @@ function validateDecodedDef(def, options = {}) {
       if (actual.has(id)) return;
       if (listVariables.has(id)) {
         addIssue(warnings, "LIST_FIELD_HIDDEN_FROM_UI", `List control ${control.binding} does not render row field ${id} in list-fields, but it exists in list-variables`, `${controlPath}.attrs["list-fields"]`);
+      } else if (control.readonly === true) {
+        addIssue(warnings, "LIST_FIELD_HIDDEN_ON_READONLY_PAGE", `Readonly list control ${control.binding} does not render row field ${id}; this is allowed when the submit page owns calculation/summary display.`, `${controlPath}.attrs["list-fields"]`);
       } else {
         addIssue(errors, "LIST_FIELD_MISSING", `List control ${control.binding} is missing row field ${id}`, `${controlPath}.attrs["list-fields"]`);
       }
     });
     actual.forEach((id) => {
       if (!expected.has(id)) addIssue(errors, "LIST_FIELD_EXTRA", `List control ${control.binding} has row field not in listref: ${id}`, `${controlPath}.attrs["list-fields"]`);
+    });
+    validateListSummaries(control, controlPath, listref);
+  }
+
+  function validateListSummaries(control, controlPath, listref) {
+    const summaries = asArray(control.attrs && control.attrs["list-fields-summary"]);
+    if (!summaries.length) return;
+    const fields = new Map(asArray(listref.fields).map((field) => [field.id, field]));
+    summaries.forEach((summaryEntry, summaryIndex) => {
+      const p = `${controlPath}.attrs["list-fields-summary"][${summaryIndex}]`;
+      if (!summaryEntry || typeof summaryEntry !== "object") {
+        addIssue(errors, "LIST_SUMMARY_BAD_ENTRY", "List summary entry must be an object", p);
+        return;
+      }
+      const sourceField = fields.get(summaryEntry.field);
+      if (!sourceField) {
+        addIssue(errors, "LIST_SUMMARY_UNKNOWN_FIELD", `List summary references missing row field ${summaryEntry.field}`, `${p}.field`);
+        return;
+      }
+      const summaryType = summaryEntry.type;
+      const isNumericField = sourceField.type === "number" || sourceField.type === "currency" || sourceField.type === "percent";
+      const allowedTypes = isNumericField ? new Set(["total", "avg", "max", "min", "concat"]) : new Set(["concat"]);
+      if (!allowedTypes.has(summaryType)) {
+        addIssue(warnings, "LIST_SUMMARY_TYPE_FIELD_MISMATCH", `Summary type ${summaryType} may not be compatible with ${sourceField.type} row field ${sourceField.id}`, `${p}.type`, {
+          field: sourceField.id,
+          fieldType: sourceField.type,
+          summaryType,
+        });
+      }
+      if (summaryEntry.binding) {
+        const target = summaryEntry.binding.value;
+        const targetVar = variableById.get(target);
+        if (!targetVar) {
+          addIssue(errors, "LIST_SUMMARY_BINDING_UNKNOWN_VARIABLE", `List summary binding target variable ${target} does not exist`, `${p}.binding.value`);
+        } else if (isNumericField && targetVar.type !== "number") {
+          addIssue(errors, "LIST_SUMMARY_BINDING_TYPE_MISMATCH", `Numeric list summary ${summaryEntry.field} should bind to a number variable`, `${p}.binding.value`, {
+            target,
+            targetType: targetVar.type,
+          });
+        }
+      }
     });
   }
 
@@ -990,7 +1033,9 @@ function validateDecodedDef(def, options = {}) {
           if (!leftValue || leftValue.valueType !== "number" || !variableById.has(leftValue.id)) {
             addIssue(errors, "NUMERIC_CONDITION_BAD_LEFT", "Numeric threshold left value must reference an existing number variable", `${p}.left`);
           }
-          if (typeof rightValue !== "number" && !(typeof rightValue === "string" && rightValue.trim() !== "" && !Number.isNaN(Number(rightValue)))) {
+          const rightToken = Array.isArray(rightValue) && rightValue.length === 1 ? rightValue[0] : null;
+          const rightTokenNumeric = rightToken && rightToken.type === "num" && !Number.isNaN(Number(rightToken.value));
+          if (typeof rightValue !== "number" && !(typeof rightValue === "string" && rightValue.trim() !== "" && !Number.isNaN(Number(rightValue))) && !rightTokenNumeric) {
             addIssue(errors, "NUMERIC_CONDITION_BAD_RIGHT", "Numeric threshold right value must be numeric", `${p}.right`);
           }
         }

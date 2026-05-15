@@ -22,6 +22,7 @@ Use `yeeflow-expression-functions.normalized.json`, `yeeflow-expression-function
 - Runtime note from `Expression Runtime Test v1`: do not assign raw serialized expression token arrays directly to `SetVariableTask` text values for request numbers. Yeeflow displayed the raw JSON literally. Use an export-backed value shape such as the FlowNo expression-button pattern until a real SetVariable expression-token assignment is studied.
 - Runtime note from `Expression Runtime Test v1`: workflow transition conditions need their exact outer wrapper from a working export. A locally valid numeric token array is not enough to claim workflow branch routing is runtime-proven.
 - Runtime note from `Expression User Profile Test v1`: `getUserAttr`, `getOrgAttr`, `getLocAttr`, `dateFormat`, and nested `dateAdd` can render in generated approval forms and task pages. Tenant-missing profile values should use safe fallbacks. The decoded export used `getOrgAttr` for department/organization attributes; do not generate `getDeptAttr` until it is export-backed.
+- Export-back note from updated `Approval Form Controls Test v6`: sub list row calculations use `exprType: "variable_ctx"` current-object tokens with `ctx` equal to the parent list variable id. Sub list summaries live in `attrs["list-fields-summary"]`; a numeric summary can bind to a top-level number variable through `{ "prefix": "__variables_", "value": "TotalAmount" }`, and that variable can drive workflow numeric `conditioninfo`.
 
 ## Function Selection By Business Intent
 
@@ -34,6 +35,8 @@ Use `yeeflow-expression-functions.normalized.json`, `yeeflow-expression-function
 | Required-field validation | `isNullOrEmpty(value) == false` | Prefer native required when the field is always required. |
 | Request number | `concat(prefix, dateFormat(now(), "YYYYMMDD"), UniqueID())` or `&` tokens | Preserve exact `UniqueID` capitalization. |
 | List total | `arraySum(lineItems, "LineTotal")` | Resolve list variable and column names first. |
+| Sub list row subtotal | `Current object:Quantity * Current object:Unit Price` | Use `variable_ctx` tokens, not top-level workflow variables. |
+| Workflow branch from sub list total | `TotalAmount > 5000` | Use the workflow `conditioninfo` wrapper with `n.>` / `n.<=` operators and the summary-bound number variable. |
 | List count | `arrayCount(lineItems)` | Use optional column/filter params only when column names are proven. |
 | Safe object lookup | `getAttr(object, "path.to.value", defaultValue)` | Useful for nested objects, but only when object-shaped values are proven. |
 | Current user email/name/profile | `getUserAttr(Context:Current User, attr, fallback)` | Attribute params are descriptor objects such as `{ "key": "Email", "label": "Email" }`. |
@@ -125,6 +128,39 @@ List total:
 [
   { "type": "func", "func": "arraySum", "params": [[{ "exprType": "variable", "valueType": "number", "id": "LineItems", "type": "expr", "name": "Workflow Variables:Line Items" }], [{ "type": "str", "value": "LineTotal" }]] }
 ]
+```
+
+Sub list current object row subtotal:
+
+```json
+[
+  { "exprType": "variable_ctx", "valueType": "number", "id": "LineQuantity", "ctx": "LineItems", "type": "expr", "name": "Current object:Quantity" },
+  { "type": "op", "op": "*" },
+  { "exprType": "variable_ctx", "valueType": "number", "id": "LineUnitPrice", "ctx": "LineItems", "type": "expr", "name": "Current object:Unit Price" }
+]
+```
+
+Workflow numeric condition wrapper for a summary-bound total:
+
+```json
+{
+  "pre": "and",
+  "left": {
+    "type": 1,
+    "value": {
+      "exprType": "variable",
+      "valueType": "number",
+      "id": "TotalAmount",
+      "type": "expr"
+    }
+  },
+  "op": "n.>",
+  "right": {
+    "type": 2,
+    "value": [{ "type": "num", "value": "5000" }]
+  },
+  "group": "number"
+}
 ```
 
 Text cleanup:
