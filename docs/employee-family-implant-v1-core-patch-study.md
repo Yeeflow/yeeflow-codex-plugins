@@ -306,3 +306,24 @@ Do not copy this self-reference. The generator must complete the action with the
 3. If not a family request, or quota is not exceeded, run the native `type: "submit"` step.
 
 Validation rule: an `otheraction` step must not call its own parent action. Treat recursive submit/action loops as errors.
+
+Follow-up export `Implant Application Request (2).ywf` proved the missing condition-flow setting for the same submit guard. The designer checkbox `Continue next step when condition is not met` serializes as step-level `continue: true`:
+
+```json
+{
+  "type": "confirm",
+  "name": "Warn when family quota is exceeded",
+  "condition": [
+    { "id": "ApplicationType", "exprType": "variable" },
+    { "type": "op", "op": "==" },
+    { "type": "str", "value": "Family" },
+    { "type": "op", "op": "and" },
+    { "id": "QuotaExceeded", "exprType": "variable" },
+    { "type": "op", "op": "==" },
+    { "type": "str", "value": "Yes" }
+  ],
+  "continue": true
+}
+```
+
+Generator rule: conditional warning/confirm/check steps before a Submit form step usually need `continue: true`; otherwise the valid path can skip the warning but stop before reaching submit. The following submit step should still have its own valid-path condition when the invalid path must remain blocked.

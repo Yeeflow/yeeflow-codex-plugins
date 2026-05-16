@@ -30,6 +30,7 @@ No commit or push should be made until runtime passes or the user explicitly acc
 8. Submit is wired through `formdef.formAction.onSubmit` to `Check and Submit the form`; that action calls Family Quota Check first, warns when family quota is exceeded, and submits only when valid or not a family request.
 9. Product Selection subtotal summary binding uses the export-backed compact shape `{ "prefix": "__variables_", "value": "TotalApplicationAmount" }`; no unsupported extra target metadata is generated.
 10. FlowKey `EFI` is avoided because Yeeflow import replacement can corrupt the reserved `prefix` key into `pr<runtimeFlowKey>x`. The current package uses safe FlowKey `EIA`, and wrapper inspection found no corrupted `pr<id>x` binding keys.
+11. Conditional warning/confirm steps before submit use step-level `continue: true` when the valid path should skip the warning and continue to the following Submit form step. This is the export-backed shape for designer checkbox `Continue next step when condition is not met`.
 
 ## What Passed Locally
 
@@ -46,6 +47,7 @@ No commit or push should be made until runtime passes or the user explicitly acc
 - workflow action config validation
 - focused inspection: RequesterApplicant required/default-current-user present, no redundant default Set variable, page-load quota call present, submit-time quota call present, 0 Current User applicant profile reads, Product Selection summary binding present
 - focused FlowKey/sum inspection: FlowKey `EIA`, `ProductSelectionItems` summary binding contains literal `prefix`, and no corrupted `pr<id>x` keys were found
+- focused condition-flow inspection: `Check and Submit the form` -> `Warn when family quota is exceeded` has `continue: true`, allowing valid family requests to reach the following submit step
 - child data-list validation: all five lists `pass_with_warnings`, 0 errors
 - `build-yap-wrapper` round trip: `pass`, decoded source matches wrapper round trip
 - wrapped `.yap` package and graph validation
@@ -58,7 +60,7 @@ The remaining local warnings are known schema/design-system warnings for generat
 
 Fresh runtime app: `Employee & Family Implant Application Management - FlowKey safe binding fix`
 
-Latest package tested: `/Users/Renger/Downloads/Employee Family Implant FlowKey Safe Summary Binding Fix 20260516.yap`
+Latest package generated for runtime test: `/Users/Renger/Downloads/Employee Family Implant Condition Continue Fix 20260517.yap`
 
 Passed:
 
@@ -90,9 +92,11 @@ Not yet proven:
 
 Follow-up runtime focus:
 
-1. Retest submit with a within-quota family request and the minimal required fields.
-2. Only after submit succeeds, verify HR task, Finance route, completion, and ContentList rows.
-3. Reopen the task as reviewer/HR and confirm applicant values remain the original requester snapshots.
+1. Import the condition-continue package and retest submit with a within-quota family request.
+2. Confirm the valid path skips `Warn when family quota is exceeded` and reaches Submit form.
+3. Confirm the over-quota path still displays the warning and does not submit unless an explicit override design is added.
+4. Only after submit succeeds, verify HR task, Finance route, completion, and ContentList rows.
+5. Reopen the task as reviewer/HR and confirm applicant values remain the original requester snapshots.
 
 ## Known V1 Limitations
 

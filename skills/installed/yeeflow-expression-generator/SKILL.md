@@ -96,6 +96,7 @@ Use the context-specific wrapper only when export-backed. The nested expression 
 - Function tab: categories include All, String, Logical, Date, Mathematical, and Other.
 - Variable selector: observed groups include Context, Workflow Variables, Static Variables, Temp variables, and Filter variables.
 - Form actions: button click actions use `action_button.attrs.control_action`, page load actions use `page.formdef.formAction.onLoad`, Set variable steps store expressions in `setvar_val` or `setvar_array[].value`, Confirm steps store message tokens in `confirm_qs`, and Phase 2 Query data result expressions can read temp query collections such as `__temp_var_CollectionofQueryItems`.
+- Form action step conditions use normal expression-token arrays in `steps[].condition`. When a conditional warning/confirm/check step should be skipped without stopping the action flow, set step-level `continue: true`; this is the export-backed shape for `Continue next step when condition is not met`.
 
 ## User/Profile Expression Recipes
 

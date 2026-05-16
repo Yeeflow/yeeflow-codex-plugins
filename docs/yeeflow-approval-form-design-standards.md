@@ -153,6 +153,12 @@ Phase 2 export-backed patterns:
 - Submit form steps use `type: "submit"`
 - Save changes is a submit mode with `attrs.submitType = "3"`
 
+Phase 3 export-backed condition-flow pattern:
+
+- A conditional form-action step uses step-level `condition`.
+- The designer checkbox `Continue next step when condition is not met` serializes as step-level `continue: true`.
+- Conditional warning/confirm/check steps before submit should usually set `continue: true`; otherwise the valid path can skip the warning but stop before the following Submit form step.
+
 Keep form actions distinct from workflow actions. Form actions are front-end form logic; workflow actions are process graph/backend logic. Use form actions for UI state, defaults, confirmation, query-assisted UI, and safe client-side initialization. Do not use temp variables as the only source for persisted business data.
 
 Use `docs/yeeflow-form-action-query-data-step-rules.md` and `docs/yeeflow-form-action-submit-step-rules.md` before generating Phase 2 form actions.

@@ -85,6 +85,8 @@ The first generated Form Actions Phase 1 runtime app proved button styles, butto
 
 For Yeeflow Form Actions Phase 2 query/submit learning, study the manually updated runtime export before generating. Extract `querydata` steps, query multiple vs single modes, source list metadata, selected fields, field maps, result count variables, temp collection variables, mapping to form list variables, Query data filters, `arraySum` over query collections, `JSONStringfy` collection display, submit steps, and Save changes mode. The generated `Form Actions Phase 2 Query Submit Test v1` runtime proved query multiple/single mapping, count output, `arraySum`, `JSONStringfy`, default Submit form, Save changes, approval completion, and ContentList persistence. The corrected filter retest proved Query data filter conditions use `attrs.querydata_filters` plural with Bit ON as `right: "true"`, returning 2 active rows and `arraySum` 2000; the singular `querydata_filter` helper path is ignored by runtime. Treat `vLookup` as deferred when it appears only in labels. Do not document or generate `arraySub`; the learned aggregate is `arraySum`.
 
+For Yeeflow Form Actions Phase 3 condition-flow learning, study corrected `.ywf` exports before promoting submit guard behavior. `Implant Application Request (2).ywf` proved that designer checkbox `Continue next step when condition is not met` serializes as step-level `continue: true`. Conditional warning/confirm/check steps before a Submit form step usually require this property so the valid path can skip the warning and continue to submit.
+
 ## What To Load
 
 - For the full lifecycle, read `references/feature-learning-workflow.md`.

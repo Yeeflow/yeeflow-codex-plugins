@@ -1115,7 +1115,8 @@ function implantFormActions() {
           attrs: {
             confirm_qs: literalString("Family quota appears to be exceeded. Submission is blocked for v1; please adjust product rows or ask HR to verify quota/profile data."),
             confirm_rs: tempVarToken("var_SubmitGuardResult", "var_SubmitGuardResult", "text")
-          }
+          },
+          continue: true
         },
         {
           type: "submit",

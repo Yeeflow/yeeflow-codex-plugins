@@ -62,6 +62,8 @@ Rules:
 - Use a custom action button only when the app needs a specific form-action-driven submit experience.
 - Use `formdef.formAction.onSubmit` for submit-time business validation that must run before workflow submission, such as quota checks.
 - When submit-time validation calls another action first, use an `otheraction` step that targets the reusable check action, then conditionally run the native `submit` step.
+- Conditional warning/confirm/check steps before the native `submit` step normally require step-level `continue: true`, which is the export-backed shape for designer checkbox `Continue next step when condition is not met`. Without it, the valid path can skip the warning but stop before submit.
+- For guard/block designs, put the invalid-case condition on the warning step and the valid-case condition on the following submit step. If override is allowed, store the confirm result in a temp variable and reference that result in the submit condition.
 - Never generate an `otheraction` step that calls its own parent action; that is a recursive action loop, not a submit implementation.
 - Do not confuse form action `submit` with workflow graph actions.
 

@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-05-16",
+  "generatedAt": "2026-05-17",
   "runtimeSite": "https://codex.yeeflow.com/",
   "package": "employee-family-implant.v1.yap",
-  "downloadCopy": "/Users/Renger/Downloads/Employee Family Implant FlowKey Safe Summary Binding Fix 20260516.yap",
+  "downloadCopy": "/Users/Renger/Downloads/Employee Family Implant Condition Continue Fix 20260517.yap",
   "freshRuntimeAppName": "Employee & Family Implant Application Management - FlowKey safe binding fix",
-  "status": "flowkey_safe_package_runtime_partial_pass",
-  "summary": "FlowKey-safe package imported and proved the Product Selection summary binding fix at runtime: sublist row subtotal sum reached 19500.00 and Total Application Amount received 19500.00. Family Quota Check used that amount and submit-time over-quota blocking showed the expected warning. Downstream valid submission, HR/Finance routing, approval completion, and ContentList persistence remain pending.",
+  "status": "condition_continue_fix_locally_validated_runtime_pending",
+  "summary": "Regenerated Employee Family Implant v1 with export-backed form action condition-flow continuation. The Check and Submit the form action now sets continue: true on Warn when family quota is exceeded, so the valid path can skip the warning and continue to the following Submit form step. Local package/form/graph/wrapper validation passed with warnings only; runtime valid/over-quota path testing remains pending.",
   "passed": [
     {
       "step": "App imports",
@@ -126,12 +126,22 @@
     "wrapperInspection": "ProductSelectionItems summary binding contains literal prefix and no pr<id>x corrupted keys."
   },
   "remainingRuntimeItems": [
-    "Run a within-quota family submission after entering required family/attachment fields",
-    "Verify HR Review task opens after valid submit",
-    "Verify Finance/Benefits route works for Custom Package or high-value valid case",
-    "Verify approval completes",
-    "Verify Implant Applications row is created and readable",
-    "Verify Family Quota Usage row is created for family application",
-    "Verify HR/task viewer does not overwrite applicant data after submission"
-  ]
+    "Import condition-continue package",
+    "Valid path: family application within quota skips warning and reaches Submit form",
+    "Valid path: HR Review task opens",
+    "Over-quota path: warning appears and submit does not proceed unless designed override is confirmed",
+    "Self application is not blocked by family quota",
+    "Product summary binding and Total Application Amount still update",
+    "RequesterApplicant snapshot remains stable for task viewers",
+    "ContentList persistence rows are created and readable after approval"
+  ],
+  "latestConditionFlowFix": {
+    "sourceExport": "/Users/Renger/Downloads/Implant Application Request (2).ywf",
+    "learnedProperty": "pageurls[].formdef.actions[].steps[].continue",
+    "checkedValue": true,
+    "targetAction": "Check and Submit the form",
+    "targetStep": "Warn when family quota is exceeded",
+    "generatedPackage": "/Users/Renger/Downloads/Employee Family Implant Condition Continue Fix 20260517.yap",
+    "localInspection": "Warn step has continue true; generated form has no pr<id>x corrupted keys."
+  }
 }

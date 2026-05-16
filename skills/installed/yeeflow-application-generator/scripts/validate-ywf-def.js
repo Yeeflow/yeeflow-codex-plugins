@@ -701,9 +701,37 @@ function validateDecodedDef(def, options = {}) {
           });
         }
       });
+
+      validateFormActionConditionFlow(action, actionPath, onSubmit === action.id);
     });
 
     validateRequesterApplicantActionRules(actions, formdef, pagePath);
+  }
+
+  function validateFormActionConditionFlow(action, actionPath, isSubmitTriggerAction) {
+    const steps = asArray(action && action.steps);
+    steps.forEach((step, stepIndex) => {
+      if (!step || typeof step !== "object" || !step.condition) return;
+      const laterSubmitIndex = steps.findIndex((candidate, candidateIndex) => candidateIndex > stepIndex && candidate && candidate.type === "submit");
+      if (laterSubmitIndex === -1) return;
+      const name = String(step.name || "");
+      const nameLooksLikeGuard = /warn|warning|confirm|guard|check|block|exceed|exceeded|validation|validate/i.test(name);
+      if (step.continue === true) return;
+      if (step.type === "confirm" || nameLooksLikeGuard || isSubmitTriggerAction) {
+        addIssue(
+          warnings,
+          "FORM_ACTION_CONDITIONAL_GUARD_CONTINUE_MISSING",
+          "Conditional warning/confirm/check steps before a Submit form step usually need continue: true so the valid path can skip the guard and continue to submit",
+          `${actionPath}.steps[${stepIndex}].continue`,
+          {
+            actionName: action.name,
+            stepName: step.name,
+            followingSubmitStepIndex: laterSubmitIndex,
+            exportBackedProperty: "continue",
+          }
+        );
+      }
+    });
   }
 
   function validateRequesterApplicantActionRules(actions, formdef, pagePath) {

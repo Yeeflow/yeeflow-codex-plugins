@@ -154,6 +154,39 @@ Rules:
 - Show the result with a Text/heading control using `attrs.headc.title.variable`.
 - Runtime result semantics need the focused Phase 1 generated test before broad promises.
 
+## Step Execution Condition Flow
+
+Phase 3 source: `Implant Application Request (2).ywf`.
+
+When a form action step has an execution condition, the designer checkbox `Continue next step when condition is not met` is stored on the step as:
+
+```json
+{
+  "condition": [],
+  "continue": true
+}
+```
+
+Default behavior:
+
+- If the condition is met, the step executes.
+- If the condition is not met and `continue` is missing or false, the step is skipped and the remaining action flow stops.
+- This means a conditional warning step before submit can accidentally block valid submissions when the warning condition is false.
+
+Continue behavior:
+
+- If the condition is not met and `continue: true`, the step is skipped and the action continues to the next step.
+
+Submit guard pattern:
+
+1. Run the reusable check action.
+2. Add the conditional warning/confirm step for the invalid case.
+3. Set `continue: true` on that warning/confirm step.
+4. Place the native `submit` step after it.
+5. Put the valid-path condition on the submit step when the invalid path must remain blocked.
+
+For Employee Family Implant v1, `Warn when family quota is exceeded` must use `continue: true`; otherwise family requests within quota skip the warning but stop before reaching `Submit when quota is valid or not a family request`.
+
 ## Query Data Step
 
 Use the detailed rules in `docs/yeeflow-form-action-query-data-step-rules.md`.

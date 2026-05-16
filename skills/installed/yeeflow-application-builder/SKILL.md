@@ -177,6 +177,7 @@ Use the current Yeeflow generation foundation by default:
 - policy-critical totals from sublists should be recalculated in quota/submit/routing/persistence preflight actions with `arraySum(<ListVariableId>, "<SubtotalFieldId>", [], [])`, even when a visible summary binding is present
 - applicant/requester variables should be fixed business identities; Current User may default the applicant on a new request, but applicant profile reads, quota checks, workflow routes, and persistence should use the requester/applicant variable or snapshot variables
 - core policy checks such as quota validation should run automatically on submit, not only through a manual check button
+- submit guard actions should prove both the invalid/warning path and the valid path; conditional warning/confirm/check steps before submit usually need step-level `continue: true` so valid requests skip the warning and still reach Submit form
 - required applicant identity controls with Default value = Current User should not also get redundant page-load Set variable default steps
 - temp variables are frontend-only
 - ContentList persistence rules
