@@ -65,6 +65,26 @@ For higher-quality generated forms, also use the Runtime V2/V3 CAPEX form rules 
 
 Global page background rule: for every generated approval submission page and task page, put any full-page background on `page.formdef.attrs.background`. Do not set full-page background color on the `Main` container. Use backgrounds on `Form header`, cards, sections, summary panels, or field groups only when those specific containers should be visible surfaces.
 
+## Approval Form Design Quality Gate
+
+Before a generated approval form can be accepted for `.yap` generation, run a design-quality review. Warn or fail readiness when:
+
+- normal value-entry fields are direct children of section containers instead of a two-column `flex_grid` or equivalent grid control
+- textarea, upload, list/sublist, rich text, or long helper/guidance controls are squeezed into normal two-column cells instead of full-row layout
+- Text controls do not follow the learned Text standard or are not inline width by default
+- Action Panel or Flow History are outside `Form bottom`
+- `Main` is styled as the page background instead of remaining structural
+- section containers or important controls lack meaningful `nv_label`
+- submit and review pages do not preserve the same business section structure where practical
+- applicant/profile snapshot or lookup-autofill target fields are editable without an explicit business reason
+
+Default field layout rule: generate normal fields inside grid controls. Use direct section children only for headings, helper text, summary panels, full-row controls, nested grids, and Form bottom workflow controls.
+
+Requester/applicant defaulting rule: when a required applicant/user control is generated with Default value = Current User (`attrs.default = "currentUser"` and `value = "CurrentUser"`), do not also generate a form-action Set variable step that defaults the same applicant variable from Current User. Applicant snapshot/profile actions should read from the fixed requester/applicant variable after initialization; reviewer/task viewers must not overwrite applicant data from their own Current User context.
+
+Submit-time validation rule: core business checks that must happen before workflow submission should be wired through `formdef.formAction.onSubmit`. The submit action may call a reusable check action first, then conditionally warn/confirm and run a native `type: "submit"` step. Never generate an `otheraction` step that calls its own parent action.
+Readonly default rule: generated applicant snapshot fields and autofilled fields should use control-level `readonly: true`. The applicant/requester picker may be editable on the submit page only when the requester is allowed to choose or confirm the applicant; task pages should render applicant identity and snapshot fields readonly.
+
 CAPEX runtime baseline: `IT Hardware CAPEX Request v4 Text Standard` is the latest rich generated approval-form proof. It preserves the working CAPEX workflow and ContentList persistence shape, uses Runtime V2 form design rules, replaces old generated Text controls with Text Style Sample patterns, and passed import/open/designer verification for the Text Typography and Text shadow popups. Use `docs/generated-it-hardware-capex-request-text-standard-baseline.md` plus `docs/it-hardware-capex-request-runtime-v2-ui-study.md` before generating similar enterprise request forms.
 
 ## Hard Stop Conditions
@@ -159,6 +179,7 @@ For additional field mappings:
 - each source field must resolve by source field name and/or field ID
 - each target must be a workflow/form variable
 - displayed derived target controls should usually be readonly
+- lookup/autofill target controls such as product name, product type, unit price, and calculated amount should be readonly by default
 - validate lookup source, display field, sort field, additional source fields, and target variables against metadata before wrapper build
 
 ## Control Schema Rules
@@ -177,7 +198,7 @@ Approval Form Controls Test v4 runtime update: the generated picker package prov
 
 Approval Form Controls Test v6 runtime update: the generated lookup/list package proved internal packaged single-select `lookup` and workflow-form `list` / `listref` controls through import, app open, source and target lists opening without `datas/query` 400, lookup picker open, packaged product selection, lookup display, `attrs.addition[]` autofill into readonly variables, list row add/edit, submit, submitted-page display, reviewer-task display, approval completion, and `ContentList` target row creation. Generate business lookups with the source list packaged in the same `.yap` when possible, and validate source list/display/search/addition fields before build. Do not map a raw lookup variable directly into a plain text field when the expected value is the display name: v6 showed that plain text persistence stores the internal local row ID. Persist readable values through lookup addition/autofill variables or explicit summary variables unless storing the row ID is intentional. For list/listref controls, workflow-form render/add/edit/review is proven, but direct child-row-to-data-list persistence is still deferred; persist a text summary or use a separately modeled child list until direct row persistence is export-proven.
 
-Sublist summary expression runtime update: `Expression Sublist Summary Workflow Test v1` proved generated row-level calculated fields, summary display, summary-to-variable binding, and summary-bound workflow routing. For calculated row fields, define the row field in `variables.listref[].fields[]`, render it in the submit-page list control with `control.type = "calculated"`, set `attrs.list_field = true`, `attrs.list_field_binding` to the parent list variable id, `attrs.list_control_id` to the parent list control id, and store the row expression in `attrs.calculated`. Current-row values use `exprType: "variable_ctx"`, for example `LineQuantity * LineUnitPrice` with `ctx: "LineItems"`. Put summaries on parent list `attrs["list-fields-summary"]`; use `total` and `avg` for number fields and bind numeric totals with `{ "prefix": "__variables_", "value": "TotalAmount" }`. Summary-bound number variables are runtime-proven for `InclusiveGateway` numeric branch conditions with `n.>` and `n.<=`. Runtime entry note: summary values recalculate after row fields are committed, so tests should blur/tab out of edited cells before asserting totals.
+Sublist summary expression runtime update: `Expression Sublist Summary Workflow Test v1` proved generated row-level calculated fields, summary display, summary-to-variable binding, and summary-bound workflow routing. For calculated row fields, define the row field in `variables.listref[].fields[]`, render it in the submit-page list control with `control.type = "calculated"`, set `attrs.list_field = true`, `attrs.list_field_binding` to the parent list variable id, `attrs.list_control_id` to the parent list control id, and store the row expression in `attrs.calculated`. Current-row values use `exprType: "variable_ctx"`, for example `LineQuantity * LineUnitPrice` with `ctx: "LineItems"`. Put summaries on parent list `attrs["list-fields-summary"]`; use `total` and `avg` for number fields and bind numeric totals with `{ "prefix": "__variables_", "value": "TotalAmount" }`. Summary-bound number variables are runtime-proven for `InclusiveGateway` numeric branch conditions with `n.>` and `n.<=`. Runtime entry note: summary values recalculate after row fields are committed, so tests should blur/tab out of edited cells before asserting totals. `Implant Application Request (1).ywf` proved a generator hazard: FlowKey `EFI` can be replaced inside the `prefix` property name during import/export, producing `pr<runtimeFlowKey>x` and breaking the binding. Avoid form keys that appear inside reserved JSON property names, and inspect summary binding objects for a literal `prefix` key before packaging/runtime claims. If a form action immediately uses the total for quota, submit blocking, routing, or persistence, also recalculate the top-level total in that action with `arraySum(<ListVariableId>, "<SubtotalFieldId>", [], [])` before using it.
 
 Before broad control generation, consult `approval-form-control-runtime-coverage.json` and `docs/approval-form-control-runtime-coverage-matrix.md` when present. They are the current source of truth for proven, partial, environment-dependent, deferred, persistence-safe, and summary/autofill-required controls.
 

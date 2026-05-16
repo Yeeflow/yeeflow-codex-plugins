@@ -22,7 +22,7 @@ Use `yeeflow-expression-functions.normalized.json`, `yeeflow-expression-function
 - Runtime note from `Expression Runtime Test v1`: do not assign raw serialized expression token arrays directly to `SetVariableTask` text values for request numbers. Yeeflow displayed the raw JSON literally. Use an export-backed value shape such as the FlowNo expression-button pattern until a real SetVariable expression-token assignment is studied.
 - Runtime note from `Expression Runtime Test v1`: workflow transition conditions need their exact outer wrapper from a working export. A locally valid numeric token array is not enough to claim workflow branch routing is runtime-proven.
 - Runtime note from `Expression User Profile Test v1`: `getUserAttr`, `getOrgAttr`, `getLocAttr`, `dateFormat`, and nested `dateAdd` can render in generated approval forms and task pages. Tenant-missing profile values should use safe fallbacks. The decoded export used `getOrgAttr` for department/organization attributes; do not generate `getDeptAttr` until it is export-backed.
-- Export-back note from updated `Approval Form Controls Test v6`: sub list row calculations use `exprType: "variable_ctx"` current-object tokens with `ctx` equal to the parent list variable id. Sub list summaries live in `attrs["list-fields-summary"]`; a numeric summary can bind to a top-level number variable through `{ "prefix": "__variables_", "value": "TotalAmount" }`, and that variable can drive workflow numeric `conditioninfo`.
+- Export-back note from updated `Approval Form Controls Test v6`: sub list row calculations use `exprType: "variable_ctx"` current-object tokens with `ctx` equal to the parent list variable id. Sub list summaries live in `attrs["list-fields-summary"]`; a numeric summary can bind to a top-level number variable through `{ "prefix": "__variables_", "value": "TotalAmount" }`, and that variable can drive workflow numeric `conditioninfo`. FlowKey/form keys must not collide with reserved JSON property names used by these binding objects; `EFI` corrupted `prefix` to `pr<runtimeFlowKey>x` during import replacement.
 
 ## Function Selection By Business Intent
 
@@ -39,7 +39,7 @@ Use `yeeflow-expression-functions.normalized.json`, `yeeflow-expression-function
 | Workflow branch from sub list total | `TotalAmount > 5000` | Use the workflow `conditioninfo` wrapper with `n.>` / `n.<=` operators and the summary-bound number variable. |
 | List count | `arrayCount(lineItems)` | Use optional column/filter params only when column names are proven. |
 | Safe object lookup | `getAttr(object, "path.to.value", defaultValue)` | Useful for nested objects, but only when object-shaped values are proven. |
-| Current user email/name/profile | `getUserAttr(Context:Current User, attr, fallback)` | Attribute params are descriptor objects such as `{ "key": "Email", "label": "Email" }`. |
+| Current user email/name/profile | `getUserAttr(Context:Current User, attr, fallback)` | Attribute params are direct descriptor objects such as `{ "key": "Email", "label": "Email" }`, not one-item expression arrays. |
 | Department/parent department | `getOrgAttr(getUserAttr(Context:Current User, Department, fallback), attr, fallback)` | Exact exported function is `getOrgAttr`, not `getDeptAttr`. |
 | Location name/manager | `getLocAttr(getUserAttr(Context:Current User, Location, fallback), attr, fallback)` | Environment-dependent when tenant location data is empty. |
 | Boarding anniversary | `dateFormat(dateAdd(getUserAttr(Context:Current User, Boarding Date, fallback), "year", 1), "MMM DD, YYYY")` | Runtime-tested shape; value quality depends on the current user's Boarding Date data. |
@@ -180,7 +180,7 @@ Current user email:
     "func": "getUserAttr",
     "params": [
       [{ "id": "CurrentUser", "exprType": "application", "valueType": "string", "type": "expr", "name": "Context:Current User" }],
-      [{ "key": "Email", "label": "Email" }],
+      { "key": "Email", "label": "Email" },
       [{ "type": "str", "value": "N/A" }]
     ]
   }
@@ -195,13 +195,15 @@ Current user department name:
     "type": "func",
     "func": "getOrgAttr",
     "params": [
-      [{ "type": "func", "func": "getUserAttr", "params": [[{ "id": "CurrentUser", "exprType": "application", "valueType": "string", "type": "expr", "name": "Context:Current User" }], [{ "key": "DepartmentID", "label": "Department" }], [{ "type": "str", "value": "N/A" }]] }],
-      [{ "key": "Name", "label": "Name" }],
+      [{ "type": "func", "func": "getUserAttr", "params": [[{ "id": "CurrentUser", "exprType": "application", "valueType": "string", "type": "expr", "name": "Context:Current User" }], { "key": "DepartmentID", "label": "Department" }, [{ "type": "str", "value": "N/A" }]] }],
+      { "key": "Name", "label": "Name" },
       [{ "type": "str", "value": "N/A" }]
     ]
   }
 ]
 ```
+
+Profile function parameter rule from `Employee Family Implant v1 Core Patch 20260516`: `getUserAttr`, `getOrgAttr`, and `getLocAttr` use `params[1]` as a direct descriptor object. The broken generated shape wrapped the descriptor as `[{ "key": "...", "label": "..." }]` and failed in a Set variables form action.
 
 ## Form Action Expressions
 

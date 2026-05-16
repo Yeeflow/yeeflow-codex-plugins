@@ -165,6 +165,9 @@ function validateFunctionToken(token, context = {}) {
   if (meta && (token.params.length < meta.minParams || token.params.length > meta.maxParams)) {
     issue(issues, "warning", "EXPRESSION_FUNCTION_PARAM_COUNT", "Function param count is outside the normalized reference range.", `${tokenPath}.params`, { func: token.func, count: token.params.length, min: meta.minParams, max: meta.maxParams });
   }
+  if (["getUserAttr", "getOrgAttr", "getLocAttr"].includes(token.func)) {
+    validateProfileAttributeFunctionParams(token, { issues, path: tokenPath });
+  }
   token.params.forEach((param, index) => {
     if (Array.isArray(param)) {
       param.forEach((child, childIndex) => validateExpressionToken(child, { references, issues, path: `${tokenPath}.params[${index}][${childIndex}]` }));
@@ -174,6 +177,34 @@ function validateFunctionToken(token, context = {}) {
       issue(issues, "warning", "EXPRESSION_FUNCTION_PRIMITIVE_PARAM", "Function param is a primitive value. Keep only when export-backed for this function.", `${tokenPath}.params[${index}]`, { func: token.func, valueType: typeof param });
     }
   });
+  return issues;
+}
+
+function validateProfileAttributeFunctionParams(token, context = {}) {
+  const issues = context.issues || [];
+  const tokenPath = context.path || "$";
+  const attrParam = token.params && token.params[1];
+  if (Array.isArray(attrParam)) {
+    issue(
+      issues,
+      "error",
+      "EXPRESSION_PROFILE_ATTR_DESCRIPTOR_ARRAY_WRAPPED",
+      "Profile functions use a direct attribute descriptor object as params[1], not a one-item expression array.",
+      `${tokenPath}.params[1]`,
+      { func: token.func, expected: "{ key, label }" },
+    );
+    return issues;
+  }
+  if (!isObject(attrParam) || !Object.prototype.hasOwnProperty.call(attrParam, "key") || !Object.prototype.hasOwnProperty.call(attrParam, "label")) {
+    issue(
+      issues,
+      "error",
+      "EXPRESSION_PROFILE_ATTR_DESCRIPTOR_INVALID",
+      "Profile functions require params[1] to be an export-backed attribute descriptor object.",
+      `${tokenPath}.params[1]`,
+      { func: token.func },
+    );
+  }
   return issues;
 }
 
@@ -246,6 +277,39 @@ function buildVariableToken(variable) {
     type: "expr",
     name: variable.name.includes(":") ? variable.name : `Workflow Variables:${variable.name}`,
   };
+}
+
+function buildCurrentUserToken() {
+  return {
+    id: "CurrentUser",
+    exprType: "application",
+    valueType: "string",
+    type: "expr",
+    name: "Context:Current User",
+  };
+}
+
+function buildProfileAttributeToken(func, subjectExpression, attribute = {}, fallback = "N/A") {
+  if (!["getUserAttr", "getOrgAttr", "getLocAttr"].includes(func)) throw new Error(`Unsupported profile attribute function: ${func}`);
+  if (!subjectExpression || typeof subjectExpression !== "object") throw new Error("buildProfileAttributeToken requires a subject expression token");
+  if (!attribute.key || !attribute.label) throw new Error("buildProfileAttributeToken requires attribute key and label");
+  return buildFunctionToken(func, [
+    [subjectExpression],
+    { key: attribute.key, label: attribute.label },
+    fallback === "" || fallback === null || fallback === undefined ? [] : [{ type: "str", value: fallback }],
+  ]);
+}
+
+function buildUserAttributeToken(subjectExpression, attribute = {}, fallback = "N/A") {
+  return buildProfileAttributeToken("getUserAttr", subjectExpression, attribute, fallback);
+}
+
+function buildOrgAttributeToken(subjectExpression, attribute = {}, fallback = "N/A") {
+  return buildProfileAttributeToken("getOrgAttr", subjectExpression, attribute, fallback);
+}
+
+function buildLocationAttributeToken(subjectExpression, attribute = {}, fallback = "N/A") {
+  return buildProfileAttributeToken("getLocAttr", subjectExpression, attribute, fallback);
 }
 
 function buildFunctionToken(func, params = []) {
@@ -416,10 +480,16 @@ module.exports = {
   validateVariableToken,
   validateApplicationVariableToken,
   validateFunctionToken,
+  validateProfileAttributeFunctionParams,
   validateOperatorToken,
   inferExpressionValueType,
   collectExpressionVariables,
   buildVariableToken,
+  buildCurrentUserToken,
+  buildProfileAttributeToken,
+  buildUserAttributeToken,
+  buildOrgAttributeToken,
+  buildLocationAttributeToken,
   buildFunctionToken,
   buildComparison,
   buildCalculatedExpressionFromSpec,

@@ -1,0 +1,137 @@
+{
+  "generatedAt": "2026-05-16",
+  "runtimeSite": "https://codex.yeeflow.com/",
+  "package": "employee-family-implant.v1.yap",
+  "downloadCopy": "/Users/Renger/Downloads/Employee Family Implant FlowKey Safe Summary Binding Fix 20260516.yap",
+  "freshRuntimeAppName": "Employee & Family Implant Application Management - FlowKey safe binding fix",
+  "status": "flowkey_safe_package_runtime_partial_pass",
+  "summary": "FlowKey-safe package imported and proved the Product Selection summary binding fix at runtime: sublist row subtotal sum reached 19500.00 and Total Application Amount received 19500.00. Family Quota Check used that amount and submit-time over-quota blocking showed the expected warning. Downstream valid submission, HR/Finance routing, approval completion, and ContentList persistence remain pending.",
+  "passed": [
+    {
+      "step": "App imports",
+      "evidence": "Imported the 42.23 KB regenerated package as Employee Family Implant v1 Amount Preflight 20260516."
+    },
+    {
+      "step": "App opens",
+      "evidence": "The imported app opened from the Shared Workspace search result."
+    },
+    {
+      "step": "Home dashboard renders",
+      "evidence": "Home page displayed the app title, guidance, and status cards."
+    },
+    {
+      "step": "Approval form opens",
+      "evidence": "Implant Application Request opened and rendered the trained section/grid layout."
+    },
+    {
+      "step": "RequesterApplicant defaults and snapshots initialize",
+      "evidence": "Requester / Applicant defaulted to Renger from Yeeflow; applicant name, employee ID, boarding date, email, and line manager populated from the requester profile snapshot path."
+    },
+    {
+      "step": "Applicant snapshot fields are readonly in the rendered form",
+      "evidence": "Applicant snapshot values appeared as non-editable display values; only Requester / Applicant remained selectable."
+    },
+    {
+      "step": "Product Selection sublist renders",
+      "evidence": "Product Selection rendered a row table with Product, Product Name, Product Type, Unit Price, Quantity, and Row Subtotal."
+    },
+    {
+      "step": "Product lookup and autofill work",
+      "evidence": "Selecting Standard Implant Package autofilled Product Name, Product Type = Standard Product, Unit Price = 2500.00, Quantity = 1, and Row Subtotal = 2500."
+    },
+    {
+      "step": "Sublist summary displays",
+      "evidence": "The Product Selection summary displayed Sum: 2500.00."
+    },
+    {
+      "step": "Product summary persistence value is populated",
+      "evidence": "Refresh Product Summary wrote a readable JSON line summary containing ProductLookup, ProductName, ProductType, UnitPrice, Quantity, and ProductRowSubtotal."
+    },
+    {
+      "step": "Family Quota Check uses product sublist total",
+      "evidence": "After Check Family Quota, Total Application Amount showed 2500.00 and Remaining Quota After changed from 15000.00 to 12500.00."
+    },
+    {
+      "step": "Attachment guidance renders",
+      "evidence": "The confirmed Self/Family and Standard/Custom Package attachment matrix displayed in the form."
+    },
+    {
+      "step": "FlowKey-safe package imports and opens",
+      "evidence": "Imported/opened the FlowKey safe binding fix package in Chrome as Employee & Family Implant Application Management - FlowKey safe binding fix."
+    },
+    {
+      "step": "Product Selection summary binding updates Total Application Amount",
+      "evidence": "Runtime form contained Standard Implant Package quantity 3 subtotal 7500 and Custom Implant Package quantity 2 subtotal 12000; Product Selection showed Sum: 19500.00 and Total Application Amount displayed 19500.00 without manual binding repair."
+    },
+    {
+      "step": "Family Quota Check uses Total Application Amount after FlowKey fix",
+      "evidence": "With Total Application Amount = 19500.00 and Annual Quota Amount = 15000.00, Remaining Quota After displayed -4500.00 and Quota Exceeded displayed Yes."
+    },
+    {
+      "step": "Submit-time over-quota warning/block runs",
+      "evidence": "Clicking Submit on the over-quota family request showed the warning: Family quota appears to be exceeded. Submission is blocked for v1; please adjust product rows or ask HR to verify quota/profile data."
+    }
+  ],
+  "notFullyProven": [
+    {
+      "step": "Valid submit path after reducing quota amount",
+      "result": "not_run",
+      "evidence": "The over-quota submit path correctly warned/blocked. A separate within-quota submission still needs to be completed to prove HR Review task creation, Finance/Benefits routing, approval completion, and persistence rows."
+    },
+    {
+      "step": "HR Review task opens",
+      "result": "not_run",
+      "evidence": "Submission did not advance far enough to create a task."
+    },
+    {
+      "step": "Finance/Benefits route works",
+      "result": "not_run",
+      "evidence": "Submission and custom package path were not completed."
+    },
+    {
+      "step": "Approval completes",
+      "result": "not_run",
+      "evidence": "No submitted workflow instance was completed in this run."
+    },
+    {
+      "step": "Implant Applications ContentList record is created",
+      "result": "not_run",
+      "evidence": "No completed submission was available to inspect."
+    },
+    {
+      "step": "Family Quota Usage ContentList record is created",
+      "result": "not_run",
+      "evidence": "No completed family submission was available to inspect."
+    },
+    {
+      "step": "HR/task viewer does not overwrite applicant data",
+      "result": "not_run",
+      "evidence": "No HR task was created."
+    }
+  ],
+  "rootCauseLearning": [
+    "The user-corrected export still uses the compact Product Selection summary binding shape: { \"prefix\": \"__variables_\", \"value\": \"TotalApplicationAmount\" }.",
+    "Runtime showed the visible sublist Sum updates, but policy-critical quota actions need an explicit preflight recalculation from ProductSelectionItems with arraySum(ProductSelectionItems, \"ProductRowSubtotal\", [], []).",
+    "RequesterApplicant should be required and default to Current User at the field/control level; generation should not add a redundant Set variable step to default it again.",
+    "FlowKey/form key text must not be a lowercase substring of reserved JSON property names. Known failure: EFI collided with prefix, producing pr<runtimeFlowKey>x in summary binding.",
+    "Validators should flag FlowKeys that collide with reserved property names and fail summary binding objects that contain value but no literal prefix key."
+  ],
+  "commitDecision": "commit_learning_changes_only",
+  "commitReason": "Reusable FlowKey collision rules, validators, docs, and skills are safe to commit. The app package runtime remains a partial baseline, so raw .yap baseline is not staged.",
+  "latestLocalFix": {
+    "idFamily": "641",
+    "flowKey": "EIA",
+    "rootCause": "FlowKey EFI was replaced inside reserved JSON property name prefix, corrupting it to pr<runtimeFlowKey>x and breaking Product Selection summary binding.",
+    "fixedPackage": "/Users/Renger/Downloads/Employee Family Implant FlowKey Safe Summary Binding Fix 20260516.yap",
+    "wrapperInspection": "ProductSelectionItems summary binding contains literal prefix and no pr<id>x corrupted keys."
+  },
+  "remainingRuntimeItems": [
+    "Run a within-quota family submission after entering required family/attachment fields",
+    "Verify HR Review task opens after valid submit",
+    "Verify Finance/Benefits route works for Custom Package or high-value valid case",
+    "Verify approval completes",
+    "Verify Implant Applications row is created and readable",
+    "Verify Family Quota Usage row is created for family application",
+    "Verify HR/task viewer does not overwrite applicant data after submission"
+  ]
+}

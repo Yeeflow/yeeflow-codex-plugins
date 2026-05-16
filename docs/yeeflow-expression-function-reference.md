@@ -138,7 +138,7 @@ These functions are export-backed from `Expression Runtime Test v1 Patch.yap` an
 | `getOrgAttr` | 3 | unknown/text/object | `getOrgAttr(departmentValue, attrDescriptor, defaultValue)`. Use this exact function for department/organization values; do not generate `getDeptAttr` yet. |
 | `getLocAttr` | 3 | unknown/text/object | `getLocAttr(locationValue, attrDescriptor, defaultValue)`. Use only for location values returned from user attributes or other export-backed location expressions. |
 
-Attribute parameters are descriptor objects, not plain strings:
+Attribute parameters are direct descriptor objects, not plain strings and not one-item expression arrays:
 
 ```json
 { "key": "Email", "label": "Email" }
@@ -165,7 +165,7 @@ Common recipes:
     "func": "getUserAttr",
     "params": [
       [{ "id": "CurrentUser", "exprType": "application", "valueType": "string", "type": "expr", "name": "Context:Current User" }],
-      [{ "key": "Email", "label": "Email" }],
+      { "key": "Email", "label": "Email" },
       [{ "type": "str", "value": "N/A" }]
     ]
   }
@@ -178,8 +178,8 @@ Common recipes:
     "type": "func",
     "func": "getOrgAttr",
     "params": [
-      [{ "type": "func", "func": "getUserAttr", "params": [[{ "id": "CurrentUser", "exprType": "application", "valueType": "string", "type": "expr", "name": "Context:Current User" }], [{ "key": "DepartmentID", "label": "Department" }], [{ "type": "str", "value": "N/A" }]] }],
-      [{ "key": "Name", "label": "Name" }],
+      [{ "type": "func", "func": "getUserAttr", "params": [[{ "id": "CurrentUser", "exprType": "application", "valueType": "string", "type": "expr", "name": "Context:Current User" }], { "key": "DepartmentID", "label": "Department" }, [{ "type": "str", "value": "N/A" }]] }],
+      { "key": "Name", "label": "Name" },
       [{ "type": "str", "value": "N/A" }]
     ]
   }
@@ -194,9 +194,11 @@ Boarding anniversary recipe:
     "type": "func",
     "func": "dateFormat",
     "params": [
-      [{ "type": "func", "func": "dateAdd", "params": [[{ "type": "func", "func": "getUserAttr", "params": [[{ "id": "CurrentUser", "exprType": "application", "valueType": "string", "type": "expr", "name": "Context:Current User" }], [{ "key": "LatestHireDate", "label": "Boarding Date" }], [{ "type": "str", "value": "N/A" }]] }], [{ "type": "str", "value": "year" }], [{ "type": "num", "value": "1" }]] }],
+      [{ "type": "func", "func": "dateAdd", "params": [[{ "type": "func", "func": "getUserAttr", "params": [[{ "id": "CurrentUser", "exprType": "application", "valueType": "string", "type": "expr", "name": "Context:Current User" }], { "key": "LatestHireDate", "label": "Boarding Date" }, [{ "type": "str", "value": "N/A" }]] }], [{ "type": "str", "value": "year" }], [{ "type": "num", "value": "1" }]] }],
       [{ "type": "str", "value": "MMM DD, YYYY" }]
     ]
   }
 ]
 ```
+
+Runtime correction from `Employee Family Implant v1 Core Patch 20260516`: a manually repaired Set variables step worked with `params[1]` as `{ "key": "Name_CN", "label": "Name" }`. Generated siblings that used `[{ "key": "...", "label": "..." }]` remained suspect and should be patched.

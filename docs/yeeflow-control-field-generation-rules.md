@@ -17,6 +17,7 @@ This document operationalizes the normalized control and field references for Ye
 - File upload controls in the Runtime V2 export include `attrs.ver = 1`; generated file uploads should include this until another export proves otherwise.
 - Image/icon upload in Runtime V2 uses `attrs.controlmultiple = true`; generated `icon-upload` should follow that or fall back.
 - Detect calculated-looking fields. Use native `calculated` controls for patterns such as `Subtotal = Quantity * Unit Price`; do not generate editable input controls for formulas without an explicit reason.
+- Applicant/profile snapshot controls and lookup-autofill target controls should be generated with control-level `readonly: true` unless they are intentional business inputs. This includes applicant employee ID/name/department/boarding date/status/email/line manager and product name/type/unit price/row subtotal/total amount. Keep the applicant/requester picker editable only where the requester is allowed to choose or confirm the applicant.
 - Generate expression arrays with exact Yeeflow token shapes. Variables must use `exprType: "variable"`, `type: "expr"`, and `valueType` limited to `number`, `text`, `date`, or `boolean`. Do not invent expression functions or operators.
 
 ### AI Training Approval Control Reference
@@ -67,6 +68,7 @@ Lookup persistence rule:
 
 - A raw lookup variable mapped into a plain text data-list field persisted the internal local row ID in v6.
 - Use `attrs.addition[]` autofill variables or explicit summary variables when generated apps need readable lookup text such as product name, code, category, or price.
+- Autofill target controls should normally be readonly; the lookup selection is the editable user input.
 - Store the raw lookup row ID only when downstream logic intentionally needs the row ID or the target field is a proven lookup-compatible data-list field.
 
 List/listref persistence rule:
@@ -81,6 +83,7 @@ Sublist calculated field and summary rule:
 - Store row formulas in the child control at `control.attrs.calculated`.
 - Use `attrs["list-fields-summary"]` on the parent list control for Sum/Average summaries.
 - Bind numeric summaries to top-level number variables with `{ "prefix": "__variables_", "value": "<VariableId>" }`.
+- FlowKey/form key text must not be a lowercase substring of reserved JSON property names used by summary binding objects. Known failure: FlowKey `EFI` was replaced inside `prefix`, corrupting it to `pr<runtimeFlowKey>x` and breaking summary-to-variable binding. Avoid keys that collide with `prefix`, `suffix`, `field`, `fields`, `profile`, `definition`, `workflow`, `variable`, `filter`, `ref`, `href`, `control`, `collection`, `condition`, `expression`, `attributes`, `actions`, or `binding`.
 - Use summary-bound variables such as `TotalAmount` for display, ContentList persistence, and workflow routing.
 - Keep direct child-row-to-data-list persistence deferred; summary values and text summaries are the safe durable persistence path.
 

@@ -110,6 +110,8 @@ Standard field sections should use a `flex_grid` with two desktop/tablet columns
 
 Generated forms should detect calculated-looking fields. `Subtotal` should not be a normal editable field when quantity and unit price exist; use a native `calculated` control when safe, or a readonly display with the formula documented as deferred.
 
+Applicant/profile snapshot fields and autofilled fields should be readonly by default. In `Employee Family Implant v1 Core Patch 20260516`, the user repaired `Applicant Name` with the simple export-backed control shape `readonly: true`. Apply the same pattern to generated snapshot controls such as applicant employee ID, department, boarding date, user status, email, line manager, eligibility/status snapshots, lookup-autofilled product type, unit price, row subtotal, and total amount. The requester/applicant picker may be editable only on the new request page; task/reviewer pages should render it readonly.
+
 For detailed patterns from the manually improved CAPEX export, see `docs/yeeflow-form-design-quality-rules.md` and `docs/it-hardware-capex-request-runtime-v2-ui-study.md`.
 
 For native Text controls, use `docs/yeeflow-text-control-generation-standards.md`. The focused `Text Style Sample.ywf` export proves that generated Text controls should use `type: "heading"`, inline width at `attrs.common.positioning.widthtype = [null, "2"]`, named typography presets as `attrs.heads.ty = [null, "h5-medium"]`, and plain string colors such as `attrs.heads.color = "var(--c--text)"`.
@@ -157,7 +159,7 @@ Use `docs/yeeflow-form-action-query-data-step-rules.md` and `docs/yeeflow-form-a
 
 ## Validator Guidance
 
-Warn for missing full width, zero padding, missing page-level background on rich full-page forms, background on `Main`, missing `Main`, missing `Content`, missing `Form body`, missing `Form bottom`, missing `Form header` when a request summary exists, workflow controls outside `Form bottom`, text/icon controls without inline width, field sections without grids, calculated-looking editable fields, runtime-sensitive picker/image attrs, and excessive arbitrary decision/status colors.
+Warn for missing full width, zero padding, missing page-level background on rich full-page forms, background on `Main`, missing `Main`, missing `Content`, missing `Form body`, missing `Form bottom`, missing `Form header` when a request summary exists, workflow controls outside `Form bottom`, text/icon controls without inline width, field sections without grids, calculated-looking editable fields, applicant/profile snapshot fields that are editable, lookup/autofill target fields that are editable without a documented business reason, runtime-sensitive picker/image attrs, and excessive arbitrary decision/status colors.
 
 ## Advanced Control Reference
 

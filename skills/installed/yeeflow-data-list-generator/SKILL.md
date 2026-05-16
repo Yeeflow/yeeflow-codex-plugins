@@ -142,6 +142,8 @@ Always preserve the native `Title` field metadata: `FieldName: Title`, `Status: 
 
 Sublist summary persistence update: generated approval apps can persist list summary aggregates into Decimal fields through ContentList after binding list summaries to top-level number variables. This is the preferred v1 storage pattern for totals and averages from line-item controls.
 
+Multi-item request persistence update: when an approval form uses a workflow-form sublist/listref for multiple product/service/request lines, do not assume direct child-row-to-data-list persistence unless a focused runtime proof exists. For v1 app packages, persist the parent transaction with summary fields such as readable line summary text, total amount, and custom-package/high-value flags. If row-level reporting is required, model a separate child transaction list and add runtime proof for conditional row creation before promoting it to a baseline.
+
 ## Field Type And Sample Rules
 
 Generated `.ydl` lists and `.yap` child lists can now use these proven field shapes:

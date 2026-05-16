@@ -6,9 +6,12 @@ import expressionUtils from "../yeeflow-expression-utils.js";
 const {
   buildComparison,
   buildCurrentObjectFieldToken,
+  buildCurrentUserToken,
   buildFunctionToken,
+  buildOrgAttributeToken,
   buildNumericWorkflowCondition,
   buildSublistRowCalculationExpression,
+  buildUserAttributeToken,
   buildVariableToken,
   validateExpressionTokens,
   validateSublistCurrentObjectExpression,
@@ -31,18 +34,21 @@ const status = v("Status", "Status", "text");
 const dueDate = v("DueDate", "Due Date", "date");
 const active = v("Active", "Active", "boolean");
 const lineItems = v("LineItems", "Line Items", "number");
-const currentUser = { id: "CurrentUser", exprType: "application", valueType: "string", type: "expr", name: "Context:Current User" };
+const currentUser = buildCurrentUserToken();
+const requesterApplicant = v("RequesterApplicant", "Requester / Applicant", "user");
 
-function attr(key, label = key) {
-  return { key, label };
+function assertInvalid(name, expr, code) {
+  const report = validateExpressionTokens(expr, { path: name });
+  assert.equal(report.valid, false, `${name}: expected invalid`);
+  assert.ok(report.issues.some((issue) => issue.code === code), `${name}: missing ${code}: ${JSON.stringify(report.issues, null, 2)}`);
 }
 
 function getUserAttr(userExpr, key, label = key, fallback = "N/A") {
-  return buildFunctionToken("getUserAttr", [[userExpr], attr(key, label), fallback ? [{ type: "str", value: fallback }] : []]);
+  return buildUserAttributeToken(userExpr, { key, label }, fallback);
 }
 
 function getOrgAttr(orgExpr, key, label = key, fallback = "N/A") {
-  return buildFunctionToken("getOrgAttr", [[orgExpr], attr(key, label), fallback ? [{ type: "str", value: fallback }] : []]);
+  return buildOrgAttributeToken(orgExpr, { key, label }, fallback);
 }
 
 ok("simple arithmetic", [quantity, { type: "op", op: "*" }, unitPrice]);
@@ -61,6 +67,12 @@ ok("UniqueID", [buildFunctionToken("UniqueID", [])]);
 ok("current user name", [getUserAttr(currentUser, "Name_CN", "Name")]);
 ok("current user department name", [getOrgAttr(getUserAttr(currentUser, "DepartmentID", "Department"), "Name", "Name")]);
 ok("current user manager name", [getUserAttr(getUserAttr(currentUser, "LineManager", "Line Manager"), "Name_CN", "Name", "")]);
+ok("requester applicant name", [getUserAttr(requesterApplicant, "Name_CN", "Name")]);
+assertInvalid(
+  "profile attribute descriptor wrapped array",
+  [buildFunctionToken("getUserAttr", [[currentUser], [{ key: "Name_CN", label: "Name" }], []])],
+  "EXPRESSION_PROFILE_ATTR_DESCRIPTOR_ARRAY_WRAPPED",
+);
 ok("boarding date formatted", [buildFunctionToken("dateFormat", [[getUserAttr(currentUser, "LatestHireDate", "Boarding Date")], [{ type: "str", value: "MMM DD, YYYY" }]])]);
 ok("boarding date plus one year", [buildFunctionToken("dateAdd", [[getUserAttr(currentUser, "LatestHireDate", "Boarding Date")], [{ type: "str", value: "year" }], [{ type: "num", value: "1" }]])]);
 const rowQuantity = buildCurrentObjectFieldToken({ id: "LineQuantity", name: "Quantity", valueType: "number", ctx: "LineItems" });

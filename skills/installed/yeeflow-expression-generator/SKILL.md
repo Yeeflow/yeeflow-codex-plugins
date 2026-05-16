@@ -76,7 +76,7 @@ Use only:
 - Do not serialize expression token arrays directly into `SetVariableTask` text values for request-number generation. Runtime displayed raw JSON literally. Use the proven FlowNo expression-button value shape until a SetVariable expression-token wrapper is export-backed.
 - Treat workflow transition branch conditions as wrapper-sensitive. Locally valid numeric condition tokens are not enough; use simple workflow routing unless the exact transition condition wrapper is studied from a successful export/runtime package.
 - Runtime-proven in `Expression Sublist Summary Workflow Test v1`: generated sub list row expressions can use `exprType: "variable_ctx"` with `ctx` equal to the parent list variable id and `id` equal to the row field id. Use this for current-object row formulas such as `Current object:Quantity * Current object:Unit Price`.
-- Runtime-proven in `Expression Sublist Summary Workflow Test v1`: sub list summaries configured on `attrs["list-fields-summary"]` can bind numeric totals to top-level number variables with `{ "prefix": "__variables_", "value": "TotalAmount" }`, and those summary-bound variables can drive workflow branch conditions.
+- Runtime-proven in `Expression Sublist Summary Workflow Test v1`: sub list summaries configured on `attrs["list-fields-summary"]` can bind numeric totals to top-level number variables with `{ "prefix": "__variables_", "value": "TotalAmount" }`, and those summary-bound variables can drive workflow branch conditions. Keep the literal `prefix` key intact: `Implant Application Request (1).ywf` proved that unsafe FlowKey `EFI` can be replaced inside `prefix`, producing `pr<runtimeFlowKey>x` and breaking summary binding.
 - Runtime-proven workflow numeric conditions for summary variables use `conditioninfo[]` wrappers with `op` values such as `n.>` and `n.<=`, `left.value` as a number variable token, and `right.value` as a numeric expression token array such as `[{ "type": "num", "value": "5000" }]`.
 - Form Actions Phase 1 export-backed: form action `setvar` values, multi-set values, step conditions, and confirm dialog messages use Yeeflow expression-token arrays. Temp variables are declared in `variables.tempVars[]` and referenced as variable tokens with `id: "__temp_<tempVarId>"`, such as `__temp_var_DialogResult`. Keep form action `setvar` distinct from workflow graph `SetVariableTask`; their wrappers differ.
 - Form Actions Phase 1 generated runtime: `setvar` and `confirm` tokens rendered and executed. When a form-action test also includes approval tasks, use requester/current-user expression assignment rather than tenant-specific direct-user IDs; invalid direct-user assignments can block publish before expression behavior can be tested.
@@ -103,6 +103,7 @@ Use these only with export-backed token shapes:
 
 - current user email: `getUserAttr(Context:Current User, Email, N/A)`
 - current user display name: `getUserAttr(Context:Current User, Name, N/A)` using the exported `Name_CN` key
+- profile functions (`getUserAttr`, `getOrgAttr`, `getLocAttr`) must use a direct attribute descriptor object as `params[1]`, for example `{ "key": "Name_CN", "label": "Name" }`; do not wrap it as `[{ "key": "...", "label": "..." }]`
 - department name: `getOrgAttr(getUserAttr(Context:Current User, Department, N/A), Name, N/A)`
 - parent department name: `getOrgAttr(getOrgAttr(getUserAttr(Context:Current User, Department, N/A), Parent, N/A), Name, N/A)`
 - line manager name: `getUserAttr(getUserAttr(Context:Current User, Line Manager, N/A), Name, N/A)`
@@ -110,6 +111,8 @@ Use these only with export-backed token shapes:
 - boarding anniversary: `dateFormat(dateAdd(getUserAttr(Context:Current User, Boarding Date, N/A), "year", 1), "MMM DD, YYYY")`
 
 When persisting profile-derived output, persist readable summary variables. Do not write object-shaped user, organization, or location values directly to text fields.
+
+Requester/applicant profile rule: for approval apps where the applicant is a workflow/form user variable such as `RequesterApplicant`, use `getUserAttr(RequesterApplicant, ...)` after that field is initialized. Current User is valid as the default source for a new applicant field, but not for applicant profile reads after submission because HR/reviewer/task viewers may open the form later.
 
 ## Stop Conditions
 

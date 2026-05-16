@@ -70,3 +70,35 @@ Prefer a smaller, high-quality, runtime-proven v1 over a broad package that is h
 - Which calculations should be automatic and readonly?
 - Which reference data should be a packaged list, lookup, or deferred integration?
 - What does success look like in the runtime test?
+
+## Clarification Questions Before Generation
+
+During planning, separate questions into two categories:
+
+Business-critical clarification questions:
+
+- change workflow routes
+- change approval responsibility
+- change quota/policy calculations
+- change status lifecycle
+- change data ownership
+- change pricing or amount calculations
+- change required attachments/documents
+- change persistence timing
+- change compliance/audit handling
+- change dashboard inclusion in v1 scope
+- change integration responsibility
+- change role permissions
+- change what happens on approval, rejection, or resubmission
+
+These must be asked directly in the Codex chat and must pause generation until answered or until the user explicitly approves default assumptions.
+
+Technical assumptions:
+
+- token shape availability
+- tenant data completeness
+- exact widget binding shape
+- form action runtime behavior
+- validator/runtime compatibility
+
+These can be documented, tested, and handled with fallback during generation/runtime validation unless they affect business correctness.

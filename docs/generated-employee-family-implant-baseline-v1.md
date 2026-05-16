@@ -1,0 +1,102 @@
+# Employee & Family Implant Application Management v1 Baseline Note
+
+Generated: 2026-05-16
+
+## Status
+
+This is **not yet an accepted runtime baseline**. The corrected package is locally generated and locally validated after studying the user-corrected `Employee & Family Implant Application Management_Test.yap` and `Implant Application Request (1).ywf` exports. A previous runtime import passed the focused requester/product/quota path, but submit/task routing/persistence did not receive enough proof in that run. The latest FlowKey-safe package still needs runtime import testing.
+
+No commit or push should be made until runtime passes or the user explicitly accepts this partial baseline.
+
+## Current Package
+
+- Package: `employee-family-implant.v1.yap`
+- Decoded app definition: `employee-family-implant-app-def.v1.json`
+- Approval form definition: `employee-family-implant-approval-form-def.v1.json`
+- Generator: `generate-employee-family-implant-v1.mjs`
+- Download copy: `/Users/Renger/Downloads/Employee Family Implant FlowKey Safe Summary Binding Fix 20260516.yap`
+- Flow key: `EIA`
+- ID family: `641...`
+
+## Patch Learning Applied
+
+1. `getUserAttr`, `getOrgAttr`, and `getLocAttr` now use the export-backed direct attribute descriptor object shape: `params[1] = { "key": "...", "label": "..." }`.
+2. Applicant profile snapshot expressions use `RequesterApplicant`, not `Context:Current User`, after the applicant is initialized.
+3. `RequesterApplicant` is a required identity-picker control with Default value = Current User. There is no redundant page-load Set variable step that writes `RequesterApplicant` from Current User.
+4. Applicant snapshot controls are readonly by default. Review/task pages must not overwrite applicant snapshots with the current viewer.
+5. Product Selection is now a `ProductSelectionItems` sublist/listref with row lookup, readonly autofill fields, quantity, row subtotal, and summary-bound `TotalApplicationAmount`.
+6. Quota checks, Finance/Benefits routing, and ContentList persistence use `TotalApplicationAmount`; quota and submit preflight actions also recalculate the amount from `ProductSelectionItems` with `arraySum(ProductSelectionItems, "ProductRowSubtotal", [], [])` so policy logic is not dependent on delayed UI summary commits.
+7. Page-load initialization calls Family Quota Check after applicant snapshots are set.
+8. Submit is wired through `formdef.formAction.onSubmit` to `Check and Submit the form`; that action calls Family Quota Check first, warns when family quota is exceeded, and submits only when valid or not a family request.
+9. Product Selection subtotal summary binding uses the export-backed compact shape `{ "prefix": "__variables_", "value": "TotalApplicationAmount" }`; no unsupported extra target metadata is generated.
+10. FlowKey `EFI` is avoided because Yeeflow import replacement can corrupt the reserved `prefix` key into `pr<runtimeFlowKey>x`. The current package uses safe FlowKey `EIA`, and wrapper inspection found no corrupted `pr<id>x` binding keys.
+
+## What Passed Locally
+
+- `node --check generate-employee-family-implant-v1.mjs`
+- `node --check validate-ywf-def.js`
+- JSON parse checks for app/form/spec/report artifacts
+- expression smoke tests, including the direct descriptor rejection test
+- generated expression audit: 7 `getUserAttr` hits, 0 wrapped descriptors, 0 Current User profile reads, 7 RequesterApplicant profile reads
+- applicant snapshot readonly audit: 0 editable snapshot issues
+- `validate-ywf-def`: `pass_with_warnings`, 0 errors
+- `validate-yap-package`: `pass_with_warnings`, 0 errors
+- `validate-yap-graph`: `pass`, 0 errors
+- `validate-ywf-def-against-yap`: `pass`, 0 errors
+- workflow action config validation
+- focused inspection: RequesterApplicant required/default-current-user present, no redundant default Set variable, page-load quota call present, submit-time quota call present, 0 Current User applicant profile reads, Product Selection summary binding present
+- focused FlowKey/sum inspection: FlowKey `EIA`, `ProductSelectionItems` summary binding contains literal `prefix`, and no corrupted `pr<id>x` keys were found
+- child data-list validation: all five lists `pass_with_warnings`, 0 errors
+- `build-yap-wrapper` round trip: `pass`, decoded source matches wrapper round trip
+- wrapped `.yap` package and graph validation
+
+## Remaining Local Warnings
+
+The remaining local warnings are known schema/design-system warnings for generated controls such as `text-editor`, `flex_grid`, `identity-picker`, `file-upload`, `action_button`, calculated row controls, and resolved style token colors. No local warning currently indicates the original patched-export root causes.
+
+## Runtime Result
+
+Fresh runtime app: `Employee & Family Implant Application Management - FlowKey safe binding fix`
+
+Latest package tested: `/Users/Renger/Downloads/Employee Family Implant FlowKey Safe Summary Binding Fix 20260516.yap`
+
+Passed:
+
+1. App imported and opened.
+2. Home dashboard rendered.
+3. Approval form opened.
+4. `RequesterApplicant` defaulted to the current login user and remained the applicant identity.
+5. Applicant snapshot fields populated from the requester profile path and rendered readonly.
+6. Product Selection sublist rendered.
+7. Selecting `Standard Implant Package` autofilled product name, product type, unit price, quantity, and row subtotal.
+8. Product Selection displayed `Sum: 2500.00`.
+9. `Refresh Product Summary` produced a readable persisted product-line summary.
+10. `Check Family Quota` recalculated `Total Application Amount` as `2500.00` and changed `Remaining Quota After` from `15000.00` to `12500.00`.
+11. Attachment guidance rendered the confirmed scenario matrix.
+12. The FlowKey-safe package imported and opened in Chrome.
+13. Product Selection summary binding worked without manual repair: Standard quantity 3 subtotal `7500` plus Custom quantity 2 subtotal `12000` displayed `Sum: 19500.00`, and `Total Application Amount` also displayed `19500.00`.
+14. Family Quota Check used `Total Application Amount`: annual quota `15000.00`, remaining quota after `-4500.00`, and quota exceeded `Yes`.
+15. Submit-time quota validation ran for the over-quota family case and showed the expected warning/block message.
+
+Not yet proven:
+
+1. A within-quota valid submission after entering required family/attachment fields.
+2. HR Review task creation/opening.
+3. Finance/Benefits route.
+4. Approval completion.
+5. Implant Applications ContentList persistence.
+6. Family Quota Usage ContentList persistence.
+7. HR/task viewer non-overwrite proof after submission.
+
+Follow-up runtime focus:
+
+1. Retest submit with a within-quota family request and the minimal required fields.
+2. Only after submit succeeds, verify HR task, Finance route, completion, and ContentList rows.
+3. Reopen the task as reviewer/HR and confirm applicant values remain the original requester snapshots.
+
+## Known V1 Limitations
+
+- Direct `getUserAttr(RequesterApplicant, ...)` is generation-safe with the export-backed parameter shape, but still requires runtime proof in the target approval-form context.
+- If requester-based profile expressions fail at runtime, keep `RequesterApplicant` fixed, route missing profile data to HR verification, and do not use the task viewer's Current User as fallback.
+- The confirmed Finance/Benefits route is Custom Package based. High-amount routing still needs a business threshold before it can be made exact.
+- Strict dynamic attachment blocking remains conditional on runtime-safe validation patterns; v1 uses visible guidance plus upload control and HR verification fallback.

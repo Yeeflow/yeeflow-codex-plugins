@@ -121,7 +121,7 @@ Workflow transition branching by numeric expression remains deferred because the
 Generation notes:
 
 - Preserve exact function name `getOrgAttr`; do not generate `getDeptAttr` from the user-facing label.
-- Attribute parameters are descriptor objects with `key` and `label`, not plain string literals.
+- Attribute parameters are direct descriptor objects with `key` and `label`, not plain string literals and not one-item expression arrays. The export-backed Set variables fix in `Employee Family Implant v1 Core Patch 20260516` failed with wrapped profile descriptors and worked with a direct descriptor object.
 - Context current-user tokens are application tokens, not workflow variable tokens.
 - Use fallback arrays such as `[{ "type": "str", "value": "N/A" }]` for optional tenant profile fields.
 - Persist readable profile summary values through variables and ContentList only after render proof; do not persist object-shaped profile values directly to text fields.

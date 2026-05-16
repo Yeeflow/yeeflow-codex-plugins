@@ -268,8 +268,9 @@ Use warnings first:
 - Submit form step used in dashboard context
 - Save changes step generated without a draft/save purpose
 - accidental `arraySub` expression usage; use `arraySum`
+- recursive `otheraction` step that calls the same form action containing it
 
-Only promote these to hard errors after generated runtime proof.
+Treat recursive `otheraction` self-calls as errors in generated packages. Other validation items stay warning-first unless a runtime-proven rule makes them unsafe.
 
 ## Runtime Baseline Status
 
@@ -306,3 +307,14 @@ Filter correction:
 - The patched export and corrected generated retest prove the working JSON path is `attrs.querydata_filters` plural. For an Active Bit field, the exported working condition is `{ "left": "Bit1", "op": "0", "right": "true", "pre": "and", "showCus": true }`.
 - Do not generate `attrs.querydata_filter` singular as the final filter implementation.
 - `vLookup` remains deferred because only labels, not function tokens, have been observed.
+
+## Employee Family Implant Requester and Submit-Time Quota Pattern
+
+`Employee & Family Implant Application Management_Test.yap` confirmed these form-action rules for generated business apps:
+
+- If an applicant user control is required and already has Default value = Current User (`attrs.default = "currentUser"` and `value = "CurrentUser"`), do not add a redundant Set variable action to write that applicant variable from Current User.
+- Applicant snapshot actions should read profile fields from the fixed applicant/requester variable, not from `Context:Current User`, after the applicant field has been initialized.
+- Page-load initialization may end with an `otheraction` call to a reusable check action, such as Family Quota Check.
+- Submit-time business validation should be wired through `formdef.formAction.onSubmit` when the app must check a policy before submission.
+- A submit validation action should call the reusable check action first, then use conditional warning/confirm behavior and a conditional native `submit` step.
+- Do not rely only on a manual Check button for core policy checks such as quota validation.

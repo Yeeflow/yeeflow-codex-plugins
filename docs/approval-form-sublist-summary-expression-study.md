@@ -184,7 +184,9 @@ Runtime screenshot evidence showed:
 - `Sub Total` summary `Sum: 17.00`
 - `Total Amount` displayed as `17.00`
 
-Generation rule: use the list summary binding to set `TotalAmount`; do not manually recalculate all line items with a separate top-level expression unless the list summary binding is unavailable.
+Generation rule: use the list summary binding to set `TotalAmount` for normal summary display and simple downstream reads.
+
+For policy-critical form actions such as quota checks, submit guards, routing thresholds, or persistence that must run immediately after row edits, add an explicit preflight set-variable step that recalculates the same total with `arraySum(<ListVariableId>, "<SubtotalFieldId>", [], [])`. A later Employee & Family Implant runtime test showed the visible sublist sum updating while the separate top-level bound variable was not committed in time for a quota action. The safe pattern is therefore: keep the export-backed summary binding, but recalculate the top-level total in the action before using it for policy decisions.
 
 ## Workflow Numeric Condition Pattern
 
@@ -265,6 +267,7 @@ The readonly task-page omission of a listref field is warning-level when the sub
 - Use `exprType: "variable_ctx"` for row field references.
 - Put summary configuration on the parent list control in `attrs["list-fields-summary"]`.
 - Bind numeric summaries to form-level `number` variables.
+- Export-backed summary binding for a top-level workflow/form variable is the compact object `{ "prefix": "__variables_", "value": "<VariableId>" }`; do not add name/label/type metadata unless a future export serializes it.
 - Display bound summaries through readonly number controls when users need to see the value.
 - Use summary-bound variables in workflow numeric `conditioninfo` instead of recalculating line item totals.
 - Keep Text controls on the learned standard and inline by default.
@@ -276,3 +279,5 @@ The readonly task-page omission of a listref field is warning-level when the sub
 - Direct line-item child-row persistence to a data list remains deferred.
 - InclusiveGateway branch behavior is now generated-package runtime-proven in `Expression Sublist Summary Workflow Test v1` for both `TotalAmount > 5000` and `TotalAmount <= 5000` branches.
 - Summary recalculation is event-driven in the runtime UI. During manual entry, summary values may update after the row input blurs or another row value is committed; generated runtime tests should tab/blur out of edited cells before asserting summary values.
+- `Employee & Family Implant Application Management_Test.yap` confirmed that a manually reselected Product Selection subtotal binding still exports as `{ "prefix": "__variables_", "value": "TotalApplicationAmount" }`. If runtime does not update a summary-bound variable, inspect row commit/blur timing, source row field type, rendered submit-page control wiring, downstream action timing, and import-time FlowKey replacement before inventing unsupported binding metadata.
+- `Implant Application Request (1).ywf` proved one import-time corruption case: generated FlowKey `EFI` was replaced inside the property name `prefix`, producing `pr2055672796649762823x`; the designer-created comparison sublist used the same summary settings but kept `prefix` and worked. Generator-safe rule: avoid FlowKeys/form keys that are substrings of reserved JSON property names such as `prefix`, and add a focused inspection for corrupted summary binding keys before packaging/runtime test.

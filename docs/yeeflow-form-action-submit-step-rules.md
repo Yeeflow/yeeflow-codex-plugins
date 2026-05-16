@@ -60,6 +60,9 @@ Rules:
 
 - Keep the native Action Panel available unless the user explicitly asks for custom submit buttons.
 - Use a custom action button only when the app needs a specific form-action-driven submit experience.
+- Use `formdef.formAction.onSubmit` for submit-time business validation that must run before workflow submission, such as quota checks.
+- When submit-time validation calls another action first, use an `otheraction` step that targets the reusable check action, then conditionally run the native `submit` step.
+- Never generate an `otheraction` step that calls its own parent action; that is a recursive action loop, not a submit implementation.
 - Do not confuse form action `submit` with workflow graph actions.
 
 ## Save Changes

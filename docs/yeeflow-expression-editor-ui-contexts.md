@@ -131,7 +131,7 @@ Export-backed current-user context tokens use a different application-token shap
 }
 ```
 
-Use this context token with `getUserAttr` only after the target page is an approval-form expression context. Attribute selector parameters are descriptor objects such as `{ "key": "Email", "label": "Email" }`.
+Use this context token with `getUserAttr` only after the target page is an approval-form expression context. Attribute selector parameters are direct descriptor objects such as `{ "key": "Email", "label": "Email" }`; do not wrap the descriptor in an expression-token array.
 
 ## Dynamic Display Rules
 

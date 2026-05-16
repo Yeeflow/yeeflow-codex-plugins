@@ -45,7 +45,7 @@ Extract:
 
 If supplied exports or manually improved samples contain reusable patterns, study them read-only before generation. Preserve original files.
 
-## 2. Business Process Understanding
+## 2. Initial Business Analysis
 
 Before designing resources, summarize:
 
@@ -58,7 +58,7 @@ Before designing resources, summarize:
 
 Document reasonable assumptions instead of blocking unnecessarily. Ask only when a missing answer would materially change the app architecture.
 
-## 3. Requirement Study And App Planning
+## 3. Initial App Plan/Spec
 
 Create:
 
@@ -86,7 +86,116 @@ The plan must include:
 
 Validate the spec with a JSON parse check before using it for generation.
 
-## 4. Decide Safe V1 Scope
+## 4. Business Clarification Gate
+
+After the initial app plan/spec is created, identify business-critical decisions that are still unanswered.
+
+Business-critical questions include anything that changes:
+
+- workflow route
+- approval responsibility
+- quota/policy calculation
+- status lifecycle
+- data ownership
+- pricing or amount calculation
+- required attachments/documents
+- persistence timing
+- compliance/audit handling
+- dashboard inclusion if it affects v1 scope
+- integration responsibility
+- role permissions
+- what happens on approval/rejection/resubmission
+
+Examples:
+
+- Should quota reset by calendar year or employee anniversary year?
+- Should quota be occupied on submission or final approval?
+- Is manager approval mandatory?
+- Is custom pricing fixed or manually entered?
+- Which attachments are required by scenario?
+- Should v1 include a home dashboard?
+- Should rejected records be automatically expired or manually closed?
+- Should approval route depend on amount threshold?
+
+When unanswered business decisions exist, output a clear question block in the Codex chat:
+
+```text
+Business clarification required before generation:
+
+1. <Question>
+   - Option A:
+   - Option B:
+   - Recommended default:
+   - Why this matters:
+
+2. <Question>
+   - Option A:
+   - Option B:
+   - Recommended default:
+   - Why this matters:
+
+Generation is paused until these questions are answered or defaults are explicitly approved.
+```
+
+Stop after outputting the clarification block. Do not continue to `.yap` generation in the same turn.
+
+Generation may continue only after:
+
+- the user answers the questions, or
+- the user explicitly approves default assumptions.
+
+## 5. Wait For User Answers
+
+If the clarification gate is open, wait. Do not generate an app, import anything, operate Yeeflow UI, or silently choose defaults.
+
+When the user answers:
+
+- update the app plan/spec
+- mark each relevant `businessDecisionGates[].status` as `answered` or `defaultApproved`
+- record the confirmed answer
+- adjust v1 scope, workflow, form actions, data model, dashboards, and runtime checklist accordingly
+
+## 6. Apply Confirmed Answers To Plan/Spec
+
+App specs should include decision gates using this shape:
+
+```json
+"businessDecisionGates": [
+  {
+    "key": "quotaCycle",
+    "question": "Should quota reset by calendar year or employee anniversary year?",
+    "options": ["calendarYear", "employeeAnniversaryYear"],
+    "recommendedDefault": "calendarYear",
+    "requiredBeforeGeneration": true,
+    "status": "unanswered"
+  }
+]
+```
+
+Technical assumptions should be recorded separately from business decision gates. Technical assumptions can be tested by Codex during generation/runtime and should have fallback behavior.
+
+Examples:
+
+- whether `getUserAttr(RequesterApplicant, ...)` works directly
+- whether a tenant profile field is populated
+- whether a dashboard widget binding needs a specific runtime pattern
+- whether a form action step needs a reduced runtime proof
+
+Technical assumptions should not block generation unless they affect business correctness.
+
+## 7. Generation-Readiness Review
+
+Before generation, confirm:
+
+- all required business decision gates are answered or defaults are explicitly approved
+- mandatory v1 business capabilities are not misclassified as v2 enhancements
+- technical assumptions have validation/fallback plans
+- approval form design-quality gates are represented
+- the JSON spec parses
+
+Stop if any required business decision gate remains unanswered.
+
+## 8. Decide Safe V1 Scope
 
 Choose the safest first working version.
 
@@ -101,7 +210,7 @@ Default v1 scope:
 
 If the requirement is large, defer advanced features to v2/v3. Prefer a working, importable, testable v1 over a large all-at-once package.
 
-## 5. Generate V1 Package
+## 9. Generate V1 Package
 
 Generate:
 
@@ -143,7 +252,7 @@ Use current proven feature foundations:
 - Submit form / Save changes
 - `arraySum` and `JSONStringfy` where export-backed
 
-## 6. Local Validation
+## 10. Local Validation
 
 Run the relevant local checks:
 
@@ -162,7 +271,7 @@ Also run JSON parse checks for generated specs and decoded/package JSON.
 
 Do not import if validation has blocking errors. Warning-level findings may be acceptable when documented and understood.
 
-## 7. Runtime Test
+## 11. Runtime Test
 
 Use:
 
@@ -189,7 +298,7 @@ Runtime checklist:
 
 Runtime testing requires explicit user intent to test/import or an app-generation request that asks for end-to-end testing. Do not operate Yeeflow UI for study-only tasks.
 
-## 8. Fix Runtime Issues
+## 12. Fix Runtime Issues
 
 If runtime fails:
 
@@ -211,7 +320,7 @@ Known root-cause checks:
 - `Main` container should not carry page-level background
 - `Data.Forms[].ListID` must be `0` for app-level approval forms
 
-## 9. Documentation
+## 13. Documentation
 
 Create:
 
@@ -231,7 +340,7 @@ Include:
 - known limitations
 - v2 recommendations
 
-## 10. Skill Updates
+## 14. Skill Updates
 
 If new reusable Yeeflow patterns are learned:
 
@@ -243,7 +352,7 @@ If new reusable Yeeflow patterns are learned:
 
 Do not update skills for app-specific content unless it is reusable.
 
-## 11. Git
+## 15. Git
 
 After success or honest partial result:
 

@@ -13,6 +13,27 @@ const { validateExpressionTokens } = require("./yeeflow-expression-utils");
 const PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
 const NUMERIC_OPS = new Set(["n.>", "n.>=", "n.<", "n.<=", "n.=", "n.!=", ">", ">=", "<", "<="]);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const CORRUPTED_REPLACEMENT_KEY_RE = /^pr[0-9]+x$/;
+const FLOW_KEY_RESERVED_PROPERTY_NAMES = [
+  "prefix",
+  "suffix",
+  "field",
+  "fields",
+  "profile",
+  "definition",
+  "workflow",
+  "variable",
+  "filter",
+  "ref",
+  "href",
+  "control",
+  "collection",
+  "condition",
+  "expression",
+  "attributes",
+  "actions",
+  "binding",
+];
 const HEX_COLOR_RE = /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/g;
 const ROOT_STYLE_TOKEN_HEX = new Map([
   ["#0065ff", "--c--primary"],
@@ -210,6 +231,8 @@ function validateDecodedDef(def, options = {}) {
   validateWorkflowActionConfigurations();
   validatePlaceholderPolicy();
   validateDesignSystemColorUsage();
+  validateFlowKeyReplacementSafety();
+  validateCorruptedReplacementKeys();
 
   return finish();
 
@@ -259,6 +282,38 @@ function validateDecodedDef(def, options = {}) {
         }
       }
     }
+  }
+
+  function validateFlowKeyReplacementSafety() {
+    const flowKey = typeof def.defkey === "string" ? def.defkey.trim() : "";
+    if (!flowKey) return;
+    const lowerFlowKey = flowKey.toLowerCase();
+    const collisions = FLOW_KEY_RESERVED_PROPERTY_NAMES.filter((name) => name.includes(lowerFlowKey));
+    if (!collisions.length) return;
+    addIssue(
+      warnings,
+      "FLOW_KEY_RESERVED_PROPERTY_COLLISION",
+      `FlowKey ${flowKey} can collide with reserved JSON property names during Yeeflow import replacement: ${collisions.join(", ")}`,
+      "$.defkey",
+      { flowKey, collisions }
+    );
+  }
+
+  function validateCorruptedReplacementKeys() {
+    deepWalk(def, (node, pointer) => {
+      if (!isObject(node)) return;
+      for (const key of Object.keys(node)) {
+        if (CORRUPTED_REPLACEMENT_KEY_RE.test(key)) {
+          addIssue(
+            warnings,
+            "CORRUPTED_REPLACEMENT_KEY",
+            `Suspicious generated/import replacement key ${key}; this may indicate a reserved property such as prefix was corrupted`,
+            `${pointer}.${key}`,
+            { key }
+          );
+        }
+      }
+    });
   }
 
   function validateVariables() {
@@ -541,6 +596,7 @@ function validateDecodedDef(def, options = {}) {
     const actions = asArray(formdef.actions);
     const actionIds = new Set(actions.map((action) => action && action.id).filter(Boolean));
     const buttonActionRefs = new Map();
+    const triggeredActionRefs = new Map();
 
     deepWalk(formdef.children, (node, pointer) => {
       if (!isObject(node)) return;
@@ -549,6 +605,7 @@ function validateDecodedDef(def, options = {}) {
         const controlPath = `${pagePath}.formdef.children${pointer.slice(1)}`;
         if (actionRef) {
           buttonActionRefs.set(actionRef, controlPath);
+          triggeredActionRefs.set(actionRef, controlPath);
           if (!actionIds.has(actionRef)) {
             addIssue(warnings, "FORM_ACTION_BUTTON_TARGET_MISSING", `Action button references missing form action ${actionRef}`, `${controlPath}.attrs.control_action`);
           }
@@ -560,9 +617,23 @@ function validateDecodedDef(def, options = {}) {
     });
 
     const onLoad = formdef.formAction && formdef.formAction.onLoad;
+    const onSubmit = formdef.formAction && formdef.formAction.onSubmit;
     if (onLoad && !actionIds.has(onLoad)) {
       addIssue(warnings, "FORM_ACTION_ONLOAD_TARGET_MISSING", `Page load action references missing form action ${onLoad}`, `${pagePath}.formdef.formAction.onLoad`);
     }
+    if (onLoad) triggeredActionRefs.set(onLoad, `${pagePath}.formdef.formAction.onLoad`);
+    if (onSubmit && !actionIds.has(onSubmit)) {
+      addIssue(warnings, "FORM_ACTION_ONSUBMIT_TARGET_MISSING", `Form submit action references missing form action ${onSubmit}`, `${pagePath}.formdef.formAction.onSubmit`);
+    }
+    if (onSubmit) triggeredActionRefs.set(onSubmit, `${pagePath}.formdef.formAction.onSubmit`);
+
+    actions.forEach((action, actionIndex) => {
+      asArray(action && action.steps).forEach((step, stepIndex) => {
+        if (step && step.type === "otheraction" && step.attrs && step.attrs.control_action) {
+          triggeredActionRefs.set(step.attrs.control_action, `${pagePath}.formdef.actions[${actionIndex}].steps[${stepIndex}].attrs.control_action`);
+        }
+      });
+    });
 
     actions.forEach((action, actionIndex) => {
       const actionPath = `${pagePath}.formdef.actions[${actionIndex}]`;
@@ -576,7 +647,7 @@ function validateDecodedDef(def, options = {}) {
         addIssue(warnings, "FORM_ACTION_STEPS_EMPTY", "Form action should include at least one step", `${actionPath}.steps`);
         return;
       }
-      if (!buttonActionRefs.has(action.id) && onLoad !== action.id) {
+      if (!triggeredActionRefs.has(action.id)) {
         addIssue(warnings, "FORM_ACTION_UNTRIGGERED", "Form action is not referenced by an action button or page-load trigger", actionPath, {
           actionName: action.name,
         });
@@ -615,11 +686,55 @@ function validateDecodedDef(def, options = {}) {
           validateQueryDataStep(step, stepPath);
         } else if (step.type === "submit") {
           validateSubmitStep(step, stepPath, page);
+        } else if (step.type === "otheraction") {
+          const targetAction = step.attrs && step.attrs.control_action;
+          if (!targetAction) {
+            addIssue(warnings, "FORM_ACTION_OTHERACTION_TARGET_MISSING", "Call action step should include attrs.control_action", `${stepPath}.attrs.control_action`);
+          } else if (!actionIds.has(targetAction)) {
+            addIssue(warnings, "FORM_ACTION_OTHERACTION_TARGET_UNKNOWN", `Call action step references missing action ${targetAction}`, `${stepPath}.attrs.control_action`);
+          } else if (targetAction === action.id) {
+            addIssue(errors, "FORM_ACTION_OTHERACTION_SELF_REFERENCE", "Call action step must not call the same action; this creates a recursive submit/action loop", `${stepPath}.attrs.control_action`);
+          }
         } else if (step.type && !["listitem"].includes(step.type)) {
           addIssue(warnings, "FORM_ACTION_STEP_TYPE_UNCLASSIFIED", "Form action step type is not covered by current Phase 1 validation rules", `${stepPath}.type`, {
             type: step.type,
           });
         }
+      });
+    });
+
+    validateRequesterApplicantActionRules(actions, formdef, pagePath);
+  }
+
+  function validateRequesterApplicantActionRules(actions, formdef, pagePath) {
+    let requesterControl = null;
+    deepWalk(formdef && formdef.children, (node) => {
+      if (!isObject(node)) return;
+      if (node.binding === "RequesterApplicant") requesterControl = node;
+    });
+    const requesterHasCurrentUserDefault = requesterControl && requesterControl.value === "CurrentUser" && requesterControl.attrs && requesterControl.attrs.default === "currentUser";
+
+    actions.forEach((action, actionIndex) => {
+      asArray(action && action.steps).forEach((step, stepIndex) => {
+        const stepPath = `${pagePath}.formdef.actions[${actionIndex}].steps[${stepIndex}]`;
+        if (step && step.type === "setvar") {
+          const attrs = step.attrs || {};
+          const target = attrs.setvar_var;
+          const value = attrs.setvar_val;
+          if (requesterHasCurrentUserDefault && target && target.id === "RequesterApplicant" && JSON.stringify(value || "").includes("CurrentUser")) {
+            addIssue(warnings, "REQUESTER_APPLICANT_REDUNDANT_CURRENT_USER_SETVAR", "RequesterApplicant already has Default value = Current User; do not generate a duplicate form-action setvar to Current User", stepPath);
+          }
+        }
+        deepWalk(step, (node, pointer) => {
+          if (!isObject(node) || node.func !== "getUserAttr") return;
+          const subject = JSON.stringify(node.params && node.params[0] || "");
+          const stepName = String(step && step.name || "");
+          const actionName = String(action && action.name || "");
+          const applicantSnapshotContext = /applicant|requester/i.test(`${actionName} ${stepName}`);
+          if (applicantSnapshotContext && subject.includes("CurrentUser") && !subject.includes("RequesterApplicant")) {
+            addIssue(warnings, "APPLICANT_PROFILE_READS_CURRENT_USER", "Applicant profile snapshot actions should read profile fields from RequesterApplicant, not Context:Current User, after the applicant is initialized", `${stepPath}${pointer.slice(1)}`);
+          }
+        });
       });
     });
   }
@@ -710,10 +825,13 @@ function validateDecodedDef(def, options = {}) {
           const fieldPath = `${controlPath}.attrs["list-fields"][${fieldIndex}]`;
           if (field && field.control) {
             controls.push(field.control);
+            controlEntries.push({ control: field.control, path: `${fieldPath}.control`, page: context.page, listContext });
             if (typeof field.control.binding === "string") {
               validateBinding(field.control.binding, `${fieldPath}.control`, listContext);
             }
             validateControlSchema(field.control, `${fieldPath}.control`);
+            validateApprovalFormUsabilityControl(field.control, `${fieldPath}.control`, context.page);
+            validateFormDesignQualityControl(field.control, `${fieldPath}.control`);
             validateCalculationExpressions(field.control.attrs && field.control.attrs.calculated, `${fieldPath}.control.attrs.calculated`, listContext);
           }
         });
@@ -817,6 +935,39 @@ function validateDecodedDef(def, options = {}) {
         type: control.type,
       });
     }
+
+    const binding = String(control.binding || "");
+    const label = String(control.label || control.nv_label || "");
+    const applicantSnapshotField = /^Applicant(?!$)/.test(binding) || /^Applicant\s+/i.test(label);
+    const requesterApplicantIdentity = binding === "RequesterApplicant" || /^Requester\s*\/\s*Applicant$/i.test(label);
+    if (applicantSnapshotField && !requesterApplicantIdentity && isGeneratedValueControl(control.type) && control.readonly !== true && attrs.readonly !== true && attrs.disabled !== true) {
+      addIssue(warnings, "APPLICANT_SNAPSHOT_FIELD_EDITABLE", "Applicant/profile snapshot fields populated from requester data should be readonly by default; only the Requester / Applicant identity picker should remain editable when scoped by the business process", controlPath, {
+        control: name,
+        binding,
+        type: control.type,
+      });
+    }
+
+    const derivedBindings = new Set([
+      "ProductName",
+      "ProductType",
+      "UnitPrice",
+      "ProductRowSubtotal",
+      "TotalApplicationAmount",
+      "UsedQuotaBefore",
+      "RemainingQuotaAfter",
+      "EligibilityDate",
+      "EligibilityStatus",
+      "QuotaExceeded",
+      "QuotaUsageStatus",
+    ]);
+    if (derivedBindings.has(binding) && isGeneratedValueControl(control.type) && control.readonly !== true && attrs.readonly !== true && attrs.disabled !== true) {
+      addIssue(warnings, "AUTOFILL_OR_DERIVED_FIELD_EDITABLE", "Lookup/autofill/calculated target fields should be readonly by default unless the user is explicitly expected to override them", controlPath, {
+        control: name,
+        binding,
+        type: control.type,
+      });
+    }
   }
 
   function validateControlSchema(control, controlPath) {
@@ -874,9 +1025,11 @@ function validateDecodedDef(def, options = {}) {
       const attrs = control.attrs || {};
       const lookupPath = entry.path;
 
-      if (!control.binding || !variableById.has(control.binding)) {
+      const rowFields = entry.listContext ? rowFieldsByListVar.get(entry.listContext) : null;
+      const bindingIsRowField = rowFields && rowFields.has(control.binding);
+      if (!control.binding || (!variableById.has(control.binding) && !bindingIsRowField)) {
         addIssue(errors, "LOOKUP_BINDING_UNKNOWN", "Lookup control binding must reference variables.basic", `${lookupPath}.binding`);
-      } else {
+      } else if (variableById.has(control.binding)) {
         const variable = variableById.get(control.binding);
         if (variable.type !== "lookup") {
           addIssue(errors, "LOOKUP_BINDING_NON_LOOKUP_VARIABLE", "Lookup control should bind to a variables.basic entry with type \"lookup\"", `${lookupPath}.binding`, {
@@ -918,7 +1071,7 @@ function validateDecodedDef(def, options = {}) {
         if (!addition.FieldID) addIssue(errors, "LOOKUP_ADDITION_SOURCE_FIELD_ID_MISSING", "Lookup additional mapping must include source FieldID", `${additionPath}.FieldID`);
         if (!addition.RelationName) {
           addIssue(errors, "LOOKUP_ADDITION_TARGET_VARIABLE_MISSING", "Lookup additional mapping must include RelationName target variable", `${additionPath}.RelationName`);
-        } else if (!variableById.has(addition.RelationName)) {
+        } else if (!variableById.has(addition.RelationName) && !(rowFields && rowFields.has(addition.RelationName))) {
           addIssue(errors, "LOOKUP_ADDITION_TARGET_VARIABLE_NOT_FOUND", "Lookup additional mapping RelationName must reference variables.basic", `${additionPath}.RelationName`, {
             relationName: addition.RelationName,
           });
@@ -1042,6 +1195,20 @@ function validateDecodedDef(def, options = {}) {
         });
       }
       if (summaryEntry.binding) {
+        if (!Object.prototype.hasOwnProperty.call(summaryEntry.binding, "prefix")) {
+          addIssue(errors, "LIST_SUMMARY_BINDING_PREFIX_MISSING", "List summary binding must contain literal key prefix", `${p}.binding`);
+        } else if (summaryEntry.binding.prefix !== "__variables_") {
+          addIssue(warnings, "LIST_SUMMARY_BINDING_PREFIX_UNEXPECTED", "List summary binding prefix should normally be __variables_", `${p}.binding.prefix`, {
+            prefix: summaryEntry.binding.prefix,
+          });
+        }
+        for (const key of Object.keys(summaryEntry.binding)) {
+          if (CORRUPTED_REPLACEMENT_KEY_RE.test(key)) {
+            addIssue(errors, "LIST_SUMMARY_BINDING_CORRUPTED_PREFIX_KEY", `List summary binding contains corrupted prefix key ${key}`, `${p}.binding.${key}`, {
+              key,
+            });
+          }
+        }
         const target = summaryEntry.binding.value;
         const targetVar = variableById.get(target);
         if (!targetVar) {
