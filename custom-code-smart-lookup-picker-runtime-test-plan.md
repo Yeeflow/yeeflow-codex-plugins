@@ -2,7 +2,9 @@
 
 Scope: validate `smart-lookup-picker.tsx` when used through Yeeflow Custom Code controls in dashboard, approval-form, and data-list custom-form contexts.
 
-This plan is not yet executed. The current evidence is static export inspection only.
+Runtime baseline executed on 2026-05-18 in `https://codex.yeeflow.com/` using generated package `custom-code-smart-lookup-picker-test.v1.yap`.
+
+Result: dashboard, approval-form submit/detail, and data-list custom-form contexts passed. Public-form support remains unclaimed because no public form was generated or tested.
 
 ## Preconditions
 
@@ -13,6 +15,15 @@ This plan is not yet executed. The current evidence is static export inspection 
   - approval variables: `saveToField`, `selectedItemsField`, `newItemsField`
   - data-list fields: dedicated text fields preferred; avoid using `Title` unless intentionally testing that behavior
 - Open browser console/network logging for observable runtime errors.
+
+## Runtime Baseline Evidence
+
+| Context | Runtime result | Evidence |
+|---|---|---|
+| Dashboard | Passed | Imported `Custom Code Smart Lookup Picker Test`; opened `Smart Lookup Dashboard`; picker rendered; searching `Acme` returned `Acme Clinical Partner`; selecting it updated dashboard temp outputs to combined JSON, selected values, and empty manual values. |
+| Approval form | Passed | Opened `Smart Lookup Approval Test`; picker rendered on the submit page; searching `Beacon` returned `Beacon Research Vendor`; selection updated `Picker Combined JSON`, `Picker Selected Values`, and `Picker Manual Values`; submitted request `SLPTEST2026051700001`; request detail persisted the picker values. |
+| Data-list custom form | Passed | Opened `Smart Lookup Test Records`; New item custom form rendered the picker; searching `Acme` returned `Acme Clinical Partner`; selection updated list-bound output fields; saving created row `List picker runtime Acme` with persisted combined JSON in the list grid. |
+| Public form | Not tested | No public-form control was included in the focused runtime package. Do not claim public-form support from this baseline. |
 
 ## Test Cases
 
@@ -32,6 +43,25 @@ This plan is not yet executed. The current evidence is static export inspection 
 | SLP-012 | Error handling | Missing required config | Remove or blank `dataListId` in a focused negative test | Control shows safe incomplete-config behavior and does not crash |
 | SLP-013 | Error handling | No search result | Search a known no-result keyword | No-result text appears; no console error |
 | SLP-014 | Readonly | Readonly mode | Open any readonly/render-only context | Input is disabled or non-mutating behavior is preserved |
+
+## Executed Test Case Status
+
+| ID | Status | Notes |
+|---|---|---|
+| SLP-001 | Passed | Dashboard picker rendered. |
+| SLP-002 | Passed | Dashboard search returned `Acme Clinical Partner`. |
+| SLP-003 | Passed | Dashboard `__temp_` outputs became combined JSON, selected value array, and manual array. |
+| SLP-004 | Not run | Manual entry was not part of the focused positive baseline. |
+| SLP-005 | Passed | Approval submit-page picker rendered. |
+| SLP-006 | Passed | Approval search returned and selected `Beacon Research Vendor`. |
+| SLP-007 | Passed | Approval submit succeeded and detail view persisted mapped output values. |
+| SLP-008 | Partially covered | Submitted detail/read view showed persisted values; reviewer task interaction was not completed. |
+| SLP-009 | Passed | Data-list New item custom form rendered the picker. |
+| SLP-010 | Passed | Saved row persisted picker combined JSON in list grid. |
+| SLP-011 | Deferred | Public form not tested. |
+| SLP-012 | Not run | Negative missing-config test not executed. |
+| SLP-013 | Not run | No-result test not executed. |
+| SLP-014 | Partially covered | Approval detail rendered persisted value without editing. |
 
 ## Evidence To Capture
 

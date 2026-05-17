@@ -1,0 +1,306 @@
+{
+  "status": "pass_with_warnings",
+  "mode": "final",
+  "errors": [],
+  "warnings": [
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control flex_grid is schema-supported-unclassified; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[7]",
+      "detail": {
+        "supportLevel": "schema-supported-unclassified"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_VALUE_TYPE_MISMATCH",
+      "message": "control flex_grid.attrs.rows should match array.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[7]",
+      "detail": {
+        "propertyPath": "attrs.rows",
+        "expected": [
+          "array"
+        ],
+        "actual": "object"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control identity-picker is environment-dependent; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[7].children[1]",
+      "detail": {
+        "supportLevel": "environment-dependent"
+      }
+    },
+    {
+      "code": "AUTOFILL_OR_DERIVED_FIELD_EDITABLE",
+      "message": "Lookup/autofill/calculated target fields should be readonly by default unless the user is explicitly expected to override them",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[7].children[3]",
+      "detail": {
+        "control": "Unit Price control",
+        "binding": "UnitPrice",
+        "type": "currency"
+      }
+    },
+    {
+      "code": "CONTROL_EXPORT_BACKED_CONTROL_TYPE",
+      "message": "Control type calculated is export-backed by IT Hardware CAPEX Runtime V2 but not present in control-configurations.normalized.json; validate attrs.calculated before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[7].children[4]",
+      "detail": {
+        "type": "calculated",
+        "supportLevel": "export-backed-runtime-v2"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control percent is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[7].children[5]",
+      "detail": {
+        "supportLevel": "schema-supported-runtime-unproven"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control checkbox is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[7].children[7]",
+      "detail": {
+        "supportLevel": "schema-supported-runtime-unproven"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control daterange is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[7].children[10]",
+      "detail": {
+        "supportLevel": "schema-supported-runtime-unproven"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control richtext is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[8].children[1]",
+      "detail": {
+        "supportLevel": "schema-supported-runtime-unproven"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control file-upload is environment-dependent; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[8].children[2]",
+      "detail": {
+        "supportLevel": "environment-dependent"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[2]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control flex_grid is schema-supported-unclassified; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[7]",
+      "detail": {
+        "supportLevel": "schema-supported-unclassified"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_VALUE_TYPE_MISMATCH",
+      "message": "control flex_grid.attrs.rows should match array.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[7]",
+      "detail": {
+        "propertyPath": "attrs.rows",
+        "expected": [
+          "array"
+        ],
+        "actual": "object"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control identity-picker is environment-dependent; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[7].children[1]",
+      "detail": {
+        "supportLevel": "environment-dependent"
+      }
+    },
+    {
+      "code": "CONTROL_EXPORT_BACKED_CONTROL_TYPE",
+      "message": "Control type calculated is export-backed by IT Hardware CAPEX Runtime V2 but not present in control-configurations.normalized.json; validate attrs.calculated before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[7].children[4]",
+      "detail": {
+        "type": "calculated",
+        "supportLevel": "export-backed-runtime-v2"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control percent is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[7].children[5]",
+      "detail": {
+        "supportLevel": "schema-supported-runtime-unproven"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control checkbox is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[7].children[7]",
+      "detail": {
+        "supportLevel": "schema-supported-runtime-unproven"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control daterange is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[7].children[10]",
+      "detail": {
+        "supportLevel": "schema-supported-runtime-unproven"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control richtext is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[8].children[1]",
+      "detail": {
+        "supportLevel": "schema-supported-runtime-unproven"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control file-upload is environment-dependent; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[8].children[2]",
+      "detail": {
+        "supportLevel": "environment-dependent"
+      }
+    },
+    {
+      "code": "DESIGN_SYSTEM_RESOLVED_TOKEN_COLOR",
+      "message": "Generated approval UI contains literal hex colors that match known Yeeflow root tokens. Prefer token references where supported, but do not fail exports that store resolved values.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+      "detail": {
+        "count": 8,
+        "examples": [
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": "--c--background"
+          },
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": "--c--background"
+          },
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": "--c--background"
+          },
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": "--c--background"
+          },
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": "--c--background"
+          },
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": "--c--background"
+          },
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": "--c--background"
+          },
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": "--c--background"
+          }
+        ]
+      }
+    },
+    {
+      "code": "DESIGN_SYSTEM_ARBITRARY_COLOR_USAGE",
+      "message": "Generated approval UI contains many hard-coded hex colors. Prefer semantic Yeeflow root tokens where supported.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+      "detail": {
+        "count": 56,
+        "examples": [
+          {
+            "color": "#172033",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": null
+          },
+          {
+            "color": "#172033",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": null
+          },
+          {
+            "color": "#d8e1ee",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": null
+          },
+          {
+            "color": "#146ff6",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": null
+          },
+          {
+            "color": "#f2c36b",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": null
+          },
+          {
+            "color": "#fffaf0",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": null
+          },
+          {
+            "color": "#172033",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": null
+          },
+          {
+            "color": "#8a97aa",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2].attrs.codein-script",
+            "token": null
+          }
+        ]
+      }
+    }
+  ],
+  "placeholders": [],
+  "summary": {
+    "variables": 20,
+    "listrefs": 0,
+    "pages": 2,
+    "controls": 61,
+    "workflowNodes": 5,
+    "sequenceFlows": 4,
+    "approvalTasks": 1,
+    "contentListNodes": 1,
+    "lookupControls": 2,
+    "workflowActionConfig": {
+      "checkedNodes": 9,
+      "supportedNodes": 9,
+      "unsupportedNodes": 0,
+      "partialNodes": 0,
+      "unsafeNodes": 0
+    }
+  }
+}

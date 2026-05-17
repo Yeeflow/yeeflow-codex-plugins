@@ -1,0 +1,409 @@
+{
+  "status": "pass",
+  "mode": "generator",
+  "stage": "final",
+  "errors": [],
+  "warnings": [],
+  "dependencies": [],
+  "graph": {
+    "nodes": [
+      {
+        "id": "app:6081000000000000000",
+        "type": "app",
+        "label": "Custom Code Smart Lookup Picker Test",
+        "listId": "6081000000000000000",
+        "listSetId": "6081000000000000000",
+        "appId": 41
+      },
+      {
+        "id": "dashboard:6081000000000000001",
+        "type": "dashboard",
+        "label": "Smart Lookup Dashboard",
+        "layoutId": "6081000000000000001",
+        "listId": "6081000000000000000"
+      },
+      {
+        "id": "list:6081000000000000002",
+        "type": "dataList",
+        "label": "Smart Lookup Test Records",
+        "listId": "6081000000000000002",
+        "listSetId": "6081000000000000000",
+        "appId": 41
+      },
+      {
+        "id": "field:6081000000000000002:Title",
+        "type": "field",
+        "label": "Sample Record / Combined Output",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000002",
+        "fieldName": "Title",
+        "internalName": "SampleRecordCombinedOutput",
+        "fieldType": "Text",
+        "controlType": "input"
+      },
+      {
+        "id": "field:6081000000000000002:Text1",
+        "type": "field",
+        "label": "Description",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000003",
+        "fieldName": "Text1",
+        "internalName": "Description",
+        "fieldType": "Text",
+        "controlType": "textarea"
+      },
+      {
+        "id": "field:6081000000000000002:Text2",
+        "type": "field",
+        "label": "Category",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000004",
+        "fieldName": "Text2",
+        "internalName": "Category",
+        "fieldType": "Text",
+        "controlType": "radio"
+      },
+      {
+        "id": "field:6081000000000000002:Text3",
+        "type": "field",
+        "label": "Picker Combined JSON",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000005",
+        "fieldName": "Text3",
+        "internalName": "PickerCombinedJson",
+        "fieldType": "Text",
+        "controlType": "textarea"
+      },
+      {
+        "id": "field:6081000000000000002:Bit1",
+        "type": "field",
+        "label": "Active Request",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000006",
+        "fieldName": "Bit1",
+        "internalName": "ActiveRequest",
+        "fieldType": "Bit",
+        "controlType": "switch"
+      },
+      {
+        "id": "field:6081000000000000002:Decimal1",
+        "type": "field",
+        "label": "Quantity",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000007",
+        "fieldName": "Decimal1",
+        "internalName": "Quantity",
+        "fieldType": "Decimal",
+        "controlType": "input_number"
+      },
+      {
+        "id": "field:6081000000000000002:Decimal2",
+        "type": "field",
+        "label": "Unit Price",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000008",
+        "fieldName": "Decimal2",
+        "internalName": "UnitPrice",
+        "fieldType": "Decimal",
+        "controlType": "currency"
+      },
+      {
+        "id": "field:6081000000000000002:Decimal3",
+        "type": "field",
+        "label": "Sub total",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000009",
+        "fieldName": "Decimal3",
+        "internalName": "SubTotal",
+        "fieldType": "Decimal",
+        "controlType": "input_number"
+      },
+      {
+        "id": "field:6081000000000000002:Decimal4",
+        "type": "field",
+        "label": "Confidence",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000010",
+        "fieldName": "Decimal4",
+        "internalName": "Confidence",
+        "fieldType": "Decimal",
+        "controlType": "input_number"
+      },
+      {
+        "id": "field:6081000000000000002:Datetime1",
+        "type": "field",
+        "label": "Needed By",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000011",
+        "fieldName": "Datetime1",
+        "internalName": "NeededBy",
+        "fieldType": "Datetime",
+        "controlType": "datepicker"
+      },
+      {
+        "id": "field:6081000000000000002:Datetime2",
+        "type": "field",
+        "label": "Service Window From",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000012",
+        "fieldName": "Datetime2",
+        "internalName": "ServiceWindowFrom",
+        "fieldType": "Datetime",
+        "controlType": "datepicker"
+      },
+      {
+        "id": "field:6081000000000000002:Datetime3",
+        "type": "field",
+        "label": "Service Window To",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000013",
+        "fieldName": "Datetime3",
+        "internalName": "ServiceWindowTo",
+        "fieldType": "Datetime",
+        "controlType": "datepicker"
+      },
+      {
+        "id": "field:6081000000000000002:Text4",
+        "type": "field",
+        "label": "Related Record",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000014",
+        "fieldName": "Text4",
+        "internalName": "RelatedRecord",
+        "fieldType": "Text",
+        "controlType": "input"
+      },
+      {
+        "id": "field:6081000000000000002:Text5",
+        "type": "field",
+        "label": "Requester",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000015",
+        "fieldName": "Text5",
+        "internalName": "Requester",
+        "fieldType": "Text",
+        "controlType": "input"
+      },
+      {
+        "id": "field:6081000000000000002:Text6",
+        "type": "field",
+        "label": "Picker Selected Values",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000016",
+        "fieldName": "Text6",
+        "internalName": "PickerSelectedValues",
+        "fieldType": "Text",
+        "controlType": "textarea"
+      },
+      {
+        "id": "field:6081000000000000002:Text7",
+        "type": "field",
+        "label": "Picker Manual Values",
+        "listId": "6081000000000000002",
+        "fieldId": "6081000000000000017",
+        "fieldName": "Text7",
+        "internalName": "PickerManualValues",
+        "fieldType": "Text",
+        "controlType": "textarea"
+      },
+      {
+        "id": "customForm:6081000000000000019",
+        "type": "customForm",
+        "label": "Edit Item",
+        "layoutId": "6081000000000000019",
+        "listId": "6081000000000000002"
+      },
+      {
+        "id": "customForm:6081000000000000020",
+        "type": "customForm",
+        "label": "View Item",
+        "layoutId": "6081000000000000020",
+        "listId": "6081000000000000002"
+      },
+      {
+        "id": "page:6081000000000000001",
+        "type": "appPage",
+        "label": "Smart Lookup Dashboard",
+        "listId": "6081000000000000000",
+        "layoutId": "6081000000000000001",
+        "appId": 41
+      },
+      {
+        "id": "form:SLPTEST",
+        "type": "approvalForm",
+        "label": "Smart Lookup Approval Test",
+        "key": "SLPTEST",
+        "workflowType": 2
+      },
+      {
+        "id": "page:SLPTEST:fd666aff-5700-4d9c-81e4-3c65515ab1e8",
+        "type": "formPage",
+        "label": "Submit Smart Lookup Test",
+        "formKey": "SLPTEST",
+        "pageId": "fd666aff-5700-4d9c-81e4-3c65515ab1e8",
+        "pageurl": null
+      },
+      {
+        "id": "page:SLPTEST:af79ff12-dac2-41a5-ace6-234d484620e0",
+        "type": "formPage",
+        "label": "Review Smart Lookup Test",
+        "formKey": "SLPTEST",
+        "pageId": "af79ff12-dac2-41a5-ace6-234d484620e0",
+        "pageurl": null
+      },
+      {
+        "id": "control:fd666aff-5700-4d9c-81e4-3c65515ab1e8:afc1-control-RelatedRecord-submit",
+        "type": "lookupControl",
+        "label": "Related Record",
+        "form": "Smart Lookup Approval Test",
+        "pageId": "fd666aff-5700-4d9c-81e4-3c65515ab1e8",
+        "binding": "RelatedRecord",
+        "multiple": false
+      },
+      {
+        "id": "control:af79ff12-dac2-41a5-ace6-234d484620e0:afc1-control-RelatedRecord-review",
+        "type": "lookupControl",
+        "label": "Related Record",
+        "form": "Smart Lookup Approval Test",
+        "pageId": "af79ff12-dac2-41a5-ace6-234d484620e0",
+        "binding": "RelatedRecord",
+        "multiple": false
+      }
+    ],
+    "edges": [
+      {
+        "from": "app:6081000000000000000",
+        "to": "page:6081000000000000001",
+        "type": "rootNavigation",
+        "label": "Smart Lookup Dashboard",
+        "navType": "103"
+      },
+      {
+        "from": "app:6081000000000000000",
+        "to": "list:6081000000000000002",
+        "type": "rootNavigation",
+        "label": "Smart Lookup Test Records",
+        "navType": "1"
+      },
+      {
+        "from": "app:6081000000000000000",
+        "to": "form:SLPTEST",
+        "type": "rootNavigation",
+        "label": "Smart Lookup Approval Test",
+        "navType": "105"
+      },
+      {
+        "from": "form:SLPTEST",
+        "to": "page:SLPTEST:fd666aff-5700-4d9c-81e4-3c65515ab1e8",
+        "type": "formPage",
+        "label": "uses page"
+      },
+      {
+        "from": "form:SLPTEST",
+        "to": "page:SLPTEST:af79ff12-dac2-41a5-ace6-234d484620e0",
+        "type": "formPage",
+        "label": "uses page"
+      },
+      {
+        "from": "form:SLPTEST",
+        "to": "page:SLPTEST:fd666aff-5700-4d9c-81e4-3c65515ab1e8",
+        "type": "taskPageReference",
+        "label": "task page"
+      },
+      {
+        "from": "form:SLPTEST",
+        "to": "page:SLPTEST:af79ff12-dac2-41a5-ace6-234d484620e0",
+        "type": "taskPageReference",
+        "label": "task page"
+      },
+      {
+        "from": "form:SLPTEST",
+        "to": "list:6081000000000000002",
+        "type": "contentListTarget",
+        "label": "ContentList target",
+        "form": "Smart Lookup Approval Test",
+        "nodeId": "afc1-node-persist-0003",
+        "targetListId": "6081000000000000002"
+      },
+      {
+        "from": "form:SLPTEST",
+        "to": "control:fd666aff-5700-4d9c-81e4-3c65515ab1e8:afc1-control-RelatedRecord-submit",
+        "type": "formControl",
+        "label": "contains control"
+      },
+      {
+        "from": "control:fd666aff-5700-4d9c-81e4-3c65515ab1e8:afc1-control-RelatedRecord-submit",
+        "to": "list:6081000000000000002",
+        "type": "lookupControlSource",
+        "label": "lookup source list",
+        "sourceListId": "6081000000000000002",
+        "form": "Smart Lookup Approval Test"
+      },
+      {
+        "from": "control:fd666aff-5700-4d9c-81e4-3c65515ab1e8:afc1-control-RelatedRecord-submit",
+        "to": "field:6081000000000000002:Title",
+        "type": "lookupDisplayField",
+        "label": "lookup display field",
+        "path": "pageurls[0].formdef$.children[0].children[0].children[7].children[11]",
+        "form": "Smart Lookup Approval Test",
+        "sourceListId": "6081000000000000002"
+      },
+      {
+        "from": "form:SLPTEST",
+        "to": "control:af79ff12-dac2-41a5-ace6-234d484620e0:afc1-control-RelatedRecord-review",
+        "type": "formControl",
+        "label": "contains control"
+      },
+      {
+        "from": "control:af79ff12-dac2-41a5-ace6-234d484620e0:afc1-control-RelatedRecord-review",
+        "to": "list:6081000000000000002",
+        "type": "lookupControlSource",
+        "label": "lookup source list",
+        "sourceListId": "6081000000000000002",
+        "form": "Smart Lookup Approval Test"
+      },
+      {
+        "from": "control:af79ff12-dac2-41a5-ace6-234d484620e0:afc1-control-RelatedRecord-review",
+        "to": "field:6081000000000000002:Title",
+        "type": "lookupDisplayField",
+        "label": "lookup display field",
+        "path": "pageurls[1].formdef$.children[0].children[0].children[7].children[11]",
+        "form": "Smart Lookup Approval Test",
+        "sourceListId": "6081000000000000002"
+      },
+      {
+        "from": "dashboard:6081000000000000001",
+        "to": "list:6081000000000000002",
+        "type": "dashboardDataSource",
+        "label": "dashboard data source",
+        "sourceId": "6081000000000000002"
+      }
+    ]
+  },
+  "summary": {
+    "nodes": 27,
+    "edges": 15,
+    "lists": 1,
+    "fields": 16,
+    "approvalForms": 1,
+    "listWorkflows": 0,
+    "reports": 0,
+    "dashboards": 1,
+    "agents": 0,
+    "connections": 0,
+    "lookups": 2,
+    "contentListEdges": 1,
+    "queryDataEdges": 0,
+    "unresolvedEdges": 0,
+    "cycles": 0,
+    "workflowActionConfig": {
+      "checkedNodes": 9,
+      "supportedNodes": 9,
+      "unsupportedNodes": 0,
+      "partialNodes": 0,
+      "unsafeNodes": 0
+    },
+    "replaceIds": 28
+  },
+  "inputType": "wrapped-yap"
+}

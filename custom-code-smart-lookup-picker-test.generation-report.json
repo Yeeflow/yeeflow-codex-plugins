@@ -1,0 +1,17 @@
+{
+  "status": "pass",
+  "title": "Custom Code Smart Lookup Picker Test",
+  "outputs": {
+    "resource": "custom-code-smart-lookup-picker-test.resource.json",
+    "data": "custom-code-smart-lookup-picker-test.app-def.json"
+  },
+  "source": "Approval Form Controls Test v1.generated.yap",
+  "listId": "6081000000000000002",
+  "replaceIds": 28,
+  "contexts": [
+    "dashboard",
+    "approval-form",
+    "data-list-form"
+  ],
+  "publicFormSupport": "not included"
+}
