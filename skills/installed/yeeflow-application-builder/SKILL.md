@@ -37,6 +37,11 @@ Think like an experienced business consultant and Yeeflow solution architect:
 - when requirements include requester/applicant/employee identity, decide whether proxy submission is allowed; if the applicant field is editable, its change action must rerun profile snapshot and dependent policy/quota calculations
 - when requirements include quota, benefit eligibility, or tenure rules, decide the quota cycle, occupation timing, release behavior, and eligibility source before generation
 - every generated data list must have an active runtime purpose in v1 or be explicitly deferred out of the package
+- master/reference data lists named in requirements must be real active generated lists with fields, views, current-standard custom forms, and sample/reference rows when forms, lookups, dashboards, or workflows depend on them; do not leave them as placeholder concepts
+- line-item planning must explicitly choose one persistence model: workflow sublist summary only, direct child-row persistence, or a separate transaction item list with its own runtime proof and reporting purpose
+- availability, stock, booking, quota, or capacity logic must be labeled honestly as manual review only, query-based availability, or inventory/reservation based; never present review routing as true stock control
+- generated dashboards must be meaningful enough for the app's v1 workflow while staying inside runtime-proven dashboard patterns
+- runtime-unproven features must be marked as required focused proof items or deferred with fallback behavior before final package claims
 - workflow routing variables must be required, auto-derived, or protected by fallback branches so no approval path can dead-end on empty/unexpected values
 - decide package type before generation: output `.yap` for a new/cloned application, and output `.yapk` only for an existing-app upgrade from a Yeeflow Version management baseline package
 - for `.yapk` upgrades, preserve app identity and stable object IDs; do not apply fresh-ID `.yap` import-generation rules unless adding newly proven resources
@@ -76,6 +81,10 @@ Current `.yapk` limitation: studied Version management packages store `Resource`
 
 Also load `references/business-solution-design-principles.md` before designing the app structure.
 For generation-readiness reviews, also load `references/business-decision-gates.md`, `references/application-design-quality-gates.md`, and `references/application-planning-key-design-decisions.md`.
+During final validation and runtime planning, also use the active workspace checklists when present:
+
+- `docs/yeeflow-runtime-test-checklist-template.md`
+- `docs/yeeflow-application-generation-review-checklist.md`
 
 ## Business Decision Gates
 
@@ -203,6 +212,10 @@ Use the current Yeeflow generation foundation by default:
 - if quota is occupied on submission, create the usage/occupation record when the workflow starts, include in-progress and approved/confirmed records in future quota checks, and release/update the matching record on rejection or final approval using a stored request/form/workflow correlation key
 - employee-anniversary quota cycles should use a numeric cycle field when comparing usage records; for boarding-year eligibility, `ApplicantBoardingYears = dateDiff(ApplicantBoardingDate, now(), "year", [])`, with `0` meaning no family quota and values greater than `0` meaning eligible
 - configuration lists such as attachment requirement rules must be read by form actions, workflows, dashboards, or reports in v1; otherwise remove/defer them instead of shipping dead configuration
+- master data lists such as Equipment Catalog, Visitors, Departments, Products, or Resource Catalog must be generated as usable runtime lists when lookups/forms depend on them; include maintainable sample/reference rows for local validation unless the dependency is deliberately external and mapped
+- do not ship generated data lists that only make the app plan look complete; each list must be opened by navigation/dashboard, queried by form actions, written by workflow, or explicitly identified as a maintained master/reference list
+- request line items must declare whether they are stored only as a parent readable summary, stored as direct child rows, or stored in a separate transaction item list; direct child-row persistence remains runtime-proof scoped unless a current baseline proves it for the target pattern
+- review-only availability decisions may route to an admin/security/equipment reviewer, but they are not inventory control. True stock/availability requires query-backed stock status or reservation/decrement/update behavior with focused runtime proof
 - workflow branches from approval/review nodes must cover normal, exception, empty, and unexpected routing-variable cases; unknown policy values should route to review/fallback, not to a dead end
 - core policy checks such as quota validation should run automatically on submit, not only through a manual check button
 - submit guard actions should prove both the invalid/warning path and the valid path; conditional warning/confirm/check steps before submit usually need step-level `continue: true` so valid requests skip the warning and still reach Submit form

@@ -54,7 +54,8 @@ Employee-anniversary example:
 
 When users can request multiple products, services, benefits, or items:
 
-- design selection as a sublist/listref
+- first choose the persistence model: workflow sublist summary only, direct child-row persistence, or a separate transaction item list
+- design selection as a sublist/listref when users need to enter multiple rows in one request
 - use a lookup as the first column
 - autofill product type, name, price, and other derived fields
 - make autofilled and calculated fields readonly
@@ -62,6 +63,27 @@ When users can request multiple products, services, benefits, or items:
 - bind row subtotal summary to a top-level total variable
 - use the total variable for quota, workflow routing, validation, and persistence
 - persist a readable product summary when direct row persistence is not proven
+- if row-level reporting is required, model a separate transaction item list and treat row creation/update as a focused runtime proof item before claiming it as complete
+
+## Master / Reference Lists
+
+When a requirement names a catalog, visitor directory, department list, product list, equipment list, cost center list, or other master data:
+
+- decide whether it is generated as a real maintained v1 list, mapped as an external dependency, or deferred
+- generate usable fields, views, current-standard Edit Item and View Item custom forms, and sample/reference rows when forms or lookups depend on the list
+- do not use free-text fields where the business process requires controlled master-data selection
+- do not leave master data as a placeholder concept in the plan while the generated app contains only transaction lists
+- confirm which role maintains the list and which form, dashboard, or workflow reads it
+
+## Availability / Stock / Capacity Model
+
+For equipment borrowing, inventory, room booking, visitor capacity, quota, or similar availability-sensitive apps:
+
+- classify availability as manual review only, query-based availability, or inventory/reservation based
+- manual review may be valid for v1, but label it as review-only routing and avoid stock-control language
+- query-based availability must read a maintained master/reference list or transaction list and show how the query result affects the form or workflow
+- reservation/inventory control must define create/update/decrement/release timing and a runtime proof plan before it is treated as complete
+- if automatic reservation is not proven, include a reviewer fallback and document the limitation
 
 ## Data List Runtime Purpose
 

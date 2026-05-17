@@ -49,6 +49,14 @@ Extract:
 - integrations, if any
 - risky, unsupported, or deferred features
 
+For master/reference data, line items, and availability-sensitive processes, explicitly identify:
+
+- whether each master list is a real maintained v1 list, an external dependency, or deferred out of the package
+- whether line items are persisted as workflow sublist summary only, direct child-row records, or a separate transaction item list
+- whether availability/stock/capacity checks are manual review only, query-based availability, or inventory/reservation based
+- which dashboard queues/KPIs are meaningful for v1 and which dashboard ideas are deferred
+- which features are runtime-unproven and require focused proof before being claimed as complete
+
 If supplied exports or manually improved samples contain reusable patterns, study them read-only before generation. Preserve original files.
 
 ## 2. Initial Business Analysis
@@ -96,7 +104,13 @@ The plan/spec must also make key design decisions explicit when relevant:
 - applicant profile snapshot and readonly/persistence rules
 - quota cycle, occupation timing, release behavior, and eligibility source
 - multiple product/item sublist strategy
+- master/reference list runtime purpose and sample/reference data needs
+- line-item persistence strategy: sublist summary only, direct child rows, or separate transaction item list
+- availability/stock/capacity strategy: manual review, query-based, or reservation/inventory update
+- dashboard scope: minimal shell, meaningful v1 queues/KPIs, or deferred
 - form-action recalculation triggers for page load, driver-field change, and submit
+
+If the plan uses manual reviewer judgment for availability, label it as review-only and do not describe it as stock decrement, reservation, or true inventory control.
 
 Validate the spec with a JSON parse check before using it for generation. The spec should include a package-target decision (`newApplication` / `.yap` or `existingApplicationUpgrade` / `.yapk`) when the request may apply to an already imported app.
 
@@ -205,6 +219,9 @@ Before generation, confirm:
 - mandatory v1 business capabilities are not misclassified as v2 enhancements
 - technical assumptions have validation/fallback plans
 - approval form design-quality gates are represented
+- generated resource inventory matches required v1 scope, especially master/reference lists, line-item storage, and dashboard pages
+- every generated data list has standalone validation coverage, including `validate-ydl-list` when extracted from an app package
+- runtime-unproven features are marked as focused proof items or documented limitations
 - the JSON spec parses
 
 Stop if any required business decision gate remains unanswered.

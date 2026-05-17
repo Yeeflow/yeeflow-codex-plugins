@@ -8,6 +8,11 @@ Use this checklist before packaging, after local validation, and after runtime t
 - [ ] For new/cloned `.yap`, the package uses a fresh ID family and a fresh safe FlowKey/form key.
 - [ ] For existing-app upgrades, `.yapk` is treated as read-only/server-generated unless a valid Yeeflow Version management baseline and signing/encoding proof exists.
 - [ ] The app does not include dead configuration lists; every v1 list is used by forms, workflow, dashboard, reports, or documented runtime proof.
+- [ ] Master/reference lists named in the requirement are real active lists, not placeholder concepts. Each one has an owner, fields, views/forms, and sample/reference rows when lookups depend on it.
+- [ ] Line items have an explicit persistence model: workflow sublist summary only, direct child-row persistence, or a separate transaction item list.
+- [ ] Availability/stock/capacity logic is clearly classified as manual review only, query-based availability, or inventory/reservation based.
+- [ ] Review-only availability is not described as true stock decrement, reservation, or inventory control.
+- [ ] Dashboard scope is meaningful for v1 and runtime-safe, or explicitly deferred.
 - [ ] Business-critical capabilities are either implemented in v1 or marked as required runtime proof items with fallback behavior.
 
 ## 2. Local Validation Gate
@@ -16,6 +21,11 @@ Use this checklist before packaging, after local validation, and after runtime t
 - [ ] App graph validates.
 - [ ] Approval form definitions validate.
 - [ ] Data list definitions validate.
+- [ ] Every generated child data list also passes standalone `validate-ydl-list`; app-level package validation alone is not accepted.
+- [ ] Duplicate field names/internal names are absent.
+- [ ] Lookup targets, display fields, dependency maps, and sample lookup target rows resolve.
+- [ ] Referenced master/reference lists are present and non-empty when form lookup selection is part of v1.
+- [ ] Generated data-list custom forms include current-standard `Edit Item` and `View Item`; New/Edit maps to `Edit Item`, View maps to `View Item`.
 - [ ] Workflow action configuration validates.
 - [ ] Expression smoke checks cover generated formulas, query filters, workflow conditions, and sublist summaries where applicable.
 - [ ] The package is not sent to Yeeflow runtime testing until local validation passes, unless the task is explicitly an isolation/proof experiment.

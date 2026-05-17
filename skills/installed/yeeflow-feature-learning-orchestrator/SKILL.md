@@ -16,6 +16,8 @@ This is a learning orchestration skill. It does not replace:
 
 Use generator and builder skills for proven generation work. Use this skill when a feature area is not yet proven or when a new resource pattern must be learned from real exports.
 
+When reviewing black-box generated-app self-tests, treat the generated apps as evidence only. Do not merge self-test packages as product baselines and do not promote raw `.yap`, `.ydl`, `.ywf`, or `.yapk` artifacts into reusable skills. Classify each finding as a reusable skill/generator rule, validator rule, application-specific design choice, acceptable limitation, or focused runtime-proof need before updating docs, validators, or installed skills.
+
 ## Skill Boundary
 
 Use `yeeflow-feature-learning-orchestrator` for training Codex on new Yeeflow platform capabilities:
@@ -30,6 +32,7 @@ Use `yeeflow-feature-learning-orchestrator` for training Codex on new Yeeflow pl
 - updating docs, validators, and skills
 - creating focused runtime proof apps for unknown platform behavior
 - promoting proven learning into generator skills
+- consolidating black-box self-test findings into reusable generator, validator, checklist, and skill guidance without adopting the self-test app as a baseline
 
 Use `yeeflow-application-builder` when the user provides business requirements and asks Codex to build, implement, create, generate, test, or output a real Yeeflow application/package/`.yap`. The builder skill owns the Requirement-to-YAP lifecycle and business solution design process.
 

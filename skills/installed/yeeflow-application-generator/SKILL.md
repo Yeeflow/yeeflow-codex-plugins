@@ -20,11 +20,12 @@ For component details, also use the installed skills:
 1. Decompose the app requirement into resources, relationships, and stop conditions.
 2. Create a normalized app spec before generating package JSON.
 3. Generate or patch decoded `.yap` Resource/Data JSON only after the graph is clear.
-4. Validate child lists and approval forms where practical.
-5. Validate the assembled app with `scripts/validate-yap-package.js`.
-6. Validate app relationships with `scripts/validate-yap-graph.js`.
-7. Build the wrapper with `scripts/build-yap-wrapper.js` only after validation passes.
-8. Report sandbox import checklist and require export-back learning before production-like use.
+4. Validate every generated child data list with `scripts/validate-ydl-list.js --mode generator --stage final`, using an app/dependency map when lookup relationships require it. App-level validation is not enough.
+5. Validate child approval forms where practical.
+6. Validate the assembled app with `scripts/validate-yap-package.js`.
+7. Validate app relationships with `scripts/validate-yap-graph.js`.
+8. Build the wrapper with `scripts/build-yap-wrapper.js` only after validation passes.
+9. Report sandbox import checklist and require export-back learning before production-like use.
 
 For package type selection, use `docs/yeeflow-application-package-generation-rules.md` when present.
 
@@ -45,6 +46,15 @@ Use v1 for apps like `Department Access Management`:
 - workflow action validation against the normalized node/action configuration reference
 - generated multi-type approval/list fields, including text, number, radio/dropdown, switch, and conditional display
 - simple root navigation and one Type `103` app page
+
+Generated child data lists must also be valid as standalone extracted list definitions:
+
+- include required list type metadata such as `ListModel.ListType` or a wrapper `MainListType`
+- keep `FieldName` and `InternalName` unique
+- resolve local lookup target lists and display fields
+- provide valid referenced sample rows for lookup sample values
+- include usable master/reference sample data when approval forms or dashboards depend on those lists
+- include current-standard `Edit Item` and `View Item` custom forms; map New/Edit to `Edit Item` and View to `View Item`
 
 ## Generated App UI/UX Standard
 
@@ -116,7 +126,12 @@ Keep these out of scope in v1 unless the user asks for research only:
 Stop before final `.yap` build if any of these are true:
 
 - unresolved resource graph
+- any generated child data list fails standalone `validate-ydl-list`
+- duplicate data-list field `FieldName` or `InternalName`
+- generated main/child lists are missing required list type metadata
 - missing lookup target list or display/search field
+- lookup target list, display field, dependency map, or sample lookup target row is unresolved
+- a form lookup depends on a missing or empty master/reference list without an explicit external-data plan
 - missing `ContentList` target list or target field
 - invalid or incomplete root app shell
 - missing root navigation or app page

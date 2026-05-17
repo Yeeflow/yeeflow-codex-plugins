@@ -41,6 +41,13 @@ Prefer Yeeflow native configuration in this order:
 7. AI actions
 8. custom code control
 
+When an approval form depends on master/reference data, treat the dependency as part of the form design:
+
+- lookup controls must resolve to a real local generated list or an explicit external dependency map
+- target display fields must exist
+- local target lists should include sample/reference rows when runtime lookup selection is part of the smoke test
+- do not use free-text controls as a substitute for controlled catalog/visitor/product/equipment selection when the business process requires a master-data list
+
 Use custom code only when the requirement is justified client-side behavior that native Yeeflow features cannot model safely.
 
 ## Generated Approval Form UI/UX Standard

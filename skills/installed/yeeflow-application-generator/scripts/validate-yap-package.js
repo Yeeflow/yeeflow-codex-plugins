@@ -314,6 +314,22 @@ function listIdOf(item) {
   return safeString(item && item.ListModel && item.ListModel.ListID);
 }
 
+function parsedFieldRules(field) {
+  if (!field) return {};
+  if (isObject(field.Rules)) return field.Rules;
+  return tryParseJson(field.Rules) || {};
+}
+
+function lookupSampleValues(value, multiple) {
+  if (value === null || value === undefined || value === "") return [];
+  if (Array.isArray(value)) return value.map(safeString).filter(Boolean);
+  if (multiple && typeof value === "string") {
+    const parsed = tryParseJson(value);
+    if (Array.isArray(parsed)) return parsed.map(safeString).filter(Boolean);
+  }
+  return [safeString(value)].filter(Boolean);
+}
+
 function listSetIdOf(item, rootListSetId) {
   const list = item && item.ListModel ? item.ListModel : {};
   const candidates = [list.ListSetID, list.ListSetId, list.ListSiteID, list.CustomType, rootListSetId];
@@ -438,6 +454,7 @@ function validate(inputPath, mode, stage) {
   validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList, report, resource);
   validateReplaceIds(replaceIds, localIds, report);
   validateForms(data, listsById, fieldsByList, replaceIds, localIds, report);
+  validateGeneratedListRuntimeUsage(data, report);
   validateReportsDashboardsModules(data, listsById, fieldsByList, replaceIds, localIds, report);
   validateLookupRelationships(listsById, fieldsByList, report);
   validateSensitiveResources(data, report);
@@ -921,6 +938,9 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   } else {
     if (!listId) issue(report, "error", "CHILD_LISTID_MISSING", "Child ListID is required.", { path: `${pathPrefix}.ListModel.ListID`, title });
     if (!title) issue(report, "warning", "CHILD_TITLE_MISSING", "Child resource title is missing.", { path: `${pathPrefix}.ListModel.Title`, listId });
+    if (resourceType === "data list" && list.ListType === undefined) {
+      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "MAIN_LIST_TYPE_MISSING", "Generated child data lists should include ListModel.ListType so extracted standalone list validation does not fail.", { path: `${pathPrefix}.ListModel.ListType`, title, listId });
+    }
   }
 
   if (listId) {
@@ -947,7 +967,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
       fieldsByName.set(fieldName, field);
     }
     if (internalName) {
-      if (fieldInternal.has(internalName)) issue(report, "warning", "FIELD_INTERNAL_NAME_DUPLICATE", "Duplicate InternalName in resource.", { list: title, internalName });
+      if (fieldInternal.has(internalName)) issue(report, "error", "DUPLICATE_INTERNAL_NAME", "Duplicate InternalName in resource; generated data lists must use unique internal field names.", { list: title, internalName });
       fieldInternal.add(internalName);
       fieldsByName.set(internalName, field);
     }
@@ -994,6 +1014,22 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
         const assignedLayoutId = safeString(listLayoutView[key]);
         if (assignedLayoutId && !layoutIds.has(assignedLayoutId)) {
           issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "LIST_LAYOUTVIEW_FORM_REFERENCE_UNRESOLVED", "ListModel.LayoutView add/edit/view points to a layout ID that does not belong to this list.", { list: title, key, assignedLayoutId });
+        }
+      }
+      if (resourceType === "data list" && report.mode === "generator") {
+        const customFormsByTitle = new Map(layouts.filter((layout) => Number(layout.Type) === 1 && layout.Title).map((layout) => [safeString(layout.Title).toLowerCase(), layout]));
+        const editLayout = customFormsByTitle.get("edit item");
+        const viewLayout = customFormsByTitle.get("view item");
+        if (!editLayout) issue(report, "warning", "UI_STANDARD_EDIT_ITEM_FORM_MISSING", "Generated data lists should include a current-standard custom form titled \"Edit Item\".", { list: title, listId });
+        if (!viewLayout) issue(report, "warning", "UI_STANDARD_VIEW_ITEM_FORM_MISSING", "Generated data lists should include a current-standard custom form titled \"View Item\".", { list: title, listId });
+        if (editLayout && safeString(listLayoutView.add) !== safeString(editLayout.LayoutID)) {
+          issue(report, "warning", "UI_STANDARD_NEW_NOT_USING_EDIT_ITEM_FORM", "Generated data-list New item display setting should use the Edit Item custom form.", { list: title, listId, expectedLayoutId: editLayout.LayoutID, actualLayoutId: listLayoutView.add });
+        }
+        if (editLayout && safeString(listLayoutView.edit) !== safeString(editLayout.LayoutID)) {
+          issue(report, "warning", "UI_STANDARD_EDIT_NOT_USING_EDIT_ITEM_FORM", "Generated data-list Edit item display setting should use the Edit Item custom form.", { list: title, listId, expectedLayoutId: editLayout.LayoutID, actualLayoutId: listLayoutView.edit });
+        }
+        if (viewLayout && safeString(listLayoutView.view) !== safeString(viewLayout.LayoutID)) {
+          issue(report, "warning", "UI_STANDARD_VIEW_NOT_USING_VIEW_ITEM_FORM", "Generated data-list View item display setting should use the View Item custom form.", { list: title, listId, expectedLayoutId: viewLayout.LayoutID, actualLayoutId: listLayoutView.view });
         }
       }
     }
@@ -1223,6 +1259,7 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     if (!def) return;
     if (def.defkey && key && String(def.defkey) !== key) issue(report, "warning", "FORM_DEFKEY_MISMATCH", "Form Key and decoded Def defkey differ.", { form: formName, key, defkey: def.defkey });
     if (approvalLike) validateApprovalDef(def, form, report);
+    validateFormLookupControls(def, form, listsById, fieldsByList, report);
     validateWorkflowGraph(def, form, report);
     validateWorkflowActionConfigurations(def, form, report);
     validateWorkflowReferences(def, form, listsById, fieldsByList, report);
@@ -1230,6 +1267,39 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "HttpRequest")) issue(report, "dependency", "HTTP_REQUEST_NODE_PRESENT", "HTTP request node present; external connection/credential dependency must be resolved.", { form: formName, key });
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "GenerateDocument")) issue(report, "dependency", "GENERATE_DOCUMENT_NODE_PRESENT", "Document generation node present; template/library dependencies must be resolved.", { form: formName, key });
   });
+}
+
+function validateFormLookupControls(def, form, listsById, fieldsByList, report) {
+  const severity = report.mode === "generator" && report.stage === "final" ? "error" : "warning";
+  for (const page of asArray(def && def.pageurls)) {
+    const formdef = typeof page.formdef === "string" ? tryParseJson(page.formdef) : page.formdef;
+    asArray(formdef && formdef.children).forEach((child, childIndex) => {
+      walkControls(child, (control, pointer) => {
+        if (control.type !== "lookup") return;
+        const attrs = control.attrs || {};
+        const listId = safeString(attrs.listid || attrs.ListID || attrs.data && attrs.data.list && attrs.data.list.ListID);
+        const displayField = safeString(attrs.listfield || attrs.displayfield || attrs.DisplayField || attrs.data && attrs.data.listfield);
+        const location = `Data.Forms[${safeString(form.Key || form.Name)}].pageurls[${safeString(page.id || page.title)}].formdef.children[${childIndex}]${pointer.slice(1)}`;
+        if (!listId) {
+          issue(report, severity, "FORM_LOOKUP_TARGET_LISTID_MISSING", "Approval-form lookup control should declare target list metadata.", { form: form.Name, page: page.title || page.id, location, label: control.label || control.nv_label || null });
+          return;
+        }
+        const target = listsById.get(listId);
+        if (!target) {
+          issue(report, severity, "FORM_LOOKUP_TARGET_UNRESOLVED", "Approval-form lookup control references a master/reference list not included in the package.", { form: form.Name, page: page.title || page.id, location, listId, label: control.label || control.nv_label || null });
+          return;
+        }
+        const sampleCount = target.item && target.item.ListDatas && isObject(target.item.ListDatas) ? Object.keys(target.item.ListDatas).length : 0;
+        if (!sampleCount) {
+          issue(report, "warning", "FORM_LOOKUP_TARGET_LIST_EMPTY", "Approval-form lookup target list is included but has no sample/reference rows; runtime lookup selection may be empty until data is maintained.", { form: form.Name, page: page.title || page.id, location, list: target.title, listId });
+        }
+        const targetFields = fieldsByList.get(listId) || new Map();
+        if (displayField && !targetFields.has(displayField)) {
+          issue(report, severity, "FORM_LOOKUP_DISPLAY_FIELD_NOT_FOUND", "Approval-form lookup display field does not resolve on the target list.", { form: form.Name, page: page.title || page.id, location, list: target.title, listId, displayField });
+        }
+      });
+    });
+  }
 }
 
 function validateApprovalDef(def, form, report) {
@@ -1341,6 +1411,81 @@ function validateWorkflowGraph(def, form, report) {
       if (id && !ids.has(id)) issue(report, "warning", "WORKFLOW_INCOMING_SOURCE_NOT_FOUND", "Workflow incoming reference does not resolve.", { form: form.Name, node: shapeId(shape), incoming: id });
     }
   });
+  const flowsById = new Map(shapes.filter((shape) => shapeType(shape) === "SequenceFlow").map((shape) => [shapeId(shape), shape]));
+  shapes.forEach((shape) => {
+    if (shapeType(shape) !== "MultiAssignmentTask") return;
+    const outgoingIds = asArray(shape.outgoing).map(refId).filter(Boolean);
+    if (outgoingIds.length < 2) return;
+    const outgoingFlows = outgoingIds.map((id) => flowsById.get(id)).filter(Boolean);
+    const conditionBlob = JSON.stringify(outgoingFlows.map((flow) => flow.properties && flow.properties.conditioninfo || []));
+    if (conditionBlob.includes("HasCustomPackageProduct")) {
+      const hasStandardNo = conditionBlob.includes("Has Custom Package Product") && conditionBlob.includes("s.=") && conditionBlob.includes("No");
+      const hasFallbackNotNo = conditionBlob.includes("Has Custom Package Product") && conditionBlob.includes("s.!=") && conditionBlob.includes("No");
+      if (hasStandardNo && !hasFallbackNotNo) {
+        issue(report, "warning", "WORKFLOW_BRANCH_CUSTOM_PACKAGE_FALLBACK_MISSING", "Workflow branches on HasCustomPackageProduct should include a fallback for Yes, empty, or unexpected values, typically routing to Finance/Benefits Review.", { form: form.Name, node: shape.properties && shape.properties.name || shapeId(shape) });
+      }
+    }
+  });
+}
+
+function validateGeneratedListRuntimeUsage(data, report) {
+  const listTitles = new Map();
+  asArray(data && data.Childs).forEach((child) => {
+    const list = child && child.ListModel ? child.ListModel : {};
+    const id = safeString(list.ListID);
+    const title = safeString(list.Title);
+    if (id && title) listTitles.set(id, title);
+  });
+  if (!listTitles.size) return;
+  const reads = new Map();
+  const writes = new Map();
+  const edits = new Map();
+  for (const form of asArray(data && data.Forms)) {
+    const def = parseDefResource(form, report, -1);
+    if (!def) continue;
+    for (const shape of collectShapes(def)) {
+      if (shapeType(shape) === "ContentList") {
+        const props = shape.properties || {};
+        const id = safeString(props.listid || props.ListID);
+        if (!id) continue;
+        writes.set(id, (writes.get(id) || 0) + 1);
+        if (["edit", "remove"].includes(safeString(props.type))) edits.set(id, (edits.get(id) || 0) + 1);
+      }
+    }
+    for (const page of asArray(def.pageurls)) {
+      const formdef = typeof page.formdef === "string" ? tryParseJson(page.formdef) : page.formdef;
+      for (const action of asArray(formdef && formdef.actions)) {
+        for (const step of asArray(action && action.steps)) {
+          if (step && step.type === "querydata") {
+            const ref = step.attrs && step.attrs.querydata_list;
+            const id = safeString(ref && (ref.ListID || ref.listid));
+            if (id) reads.set(id, (reads.get(id) || 0) + 1);
+          }
+        }
+      }
+    }
+  }
+  for (const [id, title] of listTitles.entries()) {
+    const businessConfigLike = /(Requirement Rules|Configuration|Rules)$/i.test(title);
+    const usageLike = /(Quota Usage|Usage History|Usage)$/i.test(title);
+    if ((businessConfigLike || usageLike) && !reads.has(id) && !writes.has(id)) {
+      issue(report, "warning", "GENERATED_LIST_UNUSED_RUNTIME_PURPOSE", "Generated configuration/usage list has no detected form-action read or workflow ContentList write/update. Use it in v1 or defer it out of the package.", { list: title, listId: id });
+    }
+    if (/Attachment Requirement Rules/i.test(title) && !reads.has(id)) {
+      issue(report, "warning", "ATTACHMENT_RULES_NOT_READ_BY_FORM_ACTION", "Attachment Requirement Rules exists but no Query data form action reads it; prefer using it for guidance/validation or defer the list.", { list: title, listId: id });
+    }
+    if (/Family Quota Usage/i.test(title)) {
+      if (!writes.has(id)) {
+        issue(report, "warning", "FAMILY_QUOTA_USAGE_NOT_WRITTEN", "Family Quota Usage exists but no workflow ContentList write/update targets it.", { list: title, listId: id });
+      }
+      if (!reads.has(id)) {
+        issue(report, "warning", "FAMILY_QUOTA_USAGE_NOT_READ_BY_QUOTA_CHECK", "Family Quota Usage should be read by quota-check Query data actions.", { list: title, listId: id });
+      }
+      if (!edits.has(id)) {
+        issue(report, "warning", "FAMILY_QUOTA_USAGE_RELEASE_NOT_MODELED", "Family Quota Usage should model approval confirmation or rejection release through ContentList edit/remove when runtime-safe.", { list: title, listId: id });
+      }
+    }
+  }
 }
 
 function validateWorkflowActionConfigurations(def, form, report) {
@@ -1429,7 +1574,7 @@ function validateLookupRelationships(listsById, fieldsByList, report) {
   for (const list of listsById.values()) {
     const fields = asArray(list.item.Defs);
     for (const field of fields) {
-      const rules = tryParseJson(field.Rules) || {};
+      const rules = parsedFieldRules(field);
       if (normalizeType(field) !== "lookup" && !rules.listid && !rules.listfield) continue;
       report.summary.lookupRelationships += 1;
       const targetListId = safeString(rules.listid || rules.ListID);
@@ -1442,9 +1587,32 @@ function validateLookupRelationships(listsById, fieldsByList, report) {
         issue(report, report.mode === "generator" ? "error" : "dependency", "LOOKUP_TARGET_UNRESOLVED", "Lookup target list does not resolve inside package.", { list: list.title, field: field.DisplayName || field.FieldName, targetListId });
         continue;
       }
+      const target = listsById.get(targetListId);
+      const targetRecords = target.item && target.item.ListDatas && isObject(target.item.ListDatas) ? target.item.ListDatas : {};
+      const targetRecordIds = new Set(Object.entries(targetRecords).flatMap(([recordId, record]) => [safeString(recordId), safeString(record && record.ListDataID)]).filter(Boolean));
+      if (!targetRecordIds.size) {
+        issue(report, "warning", "LOOKUP_TARGET_LIST_EMPTY", "Lookup target list is included but has no sample/reference rows; generated master/reference lists should include usable sample data when forms depend on them.", { list: list.title, field: field.DisplayName || field.FieldName, targetList: target.title, targetListId });
+      }
       const targetFields = fieldsByList.get(targetListId) || new Map();
       if (displayField && !targetFields.has(displayField)) {
         issue(report, report.mode === "generator" ? "error" : "warning", "LOOKUP_DISPLAY_FIELD_NOT_FOUND", "Lookup display field does not resolve in target list.", { list: list.title, field: field.DisplayName || field.FieldName, targetListId, displayField });
+      }
+      const sourceRecords = list.item && list.item.ListDatas && isObject(list.item.ListDatas) ? list.item.ListDatas : {};
+      for (const [recordId, record] of Object.entries(sourceRecords)) {
+        if (!isObject(record)) continue;
+        const value = record[field.FieldName] !== undefined ? record[field.FieldName] : record[field.InternalName];
+        for (const lookupId of lookupSampleValues(value, rules.multiple === true || rules.multiple === "true")) {
+          if (!targetRecordIds.has(lookupId)) {
+            issue(report, report.mode === "generator" ? "error" : "warning", "SAMPLE_LOOKUP_TARGET_RECORD_NOT_FOUND", "Lookup sample value does not reference a valid target row in the included master/reference list.", {
+              list: list.title,
+              field: field.DisplayName || field.FieldName,
+              recordId,
+              value: lookupId,
+              targetList: target.title,
+              targetListId,
+            });
+          }
+        }
       }
     }
   }

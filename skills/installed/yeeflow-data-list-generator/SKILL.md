@@ -34,8 +34,11 @@ Do not build a final `.ydl` when:
 - placeholders remain
 - `validate-ydl-list.js --mode generator --stage final` fails
 - required app/list/field metadata is missing
+- generated main/list metadata is missing `MainListType` or `ListModel.ListType`
+- duplicate `FieldName` or `InternalName` values exist
 - lookup targets or target display fields are unresolved
 - sample lookup values are unknown or unsafe
+- sample lookup values do not map to valid referenced target rows
 - external resolved lookup IDs would be included in `Resource.ReplaceIds`
 - production IDs are guessed
 - custom form bindings are unresolved
@@ -92,6 +95,9 @@ Load only the relevant reference:
 - Generate large numeric string IDs for sandbox `ListSetID`, `ListID`, `FieldID`, `LayoutID`, and sample `ListDataID`.
 - For production or existing apps, use confirmed metadata only.
 - HARD RULE: preserve `FieldName: "Title"` as Yeeflow's native primary/display field in every generated data list. `Title` must keep `Status: 0`, `IsSystem: true`, and `IsIndex: true`. Do not treat `Title` as a normal custom business field.
+- HARD RULE: every generated list must pass standalone `validate-ydl-list.js --mode generator --stage final`. App-level `.yap` package validation does not replace list-level validation.
+- Generated list metadata must include required list type metadata (`MainListType` for wrappers or `ListModel.ListType` for extracted list objects).
+- Generated fields must have unique `FieldName` and `InternalName` values. Duplicate internal names are blocking because they can pass broad package checks while breaking list import/query behavior.
 - Business concepts such as "Request No.", "Name", "Equipment Name", or "Center / Department Name" may be displayed on `Title`, but the underlying `Title` metadata must remain native/system/indexed. Use `Text1`, `Text2`, etc. for additional business text fields.
 - Use `Decimal` + `input_number` fields for persisted numbers; `Decimal1` is the proven generated slot in Visitor Access Management v11.
 - Use `Bit` + `switch` fields for persisted booleans; `Bit1` is the proven generated slot in Visitor Access Management v11.
@@ -111,6 +117,9 @@ Load only the relevant reference:
 - Single lookup sample values are plain target record `ListDataID` strings.
 - For staged standalone related lists, import/export the reference list first, patch the dependent lookup to real metadata, and exclude external lookup IDs from `Resource.ReplaceIds`.
 - For app-level `.yap` internal lookup samples, target sample record IDs are local IDs, should be included in `ReplaceIds`, and dependent lookup sample values may reference those local IDs.
+- Lookup dependencies must resolve to a target list and display/search field. Standalone generated lists need a dependency map for external lookups; app-level internal lookups should resolve inside the package.
+- Sample lookup values must map to actual referenced target rows. If the master/reference list is local, include sample/reference rows; if it is external, provide a dependency map or omit unsafe sample lookup values.
+- Master/reference lists referenced by generated forms, dashboards, or workflows must be usable runtime lists, not placeholders. Include sample data where needed for local validation and runtime smoke testing.
 - For generated lists intended as approval-form storage targets, build/import/export the `.ydl` first, then use exported-back list and field metadata to patch the approval form `ContentList` target.
 
 ## Benefit / Quota Usage Lists
