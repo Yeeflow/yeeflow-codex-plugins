@@ -1,0 +1,414 @@
+{
+  "studyDate": "2026-05-17T08:47:58.102Z",
+  "packages": [
+    {
+      "label": "Employee Family Implant v1.0",
+      "path": "/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517-Employee Family Implant v1.0.yapk",
+      "fileBytes": 37093,
+      "wrapper": {
+        "PackageId": "5821b452-74b1-4277-b7c2-ffa181d2814f",
+        "TenantID": "2054071949946798081",
+        "AppID": 41,
+        "ListID": "2055913049871364096",
+        "Title": "Employee Family Implant Query Filter Expression Fix 20260517",
+        "Description": "Employee Family Implant v1 with query data filter expression-mode fix",
+        "IconUrl": "{\"b\":\"#E6F0FF\",\"i\":\"fa-regular fa-heart\",\"c\":\"#0065FF\"}",
+        "Notes": "The first version of this application",
+        "Author": "Renger from Yeeflow",
+        "Date": "2026-05-17T08:03:37Z",
+        "Version": "Employee Family Implant v1.0",
+        "Sign": "gBM9ISAYaj+QJo5t5SzHxf/UI+20TJ6ZyR5HMZL2LzU="
+      },
+      "resource": {
+        "base64Length": 36508,
+        "decodedBytes": 27379,
+        "prefixBase64": "K7EJMRIhbBwAAFLfQ4xI0IeAOlIX/vz5",
+        "suffixBase64": "Mn8nMadGgBm/frA+aRNihqqn/fp/Aw==",
+        "firstBytesHex": "2bb1093112216c1c000052df438c48d087803a5217fefcf9f78fd0e173defff7",
+        "lastBytesHex": "571bb15b893994d9821c327f2731a7468019bf7eb03e69136286aaa7fdfa7f03",
+        "entropy": 7.9935,
+        "uniqueBytes": 256,
+        "printableRatio": 0.3723,
+        "sha256": "nljeTfLMz8CllBZA35SEe2Z+JyYB4E/CV1m8OKzsQ2w=",
+        "sha256Hex": "9e58de4df2cccfc0a5941640df94847b667e272601e04fc25759bc38acec436c",
+        "charsetLooksBase64": true,
+        "charsetLooksBase64Url": false,
+        "gzipMagic": false,
+        "zlibMagicLikely": false,
+        "zipMagic": false,
+        "decodeAttempts": {
+          "gunzip": {
+            "ok": false,
+            "error": "incorrect header check"
+          },
+          "inflate": {
+            "ok": false,
+            "error": "incorrect header check"
+          },
+          "inflateRaw": {
+            "ok": false,
+            "error": "invalid distance too far back"
+          },
+          "brotli": {
+            "ok": false,
+            "error": "unexpected end of file"
+          },
+          "unzip": {
+            "ok": false,
+            "error": "incorrect header check"
+          }
+        },
+        "searchNeedles": {
+          "Employee Family Implant": false,
+          "Implant Application Request": false,
+          "Family Quota Usage": false,
+          "Product Selection": false,
+          "RequesterApplicant": false
+        },
+        "samplePrintableStrings": [
+          "DP9KPd",
+          "@k2yBR",
+          ",HGMyi",
+          "2I5\\\"V",
+          "bG .<l",
+          "byK?EK",
+          "}3jf?jt",
+          "?Y'wp ",
+          "fN;Ldu",
+          ":R4d\\c2",
+          "&1DE0TX(",
+          "DM!Ar ",
+          " WuI'hY",
+          "?bld)e>",
+          "DD%J](",
+          "3HH`Gh",
+          " HA[9gWEk",
+          ".Oj$nT",
+          ";*Cd).",
+          "EZQw\"V"
+        ]
+      }
+    },
+    {
+      "label": "Employee Family Implant v1.2",
+      "path": "/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517-Employee Family Implant v1.2.yapk",
+      "fileBytes": 37601,
+      "wrapper": {
+        "PackageId": "1640f5b5-9ed0-4ed3-a43a-9018665b854f",
+        "TenantID": "2054071949946798081",
+        "AppID": 41,
+        "ListID": "2055913049871364096",
+        "Title": "Employee Family Implant Query Filter Expression Fix 20260517",
+        "Description": "Employee Family Implant v1 with query data filter expression-mode fix",
+        "IconUrl": "{\"b\":\"#E6F0FF\",\"i\":\"fa-regular fa-heart\",\"c\":\"#0065FF\"}",
+        "Notes": "Added a single line control on the approval form.",
+        "Author": "Renger from Yeeflow",
+        "Date": "2026-05-17T08:42:47Z",
+        "Version": "Employee Family Implant v1.2",
+        "Sign": "BYflt6fFGR46cb1BTMhQCdBWGRAGTaeoCYLuxCulHVU="
+      },
+      "resource": {
+        "base64Length": 37004,
+        "decodedBytes": 27753,
+        "prefixBase64": "K5kKMRJh2os9xIgEfQioI3Xhz59//wgd",
+        "suffixBase64": "hxwy/ywxp/JLxucP1o3eGgTg0hd+/n8D",
+        "firstBytesHex": "2b990a311261da8b3dc488047d08a82375e1cf9f7fff081d3ee7fdffbf6efffc",
+        "lastBytesHex": "ed6a23369598f35c871c32ff2c31a7f24bc6e70fd68dde1a04e0d2177efe7f03",
+        "entropy": 7.992,
+        "uniqueBytes": 256,
+        "printableRatio": 0.3754,
+        "sha256": "02jeAa2qkKehyX7FZZkag+7nw4ZAFqw5Ggz8YLMPBlI=",
+        "sha256Hex": "d368de01adaa90a7a1c97ec565991a83eee7c3864016ac391a0cfc60b30f0652",
+        "charsetLooksBase64": true,
+        "charsetLooksBase64Url": false,
+        "gzipMagic": false,
+        "zlibMagicLikely": false,
+        "zipMagic": false,
+        "decodeAttempts": {
+          "gunzip": {
+            "ok": false,
+            "error": "incorrect header check"
+          },
+          "inflate": {
+            "ok": false,
+            "error": "incorrect header check"
+          },
+          "inflateRaw": {
+            "ok": false,
+            "error": "invalid distance too far back"
+          },
+          "brotli": {
+            "ok": false,
+            "error": "unexpected end of file"
+          },
+          "unzip": {
+            "ok": false,
+            "error": "incorrect header check"
+          }
+        },
+        "searchNeedles": {
+          "Employee Family Implant": false,
+          "Implant Application Request": false,
+          "Family Quota Usage": false,
+          "Product Selection": false,
+          "RequesterApplicant": false
+        },
+        "samplePrintableStrings": [
+          "7YoJWu",
+          "Ep]QWy",
+          "h$\\?By",
+          "[C5H!\"",
+          ")(01)P",
+          "K`Q+`<q%$3",
+          "\"2Lxm\"",
+          " 9IDGkTRb",
+          "1o`h(+I",
+          "K\"-Fa]",
+          "1b,6@m.B/s{(N",
+          "4i@knMekM",
+          "Eo]L{/",
+          "'r/|}8g",
+          "qD'G'X^",
+          "25U_B(",
+          ">5kig>+",
+          "'BpBi\\LJ>*\"t",
+          "<~EO6gq",
+          "\\^!c~o"
+        ]
+      }
+    },
+    {
+      "label": "Employee Family Implant v1.3",
+      "path": "/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517-Employee Family Implant v1.3.yapk",
+      "fileBytes": 37791,
+      "wrapper": {
+        "PackageId": "ef9b4691-6338-4c2c-8715-4c49a1ffbc81",
+        "TenantID": "2054071949946798081",
+        "AppID": 41,
+        "ListID": "2055913049871364096",
+        "Title": "Employee Family Implant Query Filter Expression Fix 20260517",
+        "Description": "Employee Family Implant v1 with query data filter expression-mode fix",
+        "IconUrl": "{\"b\":\"#E6F0FF\",\"i\":\"fa-regular fa-heart\",\"c\":\"#0065FF\"}",
+        "Notes": "Dashboard and data list changes",
+        "Author": "Renger from Yeeflow",
+        "Date": "2026-05-17T08:44:48Z",
+        "Version": "Employee Family Implant v1.3",
+        "Sign": "1Z94tdCwaRBgt+rRKjNwAaDKYZGp2dan7E86Pmzpdms="
+      },
+      "resource": {
+        "base64Length": 37212,
+        "decodedBytes": 27909,
+        "prefixBase64": "qx0LMRJh2os9xIjkpNUDoI7UhT9//v0j",
+        "suffixBase64": "kNmAnHiJObd1+PMvBtCtQ7hg+rw//78B",
+        "firstBytesHex": "ab1d0b311261da8b3dc488e4a4d503a08ed4853f7ffefd2374f89cf7ffffbafd",
+        "lastBytesHex": "f1d3d812130aa56590d9809c788939b775f8f32f06d0ad43b860fabc3fffbf01",
+        "entropy": 7.9911,
+        "uniqueBytes": 256,
+        "printableRatio": 0.3729,
+        "sha256": "HHsFE5kXUrIUVySHj55P5v235lS8AK/ZO0cAF1hW4uw=",
+        "sha256Hex": "1c7b0513991752b2145724878f9e4fe6fdb7e654bc00afd93b4700175856e2ec",
+        "charsetLooksBase64": true,
+        "charsetLooksBase64Url": false,
+        "gzipMagic": false,
+        "zlibMagicLikely": false,
+        "zipMagic": false,
+        "decodeAttempts": {
+          "gunzip": {
+            "ok": false,
+            "error": "incorrect header check"
+          },
+          "inflate": {
+            "ok": false,
+            "error": "incorrect header check"
+          },
+          "inflateRaw": {
+            "ok": false,
+            "error": "invalid literal/length/distance code"
+          },
+          "brotli": {
+            "ok": false,
+            "error": "unexpected end of file"
+          },
+          "unzip": {
+            "ok": false,
+            "error": "incorrect header check"
+          }
+        },
+        "searchNeedles": {
+          "Employee Family Implant": false,
+          "Implant Application Request": false,
+          "Family Quota Usage": false,
+          "Product Selection": false,
+          "RequesterApplicant": false
+        },
+        "samplePrintableStrings": [
+          ">4.uY?",
+          "`e  $q",
+          "t{[A1m",
+          "1go~~W",
+          "u>3],M'_",
+          "G;u#S]=",
+          "3+{Z6xS[N6",
+          "{oeA&[q",
+          "wgCiLw",
+          "(d>zX=Z",
+          "U3{TPp",
+          "qDG\\>F",
+          "\\-*C}J",
+          "~Q_HS:",
+          "Led@H ",
+          "I1^7b-",
+          "Bgw9+Y",
+          "|~ObG=",
+          "K.:)ZW.",
+          "u}Iy8/"
+        ]
+      }
+    }
+  ],
+  "comparisons": {
+    "stableFields": {
+      "TenantID": {
+        "stable": true,
+        "values": [
+          "2054071949946798081",
+          "2054071949946798081",
+          "2054071949946798081"
+        ]
+      },
+      "AppID": {
+        "stable": true,
+        "values": [
+          41,
+          41,
+          41
+        ]
+      },
+      "ListID": {
+        "stable": true,
+        "values": [
+          "2055913049871364096",
+          "2055913049871364096",
+          "2055913049871364096"
+        ]
+      },
+      "Title": {
+        "stable": true,
+        "values": [
+          "Employee Family Implant Query Filter Expression Fix 20260517",
+          "Employee Family Implant Query Filter Expression Fix 20260517",
+          "Employee Family Implant Query Filter Expression Fix 20260517"
+        ]
+      },
+      "Description": {
+        "stable": true,
+        "values": [
+          "Employee Family Implant v1 with query data filter expression-mode fix",
+          "Employee Family Implant v1 with query data filter expression-mode fix",
+          "Employee Family Implant v1 with query data filter expression-mode fix"
+        ]
+      },
+      "IconUrl": {
+        "stable": true,
+        "values": [
+          "{\"b\":\"#E6F0FF\",\"i\":\"fa-regular fa-heart\",\"c\":\"#0065FF\"}",
+          "{\"b\":\"#E6F0FF\",\"i\":\"fa-regular fa-heart\",\"c\":\"#0065FF\"}",
+          "{\"b\":\"#E6F0FF\",\"i\":\"fa-regular fa-heart\",\"c\":\"#0065FF\"}"
+        ]
+      },
+      "Author": {
+        "stable": true,
+        "values": [
+          "Renger from Yeeflow",
+          "Renger from Yeeflow",
+          "Renger from Yeeflow"
+        ]
+      },
+      "PackageId": {
+        "stable": false,
+        "values": [
+          "5821b452-74b1-4277-b7c2-ffa181d2814f",
+          "1640f5b5-9ed0-4ed3-a43a-9018665b854f",
+          "ef9b4691-6338-4c2c-8715-4c49a1ffbc81"
+        ]
+      },
+      "Version": {
+        "stable": false,
+        "values": [
+          "Employee Family Implant v1.0",
+          "Employee Family Implant v1.2",
+          "Employee Family Implant v1.3"
+        ]
+      },
+      "Notes": {
+        "stable": false,
+        "values": [
+          "The first version of this application",
+          "Added a single line control on the approval form.",
+          "Dashboard and data list changes"
+        ]
+      },
+      "Date": {
+        "stable": false,
+        "values": [
+          "2026-05-17T08:03:37Z",
+          "2026-05-17T08:42:47Z",
+          "2026-05-17T08:44:48Z"
+        ]
+      },
+      "Sign": {
+        "stable": false,
+        "values": [
+          "gBM9ISAYaj+QJo5t5SzHxf/UI+20TJ6ZyR5HMZL2LzU=",
+          "BYflt6fFGR46cb1BTMhQCdBWGRAGTaeoCYLuxCulHVU=",
+          "1Z94tdCwaRBgt+rRKjNwAaDKYZGp2dan7E86Pmzpdms="
+        ]
+      }
+    },
+    "pairwiseResourceByteComparison": {
+      "Employee Family Implant v1.0 vs Employee Family Implant v1.2": {
+        "bytesA": 27379,
+        "bytesB": 27753,
+        "commonPrefixBytes": 1,
+        "commonSuffixBytes": 2,
+        "samePositionBytes": 110,
+        "samePositionRatio": 0.004,
+        "firstDiffOffset": 1
+      },
+      "Employee Family Implant v1.0 vs Employee Family Implant v1.3": {
+        "bytesA": 27379,
+        "bytesB": 27909,
+        "commonPrefixBytes": 0,
+        "commonSuffixBytes": 0,
+        "samePositionBytes": 118,
+        "samePositionRatio": 0.0043,
+        "firstDiffOffset": 0
+      },
+      "Employee Family Implant v1.2 vs Employee Family Implant v1.3": {
+        "bytesA": 27753,
+        "bytesB": 27909,
+        "commonPrefixBytes": 0,
+        "commonSuffixBytes": 0,
+        "samePositionBytes": 129,
+        "samePositionRatio": 0.0046,
+        "firstDiffOffset": 0
+      }
+    },
+    "conclusions": {
+      "tenantAppListStable": true,
+      "packageIdChangesEveryGeneration": true,
+      "signChangesEveryGeneration": true,
+      "resourceChangesEveryGeneration": true,
+      "resourceReadable": false,
+      "normalCompressionDecoded": false,
+      "feasibilityClassification": "C. Not locally generatable with current knowledge",
+      "rationale": [
+        "Resource remains opaque and high entropy across all studied packages.",
+        "Normal gzip/zlib/raw deflate/brotli/unzip decoding failed for all packages.",
+        "No searched app strings were readable in decoded bytes.",
+        "PackageId, Sign, and Resource all change across Yeeflow-generated versions.",
+        "Prior runtime test rejected a metadata-only wrapper edit even with Resource and Sign preserved."
+      ]
+    }
+  }
+}

@@ -7,7 +7,7 @@ description: generate, inspect, validate, package, debug, and improve small yeef
 
 Use this skill for small Yeeflow `.yap` application packages that combine related data lists and approval forms. Keep v1 scoped to proven patterns: data lists, custom list forms, lookup relationships, simple approval forms, and `ContentList` persistence.
 
-For existing-app upgrades, do not reuse `.yap` new-app generation rules blindly. Yeeflow Version management downloads `.yapk` packages for Upgrade application. A studied `.yapk` wrapper preserves app identity fields such as `PackageId`, `TenantID`, `AppID`, and `ListID`, and stores `Resource` as an opaque high-entropy base64 payload with a signature-like `Sign`, not the normal `.yap` `[______gizp______]` gzip resource. Until `.yapk` resource encoding/signing is proven, only inspect/validate the wrapper or create metadata-only proof packages that preserve `Resource` and `Sign`; do not claim app-content `.yapk` mutation is safe.
+For existing-app upgrades, do not reuse `.yap` new-app generation rules blindly. Yeeflow Version management downloads `.yapk` packages for Upgrade application. Studied `.yapk` wrappers preserve app identity fields such as `TenantID`, `AppID`, and `ListID`, but `PackageId`, `Sign`, and opaque high-entropy `Resource` values change across Yeeflow-generated versions. A metadata-only wrapper edit was rejected at runtime even with `Resource` and `Sign` preserved. Until `.yapk` resource encoding/signing is proven, only inspect/validate wrappers and produce change plans or `.yap` clones; do not claim externally edited `.yapk` packages are valid upgrades.
 
 For component details, also use the installed skills:
 

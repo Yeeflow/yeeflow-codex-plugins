@@ -47,6 +47,7 @@ Safe current behavior:
 - validate package structure
 - preserve opaque `Resource` and `Sign`
 - treat offline wrapper edits as study-only unless runtime-proven for the exact package
+- compare multiple Yeeflow-generated `.yapk` versions to understand package identity and feasibility
 
 Unsafe until proven:
 
@@ -57,6 +58,8 @@ Unsafe until proven:
 - claiming app-content upgrade runtime readiness from local validation alone
 
 Runtime update: a metadata-only proof package that preserved `Resource`, `Sign`, `PackageId`, `TenantID`, `AppID`, and `ListID`, but edited `Version`, `Notes`, `Description`, and `Date`, was rejected by Yeeflow Upgrade application after the metadata preview step. This suggests Yeeflow validates more than the opaque `Resource` and may include wrapper metadata in package integrity checks. Until proven otherwise, `.yapk` generation must preserve the exact Yeeflow-generated wrapper or use a Yeeflow-supported version-generation/signing path.
+
+Multi-version feasibility update: three Yeeflow-generated `.yapk` packages from the same app lineage showed stable `TenantID`, `AppID`, `ListID`, app title/description/icon, and author, while `PackageId`, `Version`, `Notes`, `Date`, `Sign`, and `Resource` changed. All resources stayed opaque/high-entropy, normal decompression failed, and searched app strings were not readable. Classification is **not locally generatable with current knowledge**. Use Yeeflow Version management to generate official `.yapk` upgrade packages.
 
 ## Required User Guidance
 
