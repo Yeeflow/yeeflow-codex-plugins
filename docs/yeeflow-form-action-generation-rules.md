@@ -135,6 +135,25 @@ Rules:
 - Targets may be workflow variables or temp variables.
 - Temp variable target ids use `__temp_` prefix in expression tokens.
 - A step may include `condition` expression tokens.
+- Use multi-value Set variables only when assignments are independent and order does not matter.
+- Keep dependent calculations in separate ordered Set variable steps. For example, set a numeric boarding-year value before setting an eligibility status that compares that value.
+
+## Field Change Triggers For Driver Fields
+
+When a key driver field changes, bind a form action to that field instead of relying only on page load.
+
+Examples:
+
+- editable Requester / Applicant picker for proxy submission
+- application type selector that controls family/quota sections
+- product sublist or quantity changes that affect total amount
+
+Requester/applicant rule:
+
+- The requester/applicant field may default to Current User and remain editable when proxy submission is allowed.
+- If the requester/applicant value changes, rerun applicant profile snapshot and dependent quota/policy calculations.
+- Do not use Context:Current User for applicant profile reads after the requester/applicant value is set.
+- Snapshot/profile fields populated from the requester/applicant should be readonly unless HR is intentionally allowed to correct them.
 
 ## Show Confirm Dialog Step
 

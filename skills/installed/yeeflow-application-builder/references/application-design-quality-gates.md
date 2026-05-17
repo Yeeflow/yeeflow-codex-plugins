@@ -43,3 +43,7 @@ Warn or fail readiness when:
 - `Main` carries page background styling
 - section containers lack meaningful `nv_label`
 - generated form does not mirror submit/review task pages consistently
+- applicant/profile snapshot fields are editable without a business reason
+- an editable requester/applicant field changes applicant identity but has no field-change action to rerun profile snapshot and dependent quota/policy logic
+- multi-product requirements are modeled as one top-level product lookup instead of a sublist/listref
+- quota usage records lack a cycle field when the business cycle is employee anniversary or another non-calendar cycle

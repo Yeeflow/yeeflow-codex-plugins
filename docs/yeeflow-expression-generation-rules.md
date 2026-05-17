@@ -23,6 +23,7 @@ Use `yeeflow-expression-functions.normalized.json`, `yeeflow-expression-function
 - Runtime note from `Expression Runtime Test v1`: workflow transition conditions need their exact outer wrapper from a working export. A locally valid numeric token array is not enough to claim workflow branch routing is runtime-proven.
 - Runtime note from `Expression User Profile Test v1`: `getUserAttr`, `getOrgAttr`, `getLocAttr`, `dateFormat`, and nested `dateAdd` can render in generated approval forms and task pages. Tenant-missing profile values should use safe fallbacks. The decoded export used `getOrgAttr` for department/organization attributes; do not generate `getDeptAttr` until it is export-backed.
 - Export-back note from updated `Approval Form Controls Test v6`: sub list row calculations use `exprType: "variable_ctx"` current-object tokens with `ctx` equal to the parent list variable id. Sub list summaries live in `attrs["list-fields-summary"]`; a numeric summary can bind to a top-level number variable through `{ "prefix": "__variables_", "value": "TotalAmount" }`, and that variable can drive workflow numeric `conditioninfo`. FlowKey/form keys must not collide with reserved JSON property names used by these binding objects; `EFI` corrupted `prefix` to `pr<runtimeFlowKey>x` during import replacement.
+- Export-back note from `Implant Application Request (3).ywf`: `dateDiff` uses a raw lowercase date-unit string as its third parameter, for example `"year"`, not an expression string-token array. The broken generated shape `[{ "type": "str", "value": "Year" }]` rendered as `formcraft.formula.datetype.[object Object]`; the manually working export used `"year"` and displayed as `Year`.
 
 ## Function Selection By Business Intent
 
@@ -30,7 +31,7 @@ Use `yeeflow-expression-functions.normalized.json`, `yeeflow-expression-function
 | --- | --- | --- |
 | Display a currency or amount string | `formatNumber(amount, 2, 1)` | Returns text. Use only for display/persistence summaries, not numeric calculations. |
 | Add a deadline offset | `dateAdd(startDate, "day", offset)` | Units from the enriched reference include `year`, `month`, `day`, `hour`, `minute`, `second`. |
-| Detect overdue work | `dateDiff(dueDate, now(), "day", false) < 0` | Confirm the sign expectation in the target runtime before using for blocking validation. |
+| Detect overdue work | `dateDiff(dueDate, now(), "day", false) < 0` | In token arrays, encode the date unit as raw `"day"`, not `[{ "type": "str", "value": "day" }]`. Confirm the sign expectation in the target runtime before using for blocking validation. |
 | Conditional text/value | `iif(condition, thenValue, elseValue)` | Use direct comparison instead of `iif` when a context expects boolean routing. |
 | Required-field validation | `isNullOrEmpty(value) == false` | Prefer native required when the field is always required. |
 | Request number | `concat(prefix, dateFormat(now(), "YYYYMMDD"), UniqueID())` or `&` tokens | Preserve exact `UniqueID` capitalization. |
@@ -98,7 +99,7 @@ Overdue check:
 
 ```json
 [
-  { "type": "func", "func": "dateDiff", "params": [[{ "exprType": "variable", "valueType": "date", "id": "DueDate", "type": "expr", "name": "Workflow Variables:Due Date" }], [{ "type": "func", "func": "now", "params": [] }], [{ "type": "str", "value": "day" }], [{ "type": "bool", "value": false }]] },
+  { "type": "func", "func": "dateDiff", "params": [[{ "exprType": "variable", "valueType": "date", "id": "DueDate", "type": "expr", "name": "Workflow Variables:Due Date" }], [{ "type": "func", "func": "now", "params": [] }], "day", [{ "type": "bool", "value": false }]] },
   { "type": "op", "op": "<" },
   { "type": "num", "value": "0" }
 ]

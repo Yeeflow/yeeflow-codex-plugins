@@ -40,7 +40,7 @@ Example: date must not be earlier than today:
 
 ```json
 [
-  { "type": "func", "func": "dateDiff", "params": [[{ "exprType": "variable", "valueType": "date", "id": "RequiredDate", "type": "expr", "name": "Workflow Variables:Required Date" }], [{ "type": "func", "func": "now", "params": [] }], [{ "type": "str", "value": "day" }], [{ "type": "bool", "value": false }]] },
+  { "type": "func", "func": "dateDiff", "params": [[{ "exprType": "variable", "valueType": "date", "id": "RequiredDate", "type": "expr", "name": "Workflow Variables:Required Date" }], [{ "type": "func", "func": "now", "params": [] }], "day", [{ "type": "bool", "value": false }]] },
   { "type": "op", "op": ">=" },
   { "type": "num", "value": "0" }
 ]

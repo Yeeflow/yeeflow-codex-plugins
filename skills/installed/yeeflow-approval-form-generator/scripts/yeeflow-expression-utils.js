@@ -168,6 +168,9 @@ function validateFunctionToken(token, context = {}) {
   if (["getUserAttr", "getOrgAttr", "getLocAttr"].includes(token.func)) {
     validateProfileAttributeFunctionParams(token, { issues, path: tokenPath });
   }
+  if (token.func === "dateDiff") {
+    validateDateDiffParams(token, { issues, path: tokenPath });
+  }
   token.params.forEach((param, index) => {
     if (Array.isArray(param)) {
       param.forEach((child, childIndex) => validateExpressionToken(child, { references, issues, path: `${tokenPath}.params[${index}][${childIndex}]` }));
@@ -177,6 +180,34 @@ function validateFunctionToken(token, context = {}) {
       issue(issues, "warning", "EXPRESSION_FUNCTION_PRIMITIVE_PARAM", "Function param is a primitive value. Keep only when export-backed for this function.", `${tokenPath}.params[${index}]`, { func: token.func, valueType: typeof param });
     }
   });
+  return issues;
+}
+
+function validateDateDiffParams(token, context = {}) {
+  const issues = context.issues || [];
+  const tokenPath = context.path || "$";
+  const unitParam = token.params && token.params[2];
+  if (Array.isArray(unitParam) || isObject(unitParam)) {
+    issue(
+      issues,
+      "warning",
+      "EXPRESSION_DATEDIFF_UNIT_WRAPPED",
+      "dateDiff params[2] must be a raw lowercase unit string such as \"year\" or \"day\", not an expression token array/object.",
+      `${tokenPath}.params[2]`,
+      { func: token.func, expected: "year|month|day|hour|minute|second" },
+    );
+    return issues;
+  }
+  if (typeof unitParam !== "string" || !["year", "month", "day", "hour", "minute", "second"].includes(unitParam)) {
+    issue(
+      issues,
+      "warning",
+      "EXPRESSION_DATEDIFF_UNIT_UNKNOWN",
+      "dateDiff params[2] should be one of the export-backed raw unit strings: year, month, day, hour, minute, second.",
+      `${tokenPath}.params[2]`,
+      { func: token.func, value: unitParam },
+    );
+  }
   return issues;
 }
 

@@ -61,6 +61,7 @@ Use only:
 - Use `iif` for conditional values.
 - Use `isNullOrEmpty` for empty checks.
 - Use `dateDiff`, `dateAdd`, and `dateFormat` for date logic.
+- For `dateDiff`, encode the third date-unit parameter as a raw lowercase string such as `"year"` or `"day"`, not as an expression string-token array. `Implant Application Request (3).ywf` proved the array shape renders as `formcraft.formula.datetype.[object Object]`.
 - Use `arraySum`, `arrayCount`, `arrayAverage`, `arrayMin`, and `arrayMax` for list/sublist summaries.
 - Use `concat` or `&` for request-number and display-string assembly.
 - Use `formatNumber`, `fixed`, or `round` for numeric display.

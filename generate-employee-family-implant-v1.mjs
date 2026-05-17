@@ -326,6 +326,7 @@ const applications = makeList("Implant Applications", applicationsListId, 104, [
   ["Decimal2", "Annual Quota Amount", "AnnualQuotaAmount", "Decimal", "currency", { currencyCode: "USD", displayFormat: "code", displayThousandths: "1" }],
   ["Decimal3", "Used Quota Before", "UsedQuotaBefore", "Decimal", "currency", { currencyCode: "USD", displayFormat: "code", displayThousandths: "1" }],
   ["Decimal4", "Remaining Quota After", "RemainingQuotaAfter", "Decimal", "currency", { currencyCode: "USD", displayFormat: "code", displayThousandths: "1" }],
+  ["Decimal5", "Applicant Boarding Years", "ApplicantBoardingYears", "Decimal", "input_number", { precision: 0 }],
   ["Text8", "Eligibility Status", "EligibilityStatus", "Text", "radio", choice(["Eligible", "Not Eligible", "Not Required", "Needs HR Verification"])],
   ["Text9", "Application Status", "ApplicationStatus", "Text", "radio", choice(["Submitted", "Approved", "Rejected"])],
   ["Text10", "Quota Usage Status", "QuotaUsageStatus", "Text", "radio", choice(["Not Applicable", "Occupied", "Released", "Confirmed"])],
@@ -343,6 +344,7 @@ const usage = makeList("Family Quota Usage", usageListId, 105, [
   ["Text2", "Applicant Employee ID", "ApplicantEmployeeID", "Text", "input", textRule("Applicant employee ID")],
   ["Text3", "Applicant Name", "ApplicantEmployeeName", "Text", "input", textRule("Applicant name")],
   ["Text4", "Quota Cycle", "QuotaYear", "Text", "input", textRule("Employee anniversary quota cycle")],
+  ["Decimal2", "Quota Cycle No.", "QuotaCycleNumber", "Decimal", "input_number", { precision: 0 }],
   ["Text5", "Product Summary", "ProductSummary", "Text", "textarea", { edit: { textarea_minrows: 3 }, placeholder: "Product line summary" }],
   ["Text6", "Has Custom Package Product", "HasCustomPackageProduct", "Text", "radio", choice(["No", "Yes"])],
   ["Decimal1", "Total Application Amount", "TotalApplicationAmount", "Decimal", "currency", { currencyCode: "USD", displayFormat: "code", displayThousandths: "1" }],
@@ -503,10 +505,10 @@ const variables = [
   ["HasCustomPackageProduct", "Has Custom Package Product", "text"],
   ["TotalApplicationAmount", "Total Application Amount", "number"],
   ["QuotaYear", "Quota Year", "text"],
+  ["ApplicantBoardingYears", "Applicant Boarding Years", "number"],
   ["AnnualQuotaAmount", "Annual Quota Amount", "number"],
   ["UsedQuotaBefore", "Used Quota Before", "number"],
   ["RemainingQuotaAfter", "Remaining Quota After", "number"],
-  ["EligibilityDate", "Eligibility Date", "date"],
   ["EligibilityStatus", "Eligibility Status", "text"],
   ["QuotaExceeded", "Quota Exceeded", "text"],
   ["QuotaUsageStatus", "Quota Usage Status", "text"],
@@ -707,8 +709,10 @@ const checkAndSubmitActionId = uuid();
 
 function makeApprovalPage(title, review, pageKey = review ? "review" : "submit") {
   const readonlyMain = review;
+  const requesterApplicantAttrs = { default: "currentUser", placeholder: "Applicant", required: true };
+  if (!review && pageKey === "submit") requesterApplicantAttrs.control_event_rule = pageLoadActionId;
   const applicantControls = [
-    approvalControl("RequesterApplicant", "RequesterApplicant", "identity-picker", "Requester / Applicant", { default: "currentUser", placeholder: "Applicant", required: true }, review, pageKey),
+    approvalControl("RequesterApplicant", "RequesterApplicant", "identity-picker", "Requester / Applicant", requesterApplicantAttrs, review, pageKey),
     approvalControl("ApplicantEmployeeName", "ApplicantEmployeeName", "input", "Applicant Name", { placeholder: "Snapshot from RequesterApplicant" }, true, pageKey),
     approvalControl("ApplicantEmployeeID", "ApplicantEmployeeID", "input", "Applicant Employee ID", { placeholder: "Employee No." }, true, pageKey),
     approvalControl("ApplicantDepartment", "ApplicantDepartment", "input", "Department", { placeholder: "Department name" }, true, pageKey),
@@ -729,10 +733,10 @@ function makeApprovalPage(title, review, pageKey = review ? "review" : "submit")
   ];
   const quotaControls = [
     approvalControl("QuotaYear", "QuotaYear", "input", "Quota Cycle", { placeholder: "Employee anniversary quota cycle" }, true, pageKey),
+    approvalControl("ApplicantBoardingYears", "ApplicantBoardingYears", "input_number", "Boarding Years", { precision: 0, placeholder: "dateDiff result" }, true, pageKey),
     approvalControl("AnnualQuotaAmount", "AnnualQuotaAmount", "input_number", "Annual Quota Amount", { precision: 2 }, true, pageKey),
     approvalControl("UsedQuotaBefore", "UsedQuotaBefore", "input_number", "Used Quota Before", { precision: 2 }, true, pageKey),
     approvalControl("RemainingQuotaAfter", "RemainingQuotaAfter", "input_number", "Remaining Quota After", { precision: 2 }, true, pageKey),
-    approvalControl("EligibilityDate", "EligibilityDate", "datepicker", "Eligibility Date", { showtime: false, date_type: "0", dateformat: "0" }, true, pageKey),
     approvalControl("EligibilityStatus", "EligibilityStatus", "radio", "Eligibility Status", { displayStyle: "dropdown", choices: ["Eligible", "Not Eligible", "Not Required", "Needs HR Verification"] }, true, pageKey),
     approvalControl("QuotaExceeded", "QuotaExceeded", "radio", "Quota Exceeded", { displayStyle: "dropdown", choices: ["No", "Yes"] }, true, pageKey),
     approvalControl("QuotaUsageStatus", "QuotaUsageStatus", "radio", "Quota Usage Status", { displayStyle: "dropdown", choices: ["Not Applicable", "Occupied", "Released", "Confirmed"] }, true, pageKey)
@@ -839,6 +843,10 @@ function currentUserToken() {
   return { id: "CurrentUser", exprType: "application", valueType: "string", type: "expr", name: "Context:Current User" };
 }
 
+function nowToken() {
+  return { type: "func", func: "now", params: [] };
+}
+
 function profileAttr(func, subject, key, label, fallback = "Needs HR Verification") {
   return { type: "func", func, params: [[subject], { key, label }, fallback === "" ? [] : [{ type: "str", value: fallback }]] };
 }
@@ -857,6 +865,21 @@ function tempVarToken(id, name = id, valueType = "text") {
 
 function literalString(value) {
   return [{ type: "str", value }];
+}
+
+function literalNumber(value) {
+  return [{ type: "num", value }];
+}
+
+function multiSetStep(name, entries) {
+  return {
+    type: "setvar",
+    name,
+    attrs: {
+      setvar_multi: true,
+      setvar_array: entries.map(([target, value]) => ({ var: target, value }))
+    }
+  };
 }
 
 function queryUsageListRef() {
@@ -882,93 +905,65 @@ function implantFormActions() {
   const usedQuotaBefore = workflowVarToken("UsedQuotaBefore", "Used Quota Before", "number");
   const remainingQuotaAfter = workflowVarToken("RemainingQuotaAfter", "Remaining Quota After", "number");
   const quotaExceeded = workflowVarToken("QuotaExceeded", "Quota Exceeded", "text");
+  const applicantBoardingYears = workflowVarToken("ApplicantBoardingYears", "Applicant Boarding Years", "number");
+  const eligibilityStatus = workflowVarToken("EligibilityStatus", "Eligibility Status", "text");
+  const quotaYear = workflowVarToken("QuotaYear", "Quota Year", "text");
   const attachmentSummary = workflowVarToken("RequiredAttachmentSummary", "Required Attachment Summary", "text");
   const productLines = workflowVarToken("ProductSelectionItems", "Product Selection Items", "text");
   const productSummary = workflowVarToken("ProductSummary", "Product Summary", "text");
   const appAmount = workflowVarToken("TotalApplicationAmount", "Total Application Amount", "number");
   const usageCollection = tempVarToken("var_UsageAmountCollection", "var_UsageAmountCollection", "text");
+  const boardingDateEmpty = [{ type: "func", func: "isNullOrEmpty", params: [[applicantBoardingDate]] }];
+  const applicantTenureYears = [{ type: "func", func: "dateDiff", params: [[applicantBoardingDate], [nowToken()], "year", []] }];
+  const applicantEligibleCondition = [applicantBoardingYears, { type: "op", op: ">" }, { type: "num", value: 0 }];
+  const eligibilityStatusExpression = [
+    {
+      type: "func",
+      func: "iif",
+      params: [
+        boardingDateEmpty,
+        [{ type: "str", value: "Needs HR Verification" }],
+        [{
+          type: "func",
+          func: "iif",
+          params: [
+            applicantEligibleCondition,
+            [{ type: "str", value: "Eligible" }],
+            [{ type: "str", value: "Not Eligible" }]
+          ]
+        }]
+      ]
+    }
+  ];
+  const effectiveAnnualQuotaExpression = [
+    {
+      type: "func",
+      func: "iif",
+      params: [
+        [eligibilityStatus, { type: "op", op: "==" }, { type: "str", value: "Eligible" }],
+        [annualQuotaAmount],
+        [{ type: "num", value: 0 }]
+      ]
+    }
+  ];
   return [
     {
       id: pageLoadActionId,
       name: "Initialize requester applicant snapshot defaults",
       steps: [
-        {
-          type: "setvar",
-          name: "Snapshot applicant name from RequesterApplicant",
-          attrs: {
-            setvar_var: applicantEmployeeName,
-            setvar_val: [getUserAttr(requesterApplicant, "Name_CN", "Name", "Needs HR Verification")]
-          }
-        },
-        {
-          type: "setvar",
-          name: "Snapshot applicant employee number from RequesterApplicant",
-          attrs: {
-            setvar_var: applicantEmployeeId,
-            setvar_val: [getUserAttr(requesterApplicant, "EmployeeNo", "Employee No.", "Needs HR Verification")]
-          }
-        },
-        {
-          type: "setvar",
-          name: "Snapshot applicant department from RequesterApplicant",
-          attrs: {
-            setvar_var: applicantDepartment,
-            setvar_val: [getOrgAttr(getUserAttr(requesterApplicant, "DepartmentID", "Department", ""), "Name_CN", "Name", "Needs HR Verification")]
-          }
-        },
-        {
-          type: "setvar",
-          name: "Snapshot applicant boarding date from RequesterApplicant",
-          attrs: {
-            setvar_var: applicantBoardingDate,
-            setvar_val: [getUserAttr(requesterApplicant, "LatestHireDate", "Boarding Date", "")]
-          }
-        },
-        {
-          type: "setvar",
-          name: "Snapshot applicant user status fallback",
-          attrs: {
-            setvar_var: applicantUserStatus,
-            setvar_val: literalString("Needs HR Verification")
-          }
-        },
-        {
-          type: "setvar",
-          name: "Snapshot applicant email from RequesterApplicant",
-          attrs: {
-            setvar_var: applicantEmail,
-            setvar_val: [getUserAttr(requesterApplicant, "Email", "Email", "Needs HR Verification")]
-          }
-        },
-        {
-          type: "setvar",
-          name: "Snapshot applicant line manager from RequesterApplicant",
-          attrs: {
-            setvar_var: applicantLineManager,
-            setvar_val: [getUserAttr(getUserAttr(requesterApplicant, "LineManager", "Line Manager", ""), "Name_CN", "Name", "Needs HR Verification")]
-          }
-        },
-        {
-          type: "setvar",
-          name: "Mark applicant snapshot status for HR verification",
-          attrs: {
-            setvar_var: applicantStatus,
-            setvar_val: literalString("Profile snapshot required; HR verifies missing profile values.")
-          }
-        },
-        {
-          type: "setvar",
-          name: "Set quota usage default",
-          attrs: { setvar_var: quotaStatus, setvar_val: literalString("Not Applicable") }
-        },
-        {
-          type: "setvar",
-          name: "Set confirmed attachment matrix guidance",
-          attrs: {
-            setvar_var: attachmentSummary,
-            setvar_val: literalString("Self+Standard: Implant request/supporting document. Self+Custom: Custom package quotation and implant request/supporting document. Family+Standard: Family relationship proof and implant request/supporting document. Family+Custom: Family relationship proof, custom package quotation, and implant request/supporting document.")
-          }
-        },
+        multiSetStep("Snapshot applicant profile and defaults from RequesterApplicant", [
+          [applicantEmployeeName, [getUserAttr(requesterApplicant, "Name_CN", "Name", "Needs HR Verification")]],
+          [applicantEmployeeId, [getUserAttr(requesterApplicant, "EmployeeNo", "Employee No.", "Needs HR Verification")]],
+          [applicantDepartment, [getOrgAttr(getUserAttr(requesterApplicant, "DepartmentID", "Department", ""), "Name_CN", "Name", "Needs HR Verification")]],
+          [applicantBoardingDate, [getUserAttr(requesterApplicant, "LatestHireDate", "Boarding Date", "")]],
+          [applicantUserStatus, literalString("Needs HR Verification")],
+          [applicantEmail, [getUserAttr(requesterApplicant, "Email", "Email", "Needs HR Verification")]],
+          [applicantLineManager, [getUserAttr(getUserAttr(requesterApplicant, "LineManager", "Line Manager", ""), "Name_CN", "Name", "Needs HR Verification")]],
+          [applicantStatus, literalString("Profile snapshot required; HR verifies missing profile values.")],
+          [quotaStatus, literalString("Not Applicable")],
+          [quotaYear, [{ type: "func", func: "dateFormat", params: [[nowToken()], [{ type: "str", value: "YYYY" }]] }]],
+          [attachmentSummary, literalString("Self+Standard: Implant request/supporting document. Self+Custom: Custom package quotation and implant request/supporting document. Family+Standard: Family relationship proof and implant request/supporting document. Family+Custom: Family relationship proof, custom package quotation, and implant request/supporting document.")]
+        ]),
         {
           type: "otheraction",
           name: "Run family quota check after applicant initialization",
@@ -980,34 +975,27 @@ function implantFormActions() {
       id: recalcAmountActionId,
       name: "Refresh total amount and product summary",
       steps: [
-        {
-          type: "setvar",
-          name: "Recalculate total application amount from product row subtotals",
-          attrs: {
-            setvar_var: appAmount,
-            setvar_val: totalApplicationAmountExpression()
-          }
-        },
-        {
-          type: "setvar",
-          name: "Store readable product summary from product rows",
-          attrs: {
-            setvar_var: productSummary,
-            setvar_val: [{ type: "func", func: "JSONStringfy", params: [[productLines]] }]
-          }
-        }
+        multiSetStep("Refresh total amount and readable product summary", [
+          [appAmount, totalApplicationAmountExpression()],
+          [productSummary, [{ type: "func", func: "JSONStringfy", params: [[productLines]] }]]
+        ])
       ]
     },
     {
       id: checkQuotaActionId,
       name: "Check family quota usage",
       steps: [
+        multiSetStep("Refresh total amount, product summary, and boarding year number", [
+          [appAmount, [{ type: "func", func: "arraySum", params: [[productLines], [{ type: "str", value: "ProductRowSubtotal" }], [], []] }]],
+          [productSummary, [{ type: "func", func: "JSONStringfy", params: [[productLines]] }]],
+          [applicantBoardingYears, applicantTenureYears]
+        ]),
         {
           type: "setvar",
-          name: "Recalculate total application amount from product row subtotals",
+          name: "Set eligibility status from boarding year number",
           attrs: {
-            setvar_var: appAmount,
-            setvar_val: [{ type: "func", func: "arraySum", params: [[productLines], [{ type: "str", value: "ProductRowSubtotal" }], [], []] }]
+            setvar_var: eligibilityStatus,
+            setvar_val: eligibilityStatusExpression
           }
         },
         {
@@ -1029,13 +1017,21 @@ function implantFormActions() {
           }
         },
         {
+          type: "setvar",
+          name: "Apply one-year boarding eligibility to annual quota",
+          attrs: {
+            setvar_var: annualQuotaAmount,
+            setvar_val: effectiveAnnualQuotaExpression
+          }
+        },
+        {
           type: "querydata",
           name: "Load occupied family quota usage rows from Family Quota Usage",
           attrs: {
             querydata_list: queryUsageListRef(),
             querydata_filters: [
               { key: uuid(), pre: "and", left: "Text2", op: "0", right: varButton("ApplicantEmployeeID", "Applicant Employee ID"), showCus: true },
-              { key: uuid(), pre: "and", left: "Text4", op: "0", right: varButton("QuotaYear", "Quota Year"), showCus: true },
+              { key: uuid(), pre: "and", left: "Decimal2", op: "0", right: varButton("ApplicantBoardingYears", "Applicant Boarding Years"), showCus: true },
               { key: uuid(), pre: "and", left: "Text7", op: "0", right: "Occupied", showCus: true }
             ],
             querydata_type: "multiple",
@@ -1065,30 +1061,13 @@ function implantFormActions() {
           name: "Calculate remaining quota after this request",
           attrs: {
             setvar_var: remainingQuotaAfter,
-            setvar_val: [
-              annualQuotaAmount,
-              { type: "op", op: "-" },
-              usedQuotaBefore,
-              { type: "op", op: "-" },
-              appAmount
-            ]
+            setvar_val: [annualQuotaAmount, { type: "op", op: "-" }, usedQuotaBefore, { type: "op", op: "-" }, appAmount]
           }
         },
-        {
-          type: "setvar",
-          name: "Set quota exceeded status for HR gate",
-          attrs: {
-            setvar_var: quotaExceeded,
-            setvar_val: [
-              { type: "func", func: "iif", params: [[remainingQuotaAfter, { type: "op", op: "<" }, { type: "num", value: 0 }], [{ type: "str", value: "Yes" }], [{ type: "str", value: "No" }]] }
-            ]
-          }
-        },
-        {
-          type: "setvar",
-          name: "Mark quota as occupied candidate",
-          attrs: { setvar_var: quotaStatus, setvar_val: literalString("Occupied") }
-        }
+        multiSetStep("Set quota guard flags", [
+          [quotaExceeded, [{ type: "func", func: "iif", params: [[remainingQuotaAfter, { type: "op", op: "<" }, { type: "num", value: 0 }], [{ type: "str", value: "Yes" }], [{ type: "str", value: "No" }]] }]],
+          [quotaStatus, literalString("Occupied")]
+        ])
       ]
     },
     {
@@ -1217,6 +1196,7 @@ const appRecordMappings = [
   { Per: "0", Columns: "Decimal2", Data: varButton("AnnualQuotaAmount", "Annual Quota Amount") },
   { Per: "0", Columns: "Decimal3", Data: varButton("UsedQuotaBefore", "Used Quota Before") },
   { Per: "0", Columns: "Decimal4", Data: varButton("RemainingQuotaAfter", "Remaining Quota After") },
+  { Per: "0", Columns: "Decimal5", Data: varButton("ApplicantBoardingYears", "Applicant Boarding Years") },
   { Per: "0", Columns: "Text8", Data: varButton("EligibilityStatus", "Eligibility Status") },
   { Per: "0", Columns: "Text9", Data: "Approved" },
   { Per: "0", Columns: "Text10", Data: varButton("QuotaUsageStatus", "Quota Usage Status") },
@@ -1234,6 +1214,7 @@ const usageRecordMappings = [
   { Per: "0", Columns: "Text2", Data: varButton("ApplicantEmployeeID", "Applicant Employee ID") },
   { Per: "0", Columns: "Text3", Data: varButton("ApplicantEmployeeName", "Applicant Name") },
   { Per: "0", Columns: "Text4", Data: varButton("QuotaYear", "Quota Year") },
+  { Per: "0", Columns: "Decimal2", Data: varButton("ApplicantBoardingYears", "Applicant Boarding Years") },
   { Per: "0", Columns: "Text5", Data: varButton("ProductSummary", "Product Summary") },
   { Per: "0", Columns: "Text6", Data: varButton("HasCustomPackageProduct", "Has Custom Package Product") },
   { Per: "0", Columns: "Decimal1", Data: varButton("TotalApplicationAmount", "Total Application Amount") },
@@ -1368,15 +1349,17 @@ fs.writeFileSync(outReportPath, `${JSON.stringify({
     approvalForms: ["Implant Application Request"]
   },
   v1Scope: {
-    requesterApplicantModel: "RequesterApplicant defaults to Current User on new request only; applicant logic uses RequesterApplicant/snapshot variables.",
+    requesterApplicantModel: "RequesterApplicant is required and defaults to Current User on a new request. It remains editable for proxy submission; when changed, the applicant snapshot/quota initialization action reruns from RequesterApplicant.",
     workflow: "Submit -> HR Review -> Finance/Benefits Review for Custom Package Product -> Approved/Rejected. Standard Product can approve after HR Review.",
     dashboard: "Simple low-risk Home dashboard included; HR Operations Dashboard deferred to v2.",
-    quota: "Family quota query/check action included with attrs.querydata_filters, arraySum used quota calculation, remaining quota calculation, and HR review fallback for uncertain or exceeded cases.",
+    quota: "Family quota query/check action included with attrs.querydata_filters, arraySum used quota calculation, remaining quota calculation, and one-year boarding eligibility. Applicants boarded within one year receive an effective family annual quota of 0. Family Quota Usage is matched by Applicant Employee ID plus numeric Applicant Boarding Years/Quota Cycle No.",
     attachments: "Confirmed v1 attachment matrix is visible in the form with upload control; strict blocking remains runtime-safe only, with HR verification fallback.",
     persistence: "Implant Applications ContentList persistence is included. Family Quota Usage ContentList persistence is conditionally created for family applications."
   },
   limitations: [
     "Requester-based getUserAttr(RequesterApplicant, ...) expressions are generated with the export-backed direct attribute descriptor shape; runtime testing must prove this variable subject works in the target approval-form context.",
+    "RequesterApplicant change refresh uses identity-picker attrs.control_event_rule to rerun applicant snapshot/quota logic when a proxy applicant is selected; this trigger must be runtime-tested.",
+    "One-year boarding eligibility uses dateDiff(ApplicantBoardingDate, now(), \"year\", []) to set Applicant Boarding Years; if tenant profile data is missing or date arithmetic fails, route to HR verification instead of granting quota.",
     "If requester-based profile expressions fail at runtime, keep RequesterApplicant fixed and route missing snapshot data to HR verification; never switch applicant logic to the task viewer's Current User.",
     "High-amount Finance/Benefits routing threshold is not business-confirmed; v1 routes Custom Package Product through Finance/Benefits and documents amount-threshold routing as a follow-up configuration.",
     "Strict attachment blocking is only enabled if runtime-safe; v1 routes incomplete or uncertain attachment cases to HR verification."

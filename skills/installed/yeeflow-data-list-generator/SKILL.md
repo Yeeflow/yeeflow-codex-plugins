@@ -111,6 +111,22 @@ Load only the relevant reference:
 - For app-level `.yap` internal lookup samples, target sample record IDs are local IDs, should be included in `ReplaceIds`, and dependent lookup sample values may reference those local IDs.
 - For generated lists intended as approval-form storage targets, build/import/export the `.ydl` first, then use exported-back list and field metadata to patch the approval form `ContentList` target.
 
+## Benefit / Quota Usage Lists
+
+For family quota, annual benefit, budget usage, entitlement consumption, or similar audit lists, include fields that support reliable query and reporting:
+
+- native `Title` as usage record/application display
+- source application number
+- applicant identifier
+- applicant readable name
+- readable cycle/year label
+- numeric cycle number when the cycle is employee-anniversary or otherwise not a simple calendar year
+- amount
+- usage status such as Occupied, Confirmed, Released, or Not Applicable
+- source application id/link/notes when available
+
+Quota check queries should match applicant identity + cycle number/year + active/occupied status, then aggregate amount with `arraySum`.
+
 ## Generated Data List UI/UX Standard
 
 When the active workspace contains `docs/yeeflow-application-design-system.md` and `docs/yeeflow-data-list-form-design-standards.md`, use them as the default generated data-list form standard. Use `docs/yeeflow-data-list-ui-ux-patterns.md` for export-level evidence. The first official UI/UX reference export is `UI and UX design (1).yap`.

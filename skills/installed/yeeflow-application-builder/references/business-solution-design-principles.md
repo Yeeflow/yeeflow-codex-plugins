@@ -71,6 +71,37 @@ Prefer a smaller, high-quality, runtime-proven v1 over a broad package that is h
 - Which reference data should be a packaged list, lookup, or deferred integration?
 - What does success look like in the runtime test?
 
+## Key Design Decisions To Make Explicit
+
+Requester/applicant identity:
+
+- Is the requester always the current login user, or can a user submit for another employee?
+- If proxy submission is allowed, the applicant picker can remain editable, but changing it must rerun applicant profile snapshot and dependent quota/policy logic.
+- Current User may default the applicant on a new request. Applicant business logic after that should use the applicant variable or snapshot values.
+
+Profile snapshots:
+
+- Identify profile fields that must be snapshotted, displayed readonly, and persisted.
+- Missing profile data should route to HR verification or another business fallback, not silently use the current task viewer.
+
+Quota and eligibility:
+
+- Decide whether quota cycles are calendar year, employee anniversary year, or custom.
+- Decide when quota is occupied and when it is released.
+- Use numeric cycle fields when usage records must be matched by employee-anniversary or tenure cycle.
+- Query usage by applicant identity, cycle, and active/occupied status.
+
+Multiple product/item selection:
+
+- If the business allows multiple products/items, use a sublist/listref.
+- Use lookup/autofill for product data, row subtotal calculation, summary-bound total, and readable summary persistence.
+
+Form actions:
+
+- Use page load, field change, and submit actions for dependent logic.
+- Combine independent Set variable assignments with multi-value Set variables.
+- Keep dependent calculations in ordered steps.
+
 ## Clarification Questions Before Generation
 
 During planning, separate questions into two categories:

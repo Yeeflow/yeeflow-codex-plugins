@@ -112,6 +112,10 @@ Generated forms should detect calculated-looking fields. `Subtotal` should not b
 
 Applicant/profile snapshot fields and autofilled fields should be readonly by default. In `Employee Family Implant v1 Core Patch 20260516`, the user repaired `Applicant Name` with the simple export-backed control shape `readonly: true`. Apply the same pattern to generated snapshot controls such as applicant employee ID, department, boarding date, user status, email, line manager, eligibility/status snapshots, lookup-autofilled product type, unit price, row subtotal, and total amount. The requester/applicant picker may be editable only on the new request page; task/reviewer pages should render it readonly.
 
+If the requester/applicant picker is editable for proxy submission, bind its field-change action to rerun applicant snapshot initialization and dependent quota/policy calculations. Field-level Default value = Current User is sufficient for initial defaulting; do not also generate a redundant Set variable step that writes RequesterApplicant from Current User.
+
+For policy and quota sections, keep dependent calculations in ordered form-action steps and use multi-value Set variables only for independent assignments. Submit guard actions should run the relevant policy check first, then use a conditional warning/confirm step with `continue: true` before the native Submit form step when the valid path needs to proceed.
+
 For detailed patterns from the manually improved CAPEX export, see `docs/yeeflow-form-design-quality-rules.md` and `docs/it-hardware-capex-request-runtime-v2-ui-study.md`.
 
 For native Text controls, use `docs/yeeflow-text-control-generation-standards.md`. The focused `Text Style Sample.ywf` export proves that generated Text controls should use `type: "heading"`, inline width at `attrs.common.positioning.widthtype = [null, "2"]`, named typography presets as `attrs.heads.ty = [null, "h5-medium"]`, and plain string colors such as `attrs.heads.color = "var(--c--text)"`.

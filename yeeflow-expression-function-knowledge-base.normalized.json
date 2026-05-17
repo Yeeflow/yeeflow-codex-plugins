@@ -864,7 +864,7 @@
         "params": [
           [],
           [],
-          [],
+          "year",
           []
         ]
       },
@@ -915,7 +915,8 @@
         "date comparison"
       ],
       "generationNotes": [
-        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation."
+        "Use the exact function name shown in name. Convert example expression strings into Yeeflow JSON token arrays before generation.",
+        "For generated token arrays, pass the date unit parameter as a raw lowercase string such as \"year\" or \"day\". Do not wrap it as [{type:\"str\",value:\"Year\"}], which renders as formcraft.formula.datetype.[object Object]."
       ],
       "safetyNotes": [],
       "sourceReferences": [

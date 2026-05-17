@@ -2,10 +2,10 @@
   "generatedAt": "2026-05-17",
   "runtimeSite": "https://codex.yeeflow.com/",
   "package": "employee-family-implant.v1.yap",
-  "downloadCopy": "/Users/Renger/Downloads/Employee Family Implant Condition Continue Fix 20260517.yap",
+  "downloadCopy": "/Users/Renger/Downloads/Employee Family Implant DateDiff Unit Fix 20260517.yap",
   "freshRuntimeAppName": "Employee & Family Implant Application Management - FlowKey safe binding fix",
-  "status": "condition_continue_fix_locally_validated_runtime_pending",
-  "summary": "Regenerated Employee Family Implant v1 with export-backed form action condition-flow continuation. The Check and Submit the form action now sets continue: true on Warn when family quota is exceeded, so the valid path can skip the warning and continue to the following Submit form step. Local package/form/graph/wrapper validation passed with warnings only; runtime valid/over-quota path testing remains pending.",
+  "status": "accepted_manual_runtime_pass_after_datediff_fix",
+  "summary": "User manual runtime testing accepted the latest Employee Family Implant v1 package after the dateDiff unit fix and boarding-year quota model. This report distinguishes user-confirmed runtime pass items from paths not independently re-run by Codex in this final consolidation turn.",
   "passed": [
     {
       "step": "App imports",
@@ -143,5 +143,39 @@
     "targetStep": "Warn when family quota is exceeded",
     "generatedPackage": "/Users/Renger/Downloads/Employee Family Implant Condition Continue Fix 20260517.yap",
     "localInspection": "Warn step has continue true; generated form has no pr<id>x corrupted keys."
-  }
+  },
+  "acceptedManualRuntimeResult": {
+    "package": "/Users/Renger/Downloads/Employee Family Implant DateDiff Unit Fix 20260517.yap",
+    "evidenceSource": "User manual runtime confirmation in chat on 2026-05-17",
+    "passedAfterFixes": [
+      "Requester / Applicant remains editable, required, and defaults to Current User.",
+      "Requester / Applicant field change reruns applicant snapshot initialization and quota calculation.",
+      "Applicant logic uses RequesterApplicant or applicant snapshot variables, not Context:Current User after defaulting.",
+      "Applicant snapshot fields remain readonly.",
+      "Product Selection sublist row subtotal, summary binding, and Total Application Amount work.",
+      "FlowKey-safe summary binding remains fixed.",
+      "Submit guard uses continue: true.",
+      "Family Quota Check runs on initialization and submit.",
+      "Eligibility Date variable/control dependency was removed.",
+      "Applicant Boarding Years number variable calculates with dateDiff raw unit string.",
+      "Family quota eligibility uses Applicant Boarding Years: 0 means effective quota 0; greater than 0 means eligible.",
+      "Family Quota Usage includes numeric Quota Cycle No.",
+      "Family usage query uses ApplicantEmployeeID + Quota Cycle No. + UsageStatus.",
+      "dateDiff function shape is fixed: params[2] is raw string \"year\"."
+    ]
+  },
+  "latestDateDiffFix": {
+    "brokenGeneratedShape": "[{ \"type\": \"str\", \"value\": \"Year\" }]",
+    "brokenFrontendDisplay": "dateDiff(Workflow Variables:Applicant Boarding Date,now(),formcraft.formula.datetype.[object Object],)",
+    "workingExportBackedShape": "\"year\"",
+    "workingFrontendDisplay": "dateDiff(Workflow Variables:Applicant Boarding Date,now(),Year,)",
+    "correctGeneratorExpression": "dateDiff(ApplicantBoardingDate, now(), \"year\", [])",
+    "studyDoc": "docs/form-actions-date-diff-expression-study.md"
+  },
+  "codexFinalConsolidationNotes": [
+    "Codex did not regenerate or operate Yeeflow UI during this consolidation step.",
+    "The latest runtime pass is accepted from the user manual test report.",
+    "Previously observed over-quota warning/block behavior remains documented in this report.",
+    "Do not claim any future tenant/profile data shape beyond the tested RequesterApplicant/dateDiff behavior."
+  ]
 }

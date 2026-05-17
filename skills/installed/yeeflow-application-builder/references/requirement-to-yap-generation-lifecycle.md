@@ -84,6 +84,14 @@ The plan must include:
 15. Deferred/risky items
 16. Recommended v1 scope
 
+The plan/spec must also make key design decisions explicit when relevant:
+
+- requester/applicant model, including whether proxy submission is allowed
+- applicant profile snapshot and readonly/persistence rules
+- quota cycle, occupation timing, release behavior, and eligibility source
+- multiple product/item sublist strategy
+- form-action recalculation triggers for page load, driver-field change, and submit
+
 Validate the spec with a JSON parse check before using it for generation.
 
 ## 4. Business Clarification Gate
@@ -238,6 +246,11 @@ Use current proven generation rules:
 - use correct `attrs.querydata_filters` plural for Query data filters
 - use readable lookup summary variables instead of raw lookup IDs when persistence/display should be readable
 - treat temp variables as frontend-only; do not use them for backend persistence unless copied into workflow/form variables
+- use requester/applicant variables or snapshot variables for applicant business logic after defaulting from Current User
+- when an editable applicant field drives profile/quota logic, bind its change action to rerun applicant snapshot and quota/policy calculations
+- when quota is employee-anniversary based, persist a numeric cycle field on usage records and query by applicant identity + cycle + status
+- when using `dateDiff`, encode the third unit parameter as a raw lowercase string such as `"year"`, not an expression-token array
+- keep dependent Set variable calculations ordered; use multi-value Set variables only for independent assignments
 - ensure ContentList mappings use valid workflow/form variables
 
 Use current proven feature foundations:

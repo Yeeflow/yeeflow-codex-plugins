@@ -813,7 +813,8 @@
         "expression training data generator_2.txt:functionKnowledgeBase"
       ],
       "generationNotes": [
-        "Select this function when the requested business scenario matches the enriched businessScenarios metadata."
+        "Select this function when the requested business scenario matches the enriched businessScenarios metadata.",
+        "For generated token arrays, pass the date unit parameter as a raw lowercase string such as \"year\" or \"day\". Do not wrap it as [{type:\"str\",value:\"Year\"}], which renders as formcraft.formula.datetype.[object Object]."
       ]
     },
     "dateFormat": {

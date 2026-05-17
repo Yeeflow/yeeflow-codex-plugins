@@ -211,6 +211,17 @@ Read `references/baseline-department-access-management-v5.md` before changing ap
 - Use a fresh FlowKey/form key for every generated import-test package.
 - Do not reuse a FlowKey/form key from a previously imported generated app unless explicitly testing update behavior.
 
+## Benefit / Quota Usage App Rules
+
+When an application tracks benefit quota, annual entitlement, family usage, budget usage, or similar consumption:
+
+- generate a persistent usage/transaction list when the business needs audit, reporting, or quota checks
+- include applicant identifier, applicant name, readable cycle/year, numeric cycle number when applicable, amount, usage status, source application number, and notes
+- if the quota cycle is employee anniversary year or another non-calendar cycle, include a numeric cycle field and query usage by applicant + numeric cycle + active/occupied status
+- use `arraySum` over the query result collection for used amount
+- use the top-level total variable from sublist summaries/recalculation for quota checks, workflow routing, and ContentList persistence
+- preserve safe FlowKey rules so summary binding keys such as `prefix` cannot be corrupted by import replacement
+
 ## ReplaceIds And Lookup Sample Rules
 
 Local app graph IDs should be included in `Resource.ReplaceIds`:

@@ -34,6 +34,8 @@ Think like an experienced business consultant and Yeeflow solution architect:
 - mark unproven features clearly and test them before depending on them
 - make reasonable assumptions when requirements are unclear, document them, and keep moving unless the assumption would be risky
 - when requirements imply multiple selectable business items, evaluate a sublist/listref design early instead of forcing a single lookup field
+- when requirements include requester/applicant/employee identity, decide whether proxy submission is allowed; if the applicant field is editable, its change action must rerun profile snapshot and dependent policy/quota calculations
+- when requirements include quota, benefit eligibility, or tenure rules, decide the quota cycle, occupation timing, release behavior, and eligibility source before generation
 
 ## Default Lifecycle
 
@@ -56,7 +58,7 @@ For requirement-to-application requests, load `references/requirement-to-yap-gen
 15. Final `.yap` output
 
 Also load `references/business-solution-design-principles.md` before designing the app structure.
-For generation-readiness reviews, also load `references/business-decision-gates.md` and `references/application-design-quality-gates.md`.
+For generation-readiness reviews, also load `references/business-decision-gates.md`, `references/application-design-quality-gates.md`, and `references/application-planning-key-design-decisions.md`.
 
 ## Business Decision Gates
 
@@ -176,9 +178,14 @@ Use the current Yeeflow generation foundation by default:
 - multi-item product/service/request lines should use sublists with row calculations and summary-bound total variables when the business process allows multiple selections
 - policy-critical totals from sublists should be recalculated in quota/submit/routing/persistence preflight actions with `arraySum(<ListVariableId>, "<SubtotalFieldId>", [], [])`, even when a visible summary binding is present
 - applicant/requester variables should be fixed business identities; Current User may default the applicant on a new request, but applicant profile reads, quota checks, workflow routes, and persistence should use the requester/applicant variable or snapshot variables
+- editable applicant/requester controls must rerun dependent snapshot/profile/quota form actions on change when proxy submission is allowed
+- user-profile-derived applicant data should be snapshotted into workflow/form variables, displayed readonly, and persisted through ContentList when needed for reporting/audit
+- quota and benefit usage lists should include applicant identity, readable applicant name, cycle number/year, amount, status, and source application number
+- employee-anniversary quota cycles should use a numeric cycle field when comparing usage records; for boarding-year eligibility, `ApplicantBoardingYears = dateDiff(ApplicantBoardingDate, now(), "year", [])`, with `0` meaning no family quota and values greater than `0` meaning eligible
 - core policy checks such as quota validation should run automatically on submit, not only through a manual check button
 - submit guard actions should prove both the invalid/warning path and the valid path; conditional warning/confirm/check steps before submit usually need step-level `continue: true` so valid requests skip the warning and still reach Submit form
 - required applicant identity controls with Default value = Current User should not also get redundant page-load Set variable default steps
+- multi-value Set variables should be used only for independent assignments; keep ordered Set variable steps when later values depend on earlier assignments
 - temp variables are frontend-only
 - ContentList persistence rules
 

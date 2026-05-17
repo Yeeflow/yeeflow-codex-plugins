@@ -327,3 +327,13 @@ Follow-up export `Implant Application Request (2).ywf` proved the missing condit
 ```
 
 Generator rule: conditional warning/confirm/check steps before a Submit form step usually need `continue: true`; otherwise the valid path can skip the warning but stop before reaching submit. The following submit step should still have its own valid-path condition when the invalid path must remain blocked.
+
+## Follow-up Study: dateDiff Boarding Year Fix
+
+Source export: `/Users/Renger/Downloads/Implant Application Request (3).ywf`
+
+The generated Set variables entry for `ApplicantBoardingYears` used the third `dateDiff` parameter as an expression string-token array: `[{ "type": "str", "value": "Year" }]`. Yeeflow rendered that as `formcraft.formula.datetype.[object Object]` in the expression editor.
+
+The user-corrected export-backed shape uses a raw lowercase string: `"year"`, with the fourth parameter blank as `[]`. The designer displays this as `Year`.
+
+Reusable rule: generate `dateDiff(ApplicantBoardingDate, now(), "year", [])` for Applicant Boarding Years and similar whole-year tenure calculations. Do not wrap the date unit in an expression-token array.

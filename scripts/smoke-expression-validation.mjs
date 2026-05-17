@@ -43,6 +43,11 @@ function assertInvalid(name, expr, code) {
   assert.ok(report.issues.some((issue) => issue.code === code), `${name}: missing ${code}: ${JSON.stringify(report.issues, null, 2)}`);
 }
 
+function assertWarns(name, expr, code) {
+  const report = validateExpressionTokens(expr, { path: name });
+  assert.ok(report.issues.some((issue) => issue.code === code), `${name}: missing ${code}: ${JSON.stringify(report.issues, null, 2)}`);
+}
+
 function getUserAttr(userExpr, key, label = key, fallback = "N/A") {
   return buildUserAttributeToken(userExpr, { key, label }, fallback);
 }
@@ -56,7 +61,9 @@ ok("string concat", [{ type: "str", value: "REQ-" }, { type: "op", op: "&" }, bu
 ok("boolean comparison", buildComparison(active, "==", { type: "bool", value: true }));
 ok("logical and/or", [amount, { type: "op", op: ">" }, { type: "num", value: "1000" }, { type: "op", op: "and" }, status, { type: "op", op: "!=" }, { type: "str", value: "" }]);
 ok("dateAdd", [buildFunctionToken("dateAdd", [[buildFunctionToken("now", [])], [{ type: "str", value: "day" }], [{ type: "num", value: "3" }]])]);
-ok("dateDiff", [buildFunctionToken("dateDiff", [[dueDate], [buildFunctionToken("now", [])], [{ type: "str", value: "day" }], [{ type: "bool", value: false }]])]);
+ok("dateDiff", [buildFunctionToken("dateDiff", [[dueDate], [buildFunctionToken("now", [])], "day", [{ type: "bool", value: false }]])]);
+ok("dateDiff year raw unit", [buildFunctionToken("dateDiff", [[dueDate], [buildFunctionToken("now", [])], "year", []])]);
+assertWarns("dateDiff wrapped unit", [buildFunctionToken("dateDiff", [[dueDate], [buildFunctionToken("now", [])], [{ type: "str", value: "Year" }], []])], "EXPRESSION_DATEDIFF_UNIT_WRAPPED");
 ok("dateFormat", [buildFunctionToken("dateFormat", [[buildFunctionToken("now", [])], [{ type: "str", value: "YYYYMMDD" }]])]);
 ok("iif", [buildFunctionToken("iif", [[amount, { type: "op", op: ">" }, { type: "num", value: "5000" }], [{ type: "str", value: "Finance Review" }], [{ type: "str", value: "Manager Review" }]])]);
 ok("isNullOrEmpty", [buildFunctionToken("isNullOrEmpty", [[status]])]);

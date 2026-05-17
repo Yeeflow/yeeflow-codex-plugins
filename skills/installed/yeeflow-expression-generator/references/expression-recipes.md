@@ -30,7 +30,7 @@ Use `yeeflow-expression-functions.normalized.json`, `yeeflow-expression-function
 | --- | --- | --- |
 | Display a currency or amount string | `formatNumber(amount, 2, 1)` | Returns text. Use only for display/persistence summaries, not numeric calculations. |
 | Add a deadline offset | `dateAdd(startDate, "day", offset)` | Units from the enriched reference include `year`, `month`, `day`, `hour`, `minute`, `second`. |
-| Detect overdue work | `dateDiff(dueDate, now(), "day", false) < 0` | Confirm the sign expectation in the target runtime before using for blocking validation. |
+| Detect overdue work | `dateDiff(dueDate, now(), "day", false) < 0` | In token arrays, encode the date unit as raw `"day"`, not `[{ "type": "str", "value": "day" }]`. Confirm the sign expectation in the target runtime before using for blocking validation. |
 | Conditional text/value | `iif(condition, thenValue, elseValue)` | Use direct comparison instead of `iif` when a context expects boolean routing. |
 | Required-field validation | `isNullOrEmpty(value) == false` | Prefer native required when the field is always required. |
 | Request number | `concat(prefix, dateFormat(now(), "YYYYMMDD"), UniqueID())` or `&` tokens | Preserve exact `UniqueID` capitalization. |
@@ -98,7 +98,7 @@ Overdue check:
 
 ```json
 [
-  { "type": "func", "func": "dateDiff", "params": [[{ "exprType": "variable", "valueType": "date", "id": "DueDate", "type": "expr", "name": "Workflow Variables:Due Date" }], [{ "type": "func", "func": "now", "params": [] }], [{ "type": "str", "value": "day" }], [{ "type": "bool", "value": false }]] },
+  { "type": "func", "func": "dateDiff", "params": [[{ "exprType": "variable", "valueType": "date", "id": "DueDate", "type": "expr", "name": "Workflow Variables:Due Date" }], [{ "type": "func", "func": "now", "params": [] }], "day", [{ "type": "bool", "value": false }]] },
   { "type": "op", "op": "<" },
   { "type": "num", "value": "0" }
 ]

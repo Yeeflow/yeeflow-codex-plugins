@@ -741,6 +741,15 @@ function validateDecodedDef(def, options = {}) {
       if (node.binding === "RequesterApplicant") requesterControl = node;
     });
     const requesterHasCurrentUserDefault = requesterControl && requesterControl.value === "CurrentUser" && requesterControl.attrs && requesterControl.attrs.default === "currentUser";
+    const actionIds = new Set(asArray(actions).map((action) => action && action.id).filter(Boolean));
+    if (requesterControl && requesterControl.readonly !== true) {
+      const changeAction = requesterControl.attrs && requesterControl.attrs.control_event_rule;
+      if (!changeAction) {
+        addIssue(warnings, "REQUESTER_APPLICANT_EDITABLE_CHANGE_ACTION_MISSING", "Editable RequesterApplicant controls should rerun applicant snapshot/quota logic on change for proxy submission scenarios", `${pagePath}.formdef.children`);
+      } else if (!actionIds.has(changeAction)) {
+        addIssue(warnings, "REQUESTER_APPLICANT_CHANGE_ACTION_UNKNOWN", `RequesterApplicant change action ${changeAction} does not match a form action on this page`, `${pagePath}.formdef.children`);
+      }
+    }
 
     actions.forEach((action, actionIndex) => {
       asArray(action && action.steps).forEach((step, stepIndex) => {

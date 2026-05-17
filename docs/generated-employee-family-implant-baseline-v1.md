@@ -4,9 +4,7 @@ Generated: 2026-05-16
 
 ## Status
 
-This is **not yet an accepted runtime baseline**. The corrected package is locally generated and locally validated after studying the user-corrected `Employee & Family Implant Application Management_Test.yap` and `Implant Application Request (1).ywf` exports. A previous runtime import passed the focused requester/product/quota path, but submit/task routing/persistence did not receive enough proof in that run. The latest FlowKey-safe package still needs runtime import testing.
-
-No commit or push should be made until runtime passes or the user explicitly accepts this partial baseline.
+This is an **accepted manual runtime baseline** for the latest package after the RequesterApplicant, product sublist, FlowKey-safe binding, submit guard, boarding-year quota, and `dateDiff` unit-shape fixes. The final runtime pass was reported by the user from manual Yeeflow testing; Codex did not re-operate the UI in the final consolidation turn.
 
 ## Current Package
 
@@ -14,7 +12,7 @@ No commit or push should be made until runtime passes or the user explicitly acc
 - Decoded app definition: `employee-family-implant-app-def.v1.json`
 - Approval form definition: `employee-family-implant-approval-form-def.v1.json`
 - Generator: `generate-employee-family-implant-v1.mjs`
-- Download copy: `/Users/Renger/Downloads/Employee Family Implant FlowKey Safe Summary Binding Fix 20260516.yap`
+- Download copy: `/Users/Renger/Downloads/Employee Family Implant DateDiff Unit Fix 20260517.yap`
 - Flow key: `EIA`
 - ID family: `641...`
 
@@ -104,3 +102,34 @@ Follow-up runtime focus:
 - If requester-based profile expressions fail at runtime, keep `RequesterApplicant` fixed, route missing profile data to HR verification, and do not use the task viewer's Current User as fallback.
 - The confirmed Finance/Benefits route is Custom Package based. High-amount routing still needs a business threshold before it can be made exact.
 - Strict dynamic attachment blocking remains conditional on runtime-safe validation patterns; v1 uses visible guidance plus upload control and HR verification fallback.
+
+## Accepted Manual Runtime Baseline - 2026-05-17
+
+Accepted package: `/Users/Renger/Downloads/Employee Family Implant DateDiff Unit Fix 20260517.yap`
+
+User-confirmed runtime pass after fixes:
+
+- Requester / Applicant remains editable, required, and defaults to Current User.
+- Requester / Applicant change reruns applicant snapshot initialization and quota calculation for proxy submission.
+- Applicant business logic uses RequesterApplicant or applicant snapshot variables, not Context:Current User after initial defaulting.
+- Applicant snapshot fields remain readonly.
+- Product Selection uses sublist row subtotal, summary binding, and Total Application Amount.
+- FlowKey-safe summary binding remains fixed.
+- Submit guard uses step-level `continue: true`.
+- Family Quota Check runs during initialization and submit.
+- Eligibility Date variable/control dependency was removed.
+- Applicant Boarding Years number variable was added and calculates correctly.
+- Boarding tenure logic sets effective quota to 0 when Applicant Boarding Years = 0, and treats Applicant Boarding Years > 0 as eligible.
+- Family Quota Usage includes numeric Quota Cycle No.
+- Family usage query uses ApplicantEmployeeID + Quota Cycle No. + UsageStatus.
+- Product Selection summary, Total Application Amount, quota check, and submit guard behavior are accepted as runtime-passed by the user.
+
+Critical dateDiff learning:
+
+- Broken generated shape: third parameter `[{ "type": "str", "value": "Year" }]`.
+- Broken frontend display: `dateDiff(Workflow Variables:Applicant Boarding Date,now(),formcraft.formula.datetype.[object Object],)`.
+- Working export-backed/manual shape: raw third parameter `"year"`.
+- Working frontend display: `dateDiff(Workflow Variables:Applicant Boarding Date,now(),Year,)`.
+- Correct generator expression: `dateDiff(ApplicantBoardingDate, now(), "year", [])`.
+
+Honest boundary: this section records the user's accepted manual runtime result. Any future tenant-specific profile availability or routing variations should still be verified in the target tenant when changed.

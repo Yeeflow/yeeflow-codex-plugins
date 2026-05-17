@@ -75,7 +75,7 @@ Choose functions by business intent before choosing by name:
 | --- | --- | --- | --- |
 | `date` | 3-6 | date | Build date string from year/month/day and optional time. |
 | `dateAdd` | 3 | date | Add year/month/day/hour/minute/second interval. |
-| `dateDiff` | 4 | number | Difference between two dates. |
+| `dateDiff` | 4 | number | Difference between two dates. The third date-unit parameter must be a raw lowercase unit string such as `"year"` or `"day"`, not an expression string-token array. |
 | `dateFormat` | 2 | text | Format date with tokens such as YYYY, MM, DD, HH, mm, ss. |
 | `datePart` | 2 | number | Year, Quarter, Month, dayofweek, day, hour, minute, second. |
 | `datePicker` | 2 | date | Date picker expression helper. |
