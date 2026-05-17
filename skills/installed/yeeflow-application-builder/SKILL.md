@@ -172,6 +172,7 @@ Use the current Yeeflow generation foundation by default:
 - sublist current-object expressions
 - sublist summary binding
 - workflow numeric routing
+- latest workflow transition condition operand wrappers for direct selectors, direct values, and expression-editor operands
 - form actions Phase 1 and Phase 2
 - correct `attrs.querydata_filters`
 - expression-editor token arrays with `showCus: false` for Query data filter values that reference workflow variables or calculations

@@ -262,6 +262,7 @@ Use current proven feature foundations:
 - sublist current-object expressions
 - sublist summary binding
 - workflow numeric routing
+- latest SequenceFlow condition operand wrappers; use direct selector/value wrappers for simple routing and expression-editor operands for calculated/date/threshold routing
 - form actions Phase 1 and Phase 2
 - Query data multiple/single
 - Submit form / Save changes

@@ -66,7 +66,7 @@ Lookup/data filter screenshots show condition-builder rows with field, operator,
 
 ## Workflow Transition Conditions
 
-Use expression tokens for generated conditional routing only when the target workflow condition wrapper is export-backed. Use simple approval outcome conditions for approve/reject paths.
+Use expression tokens for generated conditional routing only with the export-backed workflow transition operand wrapper. `Implant Application Request (4).ywf` proves each transition condition row can put either side in expression-editor mode with `type: 2`.
 
 Example: route to Finance when total amount is at least 5000:
 
@@ -78,7 +78,16 @@ Example: route to Finance when total amount is at least 5000:
 ]
 ```
 
-Workflow screenshots show transition conditions are configured on selected sequence/transition arrows. Generated workflow conditions must remain boolean expressions and must not use raw JavaScript.
+Workflow screenshots show transition conditions are configured on selected sequence/transition arrows. Generated workflow conditions must remain Yeeflow expression tokens and must not use raw JavaScript.
+
+Pattern choices:
+
+- Direct variable/field left + static option right: use `left.type = 1`, `right.type = 0`.
+- Direct variable/field left + expression right: use `left.type = 1`, `right.type = 2`.
+- Expression left + static/date/option right: use `left.type = 2`, `right.type = 0`.
+- Expression left + expression right: use `left.type = 2`, `right.type = 2`.
+
+Keep the `dateDiff(..., "year", [])` raw date-unit rule inside transition expression operands; do not wrap the date unit as a string token array.
 
 ## String Formatting
 

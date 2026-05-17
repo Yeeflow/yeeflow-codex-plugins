@@ -89,6 +89,8 @@ For Yeeflow Form Actions Phase 3 condition-flow learning, study corrected `.ywf`
 
 For expression export-back fixes discovered during manual runtime testing, compare the generated and manually corrected token shapes exactly before promoting. `Implant Application Request (3).ywf` proved that `dateDiff` date-unit params use a raw lowercase string such as `"year"`; the generated token-array shape `[{ "type": "str", "value": "Year" }]` rendered as `formcraft.formula.datetype.[object Object]` and broke Applicant Boarding Years calculation. Promote this kind of finding into expression docs, validators, generator skills, and focused smoke tests.
 
+For workflow transition condition learning, study corrected `.ywf` exports before promoting branch condition generation. `Implant Application Request (4).ywf` proved latest SequenceFlow condition rows support independent left/right operand modes: `type: 1` direct selector, `type: 0` direct/static/option/date value, and `type: 2` expression editor. Compare old legacy HTML-button conditions with wrapper-object manual examples, document when each pattern should be generated, and update validators warning-first.
+
 ## What To Load
 
 - For the full lifecycle, read `references/feature-learning-workflow.md`.

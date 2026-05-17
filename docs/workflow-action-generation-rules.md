@@ -54,5 +54,17 @@ For review nodes with multiple outgoing `SequenceFlow` branches:
 - validate that every outgoing condition family eventually reaches an end or persistence node
 
 Example: if `HasCustomPackageProduct` drives Finance/Benefits Review, the standard branch can use `Approved + HasCustomPackageProduct = No`, while the Finance/fallback branch can use `Approved + HasCustomPackageProduct != No` to cover `Yes`, empty, and unexpected values.
+
+## SequenceFlow Condition Operand Pattern
+
+`Implant Application Request (4).ywf` proves the latest workflow arrow condition UI supports independent operand modes for both sides of each condition row:
+
+- `type: 0`: direct/static value, selected option value, or date-picker value
+- `type: 1`: direct field/workflow-variable selector, observed on the left side
+- `type: 2`: expression editor operand, used on either side for variables, calculations, functions, or dynamic comparisons
+
+For new generated workflow conditions, prefer these wrapper object shapes over legacy frontend `<input type="button" ...>` expression-button strings. Use `left.type = 1` and `right.type = 0` for simple routing such as `ApplicationType == Family`. Use `type = 2` on whichever side needs an expression editor, such as date tenure, numeric thresholds, calculated quota cycle, or expression-to-expression comparisons.
+
+See `docs/workflow-transition-condition-patterns-study.md` and `docs/yeeflow-workflow-generation-rules.md` for examples.
 - Stop if external/credential actions contain literal secrets or unresolved connection IDs.
 - Do not generate a new app solely from this reference; use it to validate a separately decomposed workflow requirement.

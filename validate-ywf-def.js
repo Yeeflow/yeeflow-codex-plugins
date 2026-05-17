@@ -1452,12 +1452,48 @@ function validateDecodedDef(def, options = {}) {
   }
 
   function validateSequenceFlowConditions() {
+    function looksLikeConditionExpressionArray(value) {
+      return Array.isArray(value) && value.some((entry) => isObject(entry) && (
+        entry.type === "op" ||
+        entry.type === "func" ||
+        entry.type === "str" ||
+        entry.type === "num" ||
+        entry.type === "bool" ||
+        entry.exprType === "variable" ||
+        entry.exprType === "application" ||
+        entry.exprType === "variable_ctx"
+      ));
+    }
+    function validateOperandWrapper(operand, side, p) {
+      if (typeof operand === "string") {
+        if (operand.includes("<input") && operand.includes("Workflow Variables:")) {
+          addIssue(warnings, "SEQUENCE_CONDITION_LEGACY_HTML_OPERAND", "Workflow transition condition uses legacy HTML expression-button operand; prefer export-backed operand wrapper objects for newly generated conditions", p);
+        }
+        return;
+      }
+      if (!isObject(operand)) return;
+      if (![0, 1, 2].includes(operand.type)) {
+        addIssue(warnings, "SEQUENCE_CONDITION_OPERAND_UNKNOWN_TYPE", "Workflow transition condition operand wrapper should use type 0 direct value, type 1 direct selector, or type 2 expression editor", `${p}.type`, { side, type: operand.type });
+        return;
+      }
+      if (!Object.prototype.hasOwnProperty.call(operand, "value")) {
+        addIssue(warnings, "SEQUENCE_CONDITION_OPERAND_MISSING_VALUE", "Workflow transition condition operand wrapper should include value", `${p}.value`, { side, type: operand.type });
+      }
+      if (operand.type === 2 && !looksLikeConditionExpressionArray(operand.value)) {
+        addIssue(warnings, "SEQUENCE_CONDITION_EXPR_OPERAND_BAD_VALUE", "Expression-editor workflow transition condition operands should store an expression-token array in value", `${p}.value`, { side });
+      }
+      if (operand.type === 1 && !isObject(operand.value)) {
+        addIssue(warnings, "SEQUENCE_CONDITION_DIRECT_SELECTOR_BAD_VALUE", "Direct-selector workflow transition condition operands should store the selected variable/field token object in value", `${p}.value`, { side });
+      }
+    }
     childshapes.forEach((shape, index) => {
       if (!isSequenceFlow(shape)) return;
       const conditions = asArray(shape.properties && shape.properties.conditioninfo);
       conditions.forEach((condition, conditionIndex) => {
         const p = `$.childshapes[${index}].properties.conditioninfo[${conditionIndex}]`;
         const text = JSON.stringify(condition);
+        validateOperandWrapper(condition.left, "left", `${p}.left`);
+        validateOperandWrapper(condition.right, "right", `${p}.right`);
         const isApprovalOutcome = text.includes("&quot;type&quot;:&quot;task&quot;") || text.includes(":Outcome") || text.includes(":结果");
         if (isApprovalOutcome) {
           if (condition.op !== "s.=") addIssue(errors, "APPROVAL_CONDITION_BAD_OP", "Approval outcome condition should use op: s.=", `${p}.op`);

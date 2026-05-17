@@ -375,6 +375,8 @@ function validateConditionArray(issues, value, pointer, code, severity, requireP
         hasRight,
       });
     }
+    validateConditionOperandShape(issues, condition.left, `${pointer}[${index}].left`, "left");
+    validateConditionOperandShape(issues, condition.right, `${pointer}[${index}].right`, "right");
   });
 }
 
@@ -388,6 +390,29 @@ function looksLikeExpressionTokenArray(value) {
     entry.exprType === "variable" ||
     entry.exprType === "variable_ctx"
   ));
+}
+
+function validateConditionOperandShape(issues, operand, pointer, side) {
+  if (typeof operand === "string") {
+    if (operand.includes("<input") && operand.includes("Workflow Variables:")) {
+      issue(issues, "warning", "SEQUENCEFLOW_CONDITION_LEGACY_HTML_OPERAND", "Workflow transition condition uses legacy HTML expression-button operand; prefer operand wrapper objects for newly generated conditions.", { path: pointer, side });
+    }
+    return;
+  }
+  if (!isObject(operand)) return;
+  if (![0, 1, 2].includes(operand.type)) {
+    issue(issues, "warning", "SEQUENCEFLOW_CONDITION_OPERAND_UNKNOWN_TYPE", "Workflow transition condition operand wrapper should use type 0 direct value, type 1 direct selector, or type 2 expression editor.", { path: `${pointer}.type`, side, type: operand.type });
+    return;
+  }
+  if (!Object.prototype.hasOwnProperty.call(operand, "value")) {
+    issue(issues, "warning", "SEQUENCEFLOW_CONDITION_OPERAND_MISSING_VALUE", "Workflow transition condition operand wrapper should include value.", { path: `${pointer}.value`, side, type: operand.type });
+  }
+  if (operand.type === 2 && !looksLikeExpressionTokenArray(operand.value)) {
+    issue(issues, "warning", "SEQUENCEFLOW_CONDITION_EXPR_OPERAND_BAD_VALUE", "Expression-editor workflow transition condition operands should store an expression-token array in value.", { path: `${pointer}.value`, side });
+  }
+  if (operand.type === 1 && !isObject(operand.value)) {
+    issue(issues, "warning", "SEQUENCEFLOW_CONDITION_DIRECT_SELECTOR_BAD_VALUE", "Direct-selector workflow transition condition operands should store the selected variable/field token object in value.", { path: `${pointer}.value`, side });
+  }
 }
 
 function walk(value, visitor, pointer = "", key = "") {

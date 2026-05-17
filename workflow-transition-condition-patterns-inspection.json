@@ -1,0 +1,269 @@
+{
+  "source": "/Users/Renger/Downloads/Implant Application Request (4).ywf",
+  "studiedAt": "2026-05-17",
+  "workflow": "Implant Application Request",
+  "transition": {
+    "resourceid": "efi-flow-0002a",
+    "name": "Family Application Occupies Quota",
+    "source": {
+      "id": "efi-node-set-0002",
+      "resourceid": "efi-node-set-0002"
+    },
+    "target": {
+      "id": "efi-node-occupy-usage-0006",
+      "resourceid": "efi-node-occupy-usage-0006"
+    }
+  },
+  "relatedNodes": [
+    {
+      "resourceid": "efi-node-set-0002",
+      "stencil": "SetVariableTask",
+      "name": "Set Application No. and Submitted Status"
+    },
+    {
+      "resourceid": "efi-node-hr-review-0003",
+      "stencil": "MultiAssignmentTask",
+      "name": "HR Review"
+    },
+    {
+      "resourceid": "efi-node-occupy-usage-0006",
+      "stencil": "ContentList",
+      "name": "Occupy Family Quota Usage on Submission"
+    }
+  ],
+  "rows": [
+    {
+      "index": 0,
+      "key": "efi-cond-family-start",
+      "pre": "and",
+      "op": "s.=",
+      "group": null,
+      "leftMode": {
+        "mode": "legacyHtmlButton",
+        "note": "legacy left operand serialized as frontend expression button HTML"
+      },
+      "rightMode": {
+        "mode": "primitiveLiteral",
+        "note": "primitive right operand"
+      },
+      "raw": {
+        "key": "efi-cond-family-start",
+        "pre": "and",
+        "left": "<input type=\"button\" data=\"${&quot;type&quot;:&quot;variable&quot;, &quot;param&quot;:{&quot;id&quot;:&quot;ApplicationType&quot;}}\" expr=\"__\" tabindex=\"-1\" value=\"Workflow Variables:Application Type\">",
+        "op": "s.=",
+        "right": "Family"
+      }
+    },
+    {
+      "index": 1,
+      "key": "ac709892-7ebe-4960-b780-978c94b35921",
+      "pre": "and",
+      "op": "s.=",
+      "group": "string",
+      "leftMode": {
+        "mode": "directFieldSelector",
+        "note": "left operand selected directly from workflow variable/field picker",
+        "value": {
+          "exprType": "variable",
+          "valueType": "text",
+          "id": "ApplicationType",
+          "type": "expr"
+        }
+      },
+      "rightMode": {
+        "mode": "directValue",
+        "note": "direct/static or selected value/date value",
+        "value": "Family"
+      },
+      "raw": {
+        "key": "ac709892-7ebe-4960-b780-978c94b35921",
+        "pre": "and",
+        "left": {
+          "type": 1,
+          "value": {
+            "exprType": "variable",
+            "valueType": "text",
+            "id": "ApplicationType",
+            "type": "expr"
+          }
+        },
+        "op": "s.=",
+        "right": {
+          "type": 0,
+          "value": "Family"
+        },
+        "group": "string"
+      }
+    },
+    {
+      "index": 2,
+      "key": "ddb1e9fa-2958-4bc4-878c-fe540bfeb558",
+      "pre": "and",
+      "op": "s.=",
+      "group": "string",
+      "leftMode": {
+        "mode": "expressionEditor",
+        "note": "operand switched to expression editor",
+        "value": [
+          {
+            "exprType": "variable",
+            "valueType": "text",
+            "id": "ApplicationType",
+            "type": "expr",
+            "name": "Workflow Variables:Application Type"
+          }
+        ]
+      },
+      "rightMode": {
+        "mode": "expressionEditor",
+        "note": "operand switched to expression editor",
+        "value": [
+          {
+            "type": "str",
+            "value": "Family"
+          }
+        ]
+      },
+      "raw": {
+        "key": "ddb1e9fa-2958-4bc4-878c-fe540bfeb558",
+        "pre": "and",
+        "left": {
+          "type": 2,
+          "value": [
+            {
+              "exprType": "variable",
+              "valueType": "text",
+              "id": "ApplicationType",
+              "type": "expr",
+              "name": "Workflow Variables:Application Type"
+            }
+          ]
+        },
+        "op": "s.=",
+        "right": {
+          "type": 2,
+          "value": [
+            {
+              "type": "str",
+              "value": "Family"
+            }
+          ]
+        },
+        "group": "string"
+      }
+    },
+    {
+      "index": 3,
+      "key": "df1d8944-0fd0-41d3-b6cd-738489cbb111",
+      "pre": "and",
+      "op": "s.=",
+      "group": "string",
+      "leftMode": {
+        "mode": "expressionEditor",
+        "note": "operand switched to expression editor",
+        "value": [
+          {
+            "type": "str",
+            "value": "Family"
+          }
+        ]
+      },
+      "rightMode": {
+        "mode": "expressionEditor",
+        "note": "operand switched to expression editor",
+        "value": [
+          {
+            "exprType": "variable",
+            "valueType": "text",
+            "id": "ApplicationType",
+            "type": "expr",
+            "name": "Workflow Variables:Application Type"
+          }
+        ]
+      },
+      "raw": {
+        "key": "df1d8944-0fd0-41d3-b6cd-738489cbb111",
+        "pre": "and",
+        "left": {
+          "type": 2,
+          "value": [
+            {
+              "type": "str",
+              "value": "Family"
+            }
+          ]
+        },
+        "op": "s.=",
+        "right": {
+          "type": 2,
+          "value": [
+            {
+              "exprType": "variable",
+              "valueType": "text",
+              "id": "ApplicationType",
+              "type": "expr",
+              "name": "Workflow Variables:Application Type"
+            }
+          ]
+        },
+        "group": "string"
+      }
+    },
+    {
+      "index": 4,
+      "key": "951a7cca-ae11-49a2-b388-45957411d5e2",
+      "pre": "and",
+      "op": "s.=",
+      "group": "string",
+      "leftMode": {
+        "mode": "expressionEditor",
+        "note": "operand switched to expression editor",
+        "value": [
+          {
+            "exprType": "variable",
+            "valueType": "text",
+            "id": "ApplicationType",
+            "type": "expr",
+            "name": "Workflow Variables:Application Type"
+          }
+        ]
+      },
+      "rightMode": {
+        "mode": "directValue",
+        "note": "direct/static or selected value/date value",
+        "value": "Family"
+      },
+      "raw": {
+        "key": "951a7cca-ae11-49a2-b388-45957411d5e2",
+        "pre": "and",
+        "left": {
+          "type": 2,
+          "value": [
+            {
+              "exprType": "variable",
+              "valueType": "text",
+              "id": "ApplicationType",
+              "type": "expr",
+              "name": "Workflow Variables:Application Type"
+            }
+          ]
+        },
+        "op": "s.=",
+        "right": {
+          "type": 0,
+          "value": "Family"
+        },
+        "group": "string"
+      }
+    }
+  ],
+  "operandTypeLegend": {
+    "0": "direct/static value, selected option value, or date value",
+    "1": "direct left field/workflow-variable selector",
+    "2": "expression editor operand"
+  },
+  "notes": [
+    "Large numeric ids preserved as strings in source export; decoded payload was not staged.",
+    "Rows 1-4 are the user configured examples after the original generated row."
+  ]
+}

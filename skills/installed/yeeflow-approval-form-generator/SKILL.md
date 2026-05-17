@@ -227,6 +227,8 @@ For generated form actions, use the runtime/export-backed rules from `docs/yeefl
 
 Runtime baseline status: button styles, button-click triggers, page-load triggers, temp variable display, `setvar`, `confirm`, Query data multiple/single mapping, query count, Query data filter via `querydata_filters`, `arraySum`, `JSONStringfy`, default Submit form, Save changes, task open, approval completion, and ContentList persistence are proven in the focused generated tests.
 
+Workflow transition condition update: approval-form workflows can use latest SequenceFlow condition operand wrappers from `Implant Application Request (4).ywf`. Direct variable/field selectors use operand `type: 1`, direct/static/option/date values use `type: 0`, and expression-editor operands use `type: 2` on either left or right. Use this when approval-form routing depends on calculated dates, thresholds, quota values, or dynamic comparisons; keep simple approve/reject task outcome conditions export-backed.
+
 Do not hardcode tenant-specific direct-user assignees in generated approval tasks. Avoid `method: "users"` with local user IDs/titles such as `User:Renger` unless the user explicitly supplies a target-tenant-valid mapping. Prefer requester/current-user expression assignment from an export-backed workflow variable.
 
 ## Field Type Rules
