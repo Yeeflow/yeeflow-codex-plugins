@@ -84,6 +84,10 @@ Requester/applicant defaulting rule: when a required applicant/user control is g
 
 Editable requester/applicant rule: when proxy submission is allowed and the requester/applicant picker remains editable, bind that control's change/action trigger to rerun applicant snapshot initialization and dependent quota/policy calculations. Do not rely only on page load; a changed applicant must refresh profile fields, eligibility, quota queries, and persisted snapshot values.
 
+Routing-driver field rule: any form field or variable that drives workflow routing should be required, readonly auto-derived, or protected by a workflow fallback route. Derived flags such as `HasCustomPackageProduct` should be calculated from the source controls/sublist and displayed readonly instead of left for the requester to manually set. If the value can be empty or unexpected at runtime, the workflow should route to a safe review/fallback path rather than dead-ending.
+
+Configuration-list guidance rule: if a generated approval form includes a configuration list such as Attachment Requirement Rules, the form action model must either query/use it for visible guidance or validation, or the list should be deferred out of v1. Do not show a maintained configuration list that the form never reads.
+
 Submit-time validation rule: core business checks that must happen before workflow submission should be wired through `formdef.formAction.onSubmit`. The submit action may call a reusable check action first, then conditionally warn/confirm and run a native `type: "submit"` step. Conditional warning/confirm/check steps before submit usually require step-level `continue: true`, the export-backed shape for designer checkbox `Continue next step when condition is not met`; otherwise the valid path can skip the warning but stop before submit. Never generate an `otheraction` step that calls its own parent action.
 
 Set variables rule: use multi-value Set Variables only for independent assignments. Keep dependent calculations in ordered steps when later values depend on earlier variables, query results, or summary recalculations.

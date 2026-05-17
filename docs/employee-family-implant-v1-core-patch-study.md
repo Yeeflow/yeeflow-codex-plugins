@@ -286,6 +286,26 @@ Runtime follow-up with `/Users/Renger/Downloads/Employee Family Implant FlowKey 
 
 Fresh-runtime follow-up: after importing the regenerated package, the Product Selection row subtotal and visible `Sum: 2500.00` updated correctly, but the separate `TotalApplicationAmount` workflow variable was not updated in time for the Family Quota Check action. Because quota and routing are policy-critical, the generator now keeps the export-backed summary binding and also recalculates `TotalApplicationAmount` inside quota/submit preflight actions with `arraySum(ProductSelectionItems, "ProductRowSubtotal", [], [])`. Treat summary binding as the UI/display mechanism and explicit `arraySum` preflight as the safe policy calculation fallback until a future export proves a stronger immediate-commit pattern.
 
+## Process-Design Follow-Up: Quota Lifecycle, Attachment Rules, and Branch Coverage
+
+Later manual review found three app-planning issues that are reusable application-builder lessons:
+
+1. A usage list must participate in the process.
+   - If the business confirms quota is occupied on submission, create a usage row at workflow start/submission, not only after final approval.
+   - Future quota checks must include in-progress/occupied and approved/confirmed usage records.
+   - Rejection must release/update/delete the matching usage record; final approval should confirm it.
+   - Store a correlation key such as application number, request instance key, form instance id, or workflow instance id so later workflow actions can find the same usage row.
+2. A configuration list must drive behavior or be deferred.
+   - Attachment Requirement Rules should be queried or looked up to drive visible guidance/validation.
+   - If strict upload validation is not runtime-safe, show guidance and route uncertain cases to HR verification.
+   - Do not include an unused v1 configuration list just because it looks like a good model.
+3. Workflow branches need full coverage.
+   - If a branch uses `HasCustomPackageProduct`, make that variable required, auto-derived, or guarded by fallback.
+   - Cover `Yes`, `No`, empty/null, and unexpected values.
+   - For Employee Family Implant v1, `Approved + HasCustomPackageProduct = No` follows the standard path, while `Approved + HasCustomPackageProduct != No` goes to Finance/Benefits Review as a safe fallback.
+
+The regenerated package `/Users/Renger/Downloads/Employee Family Implant Quota Lifecycle Branch Coverage 20260517.yap` applies these rules. Local validation passed. A Yeeflow runtime smoke test also confirmed import, home dashboard render, and approval-form open with requester/applicant snapshot, quota, and attachment guidance visible. The new `ContentList edit` usage approval/release lifecycle still requires workflow runtime proof.
+
 ### Check and Submit Action
 
 The corrected export contains `Check and Submit the form` and wires it to submit via `formAction.onSubmit`. However, the exported action currently contains a self-reference placeholder:

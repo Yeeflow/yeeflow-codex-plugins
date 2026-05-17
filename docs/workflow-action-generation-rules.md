@@ -31,5 +31,28 @@ Use this with `workflow-action-configurations.normalized.json` when generating o
 - Stop before building a `.ywf`, `.ydl`, or `.yap` wrapper if required action properties are missing in final mode.
 - Stop if an enum value is outside the normalized reference.
 - Stop if `ContentList` or `QueryData` targets do not resolve to package or exported-back metadata.
+
+## Quota Usage Lifecycle Pattern
+
+When a business decision says quota, entitlement, budget, or benefit usage is occupied on submission:
+
+- create the usage/occupation row when the workflow starts or immediately after the submit/start Set Variable step, not only after final approval
+- query future usage by applicant identity + numeric cycle/year + active usage status
+- count in-progress/occupied and approved/confirmed statuses; exclude released/rejected statuses
+- store a correlation key such as application number, request instance key, form instance id, or workflow instance id so the same usage row can be updated later
+- on final approval, use `ContentList` edit to mark the matching usage row approved/confirmed when runtime-safe
+- on rejection/cancel, use `ContentList` edit/remove to release or reject the matching usage row when runtime-safe
+- if `ContentList` edit/remove has not been runtime-proven for the scenario, document the HR manual release fallback and create a focused learning task instead of leaving the usage list unused
+
+## Branch Coverage Pattern
+
+For review nodes with multiple outgoing `SequenceFlow` branches:
+
+- branch variables must be required, auto-derived, or protected by a fallback route
+- cover approve/reject plus yes/no/empty/unexpected values for policy-routing flags
+- route unknown or empty exception flags to a specialist review/fallback path rather than allowing a dead end
+- validate that every outgoing condition family eventually reaches an end or persistence node
+
+Example: if `HasCustomPackageProduct` drives Finance/Benefits Review, the standard branch can use `Approved + HasCustomPackageProduct = No`, while the Finance/fallback branch can use `Approved + HasCustomPackageProduct != No` to cover `Yes`, empty, and unexpected values.
 - Stop if external/credential actions contain literal secrets or unresolved connection IDs.
 - Do not generate a new app solely from this reference; use it to validate a separately decomposed workflow requirement.

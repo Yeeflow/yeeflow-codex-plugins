@@ -152,6 +152,8 @@ Requester/applicant rule:
 
 - The requester/applicant field may default to Current User and remain editable when proxy submission is allowed.
 - If the requester/applicant value changes, rerun applicant profile snapshot and dependent quota/policy calculations.
+- If a configuration list such as Attachment Requirement Rules is included in v1, form actions should query it or otherwise use it for visible guidance/validation. Do not include a maintained configuration list that the form never reads.
+- If a field or derived variable drives workflow routing, generate it as required, readonly auto-derived, or protected by a workflow fallback route. Do not leave route-driving flags blank and nullable without coverage.
 - Do not use Context:Current User for applicant profile reads after the requester/applicant value is set.
 - Snapshot/profile fields populated from the requester/applicant should be readonly unless HR is intentionally allowed to correct them.
 
@@ -370,3 +372,4 @@ Filter correction:
 - Submit-time business validation should be wired through `formdef.formAction.onSubmit` when the app must check a policy before submission.
 - A submit validation action should call the reusable check action first, then use conditional warning/confirm behavior and a conditional native `submit` step.
 - Do not rely only on a manual Check button for core policy checks such as quota validation.
+- If quota is occupied on submission, quota checks must include in-progress/occupied usage records as well as approved/confirmed usage records. Use separate safe Query data steps per status if OR/in-list filters are not proven, then aggregate each collection with `arraySum`.

@@ -348,8 +348,13 @@ const usage = makeList("Family Quota Usage", usageListId, 105, [
   ["Text5", "Product Summary", "ProductSummary", "Text", "textarea", { edit: { textarea_minrows: 3 }, placeholder: "Product line summary" }],
   ["Text6", "Has Custom Package Product", "HasCustomPackageProduct", "Text", "radio", choice(["No", "Yes"])],
   ["Decimal1", "Total Application Amount", "TotalApplicationAmount", "Decimal", "currency", { currencyCode: "USD", displayFormat: "code", displayThousandths: "1" }],
-  ["Text7", "Usage Status", "UsageStatus", "Text", "radio", choice(["Occupied", "Released", "Confirmed", "Not Applicable"])],
-  ["Text8", "Notes", "Notes", "Text", "textarea", { edit: { textarea_minrows: 3 }, placeholder: "Notes" }]
+  ["Text7", "Usage Status", "UsageStatus", "Text", "radio", choice(["In Progress", "Occupied", "Approved", "Confirmed", "Released", "Rejected", "Not Applicable"])],
+  ["Text8", "Notes", "Notes", "Text", "textarea", { edit: { textarea_minrows: 3 }, placeholder: "Notes" }],
+  ["Text9", "Request Instance Key", "RequestInstanceKey", "Text", "input", textRule("Application or workflow instance correlation key")],
+  ["Text10", "Source Application Status", "SourceApplicationStatus", "Text", "radio", choice(["Submitted", "Approved", "Rejected"])],
+  ["Datetime1", "Submitted Time", "SubmittedTime", "Datetime", "datepicker", { showtime: true, date_type: "0", dateformat: "0" }],
+  ["Datetime2", "Approved Time", "ApprovedTime", "Datetime", "datepicker", { showtime: true, date_type: "0", dateformat: "0" }],
+  ["Datetime3", "Released Time", "ReleasedTime", "Datetime", "datepicker", { showtime: true, date_type: "0", dateformat: "0" }]
 ]);
 
 data.Childs = [product.list, quota.list, attachmentRules.list, applications.list, usage.list];
@@ -504,9 +509,14 @@ const variables = [
   ["ProductSummary", "Product Summary", "text"],
   ["HasCustomPackageProduct", "Has Custom Package Product", "text"],
   ["TotalApplicationAmount", "Total Application Amount", "number"],
+  ["AttachmentScenarioProductType", "Attachment Scenario Product Type", "text"],
   ["QuotaYear", "Quota Year", "text"],
   ["ApplicantBoardingYears", "Applicant Boarding Years", "number"],
   ["AnnualQuotaAmount", "Annual Quota Amount", "number"],
+  ["InProgressUsedQuota", "In Progress Used Quota", "number"],
+  ["OccupiedUsedQuota", "Occupied Used Quota", "number"],
+  ["ApprovedUsedQuota", "Approved Used Quota", "number"],
+  ["ConfirmedUsedQuota", "Confirmed Used Quota", "number"],
   ["UsedQuotaBefore", "Used Quota Before", "number"],
   ["RemainingQuotaAfter", "Remaining Quota After", "number"],
   ["EligibilityStatus", "Eligibility Status", "text"],
@@ -636,6 +646,26 @@ function productRowControl(field, pageKey, readonly = false) {
 }
 
 function productSelectionListControl(pageKey, readonly = false) {
+  const attrs = {
+    "list-fields": productLineFields.map((field, index) => ({
+      ...field,
+      control: productRowControl(field, pageKey, readonly),
+      attrs: {
+        table: {
+          cw: [null, field.id === "ProductLookup" ? 240 : field.id === "ProductName" ? 220 : field.id === "ProductType" ? 200 : 150]
+        }
+      },
+      Order: index
+    })),
+    "list-variables": productLineFields.map((field) => ({ ...field })),
+    "list-fields-summary": readonly ? [] : [
+      { id: uuid(), field: "ProductRowSubtotal", type: "total", display: true, binding: { prefix: "__variables_", value: "TotalApplicationAmount" } }
+    ],
+    operation: readonly ? false : true,
+    list_add_btn_text: { value: "Add product", variable: null },
+    list_row_allow_import: false
+  };
+  if (!readonly && pageKey === "submit") attrs.control_event_rule = checkQuotaActionId;
   return {
     id: `${processId}-control-ProductSelectionItems-${pageKey}`,
     type: "list",
@@ -644,25 +674,7 @@ function productSelectionListControl(pageKey, readonly = false) {
     readonly,
     displayLabel: [null, true],
     nv_label: "Product selection sublist",
-    attrs: {
-      "list-fields": productLineFields.map((field, index) => ({
-        ...field,
-        control: productRowControl(field, pageKey, readonly),
-        attrs: {
-          table: {
-            cw: [null, field.id === "ProductLookup" ? 240 : field.id === "ProductName" ? 220 : field.id === "ProductType" ? 200 : 150]
-          }
-        },
-        Order: index
-      })),
-      "list-variables": productLineFields.map((field) => ({ ...field })),
-      "list-fields-summary": readonly ? [] : [
-        { id: uuid(), field: "ProductRowSubtotal", type: "total", display: true, binding: { prefix: "__variables_", value: "TotalApplicationAmount" } }
-      ],
-      operation: readonly ? false : true,
-      list_add_btn_text: { value: "Add product", variable: null },
-      list_row_allow_import: false
-    }
+    attrs
   };
 }
 
@@ -729,7 +741,7 @@ function makeApprovalPage(title, review, pageKey = review ? "review" : "submit")
   ];
   const productControls = [
     approvalControl("TotalApplicationAmount", "TotalApplicationAmount", "input_number", "Total Application Amount", { precision: 2, placeholder: "Summary total from product rows" }, true, pageKey),
-    approvalControl("HasCustomPackageProduct", "HasCustomPackageProduct", "radio", "Includes Custom Package Product", { displayStyle: "dropdown", choices: ["No", "Yes"] }, readonlyMain, pageKey)
+    approvalControl("HasCustomPackageProduct", "HasCustomPackageProduct", "radio", "Includes Custom Package Product", { required: true, displayStyle: "dropdown", choices: ["No", "Yes"] }, true, pageKey)
   ];
   const quotaControls = [
     approvalControl("QuotaYear", "QuotaYear", "input", "Quota Cycle", { placeholder: "Employee anniversary quota cycle" }, true, pageKey),
@@ -890,6 +902,10 @@ function queryQuotaConfigListRef() {
   return { AppID: appId, ListSetID: rootId, ListID: quotaListId, ListType: 1 };
 }
 
+function queryAttachmentRulesListRef() {
+  return { AppID: appId, ListSetID: rootId, ListID: attachmentRulesListId, ListType: 1 };
+}
+
 function implantFormActions() {
   const requesterApplicant = workflowVarToken("RequesterApplicant", "Requester / Applicant", "user");
   const applicantStatus = workflowVarToken("ApplicantProfileSnapshotStatus", "Applicant Profile Snapshot Status", "text");
@@ -902,6 +918,10 @@ function implantFormActions() {
   const applicantLineManager = workflowVarToken("ApplicantLineManager", "Applicant Line Manager", "text");
   const quotaStatus = workflowVarToken("QuotaUsageStatus", "Quota Usage Status", "text");
   const annualQuotaAmount = workflowVarToken("AnnualQuotaAmount", "Annual Quota Amount", "number");
+  const inProgressUsedQuota = workflowVarToken("InProgressUsedQuota", "In Progress Used Quota", "number");
+  const occupiedUsedQuota = workflowVarToken("OccupiedUsedQuota", "Occupied Used Quota", "number");
+  const approvedUsedQuota = workflowVarToken("ApprovedUsedQuota", "Approved Used Quota", "number");
+  const confirmedUsedQuota = workflowVarToken("ConfirmedUsedQuota", "Confirmed Used Quota", "number");
   const usedQuotaBefore = workflowVarToken("UsedQuotaBefore", "Used Quota Before", "number");
   const remainingQuotaAfter = workflowVarToken("RemainingQuotaAfter", "Remaining Quota After", "number");
   const quotaExceeded = workflowVarToken("QuotaExceeded", "Quota Exceeded", "text");
@@ -912,9 +932,22 @@ function implantFormActions() {
   const productLines = workflowVarToken("ProductSelectionItems", "Product Selection Items", "text");
   const productSummary = workflowVarToken("ProductSummary", "Product Summary", "text");
   const appAmount = workflowVarToken("TotalApplicationAmount", "Total Application Amount", "number");
-  const usageCollection = tempVarToken("var_UsageAmountCollection", "var_UsageAmountCollection", "text");
+  const hasCustomPackage = workflowVarToken("HasCustomPackageProduct", "Has Custom Package Product", "text");
+  const attachmentScenarioProductType = workflowVarToken("AttachmentScenarioProductType", "Attachment Scenario Product Type", "text");
+  const inProgressUsageCollection = tempVarToken("var_InProgressUsageAmountCollection", "var_InProgressUsageAmountCollection", "text");
+  const occupiedUsageCollection = tempVarToken("var_OccupiedUsageAmountCollection", "var_OccupiedUsageAmountCollection", "text");
+  const approvedUsageCollection = tempVarToken("var_ApprovedUsageAmountCollection", "var_ApprovedUsageAmountCollection", "text");
+  const confirmedUsageCollection = tempVarToken("var_ConfirmedUsageAmountCollection", "var_ConfirmedUsageAmountCollection", "text");
+  const attachmentRuleCollection = tempVarToken("var_AttachmentRuleCollection", "var_AttachmentRuleCollection", "text");
   const boardingDateEmpty = [{ type: "func", func: "isNullOrEmpty", params: [[applicantBoardingDate]] }];
   const applicantTenureYears = [{ type: "func", func: "dateDiff", params: [[applicantBoardingDate], [nowToken()], "year", []] }];
+  const customPackageDetected = [
+    { type: "func", func: "strIndex", params: [[productSummary], [{ type: "str", value: "Custom Package Product" }]] },
+    { type: "op", op: ">=" },
+    { type: "num", value: 0 }
+  ];
+  const hasCustomPackageExpression = [{ type: "func", func: "iif", params: [customPackageDetected, literalString("Yes"), literalString("No")] }];
+  const attachmentScenarioProductTypeExpression = [{ type: "func", func: "iif", params: [[hasCustomPackage, { type: "op", op: "==" }, { type: "str", value: "Yes" }], literalString("Custom Package Product"), literalString("Standard Product")] }];
   const applicantEligibleCondition = [applicantBoardingYears, { type: "op", op: ">" }, { type: "num", value: 0 }];
   const eligibilityStatusExpression = [
     {
@@ -946,6 +979,42 @@ function implantFormActions() {
       ]
     }
   ];
+  function usageQueryStep(status, tempCollectionId) {
+    return {
+      type: "querydata",
+      name: `Load ${status} family quota usage rows from Family Quota Usage`,
+      attrs: {
+        querydata_list: queryUsageListRef(),
+        querydata_filters: [
+          { key: uuid(), pre: "and", left: "Text2", op: "0", right: varButton("ApplicantEmployeeID", "Applicant Employee ID"), showCus: true },
+          { key: uuid(), pre: "and", left: "Decimal2", op: "0", right: varButton("ApplicantBoardingYears", "Applicant Boarding Years"), showCus: true },
+          { key: uuid(), pre: "and", left: "Text7", op: "0", right: status, showCus: true }
+        ],
+        querydata_type: "multiple",
+        querydata_fieldmap: null,
+        querydata_listname: tempCollectionId,
+        querydata_vartype: "text",
+        querydata_listname_parent: "__temp_",
+        querydata_fields: [
+          { FieldName: "Title", Type: "input", DisplayName: "Usage Record" },
+          { FieldName: "Decimal1", Type: "input_number", DisplayName: "Amount" }
+        ],
+        querydata_totalcount: "var_TotalQueryItems",
+        querydata_totalparent: "__temp_",
+        querydata_pagesize: 300
+      }
+    };
+  }
+  function sumUsageStep(name, target, collection) {
+    return {
+      type: "setvar",
+      name,
+      attrs: {
+        setvar_var: target,
+        setvar_val: [{ type: "func", func: "arraySum", params: [[collection], [{ type: "str", value: "Amount" }], [], []] }]
+      }
+    };
+  }
   return [
     {
       id: pageLoadActionId,
@@ -961,6 +1030,8 @@ function implantFormActions() {
           [applicantLineManager, [getUserAttr(getUserAttr(requesterApplicant, "LineManager", "Line Manager", ""), "Name_CN", "Name", "Needs HR Verification")]],
           [applicantStatus, literalString("Profile snapshot required; HR verifies missing profile values.")],
           [quotaStatus, literalString("Not Applicable")],
+          [hasCustomPackage, literalString("No")],
+          [attachmentScenarioProductType, literalString("Standard Product")],
           [quotaYear, [{ type: "func", func: "dateFormat", params: [[nowToken()], [{ type: "str", value: "YYYY" }]] }]],
           [attachmentSummary, literalString("Self+Standard: Implant request/supporting document. Self+Custom: Custom package quotation and implant request/supporting document. Family+Standard: Family relationship proof and implant request/supporting document. Family+Custom: Family relationship proof, custom package quotation, and implant request/supporting document.")]
         ]),
@@ -978,6 +1049,10 @@ function implantFormActions() {
         multiSetStep("Refresh total amount and readable product summary", [
           [appAmount, totalApplicationAmountExpression()],
           [productSummary, [{ type: "func", func: "JSONStringfy", params: [[productLines]] }]]
+        ]),
+        multiSetStep("Derive product routing and attachment scenario", [
+          [hasCustomPackage, hasCustomPackageExpression],
+          [attachmentScenarioProductType, attachmentScenarioProductTypeExpression]
         ])
       ]
     },
@@ -989,6 +1064,10 @@ function implantFormActions() {
           [appAmount, [{ type: "func", func: "arraySum", params: [[productLines], [{ type: "str", value: "ProductRowSubtotal" }], [], []] }]],
           [productSummary, [{ type: "func", func: "JSONStringfy", params: [[productLines]] }]],
           [applicantBoardingYears, applicantTenureYears]
+        ]),
+        multiSetStep("Derive product routing and attachment scenario", [
+          [hasCustomPackage, hasCustomPackageExpression],
+          [attachmentScenarioProductType, attachmentScenarioProductTypeExpression]
         ]),
         {
           type: "setvar",
@@ -1024,36 +1103,20 @@ function implantFormActions() {
             setvar_val: effectiveAnnualQuotaExpression
           }
         },
-        {
-          type: "querydata",
-          name: "Load occupied family quota usage rows from Family Quota Usage",
-          attrs: {
-            querydata_list: queryUsageListRef(),
-            querydata_filters: [
-              { key: uuid(), pre: "and", left: "Text2", op: "0", right: varButton("ApplicantEmployeeID", "Applicant Employee ID"), showCus: true },
-              { key: uuid(), pre: "and", left: "Decimal2", op: "0", right: varButton("ApplicantBoardingYears", "Applicant Boarding Years"), showCus: true },
-              { key: uuid(), pre: "and", left: "Text7", op: "0", right: "Occupied", showCus: true }
-            ],
-            querydata_type: "multiple",
-            querydata_fieldmap: null,
-            querydata_listname: "var_UsageAmountCollection",
-            querydata_vartype: "text",
-            querydata_listname_parent: "__temp_",
-            querydata_fields: [
-              { FieldName: "Title", Type: "input", DisplayName: "Usage Record" },
-              { FieldName: "Decimal1", Type: "input_number", DisplayName: "Amount" }
-            ],
-            querydata_totalcount: "var_TotalQueryItems",
-            querydata_totalparent: "__temp_",
-            querydata_pagesize: 300
-          }
-        },
+        usageQueryStep("In Progress", "var_InProgressUsageAmountCollection"),
+        sumUsageStep("Sum in-progress usage with arraySum", inProgressUsedQuota, inProgressUsageCollection),
+        usageQueryStep("Occupied", "var_OccupiedUsageAmountCollection"),
+        sumUsageStep("Sum occupied usage with arraySum", occupiedUsedQuota, occupiedUsageCollection),
+        usageQueryStep("Approved", "var_ApprovedUsageAmountCollection"),
+        sumUsageStep("Sum approved usage with arraySum", approvedUsedQuota, approvedUsageCollection),
+        usageQueryStep("Confirmed", "var_ConfirmedUsageAmountCollection"),
+        sumUsageStep("Sum confirmed usage with arraySum", confirmedUsedQuota, confirmedUsageCollection),
         {
           type: "setvar",
-          name: "Sum occupied usage with arraySum",
+          name: "Sum active usage statuses for quota calculation",
           attrs: {
             setvar_var: usedQuotaBefore,
-            setvar_val: [{ type: "func", func: "arraySum", params: [[usageCollection], [{ type: "str", value: "Amount" }], [], []] }]
+            setvar_val: [inProgressUsedQuota, { type: "op", op: "+" }, occupiedUsedQuota, { type: "op", op: "+" }, approvedUsedQuota, { type: "op", op: "+" }, confirmedUsedQuota]
           }
         },
         {
@@ -1066,8 +1129,40 @@ function implantFormActions() {
         },
         multiSetStep("Set quota guard flags", [
           [quotaExceeded, [{ type: "func", func: "iif", params: [[remainingQuotaAfter, { type: "op", op: "<" }, { type: "num", value: 0 }], [{ type: "str", value: "Yes" }], [{ type: "str", value: "No" }]] }]],
-          [quotaStatus, literalString("Occupied")]
-        ])
+          [quotaStatus, [{ type: "func", func: "iif", params: [[workflowVarToken("ApplicationType", "Application Type", "text"), { type: "op", op: "==" }, { type: "str", value: "Family" }], literalString("In Progress"), literalString("Not Applicable")] }]]
+        ]),
+        {
+          type: "querydata",
+          name: "Load attachment requirement rules for current scenario",
+          attrs: {
+            querydata_list: queryAttachmentRulesListRef(),
+            querydata_filters: [
+              { key: uuid(), pre: "and", left: "Text1", op: "0", right: varButton("ApplicationType", "Application Type"), showCus: true },
+              { key: uuid(), pre: "and", left: "Text2", op: "0", right: varButton("AttachmentScenarioProductType", "Attachment Scenario Product Type"), showCus: true },
+              { key: uuid(), pre: "and", left: "Text5", op: "0", right: "Active", showCus: true }
+            ],
+            querydata_type: "multiple",
+            querydata_fieldmap: null,
+            querydata_listname: "var_AttachmentRuleCollection",
+            querydata_vartype: "text",
+            querydata_listname_parent: "__temp_",
+            querydata_fields: [
+              { FieldName: "Text3", Type: "input", DisplayName: "Required Attachment" },
+              { FieldName: "Text6", Type: "textarea", DisplayName: "Instructions" }
+            ],
+            querydata_totalcount: "var_TotalQueryItems",
+            querydata_totalparent: "__temp_",
+            querydata_pagesize: 50
+          }
+        },
+        {
+          type: "setvar",
+          name: "Show attachment requirement guidance from rules",
+          attrs: {
+            setvar_var: attachmentSummary,
+            setvar_val: [{ type: "func", func: "JSONStringfy", params: [[attachmentRuleCollection]] }]
+          }
+        }
       ]
     },
     {
@@ -1121,7 +1216,11 @@ def.pageurls[1].formdef.actions = [];
 financePage.formdef.actions = [];
 def.variables.tempVars = [
   { idx: "efi-temp-total-query-items", id: "var_TotalQueryItems", type: "number" },
-  { idx: "efi-temp-usage-amount-collection", id: "var_UsageAmountCollection", type: "text" },
+  { idx: "efi-temp-usage-in-progress-collection", id: "var_InProgressUsageAmountCollection", type: "text" },
+  { idx: "efi-temp-usage-occupied-collection", id: "var_OccupiedUsageAmountCollection", type: "text" },
+  { idx: "efi-temp-usage-approved-collection", id: "var_ApprovedUsageAmountCollection", type: "text" },
+  { idx: "efi-temp-usage-confirmed-collection", id: "var_ConfirmedUsageAmountCollection", type: "text" },
+  { idx: "efi-temp-attachment-rule-collection", id: "var_AttachmentRuleCollection", type: "text" },
   { idx: "efi-temp-submit-guard-result", id: "var_SubmitGuardResult", type: "text" }
 ];
 
@@ -1150,16 +1249,16 @@ function workflowFlow(resourceid, source, target, properties = {}) {
   };
 }
 
-function contentListNode(resourceid, name, listid, listdatas, position, incoming, outgoing) {
+function contentListNode(resourceid, name, listid, listdatas, position, incoming, outgoing, extra = {}) {
   return workflowNode(resourceid, "ContentList", {
     name,
-    type: "add",
+    type: extra.type || "add",
     appid: appId,
     listsetid: rootId,
     listid,
     listtype: "select",
     listdatas,
-    wheres: []
+    wheres: extra.wheres || []
   }, position, incoming, outgoing);
 }
 
@@ -1168,19 +1267,26 @@ const setNodeId = "efi-node-set-0002";
 const hrReviewNodeId = "efi-node-hr-review-0003";
 const persistAppNodeId = "efi-node-persist-app-0004";
 const financeReviewNodeId = "efi-node-finance-review-0005";
-const persistUsageNodeId = "efi-node-persist-usage-0006";
+const occupyUsageNodeId = "efi-node-occupy-usage-0006";
 const endNodeId = "efi-node-end-0007";
 const rejectNodeId = "efi-node-reject-0008";
+const approveUsageNodeId = "efi-node-approve-usage-0009";
+const releaseUsageNodeId = "efi-node-release-usage-0010";
 const flowStartSet = "efi-flow-0001";
-const flowSetReview = "efi-flow-0002";
+const flowSetSelfReview = "efi-flow-0002";
+const flowSetFamilyUsage = "efi-flow-0002a";
+const flowUsageHrReview = "efi-flow-0002b";
 const flowHrApprovedStandard = "efi-flow-0003";
 const flowHrApprovedFinance = "efi-flow-0004";
-const flowHrRejected = "efi-flow-0005";
+const flowHrRejectedSelf = "efi-flow-0005";
+const flowHrRejectedFamily = "efi-flow-0005a";
 const flowFinanceApproved = "efi-flow-0006";
-const flowFinanceRejected = "efi-flow-0007";
-const flowPersistAppUsage = "efi-flow-0008";
+const flowFinanceRejectedSelf = "efi-flow-0007";
+const flowFinanceRejectedFamily = "efi-flow-0007a";
+const flowPersistAppUsageApproved = "efi-flow-0008";
 const flowPersistAppEnd = "efi-flow-0009";
-const flowPersistUsageEnd = "efi-flow-0010";
+const flowApproveUsageEnd = "efi-flow-0010";
+const flowReleaseUsageEnd = "efi-flow-0011";
 
 const appRecordMappings = [
   { Per: "0", Columns: "Title", Data: varButton("ApplicationNo", "Application No.") },
@@ -1218,8 +1324,28 @@ const usageRecordMappings = [
   { Per: "0", Columns: "Text5", Data: varButton("ProductSummary", "Product Summary") },
   { Per: "0", Columns: "Text6", Data: varButton("HasCustomPackageProduct", "Has Custom Package Product") },
   { Per: "0", Columns: "Decimal1", Data: varButton("TotalApplicationAmount", "Total Application Amount") },
-  { Per: "0", Columns: "Text7", Data: "Occupied" },
-  { Per: "0", Columns: "Text8", Data: "Occupied on submission for family application v1." }
+  { Per: "0", Columns: "Text7", Data: "In Progress" },
+  { Per: "0", Columns: "Text8", Data: "Quota occupied on submission for family application v1." },
+  { Per: "0", Columns: "Text9", Data: varButton("ApplicationNo", "Application No.") },
+  { Per: "0", Columns: "Text10", Data: "Submitted" }
+];
+
+const approveUsageMappings = [
+  { Per: "0", Columns: "Text7", Data: "Approved" },
+  { Per: "0", Columns: "Text10", Data: "Approved" },
+  { Per: "0", Columns: "Text8", Data: "Family quota usage confirmed after final approval." }
+];
+
+const releaseUsageMappings = [
+  { Per: "0", Columns: "Text7", Data: "Released" },
+  { Per: "0", Columns: "Text10", Data: "Rejected" },
+  { Per: "0", Columns: "Text8", Data: "Family quota occupation released after workflow rejection." }
+];
+
+const usageCorrelationWheres = [
+  { key: "efi-where-usage-app", pre: "and", left: "Text1", op: "0", right: varButton("ApplicationNo", "Application No."), showCus: true },
+  { key: "efi-where-usage-employee", pre: "and", left: "Text2", op: "0", right: varButton("ApplicantEmployeeID", "Applicant Employee ID"), showCus: true },
+  { key: "efi-where-usage-cycle", pre: "and", left: "Decimal2", op: "0", right: varButton("ApplicantBoardingYears", "Applicant Boarding Years"), showCus: true }
 ];
 
 def.childshapes = [
@@ -1231,7 +1357,8 @@ def.childshapes = [
       { key: "efi-set-application-no", prop: null, id: "ApplicationNo", name: "Application No.", type: "text", value: `<input type="button" data="\${&quot;type&quot;:&quot;application&quot;,&quot;prop&quot;:&quot;FlowNo&quot;}" expr="__" tabindex="-1" value="Tracking No.">` },
       { key: "efi-set-status", prop: null, id: "ApplicationStatus", name: "Application Status", type: "text", value: "Submitted" }
     ]
-  }, { x: 150, y: 100 }, [flowStartSet], [flowSetReview]),
+  }, { x: 150, y: 100 }, [flowStartSet], [flowSetSelfReview, flowSetFamilyUsage]),
+  contentListNode(occupyUsageNodeId, "Occupy Family Quota Usage on Submission", usageListId, usageRecordMappings, { x: 400, y: -80 }, [flowSetFamilyUsage], [flowUsageHrReview]),
   workflowNode(hrReviewNodeId, "MultiAssignmentTask", {
     name: "HR Review",
     approveway: "allapprove",
@@ -1244,7 +1371,7 @@ def.childshapes = [
     TaskUrl: def.pageurls[1].id,
     duedatedefinition: 48,
     duedatetype: "hour"
-  }, { x: 400, y: 100 }, [flowSetReview], [flowHrApprovedStandard, flowHrApprovedFinance, flowHrRejected]),
+  }, { x: 600, y: 100 }, [flowSetSelfReview, flowUsageHrReview], [flowHrApprovedStandard, flowHrApprovedFinance, flowHrRejectedSelf, flowHrRejectedFamily]),
   workflowNode(financeReviewNodeId, "MultiAssignmentTask", {
     name: "Finance/Benefits Review",
     approveway: "allapprove",
@@ -1257,13 +1384,22 @@ def.childshapes = [
     TaskUrl: financePage.id,
     duedatedefinition: 48,
     duedatetype: "hour"
-  }, { x: 650, y: 30 }, [flowHrApprovedFinance], [flowFinanceApproved, flowFinanceRejected]),
-  contentListNode(persistAppNodeId, "Create Implant Application Record", applicationsListId, appRecordMappings, { x: 900, y: 100 }, [flowHrApprovedStandard, flowFinanceApproved], [flowPersistAppUsage, flowPersistAppEnd]),
-  contentListNode(persistUsageNodeId, "Create Family Quota Usage Record", usageListId, usageRecordMappings, { x: 1150, y: 20 }, [flowPersistAppUsage], [flowPersistUsageEnd]),
-  workflowNode(endNodeId, "EndNoneEvent", { name: "Approved End" }, { x: 1400, y: 100 }, [flowPersistAppEnd, flowPersistUsageEnd], []),
-  workflowNode(rejectNodeId, "EndRejectEvent", { name: "Rejected" }, { x: 900, y: 300 }, [flowHrRejected, flowFinanceRejected], []),
+  }, { x: 850, y: 30 }, [flowHrApprovedFinance], [flowFinanceApproved, flowFinanceRejectedSelf, flowFinanceRejectedFamily]),
+  contentListNode(persistAppNodeId, "Create Implant Application Record", applicationsListId, appRecordMappings, { x: 1100, y: 100 }, [flowHrApprovedStandard, flowFinanceApproved], [flowPersistAppUsageApproved, flowPersistAppEnd]),
+  contentListNode(approveUsageNodeId, "Confirm Family Quota Usage on Approval", usageListId, approveUsageMappings, { x: 1350, y: 20 }, [flowPersistAppUsageApproved], [flowApproveUsageEnd], { type: "edit", wheres: usageCorrelationWheres }),
+  contentListNode(releaseUsageNodeId, "Release Family Quota Usage on Rejection", usageListId, releaseUsageMappings, { x: 1100, y: 300 }, [flowHrRejectedFamily, flowFinanceRejectedFamily], [flowReleaseUsageEnd], { type: "edit", wheres: usageCorrelationWheres }),
+  workflowNode(endNodeId, "EndNoneEvent", { name: "Approved End" }, { x: 1600, y: 100 }, [flowPersistAppEnd, flowApproveUsageEnd], []),
+  workflowNode(rejectNodeId, "EndRejectEvent", { name: "Rejected" }, { x: 1350, y: 300 }, [flowHrRejectedSelf, flowFinanceRejectedSelf, flowReleaseUsageEnd], []),
   workflowFlow(flowStartSet, startNodeId, setNodeId, { name: "Start to Set Status" }),
-  workflowFlow(flowSetReview, setNodeId, hrReviewNodeId, { name: "Set Status to HR Review" }),
+  workflowFlow(flowSetSelfReview, setNodeId, hrReviewNodeId, {
+    name: "Self Application to HR Review",
+    conditioninfo: [{ key: "efi-cond-self-start", pre: "and", left: varButton("ApplicationType", "Application Type"), op: "s.=", right: "Self" }]
+  }),
+  workflowFlow(flowSetFamilyUsage, setNodeId, occupyUsageNodeId, {
+    name: "Family Application Occupies Quota",
+    conditioninfo: [{ key: "efi-cond-family-start", pre: "and", left: varButton("ApplicationType", "Application Type"), op: "s.=", right: "Family" }]
+  }),
+  workflowFlow(flowUsageHrReview, occupyUsageNodeId, hrReviewNodeId, { name: "Occupied Usage to HR Review" }),
   workflowFlow(flowHrApprovedStandard, hrReviewNodeId, persistAppNodeId, {
     name: "HR Approved - No Finance Required",
     documentation: "Approved",
@@ -1273,37 +1409,60 @@ def.childshapes = [
     ]
   }),
   workflowFlow(flowHrApprovedFinance, hrReviewNodeId, financeReviewNodeId, {
-    name: "HR Approved - Finance/Benefits Required",
-    documentation: "Custom Package or high-value path",
+    name: "HR Approved - Finance/Benefits Required or Fallback",
+    documentation: "Custom Package, high-value, empty, or unexpected custom flag path",
     conditioninfo: [
       { key: "efi-cond-hr-approved-finance-1", pre: "and", left: taskOutcomeButton(hrReviewNodeId, "HR Review"), op: "s.=", right: outcomeValueButton("Approved") },
-      { key: "efi-cond-hr-approved-finance-2", pre: "and", left: varButton("HasCustomPackageProduct", "Has Custom Package Product"), op: "s.=", right: "Yes" }
+      { key: "efi-cond-hr-approved-finance-2", pre: "and", left: varButton("HasCustomPackageProduct", "Has Custom Package Product"), op: "s.!=", right: "No" }
     ]
   }),
-  workflowFlow(flowHrRejected, hrReviewNodeId, rejectNodeId, {
-    name: "HR Rejected",
+  workflowFlow(flowHrRejectedSelf, hrReviewNodeId, rejectNodeId, {
+    name: "HR Rejected - No Family Usage",
     documentation: "Rejected",
-    conditioninfo: [{ key: "efi-cond-rejected", pre: "and", left: taskOutcomeButton(hrReviewNodeId, "HR Review"), op: "s.=", right: outcomeValueButton("Rejected") }]
+    conditioninfo: [
+      { key: "efi-cond-hr-rejected-self-1", pre: "and", left: taskOutcomeButton(hrReviewNodeId, "HR Review"), op: "s.=", right: outcomeValueButton("Rejected") },
+      { key: "efi-cond-hr-rejected-self-2", pre: "and", left: varButton("ApplicationType", "Application Type"), op: "s.!=", right: "Family" }
+    ]
+  }),
+  workflowFlow(flowHrRejectedFamily, hrReviewNodeId, releaseUsageNodeId, {
+    name: "HR Rejected - Release Family Usage",
+    documentation: "Rejected family application releases occupied quota",
+    conditioninfo: [
+      { key: "efi-cond-hr-rejected-family-1", pre: "and", left: taskOutcomeButton(hrReviewNodeId, "HR Review"), op: "s.=", right: outcomeValueButton("Rejected") },
+      { key: "efi-cond-hr-rejected-family-2", pre: "and", left: varButton("ApplicationType", "Application Type"), op: "s.=", right: "Family" }
+    ]
   }),
   workflowFlow(flowFinanceApproved, financeReviewNodeId, persistAppNodeId, {
     name: "Finance/Benefits Approved",
     documentation: "Approved",
     conditioninfo: [{ key: "efi-cond-finance-approved", pre: "and", left: taskOutcomeButton(financeReviewNodeId, "Finance/Benefits Review"), op: "s.=", right: outcomeValueButton("Approved") }]
   }),
-  workflowFlow(flowFinanceRejected, financeReviewNodeId, rejectNodeId, {
-    name: "Finance/Benefits Rejected",
+  workflowFlow(flowFinanceRejectedSelf, financeReviewNodeId, rejectNodeId, {
+    name: "Finance/Benefits Rejected - No Family Usage",
     documentation: "Rejected",
-    conditioninfo: [{ key: "efi-cond-finance-rejected", pre: "and", left: taskOutcomeButton(financeReviewNodeId, "Finance/Benefits Review"), op: "s.=", right: outcomeValueButton("Rejected") }]
+    conditioninfo: [
+      { key: "efi-cond-finance-rejected-self-1", pre: "and", left: taskOutcomeButton(financeReviewNodeId, "Finance/Benefits Review"), op: "s.=", right: outcomeValueButton("Rejected") },
+      { key: "efi-cond-finance-rejected-self-2", pre: "and", left: varButton("ApplicationType", "Application Type"), op: "s.!=", right: "Family" }
+    ]
   }),
-  workflowFlow(flowPersistAppUsage, persistAppNodeId, persistUsageNodeId, {
-    name: "Family Application Usage Occupation",
+  workflowFlow(flowFinanceRejectedFamily, financeReviewNodeId, releaseUsageNodeId, {
+    name: "Finance/Benefits Rejected - Release Family Usage",
+    documentation: "Rejected family application releases occupied quota",
+    conditioninfo: [
+      { key: "efi-cond-finance-rejected-family-1", pre: "and", left: taskOutcomeButton(financeReviewNodeId, "Finance/Benefits Review"), op: "s.=", right: outcomeValueButton("Rejected") },
+      { key: "efi-cond-finance-rejected-family-2", pre: "and", left: varButton("ApplicationType", "Application Type"), op: "s.=", right: "Family" }
+    ]
+  }),
+  workflowFlow(flowPersistAppUsageApproved, persistAppNodeId, approveUsageNodeId, {
+    name: "Family Application Usage Confirmation",
     conditioninfo: [{ key: "efi-cond-family-usage", pre: "and", left: varButton("ApplicationType", "Application Type"), op: "s.=", right: "Family" }]
   }),
   workflowFlow(flowPersistAppEnd, persistAppNodeId, endNodeId, {
     name: "Self Application Record to End",
     conditioninfo: [{ key: "efi-cond-self-no-usage", pre: "and", left: varButton("ApplicationType", "Application Type"), op: "s.=", right: "Self" }]
   }),
-  workflowFlow(flowPersistUsageEnd, persistUsageNodeId, endNodeId, { name: "Family Usage Record to End" })
+  workflowFlow(flowApproveUsageEnd, approveUsageNodeId, endNodeId, { name: "Confirmed Usage to End" }),
+  workflowFlow(flowReleaseUsageEnd, releaseUsageNodeId, rejectNodeId, { name: "Released Usage to Rejected End" })
 ];
 
 form.DefResource = JSON.stringify(def);
@@ -1350,11 +1509,11 @@ fs.writeFileSync(outReportPath, `${JSON.stringify({
   },
   v1Scope: {
     requesterApplicantModel: "RequesterApplicant is required and defaults to Current User on a new request. It remains editable for proxy submission; when changed, the applicant snapshot/quota initialization action reruns from RequesterApplicant.",
-    workflow: "Submit -> HR Review -> Finance/Benefits Review for Custom Package Product -> Approved/Rejected. Standard Product can approve after HR Review.",
+    workflow: "Submit -> family quota occupation on submission -> HR Review -> Finance/Benefits Review for Custom Package Product or fallback -> Approved/Rejected. Standard Product can approve after HR Review.",
     dashboard: "Simple low-risk Home dashboard included; HR Operations Dashboard deferred to v2.",
-    quota: "Family quota query/check action included with attrs.querydata_filters, arraySum used quota calculation, remaining quota calculation, and one-year boarding eligibility. Applicants boarded within one year receive an effective family annual quota of 0. Family Quota Usage is matched by Applicant Employee ID plus numeric Applicant Boarding Years/Quota Cycle No.",
-    attachments: "Confirmed v1 attachment matrix is visible in the form with upload control; strict blocking remains runtime-safe only, with HR verification fallback.",
-    persistence: "Implant Applications ContentList persistence is included. Family Quota Usage ContentList persistence is conditionally created for family applications."
+    quota: "Family quota query/check action included with attrs.querydata_filters, arraySum used quota calculation, remaining quota calculation, and one-year boarding eligibility. Applicants boarded within one year receive an effective family annual quota of 0. Family Quota Usage is matched by Applicant Employee ID plus numeric Applicant Boarding Years/Quota Cycle No. and active statuses In Progress/Occupied/Approved/Confirmed.",
+    attachments: "Confirmed v1 attachment matrix is loaded from Attachment Requirement Rules into visible guidance with upload control; strict blocking remains runtime-safe only, with HR verification fallback.",
+    persistence: "Implant Applications ContentList persistence is included. Family Quota Usage is created on family submission with status In Progress, then updated to Approved or Released through ContentList edit when runtime-safe."
   },
   limitations: [
     "Requester-based getUserAttr(RequesterApplicant, ...) expressions are generated with the export-backed direct attribute descriptor shape; runtime testing must prove this variable subject works in the target approval-form context.",
@@ -1362,7 +1521,8 @@ fs.writeFileSync(outReportPath, `${JSON.stringify({
     "One-year boarding eligibility uses dateDiff(ApplicantBoardingDate, now(), \"year\", []) to set Applicant Boarding Years; if tenant profile data is missing or date arithmetic fails, route to HR verification instead of granting quota.",
     "If requester-based profile expressions fail at runtime, keep RequesterApplicant fixed and route missing snapshot data to HR verification; never switch applicant logic to the task viewer's Current User.",
     "High-amount Finance/Benefits routing threshold is not business-confirmed; v1 routes Custom Package Product through Finance/Benefits and documents amount-threshold routing as a follow-up configuration.",
-    "Strict attachment blocking is only enabled if runtime-safe; v1 routes incomplete or uncertain attachment cases to HR verification."
+    "Strict attachment blocking is only enabled if runtime-safe; v1 routes incomplete or uncertain attachment cases to HR verification.",
+    "Family Quota Usage update/release uses workflow ContentList edit and must be runtime-tested; if edit is not safe in the tenant, HR must manually release the in-progress usage and a focused learning task should be created."
   ]
 }, null, 2)}\n`);
 

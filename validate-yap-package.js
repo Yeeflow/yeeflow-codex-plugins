@@ -438,6 +438,7 @@ function validate(inputPath, mode, stage) {
   validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList, report, resource);
   validateReplaceIds(replaceIds, localIds, report);
   validateForms(data, listsById, fieldsByList, replaceIds, localIds, report);
+  validateGeneratedListRuntimeUsage(data, report);
   validateReportsDashboardsModules(data, listsById, fieldsByList, replaceIds, localIds, report);
   validateLookupRelationships(listsById, fieldsByList, report);
   validateSensitiveResources(data, report);
@@ -1341,6 +1342,81 @@ function validateWorkflowGraph(def, form, report) {
       if (id && !ids.has(id)) issue(report, "warning", "WORKFLOW_INCOMING_SOURCE_NOT_FOUND", "Workflow incoming reference does not resolve.", { form: form.Name, node: shapeId(shape), incoming: id });
     }
   });
+  const flowsById = new Map(shapes.filter((shape) => shapeType(shape) === "SequenceFlow").map((shape) => [shapeId(shape), shape]));
+  shapes.forEach((shape) => {
+    if (shapeType(shape) !== "MultiAssignmentTask") return;
+    const outgoingIds = asArray(shape.outgoing).map(refId).filter(Boolean);
+    if (outgoingIds.length < 2) return;
+    const outgoingFlows = outgoingIds.map((id) => flowsById.get(id)).filter(Boolean);
+    const conditionBlob = JSON.stringify(outgoingFlows.map((flow) => flow.properties && flow.properties.conditioninfo || []));
+    if (conditionBlob.includes("HasCustomPackageProduct")) {
+      const hasStandardNo = conditionBlob.includes("Has Custom Package Product") && conditionBlob.includes("s.=") && conditionBlob.includes("No");
+      const hasFallbackNotNo = conditionBlob.includes("Has Custom Package Product") && conditionBlob.includes("s.!=") && conditionBlob.includes("No");
+      if (hasStandardNo && !hasFallbackNotNo) {
+        issue(report, "warning", "WORKFLOW_BRANCH_CUSTOM_PACKAGE_FALLBACK_MISSING", "Workflow branches on HasCustomPackageProduct should include a fallback for Yes, empty, or unexpected values, typically routing to Finance/Benefits Review.", { form: form.Name, node: shape.properties && shape.properties.name || shapeId(shape) });
+      }
+    }
+  });
+}
+
+function validateGeneratedListRuntimeUsage(data, report) {
+  const listTitles = new Map();
+  asArray(data && data.Childs).forEach((child) => {
+    const list = child && child.ListModel ? child.ListModel : {};
+    const id = safeString(list.ListID);
+    const title = safeString(list.Title);
+    if (id && title) listTitles.set(id, title);
+  });
+  if (!listTitles.size) return;
+  const reads = new Map();
+  const writes = new Map();
+  const edits = new Map();
+  for (const form of asArray(data && data.Forms)) {
+    const def = parseDefResource(form, report, -1);
+    if (!def) continue;
+    for (const shape of collectShapes(def)) {
+      if (shapeType(shape) === "ContentList") {
+        const props = shape.properties || {};
+        const id = safeString(props.listid || props.ListID);
+        if (!id) continue;
+        writes.set(id, (writes.get(id) || 0) + 1);
+        if (["edit", "remove"].includes(safeString(props.type))) edits.set(id, (edits.get(id) || 0) + 1);
+      }
+    }
+    for (const page of asArray(def.pageurls)) {
+      const formdef = typeof page.formdef === "string" ? tryParseJson(page.formdef) : page.formdef;
+      for (const action of asArray(formdef && formdef.actions)) {
+        for (const step of asArray(action && action.steps)) {
+          if (step && step.type === "querydata") {
+            const ref = step.attrs && step.attrs.querydata_list;
+            const id = safeString(ref && (ref.ListID || ref.listid));
+            if (id) reads.set(id, (reads.get(id) || 0) + 1);
+          }
+        }
+      }
+    }
+  }
+  for (const [id, title] of listTitles.entries()) {
+    const businessConfigLike = /(Requirement Rules|Configuration|Rules)$/i.test(title);
+    const usageLike = /(Quota Usage|Usage History|Usage)$/i.test(title);
+    if ((businessConfigLike || usageLike) && !reads.has(id) && !writes.has(id)) {
+      issue(report, "warning", "GENERATED_LIST_UNUSED_RUNTIME_PURPOSE", "Generated configuration/usage list has no detected form-action read or workflow ContentList write/update. Use it in v1 or defer it out of the package.", { list: title, listId: id });
+    }
+    if (/Attachment Requirement Rules/i.test(title) && !reads.has(id)) {
+      issue(report, "warning", "ATTACHMENT_RULES_NOT_READ_BY_FORM_ACTION", "Attachment Requirement Rules exists but no Query data form action reads it; prefer using it for guidance/validation or defer the list.", { list: title, listId: id });
+    }
+    if (/Family Quota Usage/i.test(title)) {
+      if (!writes.has(id)) {
+        issue(report, "warning", "FAMILY_QUOTA_USAGE_NOT_WRITTEN", "Family Quota Usage exists but no workflow ContentList write/update targets it.", { list: title, listId: id });
+      }
+      if (!reads.has(id)) {
+        issue(report, "warning", "FAMILY_QUOTA_USAGE_NOT_READ_BY_QUOTA_CHECK", "Family Quota Usage should be read by quota-check Query data actions.", { list: title, listId: id });
+      }
+      if (!edits.has(id)) {
+        issue(report, "warning", "FAMILY_QUOTA_USAGE_RELEASE_NOT_MODELED", "Family Quota Usage should model approval confirmation or rejection release through ContentList edit/remove when runtime-safe.", { list: title, listId: id });
+      }
+    }
+  }
 }
 
 function validateWorkflowActionConfigurations(def, form, report) {

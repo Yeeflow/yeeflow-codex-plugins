@@ -117,15 +117,38 @@ For family quota, annual benefit, budget usage, entitlement consumption, or simi
 
 - native `Title` as usage record/application display
 - source application number
+- request/form/workflow correlation key when later update/release is needed
 - applicant identifier
 - applicant readable name
 - readable cycle/year label
 - numeric cycle number when the cycle is employee-anniversary or otherwise not a simple calendar year
 - amount
-- usage status such as Occupied, Confirmed, Released, or Not Applicable
+- usage status such as In Progress, Occupied, Approved, Confirmed, Released, Rejected, or Not Applicable
+- source application status
+- submitted/approved/released timestamps when useful for audit
 - source application id/link/notes when available
 
 Quota check queries should match applicant identity + cycle number/year + active/occupied status, then aggregate amount with `arraySum`.
+
+If quota is occupied on submission, the list must support the full lifecycle:
+
+- create a usage row at submission/start with an in-progress/occupied status
+- include in-progress/occupied and approved/confirmed statuses in future quota queries
+- update or release the matching row on rejection/cancel/final approval when a runtime-safe workflow action exists
+- exclude released/rejected rows from remaining-quota calculations
+
+If update/delete is not runtime-proven, include enough fields for HR manual release and document the fallback rather than pretending the lifecycle is complete.
+
+## Generated List Runtime Purpose
+
+Before adding a list to a v1 app package, state:
+
+- who maintains it
+- who reads it
+- which form/workflow/action writes or updates it
+- whether it drives calculation, routing, reporting, audit, or configuration
+
+Do not generate idle configuration or audit lists in v1. Use them or defer them.
 
 ## Generated Data List UI/UX Standard
 

@@ -218,6 +218,31 @@ When an application tracks benefit quota, annual entitlement, family usage, budg
 - generate a persistent usage/transaction list when the business needs audit, reporting, or quota checks
 - include applicant identifier, applicant name, readable cycle/year, numeric cycle number when applicable, amount, usage status, source application number, and notes
 - if the quota cycle is employee anniversary year or another non-calendar cycle, include a numeric cycle field and query usage by applicant + numeric cycle + active/occupied status
+- if the business confirms quota is occupied on submission, create the usage record at submission/start of workflow, not only after final approval
+- include in-progress/occupied and approved/confirmed statuses in quota checks; exclude released/rejected statuses
+- update the usage record to approved/confirmed on final approval and released/rejected on rejection when `ContentList edit/remove` is runtime-safe
+- store a correlation key such as application number, request instance key, form instance id, or workflow instance id so later update/release actions can target the matching usage row
+- if edit/remove is not yet proven, document a manual HR release fallback and create a focused learning task; do not leave the usage list unused
+
+## Workflow Branch Coverage Rules
+
+When generating approval workflows:
+
+- every multi-branch review node must cover all meaningful outcomes and policy-routing values
+- variables used for branch conditions must be required, auto-derived, or backed by fallback routes
+- yes/no flags that drive routing should cover `Yes`, `No`, empty/null, and unexpected values
+- route empty or unexpected policy values to specialist review/fallback rather than a dead end
+- validate that normal, exception, rejected, and fallback paths all reach an end or persistence node
+
+## Generated List Runtime Purpose Rule
+
+Every generated v1 data list should have at least one active purpose:
+
+- maintained as master/config data and read by form/workflow/dashboard logic
+- written as transaction/usage/audit data by workflow or ContentList
+- read for quota, routing, reporting, search, dashboard, or export
+
+Do not include unused configuration lists in v1. If a list is only intended for v2, mark it deferred and omit it unless the user explicitly asks for a placeholder.
 - use `arraySum` over the query result collection for used amount
 - use the top-level total variable from sublist summaries/recalculation for quota checks, workflow routing, and ContentList persistence
 - preserve safe FlowKey rules so summary binding keys such as `prefix` cannot be corrupted by import replacement

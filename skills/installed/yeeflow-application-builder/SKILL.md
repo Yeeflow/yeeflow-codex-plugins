@@ -36,6 +36,8 @@ Think like an experienced business consultant and Yeeflow solution architect:
 - when requirements imply multiple selectable business items, evaluate a sublist/listref design early instead of forcing a single lookup field
 - when requirements include requester/applicant/employee identity, decide whether proxy submission is allowed; if the applicant field is editable, its change action must rerun profile snapshot and dependent policy/quota calculations
 - when requirements include quota, benefit eligibility, or tenure rules, decide the quota cycle, occupation timing, release behavior, and eligibility source before generation
+- every generated data list must have an active runtime purpose in v1 or be explicitly deferred out of the package
+- workflow routing variables must be required, auto-derived, or protected by fallback branches so no approval path can dead-end on empty/unexpected values
 
 ## Default Lifecycle
 
@@ -181,7 +183,10 @@ Use the current Yeeflow generation foundation by default:
 - editable applicant/requester controls must rerun dependent snapshot/profile/quota form actions on change when proxy submission is allowed
 - user-profile-derived applicant data should be snapshotted into workflow/form variables, displayed readonly, and persisted through ContentList when needed for reporting/audit
 - quota and benefit usage lists should include applicant identity, readable applicant name, cycle number/year, amount, status, and source application number
+- if quota is occupied on submission, create the usage/occupation record when the workflow starts, include in-progress and approved/confirmed records in future quota checks, and release/update the matching record on rejection or final approval using a stored request/form/workflow correlation key
 - employee-anniversary quota cycles should use a numeric cycle field when comparing usage records; for boarding-year eligibility, `ApplicantBoardingYears = dateDiff(ApplicantBoardingDate, now(), "year", [])`, with `0` meaning no family quota and values greater than `0` meaning eligible
+- configuration lists such as attachment requirement rules must be read by form actions, workflows, dashboards, or reports in v1; otherwise remove/defer them instead of shipping dead configuration
+- workflow branches from approval/review nodes must cover normal, exception, empty, and unexpected routing-variable cases; unknown policy values should route to review/fallback, not to a dead end
 - core policy checks such as quota validation should run automatically on submit, not only through a manual check button
 - submit guard actions should prove both the invalid/warning path and the valid path; conditional warning/confirm/check steps before submit usually need step-level `continue: true` so valid requests skip the warning and still reach Submit form
 - required applicant identity controls with Default value = Current User should not also get redundant page-load Set variable default steps

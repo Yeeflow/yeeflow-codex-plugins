@@ -6,6 +6,8 @@ Generated: 2026-05-16
 
 This is an **accepted manual runtime baseline** for the latest package after the RequesterApplicant, product sublist, FlowKey-safe binding, submit guard, boarding-year quota, and `dateDiff` unit-shape fixes. The final runtime pass was reported by the user from manual Yeeflow testing; Codex did not re-operate the UI in the final consolidation turn.
 
+Update on 2026-05-17: a new locally validated package was regenerated for process-design fixes around Family Quota Usage lifecycle, Attachment Requirement Rules runtime use, and workflow branch coverage. Codex imported this package and confirmed a smoke pass for home dashboard render and approval-form open. The package is **not yet fully runtime-proven** because workflow submission, usage occupation/release edits, and approval routing still need end-to-end Yeeflow testing before replacing the accepted manual runtime baseline.
+
 ## Current Package
 
 - Package: `employee-family-implant.v1.yap`
@@ -13,8 +15,44 @@ This is an **accepted manual runtime baseline** for the latest package after the
 - Approval form definition: `employee-family-implant-approval-form-def.v1.json`
 - Generator: `generate-employee-family-implant-v1.mjs`
 - Download copy: `/Users/Renger/Downloads/Employee Family Implant DateDiff Unit Fix 20260517.yap`
+- Latest regenerated process-design package: `/Users/Renger/Downloads/Employee Family Implant Quota Lifecycle Branch Coverage 20260517.yap`
 - Flow key: `EIA`
 - ID family: `641...`
+
+## Process-Design Fix Package - 2026-05-17
+
+The latest regenerated package addresses newly found application-design issues:
+
+1. Family Quota Usage is now part of the workflow lifecycle, not a passive list.
+   - Family applications create a usage row immediately after workflow start/submission with `UsageStatus = In Progress`.
+   - Quota checks query active statuses: `In Progress`, `Occupied`, `Approved`, and `Confirmed`.
+   - Final approval models `ContentList edit` to mark the matching usage row `Approved`.
+   - Rejection models `ContentList edit` to mark the matching usage row `Released`.
+   - Matching uses `ApplicationNo + ApplicantEmployeeID + QuotaCycleNumber` as the v1 correlation key unless a future runtime export proves a stronger form/workflow instance token.
+2. Attachment Requirement Rules is no longer idle.
+   - The quota/guidance form action derives `AttachmentScenarioProductType`.
+   - It queries active Attachment Requirement Rules by `ApplicationType + AttachmentScenarioProductType`.
+   - It writes the result into `RequiredAttachmentSummary` for visible guidance and persistence.
+3. HR Review branch coverage is tightened.
+   - `Approved + HasCustomPackageProduct = No` routes to the standard persistence path.
+   - `Approved + HasCustomPackageProduct != No` routes to Finance/Benefits Review, covering `Yes`, empty, and unexpected values.
+   - Rejected family requests route through usage release; rejected non-family requests go directly to rejected end.
+4. `HasCustomPackageProduct` is displayed readonly/required and derived by form actions from Product Selection/ProductSummary.
+
+Local validation for this process-design package:
+
+- `node --check generate-employee-family-implant-v1.mjs`
+- `node --check validate-yap-package.js`
+- JSON parse checks: pass
+- `validate-ywf-def`: `pass_with_warnings`, 0 errors
+- `validate-yap-package`: `pass_with_warnings`, 0 errors
+- `validate-yap-graph`: `pass`, 0 errors
+- `validate-ywf-def-against-yap`: `pass`, 0 errors
+- workflow action config validation: pass, 0 issues
+- focused inspection: pass for RequesterApplicant change action, raw `dateDiff` unit, usage lifecycle nodes, attachment rules query, HR fallback branch, and FlowKey safety
+- wrapper round trip: pass
+
+Runtime status: partial smoke passed. Codex imported the package as `Employee Family Implant Quota Lifecycle Branch Coverage 20260517`, confirmed the home dashboard renders, and confirmed the approval form opens with `Requester / Applicant` defaulted and applicant snapshot/quota/attachment guidance visible. The new `ContentList edit` usage approval/release nodes are validator-clean but still need Yeeflow workflow runtime proof. If edit/remove cannot reliably update the matching row, HR manual release remains the fallback and a focused learning task should be created.
 
 ## Patch Learning Applied
 
