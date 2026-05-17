@@ -151,6 +151,21 @@ This skill can help generate or validate:
 - `.yap` metadata extraction
 - `.ywf` wrapper build with round-trip validation
 
+## Custom Code Controls In Approval Forms
+
+Custom code remains the last implementation layer after standard controls, attrs/defaults/readonly/validation, calculated fields, lookup configuration, form actions, workflow actions, and AI actions.
+
+Generation rules:
+
+- Place the control inside the target page's `formdef.children` tree with `type: "codein"`.
+- Include a valid script in `attrs["codein-script"]`, or use a future export-backed script reference pattern if one is proven.
+- Configure `attrs["codein-script-param"]` with every required script parameter.
+- Bind approval-form writable output parameters to workflow/form variables with `{ "type": 1, "value": { "prefix": "__variables_", "value": "<VariableId>" } }`.
+- Ensure target variables exist in `variables.basic[]`, are editable where the script writes to them, and use a text-compatible type for JSON/string outputs unless runtime proof supports another type.
+- Do not use custom code for approval routing, authoritative calculations, critical validation, or persistence when workflow/form native patterns can handle them.
+- If a custom code control writes values, include a runtime test for render, interaction, target variable update, submission, task-page behavior, and final persistence if mapped through workflow actions.
+- Do not place mutating custom code on readonly task pages unless the requirement explicitly calls for task-page interaction and a runtime test covers it.
+
 ## References
 
 Load only the reference needed for the task:

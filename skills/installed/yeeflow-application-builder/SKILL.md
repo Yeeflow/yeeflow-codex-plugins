@@ -17,6 +17,39 @@ This skill is the top-level application-building controller. It coordinates prov
 
 Use `yeeflow-feature-learning-orchestrator` instead when the task is primarily to learn an unknown Yeeflow platform feature from exports, screenshots, runtime tests, or manual fixes.
 
+## Custom Code Planning
+
+Use custom code as an advanced application component only when the business interaction cannot be delivered cleanly with standard Yeeflow controls, lookup settings, expressions, form actions, workflow actions, or dashboard widgets.
+
+Use custom code when:
+
+- standard Yeeflow controls cannot provide the required interaction
+- advanced lookup/picker behavior is needed, such as a reusable search-select component over a large master list
+- dynamic UI logic is too complex for standard controls, form actions, lookup filters, or expressions
+- a reusable business component already exists and is appropriate for the target app
+- the business value justifies the maintenance and runtime-test cost
+
+Avoid custom code when:
+
+- standard controls can solve the requirement
+- behavior is simple enough with form actions, lookup, Query data, expressions, dynamic display, or workflow actions
+- the script depends on unsupported or unproven runtime APIs
+- the app must remain fully no-code for maintainability
+- the behavior affects approval routing, financial authority, security, or persistence and can be implemented server/workflow-side
+
+Planning questions before adding a Custom Code control:
+
+- Which page or form needs the component?
+- Is the placement a dashboard, approval form, data-list custom form, or public form?
+- What inputs does the component need?
+- Are inputs static, field-based, variable-based, temp-variable-based, or expression-based?
+- Does the component write back to Yeeflow variables, fields, or temp variables?
+- Is the component read-only or interactive?
+- Is the component safe for public forms and anonymous/limited-permission users?
+- What native fallback exists if the component fails?
+
+When an existing script is used in an app package, coordinate with `yeeflow-custom-code-generator` for the script's parameters and with the relevant page/form generator for placement. Do not generate a Custom Code control unless the script is available or generated as part of the app package, required input parameters are configured, and a focused runtime test plan exists.
+
 ## Core Behavior
 
 Think like an experienced business consultant and Yeeflow solution architect:

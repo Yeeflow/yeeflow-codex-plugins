@@ -84,6 +84,21 @@ Form Actions carry-forward: approval-form exports and generated runtime tests pr
 
 For app-shell navigation around dashboards, keep the menu readable by inverting the root header colors: `navigator-menu.bgc` should equal `appearance.color`, and `navigator-menu.color` should equal `appearance.bgc`.
 
+## Custom Code Controls On Dashboards
+
+Use a dashboard Custom Code control only when native dashboard controls, Collections, filters, summaries, charts, and actions cannot deliver the needed interaction.
+
+Generation rules:
+
+- Place the control in the embedded dashboard page JSON under `Item.Layouts[].LayoutInResources[0].Resource`.
+- Use `type: "codein"` and include a valid script in `attrs["codein-script"]`, or use a future export-backed script reference pattern if one is proven.
+- Configure input parameters in `attrs["codein-script-param"]`; required parameters from the script's `inputParameters()` must be present.
+- For writable dashboard outputs, define dashboard `tempVars[]` and bind output parameters with `{ "type": 1, "value": { "prefix": "__temp_", "value": "<TempVarId>" } }`.
+- Keep parameter types aligned with TSX expectations. Smart Lookup Picker-style list id, display field, value field, and booleans are expression parameters (`type: 2`); text labels and numeric config may be static strings.
+- Give the surrounding section and control a meaningful `nv_label`/title rather than relying only on the generic `Custom code` label.
+- Do not use dashboard custom code as a substitute for data-bound KPI, chart, queue, or report controls.
+- Test dashboard render separately from save/writeback, because dashboard temp-variable setters may behave differently from approval-form fields.
+
 ## Minimal Proven Baseline
 
 The first proven generated dashboard package is:
