@@ -4,9 +4,9 @@ Generated: 2026-05-16
 
 ## Status
 
-This is an **accepted manual runtime baseline** for the latest package after the RequesterApplicant, product sublist, FlowKey-safe binding, submit guard, boarding-year quota, and `dateDiff` unit-shape fixes. The final runtime pass was reported by the user from manual Yeeflow testing; Codex did not re-operate the UI in the final consolidation turn.
+This is the **accepted Employee Family Implant v1 runtime baseline**. Acceptance is based on cumulative Yeeflow runtime evidence from the process-design package plus the focused query-filter fix package. The query-filter package fixed the only blocking v1 failure that remained from the deep runtime pass: a second family request now counts the prior approved usage row and recalculates remaining quota correctly.
 
-Update on 2026-05-17: process-design and query-filter packages were regenerated and runtime-tested. The earlier process-design package passed most deep runtime paths but failed second-request quota aggregation. The latest query-filter package fixed that blocking quota aggregation failure: a second family request now counts the first 2500.00 usage row and recalculates remaining quota correctly.
+Update on 2026-05-17: v1 is accepted for the required baseline paths. Non-blocking limitations are documented below and should not start v2/v3 work by themselves.
 
 ## Current Package
 
@@ -14,7 +14,8 @@ Update on 2026-05-17: process-design and query-filter packages were regenerated 
 - Decoded app definition: `employee-family-implant-app-def.v1.json`
 - Approval form definition: `employee-family-implant-approval-form-def.v1.json`
 - Generator: `generate-employee-family-implant-v1.mjs`
-- Download copy: `/Users/Renger/Downloads/Employee Family Implant DateDiff Unit Fix 20260517.yap`
+- Accepted v1 package: `/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517.yap`
+- Earlier accepted manual package: `/Users/Renger/Downloads/Employee Family Implant DateDiff Unit Fix 20260517.yap`
 - Latest regenerated process-design package: `/Users/Renger/Downloads/Employee Family Implant Quota Lifecycle Branch Coverage 20260517.yap`
 - Latest focused quota-query fix package: `/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517.yap`
 - Flow key: `EIA`
@@ -44,7 +45,25 @@ Focused runtime result:
   - `Quota Exceeded = No`
   - `Quota Usage Status = In Progress`
 
-This proves the previous blocking quota aggregation issue is fixed for the focused second-request path. A final full baseline can be marked only after the latest package repeats the full approval/persistence path end to end.
+This proves the previous blocking quota aggregation issue is fixed for the focused second-request path. Because the earlier deep runtime pass already proved submit, HR Review, Finance/Benefits routing, usage creation, approval/release update, and persistence paths, the query-filter package is accepted as the v1 runtime baseline.
+
+## V1 Runtime Acceptance Matrix
+
+| Path | Status | Evidence |
+|---|---|---|
+| Requester / Applicant default and change behavior | Passed | Required identity picker defaults to Current User, remains editable for proxy submission, and has a change action that reruns applicant snapshot and quota logic. |
+| Applicant snapshot fields readonly | Passed | Snapshot fields render readonly; HR and Finance pages keep Requester / Applicant readonly. |
+| Product sublist lookup/autofill | Passed | Standard and Custom product selections autofilled product name, product type, unit price, quantity, and row subtotal. |
+| Row subtotal and Total Application Amount | Passed | Product Selection summary and Total Application Amount updated correctly, including multi-row totals. |
+| Family quota check | Passed | Quota check uses Total Application Amount and updates used, remaining, and exceeded values. |
+| Second request includes prior usage | Passed | Focused query-filter retest counted the first approved `2500.00` usage row in the second request. |
+| Over-quota warning/block | Passed | Over-quota family submit showed the expected submit-time warning/block behavior. |
+| Usage creation on submission | Passed | Family request created Family Quota Usage as `In Progress` on submission/start. |
+| Usage approval/release update | Passed | HR approval updated usage to `Approved`; HR rejection updated matching usage to `Released`. |
+| HR Review route | Passed | Within-quota/non-custom family request submitted, opened HR Review, and proceeded through the standard approved path. |
+| Finance/Benefits route | Passed | Custom Package route opened Finance/Benefits Review after HR approval and completed after Finance approval. |
+| Implant Applications persistence | Passed | Approved request created readable Implant Applications row. |
+| Family Quota Usage persistence | Passed | Family request created and updated readable Family Quota Usage row. |
 
 ## Process-Design Fix Package - 2026-05-17
 
@@ -79,7 +98,7 @@ Local validation for this process-design package:
 - focused inspection: pass for RequesterApplicant change action, raw `dateDiff` unit, usage lifecycle nodes, attachment rules query, HR fallback branch, and FlowKey safety
 - wrapper round trip: pass
 
-Runtime status: partial deep runtime test failed on quota usage aggregation. Codex imported the package as `Employee & Family Implant Application Management-branch coverage`, confirmed the home dashboard renders, and confirmed the approval form opens with `Requester / Applicant` defaulted and applicant snapshot/quota/attachment guidance visible.
+Runtime status: this package passed most deep runtime paths and exposed the quota aggregation failure that was later fixed by the query-filter package. Codex imported the package as `Employee & Family Implant Application Management-branch coverage`, confirmed the home dashboard renders, and confirmed the approval form opens with `Requester / Applicant` defaulted and applicant snapshot/quota/attachment guidance visible.
 
 Deep runtime observations on 2026-05-17:
 
@@ -91,7 +110,7 @@ Deep runtime observations on 2026-05-17:
 - A self custom-package request set `Includes Custom Package Product = Yes`, routed HR Review to Finance/Benefits Review, and completed after Finance approval.
 - Attachment matrix guidance rendered, but runtime did not prove the guidance was dynamically driven by the Attachment Requirement Rules list.
 
-The quota aggregation root cause was later fixed by the Query Filter Expression package above. Keep the branch-coverage package result as historical evidence of the failure mode; use the query-filter package for the next full baseline retest.
+The quota aggregation root cause was later fixed by the Query Filter Expression package above. Keep the branch-coverage package result as historical evidence of the failure mode; use the query-filter package as the accepted v1 package.
 
 ## Patch Learning Applied
 
@@ -155,34 +174,18 @@ Passed:
 14. Family Quota Check used `Total Application Amount`: annual quota `15000.00`, remaining quota after `-4500.00`, and quota exceeded `Yes`.
 15. Submit-time quota validation ran for the over-quota family case and showed the expected warning/block message.
 
-Not yet proven:
-
-1. A within-quota valid submission after entering required family/attachment fields.
-2. HR Review task creation/opening.
-3. Finance/Benefits route.
-4. Approval completion.
-5. Implant Applications ContentList persistence.
-6. Family Quota Usage ContentList persistence.
-7. HR/task viewer non-overwrite proof after submission.
-
-Follow-up runtime focus:
-
-1. Import the condition-continue package and retest submit with a within-quota family request.
-2. Confirm the valid path skips `Warn when family quota is exceeded` and reaches Submit form.
-3. Confirm the over-quota path still displays the warning and does not submit unless an explicit override design is added.
-4. Only after submit succeeds, verify HR task, Finance route, completion, and ContentList rows.
-5. Reopen the task as reviewer/HR and confirm applicant values remain the original requester snapshots.
+Later process-design and query-filter runtime tests closed the earlier submit, HR Review, Finance route, persistence, and second-request quota gaps. The remaining items below are non-blocking limitations, not v1 baseline blockers.
 
 ## Known V1 Limitations
 
-- Direct `getUserAttr(RequesterApplicant, ...)` is generation-safe with the export-backed parameter shape, but still requires runtime proof in the target approval-form context.
-- If requester-based profile expressions fail at runtime, keep `RequesterApplicant` fixed, route missing profile data to HR verification, and do not use the task viewer's Current User as fallback.
-- The confirmed Finance/Benefits route is Custom Package based. High-amount routing still needs a business threshold before it can be made exact.
-- Strict dynamic attachment blocking remains conditional on runtime-safe validation patterns; v1 uses visible guidance plus upload control and HR verification fallback.
+- Attachment Requirement Rules dynamic query is locally present and visible guidance is runtime-proven; strict upload blocking remains an HR verification fallback for v1.
+- The empty/unexpected `HasCustomPackageProduct` fallback branch is modeled and locally inspected but was not forced through a natural runtime UI path.
+- High-amount Finance/Benefits routing threshold is not configured as a separate business threshold in v1; v1-proven Finance routing is Custom Package based.
+- Submitted Time and Approved Time display on the usage-row detail view may remain blank; this does not block the v1 business baseline.
 
 ## Accepted Manual Runtime Baseline - 2026-05-17
 
-Accepted package: `/Users/Renger/Downloads/Employee Family Implant DateDiff Unit Fix 20260517.yap`
+Accepted package: `/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517.yap`
 
 User-confirmed runtime pass after fixes:
 
