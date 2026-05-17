@@ -1,74 +1,74 @@
 {
   "appName": "Enterprise Service Request & Compliance Review",
   "phase": "Phase 2 local generation",
-  "runtimeStatus": "not tested",
+  "runtimeStatus": "blocked at import component materialization",
   "publicFormSupport": "not claimed",
   "generatedPackage": "custom-code-template-showcase.v1.yap",
   "templates": [
     {
       "name": "activity-timeline",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by package import/component materialization"
     },
     {
       "name": "approval-decision-panel",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by package import/component materialization"
     },
     {
       "name": "approval-timeline",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by package import/component materialization"
     },
     {
       "name": "checklist-compliance-block",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by package import/component materialization"
     },
     {
       "name": "dependent-selector",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by package import/component materialization"
     },
     {
       "name": "distribution-chart-module",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by package import/component materialization"
     },
     {
       "name": "exception-alert-panel",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by package import/component materialization"
     },
     {
       "name": "hierarchical-selector",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by package import/component materialization"
     },
     {
       "name": "kpi-card-set",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by package import/component materialization"
     },
     {
       "name": "multi-entry-tag-input",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by package import/component materialization"
     },
     {
       "name": "related-record-summary-grid",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by package import/component materialization"
     },
     {
       "name": "smart-lookup-picker",
       "localGeneration": "included",
-      "runtimeClassification": "previously proven elsewhere; regression not yet tested in this app"
+      "runtimeClassification": "previously proven elsewhere; blocked in this showcase by package import/component materialization"
     },
     {
       "name": "trend-chart-module",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by package import/component materialization"
     }
   ],
   "localValidation": {
@@ -93,5 +93,19 @@
     "expressionSmoke": "pass",
     "tsxCheck": "pass via esbuild parse/bundle check for all 13 templates"
   },
-  "readinessDecision": "ready for local generation; runtime proof pending"
+  "runtimeAttempt": {
+    "date": "2026-05-18",
+    "environment": "https://codex.yeeflow.com/",
+    "attemptedPackage": "custom-code-template-showcase.v1.yap",
+    "observations": [
+      "Import wizard accepted the .yap file and showed the generated app metadata.",
+      "First import created an app named Enterprise Service Request & Compliance Review.",
+      "Second import with a shorter runtime name created an app named Custom Code Template Showcase Runtime 2.",
+      "Opening the runtime app landed on /#/list-set/41/2056156817023320065 and displayed Yeeflow's empty Start to build with Components state.",
+      "The generated data lists, dashboard, approval form, workflow, and custom code controls were not visible in the imported runtime app."
+    ],
+    "blockingResult": "The package imports as an app shell, but runtime did not materialize packaged components. Component-level custom code testing could not begin.",
+    "publicFormSupport": "not claimed"
+  },
+  "readinessDecision": "ready for local generation; local validation passed; runtime blocked before component testing"
 }

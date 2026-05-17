@@ -4,7 +4,7 @@ App: Enterprise Service Request & Compliance Review
 
 Phase 2 generated a local `.yap` showcase package with all 13 custom code templates embedded in Custom Code controls.
 
-Runtime status: not tested. Do not claim runtime proof from this baseline.
+Runtime status: blocked at import component materialization. Do not claim runtime proof from this baseline.
 
 Public form support: not claimed.
 
@@ -33,3 +33,26 @@ Included contexts:
 - TSX check: pass via esbuild parse/bundle check for all 13 templates.
 
 Validator warnings remain expected because Custom Code controls are schema-supported but runtime-unproven for 12 of the 13 templates until this generated package is imported and exercised.
+
+## Runtime Import Attempt
+
+Date: 2026-05-18
+
+Environment: `https://codex.yeeflow.com/`
+
+Result: blocked before component-level testing.
+
+Observed behavior:
+- The Yeeflow import wizard accepted `custom-code-template-showcase.v1.yap` and displayed the generated app metadata.
+- The first import created an app named `Enterprise Service Request & Compliance Review`.
+- A second import using the shorter name `Custom Code Template Showcase Runtime 2` also created an app shell.
+- Opening `Custom Code Template Showcase Runtime 2` landed on `/list-set/41/2056156817023320065` and showed Yeeflow's empty `Start to build with Components` state.
+- The generated data lists, dashboard, approval form, workflow, and custom code controls were not visible in the runtime app.
+
+Classification:
+- Package import: partially passed; app shells were created.
+- Component materialization: blocked; generated resources did not appear in the imported app.
+- Template runtime proof: not established for this showcase package.
+- Public form support: not claimed.
+
+Next follow-up requirement: inspect the generated `.yap` resource/wrapper shape against a runtime-proven multi-component app export to find why local validators pass while Yeeflow imports only the app shell.
