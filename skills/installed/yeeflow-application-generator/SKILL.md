@@ -7,6 +7,8 @@ description: generate, inspect, validate, package, debug, and improve small yeef
 
 Use this skill for small Yeeflow `.yap` application packages that combine related data lists and approval forms. Keep v1 scoped to proven patterns: data lists, custom list forms, lookup relationships, simple approval forms, and `ContentList` persistence.
 
+For existing-app upgrades, do not reuse `.yap` new-app generation rules blindly. Yeeflow Version management downloads `.yapk` packages for Upgrade application. A studied `.yapk` wrapper preserves app identity fields such as `PackageId`, `TenantID`, `AppID`, and `ListID`, and stores `Resource` as an opaque high-entropy base64 payload with a signature-like `Sign`, not the normal `.yap` `[______gizp______]` gzip resource. Until `.yapk` resource encoding/signing is proven, only inspect/validate the wrapper or create metadata-only proof packages that preserve `Resource` and `Sign`; do not claim app-content `.yapk` mutation is safe.
+
 For component details, also use the installed skills:
 
 - `yeeflow-data-list-generator` for `.ydl` child list structure, fields, views, custom forms, sample data, and lookup fields.
@@ -23,6 +25,8 @@ For component details, also use the installed skills:
 6. Validate app relationships with `scripts/validate-yap-graph.js`.
 7. Build the wrapper with `scripts/build-yap-wrapper.js` only after validation passes.
 8. Report sandbox import checklist and require export-back learning before production-like use.
+
+For package type selection, use `docs/yeeflow-application-package-generation-rules.md` when present.
 
 Never import into Yeeflow or operate the UI unless the user explicitly asks. Preserve large numeric IDs as strings. Redact secret/token/client values.
 
@@ -294,6 +298,7 @@ node scripts/validate-yap-graph.js ./app-def.json --mode generator --stage final
 node scripts/validate-ywf-def.js ./extracted-approval-form-def.json --mode final
 node scripts/validate-ydl-list.js ./extracted-child-list.json --mode generator --stage final
 node scripts/build-yap-wrapper.js ./app-def.json ./app.yap --title "App Name" --description "Description"
+node scripts/validate-yapk-package.js "./Existing App Version.yapk" --baseline "./Baseline Version.yapk"
 ```
 
 For real historical exports, use compatibility mode:
@@ -308,6 +313,7 @@ node scripts/validate-yap-graph.js "./Existing App.yap" --mode compatibility
 Load only the relevant reference:
 
 - `references/yap-structure-study.md`: `.yap` wrapper, root app, child resources, forms, reports/modules, ReplaceIds.
+- `docs/yeeflow-yapk-version-package-study.md` and `docs/yeeflow-application-package-generation-rules.md` when present: `.yapk` version package wrapper, package-type decision, and current opaque-resource limitations.
 - `references/first-test-plan.md`: first safe app-generation test strategy.
 - `references/baseline-department-access-management-v5.md`: successful v5 baseline and root app shell rules.
 - `references/baseline-visitor-access-management-v11.md`: Visitor Access v5-v11 generated baselines, including v11 multi-type proof.

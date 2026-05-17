@@ -7,6 +7,8 @@ description: generate, inspect, validate, and document Yeeflow expression editor
 
 Use this skill when generating or validating Yeeflow expression editor output across approval forms, dashboards, data-list forms, lookup filters, workflow transitions, workflow action conditions, default values, request numbers, and calculated controls.
 
+Package type note: expression fixes for a new app can be generated in `.yap`; expression fixes for an existing imported app should be delivered as `.yapk` only from a Yeeflow Version management baseline. Preserve existing IDs and do not assume `.yapk` app-resource mutation is safe while the studied `.yapk` payload remains opaque/signed.
+
 ## Source Of Truth
 
 Use the active workspace references first:

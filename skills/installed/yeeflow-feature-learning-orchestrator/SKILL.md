@@ -91,6 +91,8 @@ For expression export-back fixes discovered during manual runtime testing, compa
 
 For workflow transition condition learning, study corrected `.ywf` exports before promoting branch condition generation. `Implant Application Request (4).ywf` proved latest SequenceFlow condition rows support independent left/right operand modes: `type: 1` direct selector, `type: 0` direct/static/option/date value, and `type: 2` expression editor. Compare old legacy HTML-button conditions with wrapper-object manual examples, document when each pattern should be generated, and update validators warning-first.
 
+For Yeeflow application version-management package learning, treat `.yapk` as distinct from `.yap`. Study the wrapper first and preserve originals. The first studied `.yapk` version package was JSON with `PackageId`, `TenantID`, `AppID`, `ListID`, `Version`, `Notes`, `Author`, `Date`, `Sign`, and an opaque high-entropy base64 `Resource` without the `.yap` `[______gizp______]` gzip prefix. Until encoding/signing is proven, do not mutate app internals inside `.yapk`; promote only wrapper/identity preservation rules and use metadata-only proof packages or Yeeflow-generated baselines.
+
 ## What To Load
 
 - For the full lifecycle, read `references/feature-learning-workflow.md`.

@@ -7,6 +7,8 @@ description: generate, inspect, validate, package, and improve yeeflow approval 
 
 Use this skill when the user asks to generate, inspect, validate, package, troubleshoot, or improve Yeeflow approval form definitions, decoded `.ywf` Def JSON, `.ywf` wrappers, or `.yap` application exports.
 
+When approval-form changes target an existing imported app, confirm whether the user wants a new cloned `.yap` or an upgrade `.yapk`. For `.yapk`, start from a Version management baseline and preserve existing form/workflow IDs; do not regenerate fresh IDs for existing objects. The first studied `.yapk` resource is opaque and signature-like, so offline app-content form mutation inside `.yapk` is not generation-safe until Yeeflow encoding/signing is proven.
+
 ## Core Workflow
 
 Always work in stages:

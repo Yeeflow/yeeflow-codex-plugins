@@ -1,0 +1,89 @@
+{
+  "studyDate": "2026-05-17T08:22:09.371Z",
+  "ypk": {
+    "path": "/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517-Employee Family Implant v1.0.yapk",
+    "wrapperKeys": [
+      "PackageId",
+      "TenantID",
+      "AppID",
+      "ListID",
+      "Title",
+      "Description",
+      "IconUrl",
+      "Resource",
+      "Notes",
+      "Author",
+      "Date",
+      "Version",
+      "Sign"
+    ],
+    "topLevel": {
+      "PackageId": "5821b452-74b1-4277-b7c2-ffa181d2814f",
+      "TenantID": "2054071949946798081",
+      "AppID": 41,
+      "ListID": "2055913049871364096",
+      "Title": "Employee Family Implant Query Filter Expression Fix 20260517",
+      "Description": "Employee Family Implant v1 with query data filter expression-mode fix",
+      "IconUrl": "{\"b\":\"#E6F0FF\",\"i\":\"fa-regular fa-heart\",\"c\":\"#0065FF\"}",
+      "Notes": "The first version of this application",
+      "Author": "Renger from Yeeflow",
+      "Date": "2026-05-17T08:03:37Z",
+      "Version": "Employee Family Implant v1.0",
+      "Sign": "gBM9ISAYaj+QJo5t5SzHxf/UI+20TJ6ZyR5HMZL2LzU="
+    },
+    "resourcePrefix": "K7EJMRIhbBwAAFLfQ4xI",
+    "resourceBytes": 27379,
+    "resourceFirstBytesHex": "2bb1093112216c1c000052df438c48d087803a5217fefcf9f78fd0e173defff7",
+    "resourceEntropy": 7.9935,
+    "normalDecodeAttempts": {
+      "gunzip": false,
+      "inflate": false,
+      "inflateRaw": false,
+      "brotli": false
+    },
+    "signByteLength": 32,
+    "sha256ResourceBytes": "nljeTfLMz8CllBZA35SEe2Z+JyYB4E/CV1m8OKzsQ2w=",
+    "resourceLooksEncryptedOrSigned": true
+  },
+  "yap": {
+    "path": "/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517.yap",
+    "wrapperKeys": [
+      "Title",
+      "Description",
+      "IconUrl",
+      "IsListSet",
+      "Resource"
+    ],
+    "resourcePrefix": true,
+    "resourceBytes": 36038,
+    "resourceKeys": [
+      "MainListType",
+      "AppID",
+      "ReplaceIds",
+      "ReportIds",
+      "FormKeys",
+      "Data",
+      "SimplePortal",
+      "Title",
+      "Description",
+      "IconUrl"
+    ],
+    "mainListType": 1024,
+    "appId": 41,
+    "replaceIds": 89,
+    "reportIds": 0,
+    "dataItemListId": "6440010000000000000",
+    "childCount": 5,
+    "formCount": 1,
+    "layoutCount": 1
+  },
+  "conclusions": {
+    "yapkResourceIsOpaque": true,
+    "yapkTopLevelVersionMetadata": true,
+    "yapkHasNoGzipPrefix": true,
+    "yapUsesGzipPrefix": true,
+    "stableIdsLikelyRequiredForUpgrade": true,
+    "resourceModificationSafe": false,
+    "wrapperMetadataOnlyModificationSafeForLocalStructure": true
+  }
+}

@@ -1,11 +1,11 @@
 ---
 name: yeeflow-application-builder
-description: build real Yeeflow business applications from requirements, process documents, forms, screenshots, SOPs, sample exports, and app ideas by acting as a business solution architect, designing the safest Yeeflow-native app structure, generating and validating .yap packages, runtime-testing when requested, documenting baselines, and coordinating Yeeflow generator skills.
+description: build real Yeeflow business applications from requirements, process documents, forms, screenshots, SOPs, sample exports, and app ideas by acting as a business solution architect, designing the safest Yeeflow-native app structure, generating and validating .yap new-app packages or .yapk upgrade packages, runtime-testing when requested, documenting baselines, and coordinating Yeeflow generator skills.
 ---
 
 # Yeeflow Application Builder
 
-Use this skill when the user provides business requirements, process documents, forms, screenshots, SOPs, sample exports, workflow requirements, or app ideas and asks Codex to build, implement, create, generate, test, or output a Yeeflow application package or `.yap`.
+Use this skill when the user provides business requirements, process documents, forms, screenshots, SOPs, sample exports, workflow requirements, or app ideas and asks Codex to build, implement, create, generate, test, or output a Yeeflow application package, `.yap`, or `.yapk`.
 
 This skill is the top-level application-building controller. It coordinates proven generator skills:
 
@@ -38,6 +38,8 @@ Think like an experienced business consultant and Yeeflow solution architect:
 - when requirements include quota, benefit eligibility, or tenure rules, decide the quota cycle, occupation timing, release behavior, and eligibility source before generation
 - every generated data list must have an active runtime purpose in v1 or be explicitly deferred out of the package
 - workflow routing variables must be required, auto-derived, or protected by fallback branches so no approval path can dead-end on empty/unexpected values
+- decide package type before generation: output `.yap` for a new/cloned application, and output `.yapk` only for an existing-app upgrade from a Yeeflow Version management baseline package
+- for `.yapk` upgrades, preserve app identity and stable object IDs; do not apply fresh-ID `.yap` import-generation rules unless adding newly proven resources
 
 ## Default Lifecycle
 
@@ -50,14 +52,27 @@ For requirement-to-application requests, load `references/requirement-to-yap-gen
 5. Wait for user answers when business-critical decisions are missing
 6. Apply confirmed answers to plan/spec
 7. Generation-readiness review
-8. Generate `.yap` only if ready
+8. Generate the correct package type only if ready: `.yap` for new applications, `.yapk` for existing-app upgrades when a safe baseline exists
 9. Local validation
 10. Runtime import testing when requested or included in the user's build/test request
 11. Runtime issue fixing
 12. Documentation
 13. Skill updates only if new reusable knowledge is learned
 14. Git commit/push
-15. Final `.yap` output
+15. Final package output
+
+## Package Type Gate
+
+Before generation, clarify whether the user wants:
+
+- a new application package (`.yap`) for import as a separate app, or
+- an existing application upgrade package (`.yapk`) for Application Settings -> Version management -> Upgrade application.
+
+For new applications, use normal `.yap` rules: fresh ID family, safe FlowKey/form key, `ReplaceIds`, full local app/form/list validation, and import as a new app.
+
+For existing application upgrades, request a baseline `.yapk` downloaded from Yeeflow Version management. Preserve `PackageId`, `TenantID`, `AppID`, `ListID`, stable object IDs, and other app identity fields required for upgrade. Do not generate a `.yap` when the user asked to modify the already-imported app unless they explicitly want a cloned app.
+
+Current `.yapk` limitation: the first studied Version management package stores `Resource` as an opaque high-entropy base64 payload with a signature-like `Sign`; it is not the normal `[______gizp______]` `.yap` resource. Until Yeeflow `.yapk` resource encoding/signing is proven, Codex may create wrapper-metadata proof packages that preserve `Resource` and `Sign`, but must not claim app-content `.yapk` mutation is safe.
 
 Also load `references/business-solution-design-principles.md` before designing the app structure.
 For generation-readiness reviews, also load `references/business-decision-gates.md`, `references/application-design-quality-gates.md`, and `references/application-planning-key-design-decisions.md`.

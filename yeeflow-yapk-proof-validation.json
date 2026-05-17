@@ -1,0 +1,25 @@
+{
+  "status": "pass",
+  "file": "/Users/Renger/Downloads/Employee Family Implant v1.1 upgrade test.yapk",
+  "baselineFile": "/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517-Employee Family Implant v1.0.yapk",
+  "metadata": {
+    "PackageId": "5821b452-74b1-4277-b7c2-ffa181d2814f",
+    "TenantID": "2054071949946798081",
+    "AppID": 41,
+    "ListID": "2055913049871364096",
+    "Title": "Employee Family Implant Query Filter Expression Fix 20260517",
+    "Version": "Employee Family Implant v1.1 upgrade test",
+    "Date": "2026-05-17T08:22:23Z",
+    "Sign": "gBM9ISAYaj+QJo5t5SzHxf/UI+20TJ6ZyR5HMZL2LzU=",
+    "resourceBytes": 27379,
+    "resourceEntropy": 7.9935,
+    "resourceSha256": "nljeTfLMz8CllBZA35SEe2Z+JyYB4E/CV1m8OKzsQ2w="
+  },
+  "errors": [],
+  "warnings": [
+    {
+      "code": "YAPK_RESOURCE_OPAQUE",
+      "message": "Resource has high entropy and is not the normal decoded .yap gzip resource. Treat app-resource mutation as unsafe unless Yeeflow encoding/signing is proven."
+    }
+  ]
+}

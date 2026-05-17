@@ -1,6 +1,6 @@
-# Yeeflow Requirement-to-YAP Generation Lifecycle
+# Yeeflow Requirement-to-Application Package Lifecycle
 
-Use this lifecycle whenever the user provides Yeeflow application requirements, screenshots, sample forms, SOPs, process documents, sample exports, or app ideas and asks Codex to build, implement, create, generate, test, or output an application package or `.yap`.
+Use this lifecycle whenever the user provides Yeeflow application requirements, screenshots, sample forms, SOPs, process documents, sample exports, or app ideas and asks Codex to build, implement, create, generate, test, or output an application package, `.yap`, or `.yapk`.
 
 The builder is the main controller. Coordinate the application, data-list, approval-form, dashboard, and expression generator skills as needed. Use proven knowledge first; send genuinely unknown platform behavior to `yeeflow-feature-learning-orchestrator`.
 
@@ -11,12 +11,18 @@ Run this lifecycle for requests such as:
 - "Build this Yeeflow app from the uploaded requirement."
 - "Implement this application."
 - "Generate the .yap for this process."
+- "Generate an upgrade .yapk for this existing application."
 - "Create the Yeeflow application based on this document."
 - "Use the current skills to build this app."
 - "Here is the requirement. Please generate the final app package."
 - "Create the app and test it in Yeeflow."
 
 Do not generate an app when the user explicitly asks only for study, review, planning, or learning.
+
+Before generation, confirm package target:
+
+- new/cloned app: generate `.yap`
+- existing-app upgrade: require a Yeeflow Version management baseline `.yapk`, preserve app identity and stable object IDs, and generate `.yapk` only when the upgrade package structure is safe
 
 ## 1. Requirement Intake
 
@@ -92,7 +98,7 @@ The plan/spec must also make key design decisions explicit when relevant:
 - multiple product/item sublist strategy
 - form-action recalculation triggers for page load, driver-field change, and submit
 
-Validate the spec with a JSON parse check before using it for generation.
+Validate the spec with a JSON parse check before using it for generation. The spec should include a package-target decision (`newApplication` / `.yap` or `existingApplicationUpgrade` / `.yapk`) when the request may apply to an already imported app.
 
 ## 4. Business Clarification Gate
 
