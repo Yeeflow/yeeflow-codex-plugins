@@ -1,0 +1,116 @@
+{
+  "app": "Employee & Family Implant Application Management v2",
+  "packagePath": "/Users/Renger/Downloads/Employee Family Implant v2 Baseline 20260517.yap",
+  "generatedPackagePath": "/Users/Renger/Documents/Codex Projects/AI Agent and Copilot templates/employee-family-implant.v2.yap",
+  "testDate": "2026-05-17",
+  "tester": "Codex runtime smoke test with authenticated Yeeflow tenant",
+  "status": "passed",
+  "summary": "The v2 package imported successfully and passed local validation plus focused runtime tests for dashboards, form load, requester/applicant snapshots, product sublist totals, quota aggregation with prior usage, HR review approval routing, HR return to applicant, applicant resubmission, duplicate-prevention for Family Quota Usage during resubmission, custom-package Finance routing, Finance return to applicant, final Finance approval, persistence, and the over-quota warning/block path.",
+  "localValidation": {
+    "nodeCheckGenerator": "passed",
+    "jsonParseChecks": "passed",
+    "validateYapPackage": "pass_with_warnings",
+    "validateYapGraph": "pass_with_warnings",
+    "validateYwfDef": "pass_with_warnings",
+    "validateYwfAgainstYap": "passed",
+    "workflowActionValidation": "pass_with_warnings",
+    "wrapperRoundTrip": "passed",
+    "focusedInspection": "passed",
+    "notes": [
+      "Warnings are known generated-form/workflow shape warnings and did not block local validation.",
+      "Focused inspection confirmed safe FlowKey EIX, no corrupted prefix keys, dateDiff raw year usage, query filter blocks, submit guard continue:true, return workflow nodes, and two dashboard pages."
+    ]
+  },
+  "runtimeResults": {
+    "import": {
+      "status": "passed",
+      "evidence": "Package imported as Employee & Family Implant Application Management v2."
+    },
+    "homeDashboard": {
+      "status": "passed",
+      "evidence": "Home dashboard rendered with KPI cards and guidance."
+    },
+    "hrOperationsDashboard": {
+      "status": "passed",
+      "evidence": "HR Operations Dashboard rendered with core KPI cards and operational queue guidance."
+    },
+    "approvalFormOpen": {
+      "status": "passed",
+      "evidence": "Implant Application Request opened on the New tab."
+    },
+    "requesterApplicantDefault": {
+      "status": "passed",
+      "evidence": "Requester / Applicant defaulted to Renger from Yeeflow."
+    },
+    "applicantSnapshotsReadonly": {
+      "status": "passed",
+      "evidence": "Applicant name, employee ID, department, boarding date, user status, email, and line manager displayed as non-editable snapshot text."
+    },
+    "productSublist": {
+      "status": "passed",
+      "evidence": "Added Standard Implant Package row; product name/type/unit price autofilled; row subtotal became 2500; summary became 2500.00."
+    },
+    "totalApplicationAmount": {
+      "status": "passed",
+      "evidence": "Total Application Amount updated to 2500.00 from Product Selection summary."
+    },
+    "familyQuotaCheck": {
+      "status": "passed",
+      "evidence": "Family quota check showed annual quota 15000.00, remaining after 12500.00, eligible, and quota exceeded No for a 2500 family request."
+    },
+    "submitValidPath": {
+      "status": "passed",
+      "evidence": "Submit completed and Yeeflow showed Thank you for submitting this form."
+    },
+    "hrReviewTask": {
+      "status": "passed",
+      "evidence": "New HR Review task appeared in Pending tasks for the submitted request."
+    },
+    "hrApprovalStandardPath": {
+      "status": "passed",
+      "evidence": "Approving HR Review for a non-custom family request succeeded and removed the task from Pending tasks."
+    },
+    "implantApplicationsPersistence": {
+      "status": "passed",
+      "evidence": "Implant Applications row was created with application no, applicant employee ID 001, applicant name, Family type, Has Custom Package Product No, and USD 2500.00 total."
+    },
+    "familyQuotaUsagePersistence": {
+      "status": "passed",
+      "evidence": "Family Quota Usage row was created with usage/application no, applicant employee ID 001, applicant name, quota cycle key 1, quota cycle no 1.00, custom flag No, and USD 2500.00 amount."
+    },
+    "secondRequestIncludesPriorUsage": {
+      "status": "passed",
+      "evidence": "A new request form loaded after the first approval showed Used Quota Before 2500.00, confirming the prior approved usage row was included by the quota query."
+    },
+    "attachmentVerificationFields": {
+      "status": "passed_smoke",
+      "evidence": "HR Review page displayed Attachment Verification Status, Missing Attachment Flag, HR Verification Flag, Attachment Requirement Scenario, and review notes fields."
+    },
+    "returnResubmission": {
+      "status": "passed",
+      "evidence": "HR Review returned family request 20559911459507527722026051700002 to Applicant Correction / Resubmission. The applicant correction task opened for the same request and completion routed it back to HR Review."
+    },
+    "quotaDuplicatePreventionOnResubmission": {
+      "status": "passed",
+      "evidence": "After resubmission, Family Quota Usage showed one row for request 20559911459507527722026051700002 and one row for the earlier request; no duplicate usage row was created for the resubmitted request."
+    },
+    "financeRouteCustomPackage": {
+      "status": "passed",
+      "evidence": "Self + Custom Package request 20559911459507527722026051700003 set Includes Custom Package Product to Yes. HR Review approval routed the same request to Finance/Benefits Review."
+    },
+    "financeReturn": {
+      "status": "passed",
+      "evidence": "Finance/Benefits Review returned request 20559911459507527722026051700003 to Applicant Correction / Resubmission. After applicant resubmission, the request routed back through HR Review and then Finance/Benefits Review."
+    },
+    "overQuotaWarningBlock": {
+      "status": "passed",
+      "evidence": "Family + Custom over-quota request with Total Application Amount 12000.00 showed Used Quota Before 5000.00, Remaining Quota After -2000.00, and Quota Exceeded Yes. Submit displayed the quota-exceeded warning dialog; Cancel returned to the same new request form without submitting."
+    },
+    "financeFinalCompletion": {
+      "status": "passed",
+      "evidence": "After the Finance return/resubmission loop for request 20559911459507527722026051700003, final HR approval routed to Finance/Benefits Review and final Finance approval completed the task queue."
+    }
+  },
+  "acceptedAsFullV2Baseline": true,
+  "commitCreated": true
+}
