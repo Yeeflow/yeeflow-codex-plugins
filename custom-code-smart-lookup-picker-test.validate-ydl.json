@@ -1,0 +1,123 @@
+{
+  "status": "pass_with_warnings",
+  "mode": "generator",
+  "stage": "final",
+  "input": "/tmp/slp-runtime-list.json",
+  "inputKind": "decodedData",
+  "errors": [],
+  "warnings": [
+    {
+      "code": "LISTSET_ID_MISSING",
+      "message": "ListSetID is missing or not included in this standalone list export."
+    },
+    {
+      "code": "FORM_CONTROL_UNBOUND",
+      "message": "Unbound control is not one of the known display/layout control types.",
+      "location": "Item.Layouts[1].form.children[0].children[0].children[1]",
+      "type": "codein",
+      "label": "Custom code"
+    },
+    {
+      "code": "CUSTOM_CODE_CONTROL_FOUND",
+      "message": "Custom code control found; review before generated package use.",
+      "location": "Item.Layouts[1].form.children[0].children[0].children[1]",
+      "type": "codein",
+      "label": "Custom code"
+    },
+    {
+      "code": "DESIGN_SYSTEM_RESOLVED_TOKEN_COLOR",
+      "message": "Generated list UI contains literal hex colors that match known Yeeflow root tokens. Prefer token references where supported, but do not fail exports that store resolved values.",
+      "count": 6,
+      "examples": [
+        {
+          "color": "#E6F0FF",
+          "path": "$.data.Item.ListModel.IconUrl",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#0065FF",
+          "path": "$.data.Item.ListModel.IconUrl",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#ffffff",
+          "path": "$.data.Item.Layouts[1].LayoutInResources[0].Resource",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#ffffff",
+          "path": "$.data.Item.Layouts[1].LayoutInResources[0].Resource",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#ffffff",
+          "path": "$.data.Item.Layouts[1].LayoutInResources[0].Resource",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#ffffff",
+          "path": "$.data.Item.Layouts[1].LayoutInResources[0].Resource",
+          "token": "__REDACTED__"
+        }
+      ]
+    },
+    {
+      "code": "DESIGN_SYSTEM_ARBITRARY_COLOR_USAGE",
+      "message": "Generated list UI contains many hard-coded hex colors. Prefer semantic Yeeflow root tokens where supported.",
+      "count": 28,
+      "examples": [
+        {
+          "color": "#172033",
+          "path": "$.data.Item.Layouts[1].LayoutInResources[0].Resource",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#172033",
+          "path": "$.data.Item.Layouts[1].LayoutInResources[0].Resource",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#d8e1ee",
+          "path": "$.data.Item.Layouts[1].LayoutInResources[0].Resource",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#146ff6",
+          "path": "$.data.Item.Layouts[1].LayoutInResources[0].Resource",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#f2c36b",
+          "path": "$.data.Item.Layouts[1].LayoutInResources[0].Resource",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#fffaf0",
+          "path": "$.data.Item.Layouts[1].LayoutInResources[0].Resource",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#172033",
+          "path": "$.data.Item.Layouts[1].LayoutInResources[0].Resource",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#8a97aa",
+          "path": "$.data.Item.Layouts[1].LayoutInResources[0].Resource",
+          "token": "__REDACTED__"
+        }
+      ]
+    }
+  ],
+  "placeholders": [],
+  "dependencies": [],
+  "dependencyMap": null,
+  "summary": {
+    "fields": 16,
+    "views": 1,
+    "customForms": 2,
+    "workflows": 0,
+    "sampleRecords": 3,
+    "lookupRelationships": 0
+  }
+}

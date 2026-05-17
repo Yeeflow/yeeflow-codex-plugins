@@ -178,6 +178,21 @@ Use `docs/yeeflow-root-style-token-reference.md` for custom form token guidance.
 
 When the workspace includes `docs/yeeflow-text-control-generation-standards.md`, generated data-list custom form headings, helper text, card titles, and empty states must follow the Text Style Sample standard: native `heading` Text controls, inline width, `attrs.heads.ty = [null, token]` or a custom typography object, and plain string `attrs.heads.color`.
 
+## Custom Code Controls In Data-List Forms
+
+Use Custom Code controls in data-list custom forms only when native fields, lookup fields, form layout, validation, calculated fields, or list rules cannot deliver the required interaction.
+
+Generation rules:
+
+- Place the control in the custom form page JSON under `Childs[].Layouts[].LayoutInResources[0].Resource`.
+- Use `type: "codein"` and include a valid script in `attrs["codein-script"]`, or use a future export-backed script reference pattern if one is proven.
+- Configure `attrs["codein-script-param"]` with all required input parameters from the script.
+- Bind writable outputs to list fields with `{ "type": 1, "value": { "prefix": "__list_", "value": "<FieldName>" } }`.
+- Ensure every writable output field exists in the current list and is text-compatible for JSON/string outputs unless runtime proof supports another field type.
+- Keep native `Title` semantics intact. If a custom code control writes to `Title`, document the reason and verify it does not break display/query behavior.
+- Public-form usage is not proven by the Smart Lookup Picker export. Do not generate public-form custom code unless a focused public-form export/runtime test proves script loading, permissions, query access, and writeback.
+- Run custom-code inspection and list validation before wrapper build.
+
 CAPEX design carry-forward: the `IT Hardware CAPEX Request v4 Text Standard` baseline confirms that generated app packages should keep data-list custom forms aligned with the same page-background, `Main`/`Content`, Text, icon, and field-grid rules used by rich approval forms. Keep normal fields in clear grouped layouts and use Text/Decimal/Bit fallback persistence for runtime-sensitive controls unless native field proof exists.
 
 Form Actions carry-forward: approval-form exports and generated runtime tests prove front-end form action concepts such as action buttons, page-load actions, temp variables, Set variable, Confirm dialog, Query data multiple/single mapping, query count, Query data filters via `attrs.querydata_filters`, `arraySum`, `JSONStringfy`, Submit form, and Save changes. Data-list custom forms may use similar concepts, but do not generate custom-form actions from approval-form evidence alone. Wait for a data-list custom form export that proves the exact custom-form action wrapper before promoting the pattern. Query data rules still help data-list form planning: use explicit selected fields/mappings and never rely on temp variables for persisted data unless copied into real fields.

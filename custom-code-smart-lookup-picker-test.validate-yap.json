@@ -1,0 +1,370 @@
+{
+  "status": "pass_with_warnings",
+  "mode": "generator",
+  "stage": "final",
+  "errors": [],
+  "warnings": [
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "custom list form",
+      "title": "Edit Item",
+      "path": "$.Childs[0].Layouts[1].LayoutInResources[0].Resource.children[0].children[0].children[1]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[0].formdef.children[0].children[0].children[0].children[2]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control flex_grid is schema-supported-unclassified; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[0].formdef.children[0].children[0].children[0].children[7]",
+      "controlType": "flex_grid",
+      "supportLevel": "schema-supported-unclassified"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_VALUE_TYPE_MISMATCH",
+      "message": "control flex_grid.attrs.rows should match array.",
+      "surface": "approval form page",
+      "title": "Submit Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[0].formdef.children[0].children[0].children[0].children[7]",
+      "controlType": "flex_grid",
+      "propertyPath": "attrs.rows",
+      "expected": [
+        "array"
+      ],
+      "actual": "object"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control identity-picker is environment-dependent; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[0].formdef.children[0].children[0].children[0].children[7].children[1]",
+      "controlType": "identity-picker",
+      "supportLevel": "environment-dependent"
+    },
+    {
+      "code": "CONTROL_SCHEMA_EXPORT_BACKED_CONTROL_TYPE",
+      "message": "Control type calculated is export-backed by IT Hardware CAPEX Runtime V2 but not present in control-configurations.normalized.json; validate attrs.calculated before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[0].formdef.children[0].children[0].children[0].children[7].children[4]",
+      "controlType": "calculated",
+      "type": "calculated",
+      "supportLevel": "export-backed-runtime-v2"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control percent is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[0].formdef.children[0].children[0].children[0].children[7].children[5]",
+      "controlType": "percent",
+      "supportLevel": "schema-supported-runtime-unproven"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control checkbox is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[0].formdef.children[0].children[0].children[0].children[7].children[7]",
+      "controlType": "checkbox",
+      "supportLevel": "schema-supported-runtime-unproven"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control daterange is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[0].formdef.children[0].children[0].children[0].children[7].children[10]",
+      "controlType": "daterange",
+      "supportLevel": "schema-supported-runtime-unproven"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control richtext is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[0].formdef.children[0].children[0].children[0].children[8].children[1]",
+      "controlType": "richtext",
+      "supportLevel": "schema-supported-runtime-unproven"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control file-upload is environment-dependent; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[0].formdef.children[0].children[0].children[0].children[8].children[2]",
+      "controlType": "file-upload",
+      "supportLevel": "environment-dependent"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[1].formdef.children[0].children[0].children[0].children[2]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control flex_grid is schema-supported-unclassified; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[1].formdef.children[0].children[0].children[0].children[7]",
+      "controlType": "flex_grid",
+      "supportLevel": "schema-supported-unclassified"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_VALUE_TYPE_MISMATCH",
+      "message": "control flex_grid.attrs.rows should match array.",
+      "surface": "approval form page",
+      "title": "Review Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[1].formdef.children[0].children[0].children[0].children[7]",
+      "controlType": "flex_grid",
+      "propertyPath": "attrs.rows",
+      "expected": [
+        "array"
+      ],
+      "actual": "object"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control identity-picker is environment-dependent; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[1].formdef.children[0].children[0].children[0].children[7].children[1]",
+      "controlType": "identity-picker",
+      "supportLevel": "environment-dependent"
+    },
+    {
+      "code": "CONTROL_SCHEMA_EXPORT_BACKED_CONTROL_TYPE",
+      "message": "Control type calculated is export-backed by IT Hardware CAPEX Runtime V2 but not present in control-configurations.normalized.json; validate attrs.calculated before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[1].formdef.children[0].children[0].children[0].children[7].children[4]",
+      "controlType": "calculated",
+      "type": "calculated",
+      "supportLevel": "export-backed-runtime-v2"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control percent is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[1].formdef.children[0].children[0].children[0].children[7].children[5]",
+      "controlType": "percent",
+      "supportLevel": "schema-supported-runtime-unproven"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control checkbox is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[1].formdef.children[0].children[0].children[0].children[7].children[7]",
+      "controlType": "checkbox",
+      "supportLevel": "schema-supported-runtime-unproven"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control daterange is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[1].formdef.children[0].children[0].children[0].children[7].children[10]",
+      "controlType": "daterange",
+      "supportLevel": "schema-supported-runtime-unproven"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control richtext is schema-supported-runtime-unproven; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[1].formdef.children[0].children[0].children[0].children[8].children[1]",
+      "controlType": "richtext",
+      "supportLevel": "schema-supported-runtime-unproven"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control file-upload is environment-dependent; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Smart Lookup Test",
+      "path": "Data.Forms[Smart Lookup Approval Test].pageurls[1].formdef.children[0].children[0].children[0].children[8].children[2]",
+      "controlType": "file-upload",
+      "supportLevel": "environment-dependent"
+    },
+    {
+      "code": "DESIGN_SYSTEM_RESOLVED_TOKEN_COLOR",
+      "message": "Generated UI contains literal hex colors that match known Yeeflow root tokens. Prefer token references where the target schema supports them, but do not fail exports that store resolved values.",
+      "count": 52,
+      "examples": [
+        {
+          "color": "#E6F0FF",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#0065FF",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#ffffff",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#ffffff",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#ffffff",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#ffffff",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#E6F0FF",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#0065FF",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        }
+      ]
+    },
+    {
+      "code": "DESIGN_SYSTEM_ARBITRARY_COLOR_USAGE",
+      "message": "Generated UI contains many hard-coded hex colors. Prefer semantic Yeeflow root tokens for primary, success, warning, danger, neutral, background, and text colors where supported.",
+      "count": 224,
+      "examples": [
+        {
+          "color": "#172033",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#172033",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#d8e1ee",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#146ff6",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#f2c36b",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#fffaf0",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#172033",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#8a97aa",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        }
+      ]
+    }
+  ],
+  "dependencies": [],
+  "summary": {
+    "childResources": 1,
+    "dataLists": 1,
+    "forms": 1,
+    "approvalForms": 1,
+    "listWorkflows": 0,
+    "reports": 0,
+    "dashboards": 1,
+    "agents": 0,
+    "copilots": 0,
+    "connections": 0,
+    "knowledges": 0,
+    "replaceIds": 28,
+    "lookupRelationships": 0,
+    "contentListReferences": 1,
+    "workflowActionConfig": {
+      "checkedNodes": 9,
+      "supportedNodes": 9,
+      "unsupportedNodes": 0,
+      "partialNodes": 0,
+      "unsafeNodes": 0
+    }
+  },
+  "inventories": {
+    "resources": [
+      {
+        "title": "Custom Code Smart Lookup Picker Test",
+        "listId": "6081000000000000000",
+        "listSetId": "6081000000000000000",
+        "resourceType": "app/listset",
+        "fields": 0,
+        "layouts": 1,
+        "sampleRecords": 0
+      },
+      {
+        "title": "Smart Lookup Test Records",
+        "listId": "6081000000000000002",
+        "listSetId": "6081000000000000000",
+        "resourceType": "data list",
+        "fields": 16,
+        "layouts": 3,
+        "sampleRecords": 3
+      }
+    ],
+    "forms": [
+      {
+        "name": "Smart Lookup Approval Test",
+        "key": "SLPTEST",
+        "workflowType": "2",
+        "kind": "approval form",
+        "pages": 2,
+        "nodeTypes": {
+          "StartNoneEvent": 1,
+          "MultiAssignmentTask": 1,
+          "ContentList": 1,
+          "EndNoneEvent": 1,
+          "EndRejectEvent": 1,
+          "SequenceFlow": 4
+        }
+      }
+    ],
+    "modules": []
+  },
+  "wrapper": {
+    "inputType": "wrapped-yap",
+    "wrapperJsonValid": true,
+    "resourcePrefixValid": true
+  }
+}

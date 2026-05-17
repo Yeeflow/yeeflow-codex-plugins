@@ -1,10 +1,10 @@
 # Custom Code Control Decision Guide
 
-This guide defines when Codex should use Yeeflow custom code controls in generated approval forms, and how to do it safely. The goal is to produce powerful, user-friendly forms without adding custom code where native Yeeflow configuration is enough.
+This guide defines when Codex should use Yeeflow custom code controls in generated dashboards, approval forms, data-list custom forms, and public forms, and how to do it safely. The goal is to produce powerful, user-friendly experiences without adding custom code where native Yeeflow configuration is enough.
 
 ## 1. Purpose
 
-Custom code controls are an advanced enhancement layer for Yeeflow approval forms.
+Custom code controls are an advanced enhancement layer for Yeeflow pages and forms.
 
 They can add client-side behavior that is difficult or impossible to express with standard form controls, control attributes, formulas, actions, workflow steps, lookup settings, or validation rules.
 
@@ -134,6 +134,17 @@ export class CodeInApplication implements CodeInComp
 
 Generated custom code should prefer new-style readable source.
 
+Export-backed Smart Lookup Picker learning adds these placement-specific patterns:
+
+| Context | JSON location | Output target prefix |
+| --- | --- | --- |
+| Dashboard page | `Item.Layouts[].LayoutInResources[0].Resource` | `__temp_` dashboard temp variables |
+| Approval form | `Forms[].DefResource.pageurls[].formdef` | `__variables_` form/workflow variables |
+| Data-list custom form | `Childs[].Layouts[].LayoutInResources[0].Resource` | `__list_` list fields |
+| Public form | Not proven in the Smart Lookup Picker export | Requires focused proof |
+
+The Smart Lookup Picker export stores script source directly in `attrs["codein-script"]` and parameters in `attrs["codein-script-param"]`. It does not prove a separate script library/resource ID pattern.
+
 ## 8. Custom Code Generation Rules
 
 When Codex decides custom code is needed, it must:
@@ -175,6 +186,10 @@ Recommended validator checks:
 - warn or fail when custom code includes external API calls
 - warn when old compiled code appears in a generated new-style template
 - fail final-mode validation if custom code references unresolved placeholders
+- warn when a Custom Code control is missing a script reference or embedded script
+- warn when required input parameters declared by the script are missing
+- warn when parameter names are duplicated or not declared by the script
+- warn when a public-form control uses list queries without explicit runtime proof
 
 For sub-list row-label custom code:
 

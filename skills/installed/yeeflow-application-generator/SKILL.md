@@ -316,6 +316,12 @@ node scripts/build-yap-wrapper.js ./app-def.json ./app.yap --title "App Name" --
 node scripts/validate-yapk-package.js "./Existing App Version.yapk" --baseline "./Baseline Version.yapk"
 ```
 
+When a package includes Custom Code controls, also run:
+
+```bash
+node scripts/inspect-yap-custom-code-controls.mjs ./app.yap --out ./custom-code-control-inspection.json
+```
+
 For real historical exports, use compatibility mode:
 
 ```bash
@@ -351,6 +357,20 @@ Treat `GenerateDocument`, `ConvertToPdf`, `AddWatermark`, and `DocumentRecogniti
 Workflow assignment rule: generated app packages must not hardcode tenant-specific direct users in approval task `usertaskassignment`. A direct `method: "users"` assignment with a local user ID/title can import but fail publish if the user is not valid in the target tenant. Prefer requester/current-user expression assignment or require an explicit export-backed user mapping.
 
 Form Actions baseline: use `docs/yeeflow-form-action-generation-rules.md` for generated front-end form logic. Button styles, button click triggers, page-load triggers, temp variables, `setvar`, `confirm`, Query data multiple/single mapping, query count, Query data filters via `querydata_filters`, temp query collection aggregation, default Submit form, Save changes, approval completion, and ContentList persistence are runtime-proven in focused generated packages.
+
+## Custom Code Control Rules
+
+When an app package includes a Yeeflow Custom Code control:
+
+- Generate the script first or confirm that an existing script is available in the package; do not create a `codein` control with a missing script.
+- Use the export-backed control shape: `type: "codein"` with `attrs["codein-script"]` for embedded source and `attrs["codein-script-param"]` for the parameter map, unless a future export proves a separate script-resource reference pattern.
+- Required input parameters declared by the script must be present, and parameter names must be unique.
+- Parameter value shapes must match the script's Yeeflow parameter expectations. For Smart Lookup Picker-style controls, expression/static values use `{ type: 2, value: [token...] }`, while output targets use `{ type: 1, value: { prefix, value } }`.
+- Dashboard output targets should resolve to dashboard temp variables (`__temp_`), approval-form output targets to workflow/form variables (`__variables_`), and data-list custom-form output targets to list fields (`__list_`).
+- Every Custom Code control should have a meaningful surrounding section/title and a clear `nv_label` or nearby label. A generic `Custom code` label is acceptable in an export study but should be improved in generated packages.
+- Do not silently fall back to static text or placeholder content when a custom component is required by the app design.
+- Public-form custom code must be treated as unproven unless a focused export/runtime test proves the script is safe with public permissions and data access.
+- Treat static inspection as configuration proof only. Runtime render, lookup query, and writeback must be tested before claiming support.
 
 ## Control-To-Field Mapping Rules
 
