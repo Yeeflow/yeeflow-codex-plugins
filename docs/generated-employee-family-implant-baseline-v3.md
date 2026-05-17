@@ -1,6 +1,6 @@
 # Employee Family Implant v3 Generated Baseline
 
-Generated: 2026-05-17 22:00:00
+Generated: 2026-05-17 23:55:00
 
 ## Package
 
@@ -18,7 +18,7 @@ V3 preserves the accepted v1/v2 requester/applicant behavior, readonly applicant
 
 ## V3 additions
 
-- Advanced Home and HR Operations dashboard surfaces implemented with real Summary controls and data-bound data-list/table controls.
+- Advanced Home and HR Operations dashboard surfaces implemented with real Summary controls, chart controls, and data-bound queue/report tables.
 - Export-ready views for applications, department/status/applicant reporting, custom package requests, return/resubmission, attachment exceptions, expiry exceptions, released/rejected usage, quota adjustments, and finance review history.
 - Active Workflow Routing Rules list with hybrid configuration guidance.
 - Manager Review status/configuration fields with fallback-to-HR behavior because dynamic requester line-manager assignment remains runtime-unproven.
@@ -37,19 +37,19 @@ V3 preserves the accepted v1/v2 requester/applicant behavior, readonly applicant
 - Workflow ContentList edit paths for usage approval/release/return.
 - Return/resubmission outcome behavior.
 - Dynamic scheduler and dynamic manager assignment are not claimed as implemented; v3 uses documented safe fallbacks.
-- Chart visualization is deferred for this v3 package. Focused runtime testing showed generated chart controls could render a model-load error, so advanced reporting uses data-bound table/list fallbacks instead.
-
-## Dashboard fix result
-
-The original v3 generated dashboards were not acceptable as a final baseline because KPI cards were static Text controls with hardcoded `0` values and reporting/queue sections were free text. The fixed generator now uses:
-
-- Home: 4 Summary controls for submitted/pending/approved/rejected request counts, plus 2 data-bound data-list tables for recent applications and returned requests.
-- HR Operations: 12 Summary controls for application, quota, attachment, expiry, and adjustment KPIs, plus 13 data-bound data-list/table controls for advanced reporting and operational queues.
-
-Focused runtime import in `https://codex.yeeflow.com/` passed for `Employee Family Implant v3 Summary Clean`: Home and HR Operations opened, Summary controls rendered, dashboard tables rendered headers and empty states from real list bindings, and no static fake KPI cards or chart model errors remained.
+- Dashboard charts require representative source records during runtime validation. Empty charts are no-data states; only a chart model-load failure after valid source data exists should be treated as a chart defect.
 
 ## Validation status
 
-Local validation and focused dashboard runtime results are recorded in `employee-family-implant-runtime-test-report.v3.json`.
+Local validation passes with existing warnings recorded in `employee-family-implant-runtime-test-report.v3.json`.
 
-This repair does not by itself make v3 the final accepted runtime baseline. Full v1/v2 regression and v3 workflow runtime testing still need to pass before final baseline acceptance.
+Dashboard structure inspection confirms:
+
+- Home: 4 Summary controls, 2 data-list controls, 4 dashboard `exts`.
+- HR Operations Dashboard: 12 Summary controls, 2 pie charts, 2 column charts, 1 line chart, 8 data-list controls, 17 dashboard `exts`.
+- Wrapper `ReportIds`: 21.
+- Hardcoded fake KPI text values: 0 found.
+
+Runtime chart learning has been corrected: the user added representative source data and confirmed pie, column, and monthly trend chart sections render/load with data. Empty charts are now classified as a no-data / insufficient-seed-data result, not a chart-model failure.
+
+This document does not claim the complete v3 final runtime baseline. Full v1/v2 regression and all v3 workflow paths still need to be rerun before final baseline acceptance.

@@ -818,6 +818,21 @@ function hrOperationsDashboardPage() {
       makeSummaryCard("Quota Adjustments", quotaAdjustmentsListId, [countValue("Adjustments")], [dashboardCondition("Text4", "0", "Approved")], exts, reportIds, "Approved manual quota adjustments.", "--c--primary")
     ]
   ];
+  const applicationsByStatusChart = chartControl("pie-chart", "Applications by Status", "Applications by status pie chart");
+  const selfVsFamilyChart = chartControl("pie-chart", "Self vs Family Applications", "Self vs family applications pie chart");
+  const productTypeChart = chartControl("bar-chart", "Applications by Product Type", "Applications by product type column chart");
+  const customVsStandardChart = chartControl("bar-chart", "Custom vs Standard Requests", "Custom vs standard requests column chart");
+  const monthlyTrendChart = chartControl("line-chart", "Monthly Application Trend", "Monthly application trend line chart");
+  [
+    [applicationsByStatusChart, "pie-chart", "0", "Text32", "Current Status", "radio", "ListDataID", "Id", "input", ""],
+    [selfVsFamilyChart, "pie-chart", "0", "Text4", "Application Type", "radio", "ListDataID", "Id", "input", ""],
+    [productTypeChart, "bar-chart", "2", "Text6", "Has Custom Package Product", "radio", "ListDataID", "Id", "input", ""],
+    [customVsStandardChart, "bar-chart", "2", "Text6", "Has Custom Package Product", "radio", "ListDataID", "Id", "input", ""],
+    [monthlyTrendChart, "line-chart", "1", "Datetime2", "Submitted Time", "datepicker", "ListDataID", "Id", "input", "MONTH"]
+  ].forEach(([chart, key, chartType, rowField, rowLabel, rowType, valueField, valueLabel, valueType, rowFunc]) => {
+    exts.push(chartExt(chart.id, key, chartType, applicationsListId, rowField, rowLabel, rowType, valueField, valueLabel, valueType, rowFunc));
+    reportIds.push(chart.id);
+  });
   dashboardReportIds.push(...reportIds);
   return {
     children: [
@@ -847,15 +862,15 @@ function hrOperationsDashboardPage() {
             }
           }, [
             heading("Advanced reporting", "Advanced reporting heading", "h5-medium"),
-            text("<p>Chart visualization is deferred for this v3 package because runtime testing showed the generated chart model could not be loaded. These export-ready report sections use data-bound list/table controls as the safe fallback.</p>", "Chart fallback note"),
-            container("Reporting fallback row one", { style: { gap: [null, "--sp--s200"], direction: [null, "row"] } }, [
-              dashboardDataList(applicationsListId, "Implant Applications", appFields, [dashboardCondition("Text32", "notnull", "")], "Applications by status data-bound fallback"),
-              dashboardDataList(applicationsListId, "Implant Applications", appFields, [dashboardCondition("Text4", "notnull", "")], "Self vs family applications data-bound fallback")
+            text("<p>Charts use the packaged Implant Applications list. Runtime validation must seed or confirm representative source rows before judging chart behavior; an empty chart is a no-data condition, not a structural failure.</p>", "Chart data note"),
+            container("Chart row one", { style: { gap: [null, "--sp--s200"], direction: [null, "row"] } }, [
+              applicationsByStatusChart,
+              selfVsFamilyChart
             ]),
-            container("Reporting fallback row two", { style: { gap: [null, "--sp--s200"], direction: [null, "row"] } }, [
-              dashboardDataList(applicationsListId, "Implant Applications", appFields, [dashboardCondition("Text6", "notnull", "")], "Applications by product type data-bound fallback"),
-              dashboardDataList(applicationsListId, "Implant Applications", appFields, [dashboardCondition("Text6", "notnull", "")], "Custom vs standard requests data-bound fallback"),
-              dashboardDataList(applicationsListId, "Implant Applications", appFields, [dashboardCondition("Datetime2", "notnull", "")], "Monthly application trend data-bound fallback")
+            container("Chart row two", { style: { gap: [null, "--sp--s200"], direction: [null, "row"] } }, [
+              productTypeChart,
+              customVsStandardChart,
+              monthlyTrendChart
             ]),
             dashboardDataList(applicationsListId, "Implant Applications", appFields, [], "All applications dashboard table")
           ]),
@@ -2339,7 +2354,7 @@ fs.writeFileSync(outReportPath, `${JSON.stringify({
   v3Scope: {
     requesterApplicantModel: "RequesterApplicant is required and defaults to Current User on a new request. It remains editable for proxy submission; when changed, the applicant snapshot/quota initialization action reruns from RequesterApplicant.",
     workflow: "Submit -> family quota occupation on submission -> HR Review -> Finance/Benefits Review for Custom Package requests -> Approved/Rejected. HR and Finance can return to Applicant Correction / Resubmission; resubmission routes back to HR Review without creating another Family Quota Usage row. Workflow Routing Rules are generated as active configuration records, but stable workflow branches remain the runtime-safe fallback.",
-    dashboard: "Home and HR Operations dashboards include v3 runtime-safe KPI, queue, configuration, expiry, and report-link surfaces. Advanced trend/ranking needs are satisfied through export-ready views rather than unproven chart widgets.",
+    dashboard: "Home and HR Operations dashboards include Summary KPI controls, real chart controls, and data-bound queue/report tables. Chart runtime validation requires representative source data; empty charts are treated as no-data states, not structural failures.",
     quota: "Family quota query/check action includes existing Family Quota Usage plus approved signed Family Quota Adjustment records where local validation passes. Remaining quota is Annual Quota + Approved Adjustments - Prior Usage - Current Request.",
     attachments: "Submission is allowed with missing or uncertain attachments. HR Review has attachment verification status, missing attachment flag, HR notes, and return/reject options for insufficient evidence. Attachment Requirement Rules remain scenario-driven.",
     persistence: "Implant Applications ContentList persistence is included. Family Quota Usage is created on family submission with status In Progress, updated to Approved or Released through ContentList edit, and remains occupied while returned. Finance Review History is available as an export-ready list; workflow-created history remains a runtime proof item.",
@@ -2352,7 +2367,8 @@ fs.writeFileSync(outReportPath, `${JSON.stringify({
     "If requester-based profile expressions fail at runtime, keep RequesterApplicant fixed and route missing snapshot data to HR verification; never switch applicant logic to the task viewer's Current User.",
     "Return/Resubmission uses a workflow Returned outcome and must be runtime-tested because task-outcome availability is tenant/designer-sensitive.",
     "Strict initial attachment blocking is intentionally not included; v3 flags missing or uncertain attachments for HR Review.",
-    "Family Quota Usage return/approval/release uses workflow ContentList edit and must be runtime-tested; if edit is not safe in the tenant, HR must manually correct usage status and a focused learning task should be created."
+    "Family Quota Usage return/approval/release uses workflow ContentList edit and must be runtime-tested; if edit is not safe in the tenant, HR must manually correct usage status and a focused learning task should be created.",
+    "Dashboard chart controls are included because pie, column, and line chart models are proven when representative source records exist. A chart with no matching rows should be documented as a no-data state, not as an invalid chart model."
   ],
   localValidation: {
     status: "pending",
@@ -2384,7 +2400,7 @@ V3 preserves the accepted v1/v2 requester/applicant behavior, readonly applicant
 
 ## V3 additions
 
-- Advanced HR Operations dashboard surfaces implemented with runtime-safe KPI, queue, and report guidance sections.
+- Advanced Home and HR Operations dashboard surfaces implemented with real Summary controls, chart controls, and data-bound queue/report tables.
 - Export-ready views for applications, department/status/applicant reporting, custom package requests, return/resubmission, attachment exceptions, expiry exceptions, released/rejected usage, quota adjustments, and finance review history.
 - Active Workflow Routing Rules list with hybrid configuration guidance.
 - Manager Review status/configuration fields with fallback-to-HR behavior because dynamic requester line-manager assignment remains runtime-unproven.
@@ -2403,6 +2419,7 @@ V3 preserves the accepted v1/v2 requester/applicant behavior, readonly applicant
 - Workflow ContentList edit paths for usage approval/release/return.
 - Return/resubmission outcome behavior.
 - Dynamic scheduler and dynamic manager assignment are not claimed as implemented; v3 uses documented safe fallbacks.
+- Dashboard charts require representative source records during runtime validation. Empty charts are no-data states; only a chart model-load failure after valid source data exists should be treated as a chart defect.
 
 ## Validation status
 

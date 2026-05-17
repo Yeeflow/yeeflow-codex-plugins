@@ -29,7 +29,7 @@ Use this checklist before packaging, after local validation, and after runtime t
 - [ ] Generated data-list custom forms include current-standard `Edit Item` and `View Item`; New/Edit maps to `Edit Item`, View maps to `View Item`.
 - [ ] Workflow action configuration validates.
 - [ ] Expression smoke checks cover generated formulas, query filters, workflow conditions, and sublist summaries where applicable.
-- [ ] Dashboard structure inspection confirms KPI/count/total cards use `summary` controls with matching `exts`, queue/report sections use `data-list` or proven `collection` controls, chart sections use chart controls or a documented data-bound fallback, and no KPI value is hardcoded as Text `0`, `0.00`, `N/A`, or placeholder content.
+- [ ] Dashboard structure inspection confirms KPI/count/total cards use `summary` controls with matching `exts`, queue/report sections use `data-list` or proven `collection` controls, planned chart sections use real chart controls when the chart model is known, and no KPI value is hardcoded as Text `0`, `0.00`, `N/A`, or placeholder content.
 - [ ] The package is not sent to Yeeflow runtime testing until local validation passes, unless the task is explicitly an isolation/proof experiment.
 
 ## 3. Runtime Test Gate
@@ -55,6 +55,7 @@ Production-like runtime proof:
 - [ ] `ContentList` and usage/audit list lifecycle events persist expected rows and readable values.
 - [ ] Dashboard KPIs match source list data after runtime records change.
 - [ ] Operational queues and advanced reporting sections render real list/table/collection data or empty states from the expected source lists.
+- [ ] Chart runtime tests use representative source rows before acceptance. Record whether each chart renders with data, loads with no data, or fails to load; an empty dataset alone is not a chart-model failure.
 
 ## 4. Runtime Safety Review
 
