@@ -1,0 +1,42 @@
+{
+  "status": "pass_with_warnings",
+  "mode": "generator",
+  "stage": "final",
+  "input": "/tmp/cct-lists/request-categories.json",
+  "inputKind": "decodedData",
+  "errors": [],
+  "warnings": [
+    {
+      "code": "LISTSET_ID_MISSING",
+      "message": "ListSetID is missing or not included in this standalone list export."
+    },
+    {
+      "code": "DESIGN_SYSTEM_RESOLVED_TOKEN_COLOR",
+      "message": "Generated list UI contains literal hex colors that match known Yeeflow root tokens. Prefer token references where supported, but do not fail exports that store resolved values.",
+      "count": 2,
+      "examples": [
+        {
+          "color": "#E6F0FF",
+          "path": "$.data.Item.ListModel.IconUrl",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#0065FF",
+          "path": "$.data.Item.ListModel.IconUrl",
+          "token": "__REDACTED__"
+        }
+      ]
+    }
+  ],
+  "placeholders": [],
+  "dependencies": [],
+  "dependencyMap": null,
+  "summary": {
+    "fields": 16,
+    "views": 1,
+    "customForms": 2,
+    "workflows": 0,
+    "sampleRecords": 4,
+    "lookupRelationships": 0
+  }
+}

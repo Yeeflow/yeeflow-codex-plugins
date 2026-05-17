@@ -1,0 +1,15 @@
+{
+  "status": "pass",
+  "duplicateFieldLists": [],
+  "lookupDependencyCheck": "no native lookup fields generated; custom lookup sources are local seeded lists",
+  "flowKey": {
+    "key": "CCTSHOW",
+    "safe": true
+  },
+  "corruptedPrefixKeys": [],
+  "dashboard": {
+    "dataListControls": 1,
+    "customCodeControls": 7
+  },
+  "publicFormSupport": "not claimed"
+}

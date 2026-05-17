@@ -2,9 +2,9 @@
   "appName": "Enterprise Service Request & Compliance Review",
   "purpose": "Focused showcase app to use all 13 reusable Yeeflow custom code templates in realistic request, compliance, approval, and dashboard contexts.",
   "sourceZip": "Custom Code templates.zip",
-  "readyForGeneration": false,
-  "doNotGenerateYet": true,
-  "generationGateReason": "Phase 1 inventory and plan/spec completed. Generate in Phase 2 after accepting the app wiring plan and adding package-specific custom-code parameter validation.",
+  "readyForGeneration": true,
+  "doNotGenerateYet": false,
+  "generationGateReason": "Phase 2 readiness accepted for local package generation. Runtime proof remains pending for all templates in this generated app.",
   "publicFormSupport": "not claimed; no public form usage planned",
   "templates": [
     {
@@ -444,5 +444,11 @@
     "Local workspace currently lacks TypeScript/esbuild packages for real TSX compile; only source parsing is available unless tooling is installed or provided.",
     "Twelve templates are inventory-only and need generated-app runtime proof before support claims.",
     "Public form support is not planned or claimed."
+  ],
+  "runtimeRiskAssumptions": [
+    "Twelve templates remain inventory-only until this generated app is imported and exercised.",
+    "Smart Lookup Picker has previous runtime proof, but this showcase still needs regression testing.",
+    "Public forms are not included and public-form support is not claimed.",
+    "Custom code writeback is configured only for templates that expose writable targets."
   ]
 }

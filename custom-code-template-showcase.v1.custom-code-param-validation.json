@@ -1,0 +1,213 @@
+{
+  "status": "pass",
+  "summary": {
+    "templatesExpected": 13,
+    "templatesIncluded": 13,
+    "customCodeControls": 25,
+    "publicFormControls": 0,
+    "prefixErrors": 0
+  },
+  "checks": [
+    {
+      "template": "activity-timeline",
+      "instances": 3,
+      "contexts": [
+        "dashboard",
+        "approval-form"
+      ],
+      "requiredParameters": [
+        "sourceListId",
+        "recordIdField",
+        "recordIdValue",
+        "eventDateField",
+        "actorField",
+        "titleField",
+        "descriptionField",
+        "statusField"
+      ],
+      "status": "pass",
+      "paramIssues": []
+    },
+    {
+      "template": "approval-decision-panel",
+      "instances": 1,
+      "contexts": [
+        "approval-form"
+      ],
+      "requiredParameters": [
+        "decisionField",
+        "commentField"
+      ],
+      "status": "pass",
+      "paramIssues": []
+    },
+    {
+      "template": "approval-timeline",
+      "instances": 2,
+      "contexts": [
+        "approval-form"
+      ],
+      "requiredParameters": [
+        "sourceListId",
+        "recordIdField",
+        "recordIdValue",
+        "eventDateField",
+        "actorField",
+        "decisionField",
+        "commentField"
+      ],
+      "status": "pass",
+      "paramIssues": []
+    },
+    {
+      "template": "checklist-compliance-block",
+      "instances": 2,
+      "contexts": [
+        "approval-form"
+      ],
+      "requiredParameters": [
+        "itemsJson",
+        "saveToField",
+        "requireAllChecked"
+      ],
+      "status": "pass",
+      "paramIssues": []
+    },
+    {
+      "template": "dependent-selector",
+      "instances": 2,
+      "contexts": [
+        "approval-form"
+      ],
+      "requiredParameters": [
+        "dataListId",
+        "parentField",
+        "childField",
+        "parentSaveToField",
+        "childSaveToField"
+      ],
+      "status": "pass",
+      "paramIssues": []
+    },
+    {
+      "template": "distribution-chart-module",
+      "instances": 1,
+      "contexts": [
+        "dashboard"
+      ],
+      "requiredParameters": [
+        "dataListId",
+        "categoryField"
+      ],
+      "status": "pass",
+      "paramIssues": []
+    },
+    {
+      "template": "exception-alert-panel",
+      "instances": 1,
+      "contexts": [
+        "dashboard"
+      ],
+      "requiredParameters": [
+        "sourceListId",
+        "titleField",
+        "severityField",
+        "descriptionField"
+      ],
+      "status": "pass",
+      "paramIssues": []
+    },
+    {
+      "template": "hierarchical-selector",
+      "instances": 2,
+      "contexts": [
+        "approval-form"
+      ],
+      "requiredParameters": [
+        "dataListId",
+        "idField",
+        "parentField",
+        "labelField",
+        "valueField",
+        "saveToField"
+      ],
+      "status": "pass",
+      "paramIssues": []
+    },
+    {
+      "template": "kpi-card-set",
+      "instances": 1,
+      "contexts": [
+        "dashboard"
+      ],
+      "requiredParameters": [
+        "cardsConfig"
+      ],
+      "status": "pass",
+      "paramIssues": []
+    },
+    {
+      "template": "multi-entry-tag-input",
+      "instances": 2,
+      "contexts": [
+        "approval-form"
+      ],
+      "requiredParameters": [
+        "saveToField"
+      ],
+      "status": "pass",
+      "paramIssues": []
+    },
+    {
+      "template": "related-record-summary-grid",
+      "instances": 3,
+      "contexts": [
+        "dashboard",
+        "approval-form"
+      ],
+      "requiredParameters": [
+        "targetListId",
+        "relationField",
+        "relationValue",
+        "displayedFieldsJson",
+        "titleField"
+      ],
+      "status": "pass",
+      "paramIssues": []
+    },
+    {
+      "template": "smart-lookup-picker",
+      "instances": 4,
+      "contexts": [
+        "dashboard",
+        "data-list-form",
+        "approval-form"
+      ],
+      "requiredParameters": [
+        "dataListId",
+        "displayField",
+        "valueField",
+        "saveToField",
+        "selectedItemsField",
+        "newItemsField"
+      ],
+      "status": "pass",
+      "paramIssues": []
+    },
+    {
+      "template": "trend-chart-module",
+      "instances": 1,
+      "contexts": [
+        "dashboard"
+      ],
+      "requiredParameters": [
+        "dataListId",
+        "dateField"
+      ],
+      "status": "pass",
+      "paramIssues": []
+    }
+  ],
+  "prefixErrors": [],
+  "errors": []
+}

@@ -1,0 +1,262 @@
+{
+  "status": "pass_with_warnings",
+  "mode": "final",
+  "errors": [],
+  "warnings": [
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[1]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[2]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[3]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[4]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[5]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[6]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[7]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[8]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[1]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[2]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[3]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[4]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[5]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[6]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[7]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[8]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "CONTROL_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[9]",
+      "detail": {
+        "supportLevel": "risky-deferred"
+      }
+    },
+    {
+      "code": "DESIGN_SYSTEM_RESOLVED_TOKEN_COLOR",
+      "message": "Generated approval UI contains literal hex colors that match known Yeeflow root tokens. Prefer token references where supported, but do not fail exports that store resolved values.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[3].attrs.codein-script",
+      "detail": {
+        "count": 8,
+        "examples": [
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[3].attrs.codein-script",
+            "token": "--c--background"
+          },
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[3].attrs.codein-script",
+            "token": "--c--background"
+          },
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[3].attrs.codein-script",
+            "token": "--c--background"
+          },
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[3].attrs.codein-script",
+            "token": "--c--background"
+          },
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[3].attrs.codein-script",
+            "token": "--c--background"
+          },
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[3].attrs.codein-script",
+            "token": "--c--background"
+          },
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[3].attrs.codein-script",
+            "token": "--c--background"
+          },
+          {
+            "color": "#ffffff",
+            "path": "$.pageurls[1].formdef.children[0].children[0].children[0].children[3].attrs.codein-script",
+            "token": "--c--background"
+          }
+        ]
+      }
+    },
+    {
+      "code": "DESIGN_SYSTEM_ARBITRARY_COLOR_USAGE",
+      "message": "Generated approval UI contains many hard-coded hex colors. Prefer semantic Yeeflow root tokens where supported.",
+      "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[1].attrs.codein-script",
+      "detail": {
+        "count": 1070,
+        "examples": [
+          {
+            "color": "#fff",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[1].attrs.codein-script",
+            "token": null
+          },
+          {
+            "color": "#e5eaf3",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[1].attrs.codein-script",
+            "token": null
+          },
+          {
+            "color": "#111827",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[1].attrs.codein-script",
+            "token": null
+          },
+          {
+            "color": "#101828",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[1].attrs.codein-script",
+            "token": null
+          },
+          {
+            "color": "#667085",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[1].attrs.codein-script",
+            "token": null
+          },
+          {
+            "color": "#e5eaf3",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[1].attrs.codein-script",
+            "token": null
+          },
+          {
+            "color": "#f8fafc",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[1].attrs.codein-script",
+            "token": null
+          },
+          {
+            "color": "#475467",
+            "path": "$.pageurls[0].formdef.children[0].children[0].children[0].children[1].attrs.codein-script",
+            "token": null
+          }
+        ]
+      }
+    }
+  ],
+  "placeholders": [],
+  "summary": {
+    "variables": 27,
+    "listrefs": 0,
+    "pages": 2,
+    "controls": 45,
+    "workflowNodes": 7,
+    "sequenceFlows": 8,
+    "approvalTasks": 3,
+    "contentListNodes": 1,
+    "lookupControls": 0,
+    "workflowActionConfig": {
+      "checkedNodes": 15,
+      "supportedNodes": 15,
+      "unsupportedNodes": 0,
+      "partialNodes": 0,
+      "unsafeNodes": 0
+    }
+  }
+}

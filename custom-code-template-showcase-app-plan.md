@@ -6,10 +6,11 @@ Focused showcase app to use all 13 reusable Yeeflow custom code templates in rea
 
 ## Generation Gate
 
-- readyForGeneration: `false`
-- doNotGenerateYet: `true`
-- reason: Phase 1 inventory and plan/spec completed. Generate in Phase 2 after accepting the app wiring plan and adding package-specific custom-code parameter validation.
+- readyForGeneration: `true`
+- doNotGenerateYet: `false`
+- reason: Phase 2 readiness accepted for local package generation. All 13 templates have planned placements, source-backed parameters, seeded data support, and explicit runtime-risk assumptions.
 - Public form support remains unclaimed.
+- Runtime proof remains pending until the generated app is imported and tested in Yeeflow.
 
 ## Template Placement Plan
 

@@ -1,0 +1,405 @@
+{
+  "status": "pass_with_warnings",
+  "mode": "generator",
+  "stage": "final",
+  "errors": [],
+  "warnings": [
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "custom list form",
+      "title": "Edit Item",
+      "path": "$.Childs[0].Layouts[1].LayoutInResources[0].Resource.children[0].children[0].children[1]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[0].formdef.children[0].children[0].children[0].children[1]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[0].formdef.children[0].children[0].children[0].children[2]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[0].formdef.children[0].children[0].children[0].children[3]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[0].formdef.children[0].children[0].children[0].children[4]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[0].formdef.children[0].children[0].children[0].children[5]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[0].formdef.children[0].children[0].children[0].children[6]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[0].formdef.children[0].children[0].children[0].children[7]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Submit Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[0].formdef.children[0].children[0].children[0].children[8]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[1].formdef.children[0].children[0].children[0].children[1]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[1].formdef.children[0].children[0].children[0].children[2]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[1].formdef.children[0].children[0].children[0].children[3]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[1].formdef.children[0].children[0].children[0].children[4]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[1].formdef.children[0].children[0].children[0].children[5]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[1].formdef.children[0].children[0].children[0].children[6]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[1].formdef.children[0].children[0].children[0].children[7]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[1].formdef.children[0].children[0].children[0].children[8]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "CONTROL_SCHEMA_SCHEMA_SUPPORTED_RUNTIME_UNPROVEN",
+      "message": "control codein is risky-deferred; isolate runtime behavior before generator promotion.",
+      "surface": "approval form page",
+      "title": "Review Service Request",
+      "path": "Data.Forms[Enterprise Service Request Review].pageurls[1].formdef.children[0].children[0].children[0].children[9]",
+      "controlType": "codein",
+      "supportLevel": "risky-deferred"
+    },
+    {
+      "code": "DESIGN_SYSTEM_RESOLVED_TOKEN_COLOR",
+      "message": "Generated UI contains literal hex colors that match known Yeeflow root tokens. Prefer token references where the target schema supports them, but do not fail exports that store resolved values.",
+      "count": 84,
+      "examples": [
+        {
+          "color": "#E6F0FF",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#0065FF",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#ffffff",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#ffffff",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#ffffff",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#ffffff",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#E6F0FF",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#0065FF",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        }
+      ]
+    },
+    {
+      "code": "DESIGN_SYSTEM_ARBITRARY_COLOR_USAGE",
+      "message": "Generated UI contains many hard-coded hex colors. Prefer semantic Yeeflow root tokens for primary, success, warning, danger, neutral, background, and text colors where supported.",
+      "count": 2942,
+      "examples": [
+        {
+          "color": "#172033",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#111827",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#64748b",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#d9e2ef",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#fff",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#2f73ff",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#344054",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#7a8699",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        }
+      ]
+    }
+  ],
+  "dependencies": [],
+  "summary": {
+    "childResources": 9,
+    "dataLists": 9,
+    "forms": 1,
+    "approvalForms": 1,
+    "listWorkflows": 0,
+    "reports": 0,
+    "dashboards": 1,
+    "agents": 0,
+    "copilots": 0,
+    "connections": 0,
+    "knowledges": 0,
+    "replaceIds": 69,
+    "lookupRelationships": 0,
+    "contentListReferences": 1,
+    "workflowActionConfig": {
+      "checkedNodes": 15,
+      "supportedNodes": 15,
+      "unsupportedNodes": 0,
+      "partialNodes": 0,
+      "unsafeNodes": 0
+    }
+  },
+  "inventories": {
+    "resources": [
+      {
+        "title": "Enterprise Service Request & Compliance Review",
+        "listId": "6182000000000000000",
+        "listSetId": "6182000000000000000",
+        "resourceType": "app/listset",
+        "fields": 0,
+        "layouts": 1,
+        "sampleRecords": 0
+      },
+      {
+        "title": "Service Requests",
+        "listId": "6182000000000000100",
+        "listSetId": "6182000000000000000",
+        "resourceType": "data list",
+        "fields": 16,
+        "layouts": 3,
+        "sampleRecords": 4
+      },
+      {
+        "title": "Request Categories",
+        "listId": "6182000000000000200",
+        "listSetId": "6182000000000000000",
+        "resourceType": "data list",
+        "fields": 16,
+        "layouts": 3,
+        "sampleRecords": 4
+      },
+      {
+        "title": "Subcategories",
+        "listId": "6182000000000000300",
+        "listSetId": "6182000000000000000",
+        "resourceType": "data list",
+        "fields": 16,
+        "layouts": 3,
+        "sampleRecords": 4
+      },
+      {
+        "title": "Assets / Vendors / Related Records",
+        "listId": "6182000000000000400",
+        "listSetId": "6182000000000000000",
+        "resourceType": "data list",
+        "fields": 16,
+        "layouts": 3,
+        "sampleRecords": 3
+      },
+      {
+        "title": "Compliance Checklist Items",
+        "listId": "6182000000000000500",
+        "listSetId": "6182000000000000000",
+        "resourceType": "data list",
+        "fields": 16,
+        "layouts": 3,
+        "sampleRecords": 3
+      },
+      {
+        "title": "Request Tags",
+        "listId": "6182000000000000600",
+        "listSetId": "6182000000000000000",
+        "resourceType": "data list",
+        "fields": 16,
+        "layouts": 3,
+        "sampleRecords": 3
+      },
+      {
+        "title": "Approval History / Timeline Events",
+        "listId": "6182000000000000700",
+        "listSetId": "6182000000000000000",
+        "resourceType": "data list",
+        "fields": 16,
+        "layouts": 3,
+        "sampleRecords": 4
+      },
+      {
+        "title": "Exception Rules / Alerts",
+        "listId": "6182000000000000800",
+        "listSetId": "6182000000000000000",
+        "resourceType": "data list",
+        "fields": 16,
+        "layouts": 3,
+        "sampleRecords": 3
+      },
+      {
+        "title": "Request Metrics / Summary Records",
+        "listId": "6182000000000000900",
+        "listSetId": "6182000000000000000",
+        "resourceType": "data list",
+        "fields": 16,
+        "layouts": 3,
+        "sampleRecords": 4
+      }
+    ],
+    "forms": [
+      {
+        "name": "Enterprise Service Request Review",
+        "key": "CCTSHOW",
+        "workflowType": "2",
+        "kind": "approval form",
+        "pages": 2,
+        "nodeTypes": {
+          "StartNoneEvent": 1,
+          "MultiAssignmentTask": 3,
+          "ContentList": 1,
+          "EndNoneEvent": 1,
+          "EndRejectEvent": 1,
+          "SequenceFlow": 8
+        }
+      }
+    ],
+    "modules": []
+  },
+  "wrapper": {
+    "inputType": "decoded-resource-json",
+    "wrapperJsonValid": true,
+    "resourcePrefixValid": null
+  }
+}

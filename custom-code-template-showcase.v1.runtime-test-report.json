@@ -1,0 +1,97 @@
+{
+  "appName": "Enterprise Service Request & Compliance Review",
+  "phase": "Phase 2 local generation",
+  "runtimeStatus": "not tested",
+  "publicFormSupport": "not claimed",
+  "generatedPackage": "custom-code-template-showcase.v1.yap",
+  "templates": [
+    {
+      "name": "activity-timeline",
+      "localGeneration": "included",
+      "runtimeClassification": "not tested"
+    },
+    {
+      "name": "approval-decision-panel",
+      "localGeneration": "included",
+      "runtimeClassification": "not tested"
+    },
+    {
+      "name": "approval-timeline",
+      "localGeneration": "included",
+      "runtimeClassification": "not tested"
+    },
+    {
+      "name": "checklist-compliance-block",
+      "localGeneration": "included",
+      "runtimeClassification": "not tested"
+    },
+    {
+      "name": "dependent-selector",
+      "localGeneration": "included",
+      "runtimeClassification": "not tested"
+    },
+    {
+      "name": "distribution-chart-module",
+      "localGeneration": "included",
+      "runtimeClassification": "not tested"
+    },
+    {
+      "name": "exception-alert-panel",
+      "localGeneration": "included",
+      "runtimeClassification": "not tested"
+    },
+    {
+      "name": "hierarchical-selector",
+      "localGeneration": "included",
+      "runtimeClassification": "not tested"
+    },
+    {
+      "name": "kpi-card-set",
+      "localGeneration": "included",
+      "runtimeClassification": "not tested"
+    },
+    {
+      "name": "multi-entry-tag-input",
+      "localGeneration": "included",
+      "runtimeClassification": "not tested"
+    },
+    {
+      "name": "related-record-summary-grid",
+      "localGeneration": "included",
+      "runtimeClassification": "not tested"
+    },
+    {
+      "name": "smart-lookup-picker",
+      "localGeneration": "included",
+      "runtimeClassification": "previously proven elsewhere; regression not yet tested in this app"
+    },
+    {
+      "name": "trend-chart-module",
+      "localGeneration": "included",
+      "runtimeClassification": "not tested"
+    }
+  ],
+  "localValidation": {
+    "package": "pass_with_warnings",
+    "graph": "pass",
+    "approvalForm": "pass_with_warnings",
+    "ydlLists": "pass_with_warnings for all 9 generated lists",
+    "wrapperRoundTrip": "pass",
+    "customCodeInspection": {
+      "customCodeControls": 25,
+      "dashboardControls": 7,
+      "approvalFormControls": 17,
+      "dataListFormControls": 1,
+      "publicFormControls": 0
+    },
+    "customCodeParameterValidation": "pass",
+    "dashboardStructureInspection": "pass",
+    "duplicateFieldNameCheck": "pass",
+    "lookupDependencyCheck": "pass - no native lookup fields; custom lookup source lists are local seeded lists",
+    "flowKeySafety": "pass",
+    "corruptedPrefixKeyCheck": "pass",
+    "expressionSmoke": "pass",
+    "tsxCheck": "pass via esbuild parse/bundle check for all 13 templates"
+  },
+  "readinessDecision": "ready for local generation; runtime proof pending"
+}

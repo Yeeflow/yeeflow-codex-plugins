@@ -1,0 +1,5 @@
+{
+  "status": "pass",
+  "command": "node scripts/smoke-expression-validation.mjs",
+  "output": "Expression validation smoke tests passed."
+}
