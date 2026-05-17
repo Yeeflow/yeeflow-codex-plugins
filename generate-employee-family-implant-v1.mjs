@@ -7,14 +7,14 @@ const outAppPath = "employee-family-implant-app-def.v1.json";
 const outFormDefPath = "employee-family-implant-approval-form-def.v1.json";
 const outReportPath = "employee-family-implant-generation-report.v1.json";
 
-const family = "641";
-const generatedAt = "2026-05-16 01:30:00";
+const family = "644";
+const generatedAt = "2026-05-17 23:58:00";
 const appId = 41;
 const tenantId = "1697103066096734208";
 const userId = "1697103066163843073";
 const rootId = `${family}0010000000000000`;
 const dashboardId = `${family}0010000000000001`;
-const formKey = "EIA";
+const formKey = "EIQ";
 const processId = `${family}0020000000000001`;
 const productSelectionListRefId = `${processId}-listref-product-selection-items`;
 const productListId = `${family}1010000000001000`;
@@ -343,11 +343,12 @@ const usage = makeList("Family Quota Usage", usageListId, 105, [
   ["Text1", "Application No.", "ApplicationNo", "Text", "input", textRule("Application number")],
   ["Text2", "Applicant Employee ID", "ApplicantEmployeeID", "Text", "input", textRule("Applicant employee ID")],
   ["Text3", "Applicant Name", "ApplicantEmployeeName", "Text", "input", textRule("Applicant name")],
-  ["Text4", "Quota Cycle", "QuotaYear", "Text", "input", textRule("Employee anniversary quota cycle")],
+  ["Text4", "Quota Cycle Key", "QuotaCycleKey", "Text", "input", textRule("Employee anniversary quota cycle key used for matching")],
   ["Decimal2", "Quota Cycle No.", "QuotaCycleNumber", "Decimal", "input_number", { precision: 0 }],
   ["Text5", "Product Summary", "ProductSummary", "Text", "textarea", { edit: { textarea_minrows: 3 }, placeholder: "Product line summary" }],
   ["Text6", "Has Custom Package Product", "HasCustomPackageProduct", "Text", "radio", choice(["No", "Yes"])],
   ["Decimal1", "Total Application Amount", "TotalApplicationAmount", "Decimal", "currency", { currencyCode: "USD", displayFormat: "code", displayThousandths: "1" }],
+  ["Decimal3", "Active Usage Amount", "ActiveUsageAmount", "Decimal", "currency", { currencyCode: "USD", displayFormat: "code", displayThousandths: "1" }],
   ["Text7", "Usage Status", "UsageStatus", "Text", "radio", choice(["In Progress", "Occupied", "Approved", "Confirmed", "Released", "Rejected", "Not Applicable"])],
   ["Text8", "Notes", "Notes", "Text", "textarea", { edit: { textarea_minrows: 3 }, placeholder: "Notes" }],
   ["Text9", "Request Instance Key", "RequestInstanceKey", "Text", "input", textRule("Application or workflow instance correlation key")],
@@ -512,6 +513,8 @@ const variables = [
   ["AttachmentScenarioProductType", "Attachment Scenario Product Type", "text"],
   ["QuotaYear", "Quota Year", "text"],
   ["ApplicantBoardingYears", "Applicant Boarding Years", "number"],
+  ["QuotaCycleNo", "Quota Cycle No.", "number"],
+  ["QuotaCycleKey", "Quota Cycle Key", "text"],
   ["AnnualQuotaAmount", "Annual Quota Amount", "number"],
   ["InProgressUsedQuota", "In Progress Used Quota", "number"],
   ["OccupiedUsedQuota", "Occupied Used Quota", "number"],
@@ -839,6 +842,10 @@ function varButton(varId, name) {
   return `<input type="button" data="\${&quot;type&quot;:&quot;variable&quot;, &quot;param&quot;:{&quot;id&quot;:&quot;${varId}&quot;}}" expr="__" tabindex="-1" value="Workflow Variables:${name}">`;
 }
 
+function varFilterExpr(varId, name, valueType = "text") {
+  return [{ exprType: "variable", valueType, id: varId, type: "expr", name: `Workflow Variables:${name}` }];
+}
+
 function taskOutcomeButton(taskId, taskName) {
   return `<input type="button" data="\${&quot;type&quot;:&quot;task&quot;,&quot;param&quot;:{&quot;defid&quot;:&quot;${taskId}&quot;}, &quot;prop&quot;:&quot;Outcome&quot;}" expr="__" tabindex="-1" value="${taskName}:Outcome">`;
 }
@@ -926,6 +933,8 @@ function implantFormActions() {
   const remainingQuotaAfter = workflowVarToken("RemainingQuotaAfter", "Remaining Quota After", "number");
   const quotaExceeded = workflowVarToken("QuotaExceeded", "Quota Exceeded", "text");
   const applicantBoardingYears = workflowVarToken("ApplicantBoardingYears", "Applicant Boarding Years", "number");
+  const quotaCycleNo = workflowVarToken("QuotaCycleNo", "Quota Cycle No.", "number");
+  const quotaCycleKey = workflowVarToken("QuotaCycleKey", "Quota Cycle Key", "text");
   const eligibilityStatus = workflowVarToken("EligibilityStatus", "Eligibility Status", "text");
   const quotaYear = workflowVarToken("QuotaYear", "Quota Year", "text");
   const attachmentSummary = workflowVarToken("RequiredAttachmentSummary", "Required Attachment Summary", "text");
@@ -934,6 +943,7 @@ function implantFormActions() {
   const appAmount = workflowVarToken("TotalApplicationAmount", "Total Application Amount", "number");
   const hasCustomPackage = workflowVarToken("HasCustomPackageProduct", "Has Custom Package Product", "text");
   const attachmentScenarioProductType = workflowVarToken("AttachmentScenarioProductType", "Attachment Scenario Product Type", "text");
+  const activeUsageCollection = tempVarToken("var_ActiveUsageAmountCollection", "var_ActiveUsageAmountCollection", "text");
   const inProgressUsageCollection = tempVarToken("var_InProgressUsageAmountCollection", "var_InProgressUsageAmountCollection", "text");
   const occupiedUsageCollection = tempVarToken("var_OccupiedUsageAmountCollection", "var_OccupiedUsageAmountCollection", "text");
   const approvedUsageCollection = tempVarToken("var_ApprovedUsageAmountCollection", "var_ApprovedUsageAmountCollection", "text");
@@ -979,16 +989,15 @@ function implantFormActions() {
       ]
     }
   ];
-  function usageQueryStep(status, tempCollectionId) {
+  function activeUsageQueryStep(tempCollectionId) {
     return {
       type: "querydata",
-      name: `Load ${status} family quota usage rows from Family Quota Usage`,
+      name: "Load active family quota usage rows from Family Quota Usage",
       attrs: {
         querydata_list: queryUsageListRef(),
         querydata_filters: [
-          { key: uuid(), pre: "and", left: "Text2", op: "0", right: varButton("ApplicantEmployeeID", "Applicant Employee ID"), showCus: true },
-          { key: uuid(), pre: "and", left: "Decimal2", op: "0", right: varButton("ApplicantBoardingYears", "Applicant Boarding Years"), showCus: true },
-          { key: uuid(), pre: "and", left: "Text7", op: "0", right: status, showCus: true }
+          { key: uuid(), pre: "and", left: "Text2", op: "0", right: varFilterExpr("ApplicantEmployeeID", "Applicant Employee ID"), showCus: false },
+          { key: uuid(), pre: "and", left: "Text4", op: "0", right: varFilterExpr("QuotaCycleKey", "Quota Cycle Key"), showCus: false }
         ],
         querydata_type: "multiple",
         querydata_fieldmap: null,
@@ -997,7 +1006,7 @@ function implantFormActions() {
         querydata_listname_parent: "__temp_",
         querydata_fields: [
           { FieldName: "Title", Type: "input", DisplayName: "Usage Record" },
-          { FieldName: "Decimal1", Type: "input_number", DisplayName: "Amount" }
+          { FieldName: "Decimal3", Type: "input_number", DisplayName: "Amount" }
         ],
         querydata_totalcount: "var_TotalQueryItems",
         querydata_totalparent: "__temp_",
@@ -1065,6 +1074,10 @@ function implantFormActions() {
           [productSummary, [{ type: "func", func: "JSONStringfy", params: [[productLines]] }]],
           [applicantBoardingYears, applicantTenureYears]
         ]),
+        multiSetStep("Map boarding tenure to employee-anniversary quota cycle", [
+          [quotaCycleNo, [applicantBoardingYears]],
+          [quotaCycleKey, [applicantBoardingYears]]
+        ]),
         multiSetStep("Derive product routing and attachment scenario", [
           [hasCustomPackage, hasCustomPackageExpression],
           [attachmentScenarioProductType, attachmentScenarioProductTypeExpression]
@@ -1103,22 +1116,8 @@ function implantFormActions() {
             setvar_val: effectiveAnnualQuotaExpression
           }
         },
-        usageQueryStep("In Progress", "var_InProgressUsageAmountCollection"),
-        sumUsageStep("Sum in-progress usage with arraySum", inProgressUsedQuota, inProgressUsageCollection),
-        usageQueryStep("Occupied", "var_OccupiedUsageAmountCollection"),
-        sumUsageStep("Sum occupied usage with arraySum", occupiedUsedQuota, occupiedUsageCollection),
-        usageQueryStep("Approved", "var_ApprovedUsageAmountCollection"),
-        sumUsageStep("Sum approved usage with arraySum", approvedUsedQuota, approvedUsageCollection),
-        usageQueryStep("Confirmed", "var_ConfirmedUsageAmountCollection"),
-        sumUsageStep("Sum confirmed usage with arraySum", confirmedUsedQuota, confirmedUsageCollection),
-        {
-          type: "setvar",
-          name: "Sum active usage statuses for quota calculation",
-          attrs: {
-            setvar_var: usedQuotaBefore,
-            setvar_val: [inProgressUsedQuota, { type: "op", op: "+" }, occupiedUsedQuota, { type: "op", op: "+" }, approvedUsedQuota, { type: "op", op: "+" }, confirmedUsedQuota]
-          }
-        },
+        activeUsageQueryStep("var_ActiveUsageAmountCollection"),
+        sumUsageStep("Sum active usage amount with arraySum", usedQuotaBefore, activeUsageCollection),
         {
           type: "setvar",
           name: "Calculate remaining quota after this request",
@@ -1137,8 +1136,8 @@ function implantFormActions() {
           attrs: {
             querydata_list: queryAttachmentRulesListRef(),
             querydata_filters: [
-              { key: uuid(), pre: "and", left: "Text1", op: "0", right: varButton("ApplicationType", "Application Type"), showCus: true },
-              { key: uuid(), pre: "and", left: "Text2", op: "0", right: varButton("AttachmentScenarioProductType", "Attachment Scenario Product Type"), showCus: true },
+              { key: uuid(), pre: "and", left: "Text1", op: "0", right: varFilterExpr("ApplicationType", "Application Type"), showCus: false },
+              { key: uuid(), pre: "and", left: "Text2", op: "0", right: varFilterExpr("AttachmentScenarioProductType", "Attachment Scenario Product Type"), showCus: false },
               { key: uuid(), pre: "and", left: "Text5", op: "0", right: "Active", showCus: true }
             ],
             querydata_type: "multiple",
@@ -1216,6 +1215,7 @@ def.pageurls[1].formdef.actions = [];
 financePage.formdef.actions = [];
 def.variables.tempVars = [
   { idx: "efi-temp-total-query-items", id: "var_TotalQueryItems", type: "number" },
+  { idx: "efi-temp-active-usage-collection", id: "var_ActiveUsageAmountCollection", type: "text" },
   { idx: "efi-temp-usage-in-progress-collection", id: "var_InProgressUsageAmountCollection", type: "text" },
   { idx: "efi-temp-usage-occupied-collection", id: "var_OccupiedUsageAmountCollection", type: "text" },
   { idx: "efi-temp-usage-approved-collection", id: "var_ApprovedUsageAmountCollection", type: "text" },
@@ -1319,11 +1319,12 @@ const usageRecordMappings = [
   { Per: "0", Columns: "Text1", Data: varButton("ApplicationNo", "Application No.") },
   { Per: "0", Columns: "Text2", Data: varButton("ApplicantEmployeeID", "Applicant Employee ID") },
   { Per: "0", Columns: "Text3", Data: varButton("ApplicantEmployeeName", "Applicant Name") },
-  { Per: "0", Columns: "Text4", Data: varButton("QuotaYear", "Quota Year") },
-  { Per: "0", Columns: "Decimal2", Data: varButton("ApplicantBoardingYears", "Applicant Boarding Years") },
+  { Per: "0", Columns: "Text4", Data: varButton("QuotaCycleKey", "Quota Cycle Key") },
+  { Per: "0", Columns: "Decimal2", Data: varButton("QuotaCycleNo", "Quota Cycle No.") },
   { Per: "0", Columns: "Text5", Data: varButton("ProductSummary", "Product Summary") },
   { Per: "0", Columns: "Text6", Data: varButton("HasCustomPackageProduct", "Has Custom Package Product") },
   { Per: "0", Columns: "Decimal1", Data: varButton("TotalApplicationAmount", "Total Application Amount") },
+  { Per: "0", Columns: "Decimal3", Data: varButton("TotalApplicationAmount", "Total Application Amount") },
   { Per: "0", Columns: "Text7", Data: "In Progress" },
   { Per: "0", Columns: "Text8", Data: "Quota occupied on submission for family application v1." },
   { Per: "0", Columns: "Text9", Data: varButton("ApplicationNo", "Application No.") },
@@ -1331,12 +1332,14 @@ const usageRecordMappings = [
 ];
 
 const approveUsageMappings = [
+  { Per: "0", Columns: "Decimal3", Data: varButton("TotalApplicationAmount", "Total Application Amount") },
   { Per: "0", Columns: "Text7", Data: "Approved" },
   { Per: "0", Columns: "Text10", Data: "Approved" },
   { Per: "0", Columns: "Text8", Data: "Family quota usage confirmed after final approval." }
 ];
 
 const releaseUsageMappings = [
+  { Per: "0", Columns: "Decimal3", Data: 0 },
   { Per: "0", Columns: "Text7", Data: "Released" },
   { Per: "0", Columns: "Text10", Data: "Rejected" },
   { Per: "0", Columns: "Text8", Data: "Family quota occupation released after workflow rejection." }
@@ -1345,7 +1348,7 @@ const releaseUsageMappings = [
 const usageCorrelationWheres = [
   { key: "efi-where-usage-app", pre: "and", left: "Text1", op: "0", right: varButton("ApplicationNo", "Application No."), showCus: true },
   { key: "efi-where-usage-employee", pre: "and", left: "Text2", op: "0", right: varButton("ApplicantEmployeeID", "Applicant Employee ID"), showCus: true },
-  { key: "efi-where-usage-cycle", pre: "and", left: "Decimal2", op: "0", right: varButton("ApplicantBoardingYears", "Applicant Boarding Years"), showCus: true }
+  { key: "efi-where-usage-cycle", pre: "and", left: "Text4", op: "0", right: varButton("QuotaCycleKey", "Quota Cycle Key"), showCus: true }
 ];
 
 def.childshapes = [
@@ -1511,7 +1514,7 @@ fs.writeFileSync(outReportPath, `${JSON.stringify({
     requesterApplicantModel: "RequesterApplicant is required and defaults to Current User on a new request. It remains editable for proxy submission; when changed, the applicant snapshot/quota initialization action reruns from RequesterApplicant.",
     workflow: "Submit -> family quota occupation on submission -> HR Review -> Finance/Benefits Review for Custom Package Product or fallback -> Approved/Rejected. Standard Product can approve after HR Review.",
     dashboard: "Simple low-risk Home dashboard included; HR Operations Dashboard deferred to v2.",
-    quota: "Family quota query/check action included with attrs.querydata_filters, arraySum used quota calculation, remaining quota calculation, and one-year boarding eligibility. Applicants boarded within one year receive an effective family annual quota of 0. Family Quota Usage is matched by Applicant Employee ID plus numeric Applicant Boarding Years/Quota Cycle No. and active statuses In Progress/Occupied/Approved/Confirmed.",
+    quota: "Family quota query/check action included with attrs.querydata_filters, arraySum used quota calculation, remaining quota calculation, and one-year boarding eligibility. Applicants boarded within one year receive an effective family annual quota of 0. Family Quota Usage is matched by Applicant Employee ID plus a separate numeric Quota Cycle No. variable and active statuses In Progress/Occupied/Approved/Confirmed. The Quota Cycle No. is mapped from Applicant Boarding Years for the employee-anniversary v1 policy.",
     attachments: "Confirmed v1 attachment matrix is loaded from Attachment Requirement Rules into visible guidance with upload control; strict blocking remains runtime-safe only, with HR verification fallback.",
     persistence: "Implant Applications ContentList persistence is included. Family Quota Usage is created on family submission with status In Progress, then updated to Approved or Released through ContentList edit when runtime-safe."
   },

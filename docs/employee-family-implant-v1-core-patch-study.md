@@ -286,6 +286,57 @@ Runtime follow-up with `/Users/Renger/Downloads/Employee Family Implant FlowKey 
 
 Fresh-runtime follow-up: after importing the regenerated package, the Product Selection row subtotal and visible `Sum: 2500.00` updated correctly, but the separate `TotalApplicationAmount` workflow variable was not updated in time for the Family Quota Check action. Because quota and routing are policy-critical, the generator now keeps the export-backed summary binding and also recalculates `TotalApplicationAmount` inside quota/submit preflight actions with `arraySum(ProductSelectionItems, "ProductRowSubtotal", [], [])`. Treat summary binding as the UI/display mechanism and explicit `arraySum` preflight as the safe policy calculation fallback until a future export proves a stronger immediate-commit pattern.
 
+## Query Data Filter Operand Mode - 2026-05-17
+
+Source export: `/Users/Renger/Downloads/Implant Application Request (5).ywf`
+
+The user found that the Query Data step `Load active family quota usage rows from Family Quota Usage` did not match existing Family Quota Usage rows because two filters were visually variable-like but stored as direct literal values.
+
+Broken generated shape:
+
+```json
+{
+  "left": "Text2",
+  "op": "0",
+  "right": "<input type=\"button\" data=\"...Workflow Variables:Applicant Employee ID...\">",
+  "showCus": true
+}
+```
+
+Working export-backed shape:
+
+```json
+{
+  "left": "Text2",
+  "op": "0",
+  "right": [
+    {
+      "exprType": "variable",
+      "valueType": "text",
+      "id": "ApplicantEmployeeID",
+      "type": "expr",
+      "name": "Workflow Variables:Applicant Employee ID"
+    }
+  ],
+  "showCus": false
+}
+```
+
+Exact rule:
+
+- Direct literal values use primitive `right` values and `showCus: true`.
+- Workflow variables and calculations use expression-token arrays in `right` and `showCus: false`.
+- Do not serialize frontend expression-button HTML into `attrs.querydata_filters[].right`.
+
+Runtime proof after generator fix:
+
+- Package: `/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517.yap`
+- First family request for `2500.00` created active usage.
+- Second family request for the same applicant and quota cycle loaded `Used Quota Before = 2500.00`.
+- After adding another `2500.00` product row and running `Check Family Quota`, `Remaining Quota After = 10000.00` and `Quota Exceeded = No`.
+
+This fixed the previous blocking second-request quota aggregation failure.
+
 ## Process-Design Follow-Up: Quota Lifecycle, Attachment Rules, and Branch Coverage
 
 Later manual review found three app-planning issues that are reusable application-builder lessons:

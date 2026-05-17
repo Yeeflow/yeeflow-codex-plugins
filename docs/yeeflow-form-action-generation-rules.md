@@ -359,6 +359,7 @@ Filter correction:
 - Query data `Active == true` filter was ignored by runtime in the generated package because the generator wrote `attrs.querydata_filter`, which did not populate the Query data step's actual `Data filter -> Condition` setting.
 - User follow-up confirmed that manually setting the Query data step `Data filter -> Condition` to `Active Equals ON` filters the result correctly.
 - The patched export and corrected generated retest prove the working JSON path is `attrs.querydata_filters` plural. For an Active Bit field, the exported working condition is `{ "left": "Bit1", "op": "0", "right": "true", "pre": "and", "showCus": true }`.
+- `Implant Application Request (5).ywf` proved that Query data filter variable operands must be in expression-editor mode: `right` is an expression-token array and `showCus` is `false`. A frontend `<input type="button" ... Workflow Variables:...>` string in `right` with direct-value mode is compared literally and will not match records.
 - Do not generate `attrs.querydata_filter` singular as the final filter implementation.
 - `vLookup` remains deferred because only labels, not function tokens, have been observed.
 

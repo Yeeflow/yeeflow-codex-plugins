@@ -244,6 +244,8 @@ Use current proven generation rules:
 - use full-row layout for textarea, richtext, list, and sublist controls
 - use meaningful `nv_label` names
 - use correct `attrs.querydata_filters` plural for Query data filters
+- for Query data filter variables/calculations, use expression-token arrays in `right` with `showCus: false`; direct literal values such as `"Active"` can use primitive `right` values with `showCus: true`
+- never put frontend expression-button HTML strings such as `<input type="button" ... Workflow Variables:...>` in `attrs.querydata_filters[].right`
 - use readable lookup summary variables instead of raw lookup IDs when persistence/display should be readable
 - treat temp variables as frontend-only; do not use them for backend persistence unless copied into workflow/form variables
 - use requester/applicant variables or snapshot variables for applicant business logic after defaulting from Current User

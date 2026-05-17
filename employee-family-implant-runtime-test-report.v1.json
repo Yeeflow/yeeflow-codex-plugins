@@ -2,16 +2,17 @@
   "generatedAt": "2026-05-17",
   "runtimeSite": "https://codex.yeeflow.com/",
   "package": "employee-family-implant.v1.yap",
-  "downloadCopy": "/Users/Renger/Downloads/Employee Family Implant Quota Lifecycle Branch Coverage 20260517.yap",
-  "status": "import_and_form_smoke_passed_deep_runtime_pending",
-  "summary": "Regenerated Employee Family Implant v1 after process-design fixes for Family Quota Usage lifecycle, Attachment Requirement Rules runtime use, and HR Review branch coverage. Local validation passed. Yeeflow runtime smoke confirmed import, home dashboard render, and approval form open with requester snapshot values; full workflow submission, quota occupation/release, and approval-route testing are still required before claiming the new lifecycle is runtime-proven.",
+  "downloadCopy": "/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517.yap",
+  "status": "focused_runtime_pass_quota_usage_aggregation",
+  "summary": "Regenerated Employee Family Implant v1 after isolating the Query data filter operand-mode issue in Implant Application Request (5).ywf. Local validation passed. Runtime testing proved the prior blocking second-family-request quota aggregation failure is fixed: a second family request for the same applicant and quota cycle counted the first 2500.00 usage row, showed Used Quota Before 2500.00, and recalculated Remaining Quota After to 10000.00 after adding another 2500.00 request.",
   "processDesignFixes": [
     "Family Quota Usage is created on submission/start for family applications with UsageStatus = In Progress.",
     "Quota check queries In Progress, Occupied, Approved, and Confirmed usage statuses and aggregates with arraySum.",
     "Family Quota Usage edit nodes model approval confirmation to Approved and rejection release to Released using ApplicationNo + ApplicantEmployeeID + QuotaCycleNumber correlation.",
     "Attachment Requirement Rules is read by Query data and copied into RequiredAttachmentSummary for visible guidance.",
     "HasCustomPackageProduct is readonly/required and auto-derived from ProductSummary/Product Selection preflight logic.",
-    "HR Review routes Approved + No directly to persistence and Approved + not No to Finance/Benefits Review, covering Yes, empty, and unexpected values."
+    "HR Review routes Approved + No directly to persistence and Approved + not No to Finance/Benefits Review, covering Yes, empty, and unexpected values.",
+    "Query data filter values that reference workflow variables now use expression-token arrays with showCus false instead of HTML expression-button strings in direct-value mode."
   ],
   "localValidation": {
     "nodeCheck": [
@@ -46,6 +47,95 @@
       "Initial quota section rendered with Quota Cycle 2026, Boarding Years 1.00, Annual Quota Amount 15000.00, Remaining Quota After 15000.00, Eligibility Status Eligible, and Quota Exceeded No.",
       "Attachment matrix guidance rendered on the form."
     ]
+  },
+  "deepRuntime": {
+    "testedAt": "2026-05-17",
+    "testedPackage": "/Users/Renger/Downloads/Employee Family Implant Quota Lifecycle Branch Coverage 20260517.yap",
+    "runtimeAppName": "Employee & Family Implant Application Management-branch coverage",
+    "result": "partial_fail",
+    "test1FamilyWithinQuota": {
+      "result": "pass_with_caveats",
+      "observations": [
+        "Requester / Applicant defaulted to Renger from Yeeflow and applicant snapshot values remained stable in HR Review.",
+        "Family application with Standard Implant Package calculated row subtotal 2500, Product Selection summary Sum: 2500.00, Total Application Amount 2500.00, Remaining Quota After 12500.00, and Quota Exceeded No.",
+        "Submit succeeded and HR Review opened.",
+        "Family Quota Usage row was created on submission with Usage Status In Progress.",
+        "HR Review approval completed for the non-custom product path.",
+        "Implant Applications row was created with readable application number, applicant fields, application type, product summary, and total amount.",
+        "Family Quota Usage row was updated to Usage Status Approved with Source Application Status Approved."
+      ],
+      "caveats": [
+        "Product Summary is readable but stored as raw JSON text.",
+        "Submitted Time and Approved Time appeared blank in the usage-row detail view."
+      ]
+    },
+    "test2SecondFamilyIncludesActiveUsage": {
+      "result": "pass_after_query_filter_expression_fix",
+      "expected": "A second family quota check for the same applicant and quota cycle should include the first approved usage amount.",
+      "actual": "Focused retest with /Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517.yap showed the second family request loading Used Quota Before 2500.00 before a new product was selected. After selecting Standard Implant Package for 2500.00 and running Check Family Quota, Remaining Quota After recalculated to 10000.00 and Quota Exceeded stayed No.",
+      "rootCauseStatus": "isolated_and_fixed",
+      "rootCause": "The generated Query Data step filters used frontend HTML expression-button strings as direct values. Yeeflow treated those as literal strings instead of expression operands. The fixed export-backed shape uses expression-token arrays in right with showCus false.",
+      "verifiedValues": [
+        "Used Quota Before = 2500.00",
+        "Total Application Amount = 2500.00",
+        "Remaining Quota After = 10000.00",
+        "Quota Exceeded = No",
+        "Quota Usage Status = In Progress"
+      ]
+    },
+    "test3RejectionReleaseBehavior": {
+      "result": "pass",
+      "observations": [
+        "Second family request created a Family Quota Usage row.",
+        "Rejecting at HR Review with comment 'Runtime rejection release test' completed successfully.",
+        "The matching usage row changed to Usage Status Released, Source Application Status Rejected, with notes 'Family quota occupation released after workflow rejection.'"
+      ],
+      "remainingGap": "A future quota check excluding released rows was not separately proven because active/approved usage aggregation already failed."
+    },
+    "test4AttachmentRequirementRules": {
+      "result": "partial",
+      "observations": [
+        "The confirmed attachment matrix is visible on the form.",
+        "Strict upload blocking remains a documented HR verification fallback."
+      ],
+      "gap": "Runtime behavior did not prove that Attachment Requirement Rules are dynamically queried and scenario-specific guidance is driven from the list rather than static guidance."
+    },
+    "test5HrReviewBranchCoverage": {
+      "result": "pass_for_tested_paths",
+      "observations": [
+        "Non-custom Standard Product path approved at HR Review and proceeded to persistence/completion without Finance/Benefits Review.",
+        "Custom Implant Package set Includes Custom Package Product to Yes after Refresh Total / Product Summary.",
+        "Approving HR Review for the custom package created a Finance/Benefits Review task.",
+        "Approving Finance/Benefits Review completed the task and removed it from pending tasks."
+      ],
+      "gap": "The empty/null HasCustomPackageProduct fallback path was not forced in runtime UI."
+    },
+    "test6FinalPersistence": {
+      "result": "partial_pass",
+      "observations": [
+        "Approved family request created an Implant Applications row.",
+        "Family Quota Usage row existed and was updated to Approved for the approved family request.",
+        "Rejected family request usage row was updated to Released.",
+        "Self custom package route completed through Finance/Benefits Review."
+      ],
+      "gaps": [
+        "Full v1 baseline pass still requires repeating final end-to-end approval/persistence after the Query data filter operand-mode fix if the package is to supersede the earlier accepted baseline.",
+        "Attachment Requirement Rules dynamic query use remains unproven."
+      ]
+    }
+  },
+  "focusedRuntimeQueryFilterFix": {
+    "testedAt": "2026-05-17",
+    "testedPackage": "/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517.yap",
+    "runtimeAppName": "Employee Family Implant Query Filter Expression Fix 20260517",
+    "result": "pass_for_prior_blocking_quota_aggregation_failure",
+    "observations": [
+      "Imported package and opened the approval form.",
+      "First family request for Standard Implant Package 2500.00 calculated correctly and submitted successfully.",
+      "Second family request for the same Requester / Applicant and Quota Cycle 2026 loaded Used Quota Before 2500.00 before any new product row was selected.",
+      "After selecting Standard Implant Package for the second family request and running Check Family Quota, Total Application Amount was 2500.00, Used Quota Before was 2500.00, Remaining Quota After was 10000.00, Quota Exceeded was No, and Quota Usage Status was In Progress."
+    ],
+    "rootCauseFixed": "Query Data filter right operands for Applicant Employee ID and Quota Cycle Key now use expression-token arrays with showCus false instead of HTML expression-button strings in direct-value mode."
   },
   "focusedInspection": {
     "requesterControl": [
@@ -123,14 +213,11 @@
     "wrapperSafeFlowKey": true
   },
   "runtimeRequiredNext": [
-    "Family request within quota creates In Progress Family Quota Usage at submission.",
-    "Second family request quota check includes first in-progress usage.",
-    "Rejected request updates usage to Released or otherwise confirms manual fallback.",
-    "Approved request updates usage to Approved.",
-    "Attachment guidance reflects Attachment Requirement Rules by scenario.",
-    "Custom package routes HR Review -> Finance/Benefits Review; non-custom routes HR Review -> persistence.",
-    "Empty/unexpected custom flag does not dead-end and routes to Finance/Benefits fallback.",
-    "Implant Applications row and Family Quota Usage row are readable."
+    "Root-cause and fix the Family Quota Usage query/arraySum aggregation so approved and in-progress usage records are counted in later quota checks.",
+    "Retest second family request quota check after the aggregation fix.",
+    "Prove released/rejected usage records are excluded after the aggregation fix.",
+    "Prove Attachment Requirement Rules dynamic query/guidance, or mark the list as static/deferred if it is not runtime-used.",
+    "Force-test empty/unexpected HasCustomPackageProduct fallback branch if a safe runtime path is available."
   ],
   "knownLimitations": [
     "Workflow ContentList edit for usage approval/release is locally modeled and validator-clean, but still requires runtime proof in Yeeflow.",

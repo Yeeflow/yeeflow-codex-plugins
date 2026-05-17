@@ -34,6 +34,7 @@ When a requirement includes annual quota, benefit eligibility, entitlement, or e
 - use numeric cycle fields when comparing usage by non-calendar cycles
 - query usage records by applicant identity + cycle + active/occupied status
 - use `arraySum` for usage aggregation
+- ensure Query data filters compare against the same persisted field values and use the right operand mode: literal values in direct-value mode, workflow variables/calculations as expression-token arrays with `showCus: false`
 - use form actions to rerun quota checks on initialization, driver-field change, and submit
 - when quota is occupied on submission, create the usage record at workflow start/submission, not after final approval
 - include in-progress/occupied records in future quota checks so concurrent in-flight requests consume quota
@@ -89,6 +90,7 @@ For dependent form logic:
 - keep dependent calculations in ordered Set variable steps
 - use multi-value Set variables only for independent assignments where order does not matter
 - use `attrs.querydata_filters` for Query data filters
+- use expression-token right operands, not HTML expression-button strings, when Query data filters compare list fields to workflow variables
 - submit guard actions should call reusable checks, conditionally warn/confirm, then run Submit form
 - conditional guard steps before Submit usually require `continue: true`
 

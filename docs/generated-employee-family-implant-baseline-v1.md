@@ -6,7 +6,7 @@ Generated: 2026-05-16
 
 This is an **accepted manual runtime baseline** for the latest package after the RequesterApplicant, product sublist, FlowKey-safe binding, submit guard, boarding-year quota, and `dateDiff` unit-shape fixes. The final runtime pass was reported by the user from manual Yeeflow testing; Codex did not re-operate the UI in the final consolidation turn.
 
-Update on 2026-05-17: a new locally validated package was regenerated for process-design fixes around Family Quota Usage lifecycle, Attachment Requirement Rules runtime use, and workflow branch coverage. Codex imported this package and confirmed a smoke pass for home dashboard render and approval-form open. The package is **not yet fully runtime-proven** because workflow submission, usage occupation/release edits, and approval routing still need end-to-end Yeeflow testing before replacing the accepted manual runtime baseline.
+Update on 2026-05-17: process-design and query-filter packages were regenerated and runtime-tested. The earlier process-design package passed most deep runtime paths but failed second-request quota aggregation. The latest query-filter package fixed that blocking quota aggregation failure: a second family request now counts the first 2500.00 usage row and recalculates remaining quota correctly.
 
 ## Current Package
 
@@ -16,8 +16,35 @@ Update on 2026-05-17: a new locally validated package was regenerated for proces
 - Generator: `generate-employee-family-implant-v1.mjs`
 - Download copy: `/Users/Renger/Downloads/Employee Family Implant DateDiff Unit Fix 20260517.yap`
 - Latest regenerated process-design package: `/Users/Renger/Downloads/Employee Family Implant Quota Lifecycle Branch Coverage 20260517.yap`
+- Latest focused quota-query fix package: `/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517.yap`
 - Flow key: `EIA`
 - ID family: `641...`
+
+## Query Filter Expression Fix - 2026-05-17
+
+Root cause isolated from `Implant Application Request (5).ywf`: the Query Data step `Load active family quota usage rows from Family Quota Usage` had filter right operands rendered as frontend `<input type="button" ...>` expression-button HTML strings while the filter row was still in direct-value mode. Yeeflow compared the source fields to those literal HTML strings, so existing Family Quota Usage rows were not matched.
+
+Export-backed fix:
+
+- Literal filter values remain primitive values with direct-value mode, for example `right: "Active", showCus: true`.
+- Workflow-variable filter values use expression-editor token arrays with `showCus: false`.
+- The fixed Family Quota Usage query compares:
+  - `Applicant Employee ID == Workflow Variables:Applicant Employee ID`
+  - `Quota Cycle Key == Workflow Variables:Quota Cycle Key`
+
+Focused runtime result:
+
+- Imported `/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517.yap`.
+- First family request for `Standard Implant Package` amount `2500.00` submitted successfully and created active quota usage.
+- Second family request for the same applicant loaded `Used Quota Before = 2500.00`.
+- After selecting another `Standard Implant Package` amount `2500.00` and running `Check Family Quota`, the form showed:
+  - `Total Application Amount = 2500.00`
+  - `Used Quota Before = 2500.00`
+  - `Remaining Quota After = 10000.00`
+  - `Quota Exceeded = No`
+  - `Quota Usage Status = In Progress`
+
+This proves the previous blocking quota aggregation issue is fixed for the focused second-request path. A final full baseline can be marked only after the latest package repeats the full approval/persistence path end to end.
 
 ## Process-Design Fix Package - 2026-05-17
 
@@ -52,7 +79,19 @@ Local validation for this process-design package:
 - focused inspection: pass for RequesterApplicant change action, raw `dateDiff` unit, usage lifecycle nodes, attachment rules query, HR fallback branch, and FlowKey safety
 - wrapper round trip: pass
 
-Runtime status: partial smoke passed. Codex imported the package as `Employee Family Implant Quota Lifecycle Branch Coverage 20260517`, confirmed the home dashboard renders, and confirmed the approval form opens with `Requester / Applicant` defaulted and applicant snapshot/quota/attachment guidance visible. The new `ContentList edit` usage approval/release nodes are validator-clean but still need Yeeflow workflow runtime proof. If edit/remove cannot reliably update the matching row, HR manual release remains the fallback and a focused learning task should be created.
+Runtime status: partial deep runtime test failed on quota usage aggregation. Codex imported the package as `Employee & Family Implant Application Management-branch coverage`, confirmed the home dashboard renders, and confirmed the approval form opens with `Requester / Applicant` defaulted and applicant snapshot/quota/attachment guidance visible.
+
+Deep runtime observations on 2026-05-17:
+
+- Family within-quota request with `Standard Implant Package` passed through submit and HR Review.
+- Family Quota Usage was created at submission with `Usage Status = In Progress`.
+- HR Review approval updated the usage row to `Approved` and created an Implant Applications row.
+- A second family request for the same applicant did **not** count the first approved usage row in the quota calculation. Remaining quota showed `12500.00` for another `2500.00` request; expected remaining quota was `10000.00`.
+- HR rejection of the second family request updated the usage row to `Released`, with source status `Rejected` and release notes.
+- A self custom-package request set `Includes Custom Package Product = Yes`, routed HR Review to Finance/Benefits Review, and completed after Finance approval.
+- Attachment matrix guidance rendered, but runtime did not prove the guidance was dynamically driven by the Attachment Requirement Rules list.
+
+The quota aggregation root cause was later fixed by the Query Filter Expression package above. Keep the branch-coverage package result as historical evidence of the failure mode; use the query-filter package for the next full baseline retest.
 
 ## Patch Learning Applied
 

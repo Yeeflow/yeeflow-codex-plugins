@@ -174,6 +174,7 @@ Use the current Yeeflow generation foundation by default:
 - workflow numeric routing
 - form actions Phase 1 and Phase 2
 - correct `attrs.querydata_filters`
+- expression-editor token arrays with `showCus: false` for Query data filter values that reference workflow variables or calculations
 - `arraySum`
 - `JSONStringfy`
 - readable lookup summary variables

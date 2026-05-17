@@ -531,6 +531,12 @@ function validateDecodedDef(def, options = {}) {
         if (filter.right === "ON" || filter.right === "OFF") {
           addIssue(warnings, "FORM_ACTION_QUERYDATA_FILTER_BOOLEAN_LABEL", "Boolean Query data filters should use true/false string values, not ON/OFF labels", `${filterPath}.right`, { right: filter.right });
         }
+        if (typeof filter.right === "string" && (filter.right.includes("<input") || filter.right.includes("&quot;") || filter.right.includes("Workflow Variables:"))) {
+          addIssue(warnings, "FORM_ACTION_QUERYDATA_FILTER_HTML_VALUE_OPERAND", "Query data filter variable/calculated operands must use expression-editor token arrays with showCus false; HTML expression-button strings in direct-value mode are treated as literal strings at runtime", `${filterPath}.right`, { right: filter.right, showCus: filter.showCus });
+        }
+        if (Array.isArray(filter.right) && filter.showCus !== false) {
+          addIssue(warnings, "FORM_ACTION_QUERYDATA_FILTER_EXPR_MODE_MISMATCH", "Query data filter expression-token operands should set showCus false so the right operand is in expression-editor mode", `${filterPath}.showCus`, { showCus: filter.showCus });
+        }
       });
     }
 
