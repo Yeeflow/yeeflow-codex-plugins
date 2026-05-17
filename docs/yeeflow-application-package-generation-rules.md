@@ -46,14 +46,17 @@ Safe current behavior:
 - inspect wrapper metadata
 - validate package structure
 - preserve opaque `Resource` and `Sign`
-- make only wrapper-metadata proof changes when explicitly needed
+- treat offline wrapper edits as study-only unless runtime-proven for the exact package
 
 Unsafe until proven:
 
 - modifying app lists, dashboards, forms, workflows, or app resource internals inside `.yapk`
+- editing wrapper metadata such as `Version`, `Notes`, `Description`, or `Date`
 - recalculating or replacing `Sign`
 - fresh-ID regeneration for existing app upgrades
 - claiming app-content upgrade runtime readiness from local validation alone
+
+Runtime update: a metadata-only proof package that preserved `Resource`, `Sign`, `PackageId`, `TenantID`, `AppID`, and `ListID`, but edited `Version`, `Notes`, `Description`, and `Date`, was rejected by Yeeflow Upgrade application after the metadata preview step. This suggests Yeeflow validates more than the opaque `Resource` and may include wrapper metadata in package integrity checks. Until proven otherwise, `.yapk` generation must preserve the exact Yeeflow-generated wrapper or use a Yeeflow-supported version-generation/signing path.
 
 ## Required User Guidance
 

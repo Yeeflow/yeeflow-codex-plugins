@@ -120,12 +120,52 @@ Validation results:
 - Original `.yapk`: pass with `YAPK_RESOURCE_OPAQUE` warning
 - Metadata-only proof `.yapk`: pass with `YAPK_RESOURCE_OPAQUE` warning
 
+## Runtime Upgrade Test: Metadata-Only Proof
+
+Runtime test date: 2026-05-17
+
+Tested package:
+
+`/Users/Renger/Downloads/Employee Family Implant v1.1 upgrade test.yapk`
+
+Target application:
+
+`Employee Family Implant Query Filter Expression Fix 20260517`
+
+Target URL:
+
+`https://codex.yeeflow.com/#/list-set/settings/version/41/2055913049871364096`
+
+Observed flow:
+
+1. Opened Application Settings -> Version management for the existing app.
+2. Clicked Upgrade application.
+3. Uploaded the metadata-only `.yapk`.
+4. Yeeflow accepted the file enough to parse and display wrapper metadata:
+   - Package ID: `5821b452-74b1-4277-b7c2-ffa181d2814f`
+   - Version name: `Employee Family Implant v1.1 upgrade test`
+   - Release notes: metadata-only Codex proof note
+5. On the next upgrade step, Yeeflow rejected the package with a visible toast indicating the uploaded file/package was incorrect and to try again.
+6. The upgrade dialog was cancelled. The version table still showed only the original `Employee Family Implant v1.0` row with status `Succeed`.
+
+Result:
+
+- Metadata-only wrapper modification was rejected at runtime.
+- Local structure validation is not sufficient for `.yapk` upgrade acceptance.
+- `Resource` and `Sign` preservation alone is not enough if wrapper metadata is edited outside Yeeflow.
+- App-content mutation remains fully unproven and blocked.
+
+Updated rule:
+
+For `.yapk`, do not edit wrapper metadata, `Resource`, or `Sign` unless the package is produced by Yeeflow Version management or a future Yeeflow-supported signing/encoding workflow is proven. Offline `.yapk` generation should preserve the exact wrapper or remain study-only.
+
 ## Open Learning Items
 
 Before Codex can generate real app-content `.yapk` upgrades, Yeeflow needs a further export-backed study for:
 
 - whether `Resource` is encrypted, compressed with a nonstandard codec, or signed server-side
 - what `Sign` covers and whether it can be recomputed outside Yeeflow
+- whether wrapper metadata is included in server-side package integrity checks
 - whether app-content modifications must be made by generating a new Yeeflow version from the UI/API instead of editing `.yapk` offline
 - whether downloaded `.yapk` packages with included application data have additional payload markers
 
