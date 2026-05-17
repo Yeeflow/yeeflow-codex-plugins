@@ -21,7 +21,7 @@ Use this template after local `.yap` validation passes and before claiming runti
 | # | Area | Result | Evidence / notes |
 | --- | --- | --- | --- |
 | 1 | App import/open |  | Import the package, open the imported app, confirm the left navigation and default/home route load without a blank shell or fatal browser console error. |
-| 2 | Dashboards render |  | Open every generated dashboard page. Confirm KPI cards, charts, tables, filters, and action buttons render with expected labels, spacing, and data source bindings. |
+| 2 | Dashboards render |  | Open every generated dashboard page. Confirm KPI cards, charts, tables, filters, and action buttons render with expected labels, spacing, and data source bindings. Page render alone is not proof when the plan promised KPIs, queues, reports, analytics, trends, or charts. |
 | 3 | Data lists open without `datas/query` 400 |  | Open every generated data list page and custom list view. Watch the network panel for `datas/query` 400 responses, endless loading states, and first-load refresh caveats. |
 | 4 | Approval forms open |  | Open each approval form from the app and from any create/new-request entry point. Confirm the form is published if required, and task pages open after submission. |
 | 5 | Requester/applicant logic |  | Verify Current User defaults, proxy applicant behavior, applicant change actions, profile snapshots, readonly applicant fields, and workflow/user expressions use the intended requester/applicant variable. |
@@ -33,13 +33,14 @@ Use this template after local `.yap` validation passes and before claiming runti
 | 11 | Return/resubmission if included |  | If return/rework is in scope, return a request, edit required fields, resubmit, and confirm status, audit trail, and downstream routing are correct. |
 | 12 | `ContentList` persistence |  | Confirm create/edit/remove `ContentList` workflow actions write the expected rows and fields after submit, approval, rejection, and final completion. Include readable lookup/profile summaries, not only internal IDs, when reports need readable values. |
 | 13 | Usage/audit list lifecycle |  | For quota, benefit, booking, or audit lists, confirm row creation timing, in-progress inclusion, final approval confirmation, rejection release/update, and correlation keys back to the source request. |
-| 14 | Dashboard KPI validation |  | Compare dashboard KPI values against source list rows or submitted test requests. Confirm filter controls change the expected widgets and totals after records are created or updated. |
+| 14 | Dashboard KPI validation |  | Compare dashboard KPI values against source list rows or submitted test requests. Confirm KPI cards are real Summary/data-bound controls, not static Text values such as `0`, `0.00`, `N/A`, or placeholder text. Confirm filter controls change the expected widgets and totals after records are created or updated. |
 | 15 | No temp variables used for backend persistence |  | Verify temp variables are only used for frontend form state. Backend persistence, workflow routing, audit rows, and dashboard/report fields must use workflow/form/list variables or persisted fields. |
 | 16 | No FlowKey collision |  | Confirm generated FlowKey/form keys do not appear as lowercase substrings of reserved JSON property names such as `prefix`, `suffix`, `field`, `profile`, `workflow`, `variable`, `filter`, `collection`, `condition`, `expression`, `attributes`, `actions`, or `binding`. |
 | 17 | No corrupted `prefix` / `pr<id>x` keys |  | Inspect the imported/exported form or package for corrupted binding keys such as `pr205...x`. Pay special attention to sublist summary bindings and variable binding objects. |
 | 18 | Form design quality gates |  | Confirm page-level background, `Main` / `Content` / `Form body` / `Form bottom`, header/request summary, two-column field grids, full-row long controls, Action Panel, Flow History, meaningful `nv_label`, and no obvious overlap or caption clutter. |
 | 19 | Attachment verification/guidance |  | Verify required upload controls render, accept expected file types when tested, and show clear guidance. If binary persistence to data-list file/image fields is not runtime-proven, document the fallback/manual review rule. |
 | 20 | Existing-app package limitation |  | If the target is an existing app, confirm `.yapk` handling is read-only/server-generated. Do not claim Codex-edited `.yapk` upgrade packages are valid unless Yeeflow Version management generated/signed the package or a future proof establishes the encoding/signing model. |
+| 21 | Dashboard queues/reports/charts |  | Confirm operational queues and report sections are real data-list/Collection/table controls bound to expected source lists. Confirm chart sections render chart controls or a documented data-bound list/table fallback; do not accept free-text "advanced reporting" as runtime proof. |
 
 ## Workflow Branch Matrix
 

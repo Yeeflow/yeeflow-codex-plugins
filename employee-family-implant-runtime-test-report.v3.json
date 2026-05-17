@@ -1,0 +1,95 @@
+{
+  "generatedAt": "2026-05-17 22:00:00",
+  "dashboardFixUpdatedAt": "2026-05-17 23:45:00",
+  "appName": "Employee & Family Implant Application Management v3",
+  "idFamily": "653...",
+  "flowKey": "EJX",
+  "formListId": 0,
+  "sourceBaseline": "design-system-request-tracker-app-def.v1.json",
+  "resources": {
+    "dashboards": [
+      "Home",
+      "HR Operations"
+    ],
+    "dataLists": [
+      "Product Master",
+      "Annual Quota Configuration",
+      "Attachment Requirement Rules",
+      "Implant Applications",
+      "Family Quota Usage",
+      "Workflow Routing Rules",
+      "Family Quota Adjustments",
+      "Employee Reference",
+      "Finance Review History"
+    ],
+    "approvalForms": [
+      "Implant Application Request"
+    ]
+  },
+  "v3Scope": {
+    "requesterApplicantModel": "RequesterApplicant is required and defaults to Current User on a new request. It remains editable for proxy submission; when changed, the applicant snapshot/quota initialization action reruns from RequesterApplicant.",
+    "workflow": "Submit -> family quota occupation on submission -> HR Review -> Finance/Benefits Review for Custom Package requests -> Approved/Rejected. HR and Finance can return to Applicant Correction / Resubmission; resubmission routes back to HR Review without creating another Family Quota Usage row. Workflow Routing Rules are generated as active configuration records, but stable workflow branches remain the runtime-safe fallback.",
+    "dashboard": "Home and HR Operations dashboards include real Summary controls and data-bound data-list/report controls. Advanced trend/ranking needs are satisfied through export-ready data-list/table fallbacks because generated chart controls produced runtime model-load errors in this v3 package.",
+    "quota": "Family quota query/check action includes existing Family Quota Usage plus approved signed Family Quota Adjustment records where local validation passes. Remaining quota is Annual Quota + Approved Adjustments - Prior Usage - Current Request.",
+    "attachments": "Submission is allowed with missing or uncertain attachments. HR Review has attachment verification status, missing attachment flag, HR notes, and return/reject options for insufficient evidence. Attachment Requirement Rules remain scenario-driven.",
+    "persistence": "Implant Applications ContentList persistence is included. Family Quota Usage is created on family submission with status In Progress, updated to Approved or Released through ContentList edit, and remains occupied while returned. Finance Review History is available as an export-ready list; workflow-created history remains a runtime proof item.",
+    "v3Administration": "Navigation includes Product Master, Annual Quota Configuration, Attachment Requirement Rules, Workflow Routing Rules, Quota Adjustment Records, Employee Reference, Finance Review History, Family Quota Usage, and Implant Applications."
+  },
+  "limitations": [
+    "Requester-based getUserAttr(RequesterApplicant, ...) expressions are generated with the export-backed direct attribute descriptor shape; runtime testing must prove this variable subject works in the target approval-form context.",
+    "RequesterApplicant change refresh uses identity-picker attrs.control_event_rule to rerun applicant snapshot/quota logic when a proxy applicant is selected; this trigger must be runtime-tested.",
+    "One-year boarding eligibility uses dateDiff(ApplicantBoardingDate, now(), \"year\", []) to set Applicant Boarding Years; if tenant profile data is missing or date arithmetic fails, route to HR verification instead of granting quota.",
+    "If requester-based profile expressions fail at runtime, keep RequesterApplicant fixed and route missing snapshot data to HR verification; never switch applicant logic to the task viewer's Current User.",
+    "Return/Resubmission uses a workflow Returned outcome and must be runtime-tested because task-outcome availability is tenant/designer-sensitive.",
+    "Strict initial attachment blocking is intentionally not included; v3 flags missing or uncertain attachments for HR Review.",
+    "Family Quota Usage return/approval/release uses workflow ContentList edit and must be runtime-tested; if edit is not safe in the tenant, HR must manually correct usage status and a focused learning task should be created.",
+    "Chart widgets are not claimed for this v3 package. Focused runtime testing showed generated chart controls could render a model-load error, so the accepted dashboard fix uses Summary controls and data-list/table fallbacks instead."
+  ],
+  "localValidation": {
+    "status": "pass_with_known_warnings",
+    "commands": [
+      "node --check validate-yap-package.js",
+      "node --check generate-employee-family-implant-v3.mjs",
+      "JSON.parse employee-family-implant-v3-spec.json employee-family-implant-app-def.v3.json employee-family-implant-approval-form-def.v3.json employee-family-implant-runtime-test-report.v3.json",
+      "node validate-yap-package.js employee-family-implant-app-def.v3.json --mode generator --stage final",
+      "node validate-yap-graph.js employee-family-implant-app-def.v3.json --mode generator --stage final",
+      "node validate-ywf-def.js employee-family-implant-approval-form-def.v3.json --mode final",
+      "node workflow-action-config-validator.js employee-family-implant-app-def.v3.json",
+      "node scripts/smoke-expression-validation.mjs employee-family-implant-app-def.v3.json",
+      "node validate-ydl-list.js for all nine extracted child lists",
+      "node build-yap-wrapper.js employee-family-implant-app-def.v3.json employee-family-implant.v3.yap --title \"Employee Family Implant v3\" --description \"Employee Family Implant v3 final full-function baseline candidate with functional dashboards and chart-safe report fallbacks\" --validation-mode generator",
+      "node validate-yap-package.js employee-family-implant.v3.yap --mode generator --stage final",
+      "git diff --check"
+    ],
+    "dashboardStructure": {
+      "home": {
+        "summaryControls": 4,
+        "dataListControls": 2,
+        "textKpiPlaceholders": 0,
+        "runtimeBehavior": "Summary controls rendered and data-list controls rendered table headers with empty states."
+      },
+      "hrOperations": {
+        "summaryControls": 12,
+        "dataListControls": 13,
+        "textKpiPlaceholders": 0,
+        "runtimeBehavior": "Summary controls rendered and advanced reporting/operational queue data-list controls rendered table headers with empty states."
+      }
+    },
+    "knownWarnings": [
+      "Existing approval-form warnings remain around flex_grid.attrs.rows, environment-dependent identity-picker, text-editor support classification, calculated list-field promotion, and legacy HTML workflow operands. These are not introduced by the dashboard fix.",
+      "Chart controls are intentionally not used in the fixed v3 dashboards because the runtime chart model did not load during focused dashboard testing."
+    ]
+  },
+  "runtimeValidation": {
+    "status": "focused_dashboard_pass_workflow_not_rerun",
+    "target": "https://codex.yeeflow.com/",
+    "testedApp": "Employee Family Implant v3 Summary Clean",
+    "dashboardResult": {
+      "home": "Pass. Home opened with four Summary controls and two data-bound dashboard data-list tables. No KPI was implemented as a static Text 0 card.",
+      "hrOperations": "Pass. HR Operations opened with twelve Summary controls and thirteen data-bound data-list/table report or queue controls. No chart model error remained after chart widgets were replaced with table fallbacks."
+    },
+    "chartResult": "Deferred. Earlier focused runtime imports showed generated chart widgets could produce \"The model could not be loaded\". V3 uses functional data-list/table fallbacks instead of static explanatory-only content.",
+    "workflowRegression": "Not rerun in this focused dashboard repair pass. V1/V2 behavior is preserved in the generated workflow definitions, but final v3 acceptance still requires the full workflow runtime regression cycle before calling v3 a final baseline.",
+    "note": "Dashboard defect is fixed. Do not claim final v3 baseline until the full workflow regression and v3 scope runtime paths also pass."
+  }
+}

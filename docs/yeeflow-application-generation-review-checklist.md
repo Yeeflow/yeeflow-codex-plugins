@@ -13,6 +13,7 @@ Use this checklist before packaging, after local validation, and after runtime t
 - [ ] Availability/stock/capacity logic is clearly classified as manual review only, query-based availability, or inventory/reservation based.
 - [ ] Review-only availability is not described as true stock decrement, reservation, or inventory control.
 - [ ] Dashboard scope is meaningful for v1 and runtime-safe, or explicitly deferred.
+- [ ] Dashboard KPI/summary/report/queue/chart promises are mapped to functional dashboard controls, not static Text placeholders.
 - [ ] Business-critical capabilities are either implemented in v1 or marked as required runtime proof items with fallback behavior.
 
 ## 2. Local Validation Gate
@@ -28,6 +29,7 @@ Use this checklist before packaging, after local validation, and after runtime t
 - [ ] Generated data-list custom forms include current-standard `Edit Item` and `View Item`; New/Edit maps to `Edit Item`, View maps to `View Item`.
 - [ ] Workflow action configuration validates.
 - [ ] Expression smoke checks cover generated formulas, query filters, workflow conditions, and sublist summaries where applicable.
+- [ ] Dashboard structure inspection confirms KPI/count/total cards use `summary` controls with matching `exts`, queue/report sections use `data-list` or proven `collection` controls, chart sections use chart controls or a documented data-bound fallback, and no KPI value is hardcoded as Text `0`, `0.00`, `N/A`, or placeholder content.
 - [ ] The package is not sent to Yeeflow runtime testing until local validation passes, unless the task is explicitly an isolation/proof experiment.
 
 ## 3. Runtime Test Gate
@@ -37,7 +39,7 @@ Before claiming runtime proof, complete `docs/yeeflow-runtime-test-checklist-tem
 Minimum runtime smoke proof:
 
 - [ ] App imports and opens.
-- [ ] Dashboards render.
+- [ ] Dashboards render and functional controls are data-bound to expected source lists; page render alone is not dashboard proof.
 - [ ] Data lists open without `datas/query` 400 responses.
 - [ ] Approval forms open from the app and, when needed, from submitted workflow tasks.
 - [ ] At least one valid submit path completes without workflow node errors.
@@ -52,6 +54,7 @@ Production-like runtime proof:
 - [ ] Submit, approve, reject, return, and resubmission paths pass when included.
 - [ ] `ContentList` and usage/audit list lifecycle events persist expected rows and readable values.
 - [ ] Dashboard KPIs match source list data after runtime records change.
+- [ ] Operational queues and advanced reporting sections render real list/table/collection data or empty states from the expected source lists.
 
 ## 4. Runtime Safety Review
 

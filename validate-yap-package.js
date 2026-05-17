@@ -713,6 +713,63 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
     });
   });
   validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report);
+  validateDashboardFunctionalQuality(page, title, layoutId, report);
+}
+
+function dashboardTextValue(node) {
+  if (!isObject(node)) return "";
+  const attrs = node.attrs || {};
+  return safeString(
+    attrs.value ??
+    (attrs.headc && attrs.headc.title && attrs.headc.title.value) ??
+    (attrs.layout && attrs.layout.title && attrs.layout.title.value) ??
+    node.label ??
+    node.nv_label ??
+    ""
+  );
+}
+
+function validateDashboardFunctionalQuality(page, title, layoutId, report) {
+  const severity = generatorFinalSeverity(report);
+  const counts = { summary: 0, dataList: 0, collection: 0, chart: 0 };
+  const allText = [];
+
+  function visit(node, pointer, contextLabels) {
+    if (!isObject(node)) return;
+    const ownLabel = [node.type, node.label, node.nv_label, dashboardTextValue(node)].map(safeString).filter(Boolean).join(" ");
+    const context = `${contextLabels} ${ownLabel}`;
+    const type = safeString(node.type);
+    if (type === "summary") counts.summary += 1;
+    if (type === "data-list") counts.dataList += 1;
+    if (type === "collection") counts.collection += 1;
+    if (["pie-chart", "bar-chart", "line-chart"].includes(type)) counts.chart += 1;
+
+    const textValue = dashboardTextValue(node);
+    if (textValue) allText.push(textValue);
+    if (["heading", "text-editor", "text"].includes(type) && /(^|>|\s)(0|0\.00|N\/A)(\s|<|$)/i.test(textValue) && /\b(kpi|summary|card|metric|queue|operations|reporting|trend|chart)\b/i.test(context)) {
+      issue(report, severity, "DASHBOARD_STATIC_KPI_PLACEHOLDER", "Dashboard KPI/summary-like sections must not use static Text controls for values such as 0, 0.00, or N/A. Use a Summary control or a data-bound fallback.", { title, layoutId, pointer, text: textValue.slice(0, 120), context: context.slice(0, 240) });
+    }
+    asArray(node.children).forEach((child, index) => visit(child, `${pointer}.children[${index}]`, context));
+  }
+
+  visit(page, "$", "");
+  const joined = allText.join(" \n ");
+  const hasQueueLanguage = /\b(queue|queues|pending hr|pending finance|needs my action|returned requests|expiry follow-up)\b/i.test(joined);
+  const hasReportingLanguage = /\b(advanced reporting|reporting|analytics|trend|ranking|chart)\b/i.test(joined);
+  const hasChartLanguage = /\b(pie chart|column chart|line chart|trend|by status|by product type|self vs family|custom vs standard)\b/i.test(joined);
+
+  if (/hr operations/i.test(title) && counts.summary === 0) {
+    issue(report, severity, "DASHBOARD_HR_OPERATIONS_NO_SUMMARY_CONTROLS", "HR Operations dashboards must use real Summary controls for KPI cards; static text KPI cards are not acceptable.", { title, layoutId });
+  }
+  if (hasQueueLanguage && counts.dataList + counts.collection === 0) {
+    issue(report, severity, "DASHBOARD_QUEUES_NOT_DATA_BOUND", "Dashboard queue/operations sections must use Collection or data-list controls, not only explanatory text.", { title, layoutId, dataListControls: counts.dataList, collectionControls: counts.collection });
+  }
+  if (hasReportingLanguage && counts.summary + counts.dataList + counts.collection + counts.chart === 0) {
+    issue(report, severity, "DASHBOARD_REPORTING_NOT_FUNCTIONAL", "Dashboard reporting/analytics sections must contain Summary, chart, Collection, or data-list controls.", { title, layoutId });
+  }
+  if (hasChartLanguage && counts.chart === 0 && counts.dataList + counts.collection === 0) {
+    issue(report, severity, "DASHBOARD_CHARTS_NO_CONTROL_OR_FALLBACK", "Dashboard chart/trend language requires real chart controls or a functional data-list/Collection fallback.", { title, layoutId });
+  }
 }
 
 function validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report) {

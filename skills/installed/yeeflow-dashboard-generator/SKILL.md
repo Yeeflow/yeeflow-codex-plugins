@@ -64,6 +64,8 @@ Default generated dashboards should:
 
 For real application-builder packages, do not stop at an empty dashboard unless the app scope explicitly says dashboard is deferred. A runtime-safe v1 dashboard should include meaningful, locally proven sections such as request queues, status counts, simple source-list Collections, or KPI cards backed by included data lists. Keep advanced widgets, filters, reservations, and charts within proven dashboard patterns and mark anything unproven as focused runtime proof.
 
+Functional dashboard rule: when a plan/spec says KPI, summary, count, total, queue, report, analytics, trend, or chart, generate a functional dashboard control rather than a static Text mockup. Use `summary` controls for counts/totals, `data-list` or proven `collection` controls for operational queues and report tables, and `pie-chart`/`bar-chart`/`line-chart` controls only when their binding shape is proven for the source list. If a chart is not safe, use a data-bound list/table fallback and document the chart as deferred. Static Text controls are allowed for headings, descriptions, labels, instructions, and explanatory notes only; a hardcoded Text value such as `0`, `0.00`, `N/A`, or placeholder copy must not be used as a KPI/report/queue substitute unless explicitly labeled demo/placeholder content.
+
 The studied dashboard does not prove a dashboard `attrs.container.cw` setting. Do not invent one until another real export proves it.
 
 Global page background rule: do not set full-page background color on the dashboard `Main` container. `Main` stays structural; page background belongs on embedded page attrs. Use backgrounds on `Page header`, cards, KPI containers, Collection sections, or other specific visible containers only when those surfaces need their own color.
@@ -276,7 +278,10 @@ Confirm:
 - app appears in Shared Workspace
 - app opens
 - dashboard navigation renders
-- dashboard page content or empty page shell renders
+- dashboard page content renders with expected functional controls; rendering alone is not enough for a KPI/reporting dashboard
+- KPI/summary cards are real `summary` controls bound through dashboard `exts`, not static Text values
+- operational queues and report sections are real `data-list` or proven `collection` controls bound to source lists
+- chart sections render real chart controls, or a documented data-bound list/table fallback renders in their place
 - local source lists open without visible `datas/query` failures when the package includes dashboard data sources
 
 For the current dashboard learning loop, the user has authorized import testing after every newly generated `.yap`; do the runtime import test after local validation for each new package unless they explicitly pause it.

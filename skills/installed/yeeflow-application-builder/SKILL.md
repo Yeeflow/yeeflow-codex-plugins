@@ -41,6 +41,8 @@ Think like an experienced business consultant and Yeeflow solution architect:
 - line-item planning must explicitly choose one persistence model: workflow sublist summary only, direct child-row persistence, or a separate transaction item list with its own runtime proof and reporting purpose
 - availability, stock, booking, quota, or capacity logic must be labeled honestly as manual review only, query-based availability, or inventory/reservation based; never present review routing as true stock control
 - generated dashboards must be meaningful enough for the app's v1 workflow while staying inside runtime-proven dashboard patterns
+- dashboard KPIs, summaries, report sections, queues, analytics, trends, and charts must be implemented with data-bound dashboard controls, not static Text mockups. Use Summary controls for counts/totals, data-list or proven Collection controls for queues/report tables, and chart controls only when runtime-proven; if charts are unsafe, ship a functional list/table fallback and mark chart visualization deferred
+- do not mark dashboard runtime proof as passed only because a page renders; verify source-list bindings, dashboard `exts`, ReportIds, and at least one value/list/empty-state coming from the expected data source
 - runtime-unproven features must be marked as required focused proof items or deferred with fallback behavior before final package claims
 - workflow routing variables must be required, auto-derived, or protected by fallback branches so no approval path can dead-end on empty/unexpected values
 - decide package type before generation: output `.yap` for a new/cloned application, and output `.yapk` only for an existing-app upgrade from a Yeeflow Version management baseline package
