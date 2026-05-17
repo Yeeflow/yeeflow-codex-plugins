@@ -2,6 +2,8 @@
 
 Generated: 2026-05-17 23:55:00
 
+Final runtime baseline accepted: 2026-05-18
+
 ## Package
 
 - App definition: `employee-family-implant-app-def.v3.json`
@@ -52,4 +54,16 @@ Dashboard structure inspection confirms:
 
 Runtime chart learning has been corrected: the user added representative source data and confirmed pie, column, and monthly trend chart sections render/load with data. Empty charts are now classified as a no-data / insufficient-seed-data result, not a chart-model failure.
 
-This document does not claim the complete v3 final runtime baseline. Full v1/v2 regression and all v3 workflow paths still need to be rerun before final baseline acceptance.
+## Final runtime acceptance
+
+Employee Family Implant v3 is accepted as the final full-function runtime baseline.
+
+The final runtime pass confirmed:
+
+- Home dashboard Summary controls and data-bound table controls render and are not static KPI mockups.
+- HR Operations Dashboard uses Summary controls for KPI cards, real chart controls for visual reporting, and data-bound tables/lists for operational queues and drill-down.
+- Chart controls render correctly when representative Implant Applications / Family Quota Usage source data exists.
+- Chart validation requires representative source data; an empty chart is a no-data condition, not proof that the chart model is broken.
+- V1/V2 regression paths passed, including requester/applicant behavior, applicant snapshots, product sublist lookup/autofill, subtotal/total calculation, quota checks, HR Review, Finance/Benefits Review, return/resubmission, no duplicate usage on resubmission, persistence, and usage lifecycle behavior.
+- V3 feature paths passed or are documented as intentional safe fallbacks/visibility-only behavior where unsupported dynamic scheduler or dynamic manager assignment behavior is not claimed.
+- No blocking workflow dead ends, quota aggregation regression, or core persistence failure remained at final acceptance.

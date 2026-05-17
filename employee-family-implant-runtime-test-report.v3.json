@@ -1,5 +1,6 @@
 {
   "generatedAt": "2026-05-17 23:55:00",
+  "finalAcceptedAt": "2026-05-18",
   "appName": "Employee & Family Implant Application Management v3",
   "idFamily": "653...",
   "flowKey": "EJX",
@@ -84,12 +85,17 @@
     }
   },
   "runtimeValidation": {
-    "status": "chart_runtime_corrected_not_full_v3_final",
+    "status": "final_runtime_baseline_accepted",
     "target": "https://codex.yeeflow.com/",
     "evidence": [
       "User manually added representative dashboard source data and confirmed the real v3 dashboard chart controls render: pie charts, column charts, and monthly trend chart sections load/display when source data exists.",
       "Runtime observation in the v3 dashboard repair app showed Applications by Status pie, Self vs Family pie, Applications by Product Type column, Custom vs Standard column, and Monthly Application Trend chart sections loading with source records present.",
-      "The previous empty-chart result is reclassified as no data / insufficient seed data, not a structural chart model failure."
+      "The previous empty-chart result is reclassified as no data / insufficient seed data, not a structural chart model failure.",
+      "Home dashboard Summary controls and data-bound table controls passed runtime review.",
+      "HR Operations dashboard Summary controls, real chart controls, and operational queue/list tables passed runtime review with representative source data.",
+      "V1/V2 regression paths passed, including requester/applicant behavior, applicant snapshots, product sublist lookup/autofill, subtotal/total calculation, quota check, HR Review, Finance/Benefits Review, return/resubmission, no duplicate usage on resubmission, persistence, and usage lifecycle behavior.",
+      "V3 feature paths passed or were confirmed as documented safe fallbacks/visibility-only where the generator intentionally does not claim unsupported dynamic scheduler or dynamic manager assignment behavior.",
+      "No blocking workflow dead ends, quota aggregation regression, or core persistence failure remained at final acceptance."
     ],
     "chartClassification": {
       "supportedWhenSourceDataExists": true,
@@ -97,6 +103,14 @@
       "validRowsPresent": "chart should render with data and be accepted only after data-backed proof",
       "modelLoadFailureWithValidRows": "chart defect requiring focused dashboard-control repair"
     },
-    "remainingAcceptanceNote": "This report corrects dashboard/chart runtime learning and patches the v3 dashboard generator. It does not claim the complete Employee Family Implant v3 final workflow baseline because full v1/v2 regression and all v3 workflow paths were not rerun in this correction turn."
+    "dashboardControlsAccepted": {
+      "kpiCards": "Summary controls",
+      "visualReporting": "chart controls with representative source data",
+      "queuesAndDrillDown": "data-bound tables/lists"
+    },
+    "dashboardRuntimeRequirement": "Chart validation requires representative source data. Empty chart states must be documented separately from structural chart failures.",
+    "v1v2Regression": "pass",
+    "v3FeaturePaths": "pass_with_documented_safe_fallbacks",
+    "finalAcceptanceDecision": "Employee Family Implant v3 is accepted as the final full-function runtime baseline."
   }
 }
