@@ -1,0 +1,20 @@
+{
+  "name": "yeeflow-internal",
+  "interface": {
+    "displayName": "Yeeflow Internal"
+  },
+  "plugins": [
+    {
+      "name": "yeeflow-builder",
+      "source": {
+        "source": "local",
+        "path": "./dist/yeeflow-builder-plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

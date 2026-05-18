@@ -11,6 +11,29 @@ The supported v0 distribution paths are:
 
 Organization-level private marketplace distribution is a future option. Do not assume it is available until Codex admin setup, supported marketplace configuration, and the target environment's install flow are confirmed.
 
+## Add As A Marketplace
+
+The repo includes a marketplace catalog at:
+
+```text
+.agents/plugins/marketplace.json
+```
+
+Use this when Codex asks to add a plugin marketplace from a GitHub repo, Git URL, or local folder. The marketplace entry points to the bundled plugin folder:
+
+```text
+./dist/yeeflow-builder-plugin
+```
+
+For Git-based marketplace install, use the latest release-candidate tag that includes this marketplace catalog. If sparse paths are requested, include both the marketplace catalog and the plugin folder:
+
+```text
+.agents/plugins/marketplace.json
+dist/yeeflow-builder-plugin
+```
+
+After the marketplace is added, the plugin should appear as `Yeeflow Builder`.
+
 ## v0.1.0 Package Smoke Test
 
 Smoke test status: passed for install preparation on 2026-05-18.
