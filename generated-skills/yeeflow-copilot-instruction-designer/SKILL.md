@@ -61,3 +61,11 @@ Run:
 ```bash
 node scripts/validate_copilot_instruction.js working/final-copilot-creation-manifest.json
 ```
+
+<!-- agent-copilot-application-resource-learning:start -->
+## App-Bound Copilot Instruction Guidance
+
+App-contained Copilots may have bound tools. Instructions should distinguish conversational guidance from autonomous execution, name destructive or external actions as confirmation-required, and avoid claims for unconfigured tools. Quick prompts are export-proven as Suggestions on app-contained Copilots.
+
+Connected-Agent tools should be described as delegated workflows only when the target Agent binding exists. External Outlook, SharePoint, OAuth, or HTTP tools must be framed as governed and credential-sensitive.
+<!-- agent-copilot-application-resource-learning:end -->

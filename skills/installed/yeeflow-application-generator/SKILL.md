@@ -429,3 +429,11 @@ When generating or debugging a `.yap`, report:
 - wrapper build result, if built
 - unresolved risks and stop conditions
 - sandbox import/export-back checklist
+
+<!-- agent-copilot-application-resource-learning:start -->
+## AI Agent, Copilot, And Connection Boundary
+
+The DEMO Innovation Ecosystem Platform study proves app-level AI resources in OtherModules: Connections, Agents, and Knowledges. Agents module entries use Type = 0 for AI Agents and Type = 1 for Copilots. Tools can target local data lists, current app resources, connected Agents, or application connections.
+
+Do not include AI Agents, Copilots, or Connections in generated final .yap packages until the target resource graph is fully resolved and local validation passes. External connection tools require placeholders and post-import reconfiguration; do not generate packages that require real Outlook, SharePoint, OAuth, or HTTP credentials.
+<!-- agent-copilot-application-resource-learning:end -->

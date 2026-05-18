@@ -48,3 +48,11 @@ Run:
 ```bash
 node scripts/validate_yaic_exports.js output/Copilot 12
 ```
+
+<!-- agent-copilot-application-resource-learning:start -->
+## Application Resource Export Learning
+
+The DEMO Innovation Ecosystem Platform .yap study proves app-contained Copilots are stored in Data.OtherModules Type "Agents" with individual resource Type = 1. This is separate from standalone .yaic wrappers. Copilot records share the AI resource envelope with Agents and can contain Instructions, Suggestions, Skills, knowledge components, connected-Agent tools, connection-backed tools, and current application resource access tools.
+
+Do not hand-generate opaque .yaic PackageJson or app-bound Copilot resources from guessed structure. For app-bound learning, document export-proven shapes, redact connection metadata, and require runtime proof before claiming generated import support.
+<!-- agent-copilot-application-resource-learning:end -->

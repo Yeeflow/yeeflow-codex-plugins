@@ -59,3 +59,11 @@ Be explicit about which lists, forms, dashboards, workflow branches, and custom 
 ## Reporting
 
 Return a short status summary plus a table of tested areas, result labels, evidence, and next action. Separate "accepted baseline" from "needs follow-up"; do not imply unsupported behavior is proven.
+
+<!-- agent-copilot-application-resource-learning:start -->
+## AI Resource Runtime Safety
+
+Runtime-test AI Agents and Copilots only after local package, graph, AI resource, connection, tool-reference, ReplaceIds, and secret scans pass. Safe first checks are import, app open, Agent/Copilot visibility, configuration page open, and non-executing component visibility.
+
+Do not trigger Outlook, SharePoint, OAuth, HTTP, OpenAPI, document generation, image generation, or destructive list mutation tools unless explicitly configured with safe test credentials and approved call scope. Classify untested AI/connection packages as validation-only or partial.
+<!-- agent-copilot-application-resource-learning:end -->

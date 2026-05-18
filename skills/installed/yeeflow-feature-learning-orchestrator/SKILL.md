@@ -162,3 +162,11 @@ Never import into Yeeflow or operate Chrome for Yeeflow testing unless the user 
 `https://codex.yeeflow.com/`
 
 Use Chrome console/network evidence when import or runtime behavior fails. Do not expose secrets or tenant credentials in logs, summaries, docs, or skills.
+
+<!-- agent-copilot-application-resource-learning:start -->
+## AI Agent/Copilot Resource Learning Route
+
+For AI Agents, Copilots, application connections, OpenAPI/REST tools, and application-resource access, use learning mode first: decode exports read-only, map OtherModules, normalize redacted references, update validators, and only then decide whether a generated baseline is safe. Do not mix this with requirement-to-app delivery until the resource graph and validation rules are clear.
+
+Hard stop if Agent/Copilot resources cannot be located, tool references cannot be mapped, connection values cannot be redacted, or runtime testing would call real external systems.
+<!-- agent-copilot-application-resource-learning:end -->
