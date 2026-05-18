@@ -1,111 +1,89 @@
 {
   "appName": "Enterprise Service Request & Compliance Review",
-  "phase": "Phase 2 local generation",
-  "runtimeStatus": "blocked at import component materialization",
+  "phase": "Phase 2 materialization fix",
+  "runtimeStatus": "pending_after_latest_patch",
   "publicFormSupport": "not claimed",
   "generatedPackage": "custom-code-template-showcase.v1.yap",
   "templates": [
     {
       "name": "activity-timeline",
       "localGeneration": "included",
-      "runtimeClassification": "blocked by package import/component materialization"
+      "runtimeClassification": "not tested"
     },
     {
       "name": "approval-decision-panel",
       "localGeneration": "included",
-      "runtimeClassification": "blocked by package import/component materialization"
+      "runtimeClassification": "not tested"
     },
     {
       "name": "approval-timeline",
       "localGeneration": "included",
-      "runtimeClassification": "blocked by package import/component materialization"
+      "runtimeClassification": "not tested"
     },
     {
       "name": "checklist-compliance-block",
       "localGeneration": "included",
-      "runtimeClassification": "blocked by package import/component materialization"
+      "runtimeClassification": "not tested"
     },
     {
       "name": "dependent-selector",
       "localGeneration": "included",
-      "runtimeClassification": "blocked by package import/component materialization"
+      "runtimeClassification": "not tested"
     },
     {
       "name": "distribution-chart-module",
       "localGeneration": "included",
-      "runtimeClassification": "blocked by package import/component materialization"
+      "runtimeClassification": "not tested"
     },
     {
       "name": "exception-alert-panel",
       "localGeneration": "included",
-      "runtimeClassification": "blocked by package import/component materialization"
+      "runtimeClassification": "not tested"
     },
     {
       "name": "hierarchical-selector",
       "localGeneration": "included",
-      "runtimeClassification": "blocked by package import/component materialization"
+      "runtimeClassification": "not tested"
     },
     {
       "name": "kpi-card-set",
       "localGeneration": "included",
-      "runtimeClassification": "blocked by package import/component materialization"
+      "runtimeClassification": "not tested"
     },
     {
       "name": "multi-entry-tag-input",
       "localGeneration": "included",
-      "runtimeClassification": "blocked by package import/component materialization"
+      "runtimeClassification": "not tested"
     },
     {
       "name": "related-record-summary-grid",
       "localGeneration": "included",
-      "runtimeClassification": "blocked by package import/component materialization"
+      "runtimeClassification": "not tested"
     },
     {
       "name": "smart-lookup-picker",
       "localGeneration": "included",
-      "runtimeClassification": "previously proven elsewhere; blocked in this showcase by package import/component materialization"
+      "runtimeClassification": "previously proven elsewhere; showcase regression pending"
     },
     {
       "name": "trend-chart-module",
       "localGeneration": "included",
-      "runtimeClassification": "blocked by package import/component materialization"
+      "runtimeClassification": "not tested"
     }
   ],
-  "localValidation": {
-    "package": "pass_with_warnings",
-    "graph": "pass",
-    "approvalForm": "pass_with_warnings",
-    "ydlLists": "pass_with_warnings for all 9 generated lists",
-    "wrapperRoundTrip": "pass",
-    "customCodeInspection": {
-      "customCodeControls": 25,
-      "dashboardControls": 7,
-      "approvalFormControls": 17,
-      "dataListFormControls": 1,
-      "publicFormControls": 0
+  "localValidation": "pass_with_warnings",
+  "materialization": {
+    "latestLocalStatus": "pass",
+    "runtimeStatus": "not retested after metadata-preservation patch",
+    "previousRuntimeSmoke": {
+      "package": "pre-metadata-fix import smoke",
+      "result": "imported app tile but opened to Start to build with Components"
     },
-    "customCodeParameterValidation": "pass",
-    "dashboardStructureInspection": "pass",
-    "duplicateFieldNameCheck": "pass",
-    "lookupDependencyCheck": "pass - no native lookup fields; custom lookup source lists are local seeded lists",
-    "flowKeySafety": "pass",
-    "corruptedPrefixKeyCheck": "pass",
-    "expressionSmoke": "pass",
-    "tsxCheck": "pass via esbuild parse/bundle check for all 13 templates"
-  },
-  "runtimeAttempt": {
-    "date": "2026-05-18",
-    "environment": "https://codex.yeeflow.com/",
-    "attemptedPackage": "custom-code-template-showcase.v1.yap",
-    "observations": [
-      "Import wizard accepted the .yap file and showed the generated app metadata.",
-      "First import created an app named Enterprise Service Request & Compliance Review.",
-      "Second import with a shorter runtime name created an app named Custom Code Template Showcase Runtime 2.",
-      "Opening the runtime app landed on /#/list-set/41/2056156817023320065 and displayed Yeeflow's empty Start to build with Components state.",
-      "The generated data lists, dashboard, approval form, workflow, and custom code controls were not visible in the imported runtime app."
-    ],
-    "blockingResult": "The package imports as an app shell, but runtime did not materialize packaged components. Component-level custom code testing could not begin.",
-    "publicFormSupport": "not claimed"
-  },
-  "readinessDecision": "ready for local generation; local validation passed; runtime blocked before component testing"
+    "fixesApplied": [
+      "Root Type 103 dashboard layout ListID now points to root app/listset ID.",
+      "LayoutInResources[0].ID and RefId match the dashboard LayoutID.",
+      "Baseline TenantID, CreatedBy, and ModifiedBy metadata are preserved and not included in ReplaceIds.",
+      "ReplaceIds is limited to generated local app-resource IDs plus flow keys where applicable."
+    ]
+  }
 }

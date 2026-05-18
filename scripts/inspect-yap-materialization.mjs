@@ -1,0 +1,255 @@
+#!/usr/bin/env node
+
+import fs from "node:fs";
+import zlib from "node:zlib";
+
+const GZIP_PREFIX = "[______gizp______]";
+const LARGE_INTEGER_RE = /^-?\d{16,}$/;
+
+function usage(exitCode = 1) {
+  const text = [
+    "Usage:",
+    "  node scripts/inspect-yap-materialization.mjs <app.yap|resource.json|app-def.json> [--out <report.json>]",
+    "",
+    "Checks whether a Yeeflow .yap app package has the root app, navigation, pages, forms, and lists connected in a way that should not import as an empty app shell.",
+  ].join("\n");
+  (exitCode === 0 ? console.log : console.error)(text);
+  process.exit(exitCode);
+}
+
+function parseArgs(argv) {
+  if (argv.includes("--help") || argv.includes("-h")) usage(0);
+  const args = { input: null, out: null };
+  for (let index = 2; index < argv.length; index += 1) {
+    const arg = argv[index];
+    if (arg === "--out") args.out = argv[++index];
+    else if (!args.input) args.input = arg;
+    else usage();
+  }
+  if (!args.input) usage();
+  return args;
+}
+
+function quoteLargeIntegers(jsonText, largeNumbers) {
+  let output = "";
+  let index = 0;
+  let inString = false;
+  let escaped = false;
+  while (index < jsonText.length) {
+    const char = jsonText[index];
+    if (inString) {
+      output += char;
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (char === "\"") inString = false;
+      index += 1;
+      continue;
+    }
+    if (char === "\"") {
+      inString = true;
+      output += char;
+      index += 1;
+      continue;
+    }
+    if (char === "-" || (char >= "0" && char <= "9")) {
+      const start = index;
+      let end = index;
+      if (jsonText[end] === "-") end += 1;
+      while (end < jsonText.length && jsonText[end] >= "0" && jsonText[end] <= "9") end += 1;
+      if (jsonText[end] === "." || jsonText[end] === "e" || jsonText[end] === "E") {
+        while (end < jsonText.length && /[0-9eE+\-.]/.test(jsonText[end])) end += 1;
+        output += jsonText.slice(start, end);
+      } else {
+        const token = jsonText.slice(start, end);
+        if (LARGE_INTEGER_RE.test(token)) {
+          largeNumbers.add(token);
+          output += `"${token}"`;
+        } else {
+          output += token;
+        }
+      }
+      index = end;
+      continue;
+    }
+    output += char;
+    index += 1;
+  }
+  return output;
+}
+
+function parseJson(text, largeNumbers) {
+  return JSON.parse(quoteLargeIntegers(text, largeNumbers));
+}
+
+function tryParseJson(value) {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  if (!trimmed || !/^[{[]/.test(trimmed)) return value;
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return value;
+  }
+}
+
+function loadPackage(inputPath) {
+  const largeNumbers = new Set();
+  const parsed = parseJson(fs.readFileSync(inputPath, "utf8"), largeNumbers);
+  if (parsed?.Resource?.startsWith?.(GZIP_PREFIX)) {
+    const body = Buffer.from(parsed.Resource.slice(GZIP_PREFIX.length), "base64");
+    const resource = parseJson(zlib.gunzipSync(body).toString("utf8"), largeNumbers);
+    return { wrapper: parsed, resource, app: parseJson(resource.Data, largeNumbers), largeNumbers: [...largeNumbers] };
+  }
+  if (typeof parsed?.Data === "string") {
+    return { wrapper: null, resource: parsed, app: parseJson(parsed.Data, largeNumbers), largeNumbers: [...largeNumbers] };
+  }
+  return { wrapper: null, resource: null, app: parsed, largeNumbers: [...largeNumbers] };
+}
+
+function asString(value) {
+  return value === undefined || value === null ? "" : String(value);
+}
+
+function looksLikeLocalId(value) {
+  return /^\d{16,}$/.test(asString(value)) && /^([6-9]\d{3}|[1-9]\d{4,})/.test(asString(value).slice(0, 4));
+}
+
+function readLayoutView(model, errors) {
+  const view = tryParseJson(model?.LayoutView);
+  if (!view || typeof view !== "object") {
+    errors.push({ code: "ROOT_LAYOUT_VIEW_INVALID", message: "Root ListModel.LayoutView is missing or not valid JSON." });
+    return {};
+  }
+  return view;
+}
+
+function inspect(inputPath) {
+  const { wrapper, resource, app, largeNumbers } = loadPackage(inputPath);
+  const errors = [];
+  const warnings = [];
+  const rootModel = app?.Item?.ListModel || {};
+  const rootListId = asString(rootModel.ListID);
+  const rootLayouts = Array.isArray(app?.Item?.Layouts) ? app.Item.Layouts : [];
+  const childLists = Array.isArray(app?.Childs) ? app.Childs : [];
+  const forms = Array.isArray(app?.Forms) ? app.Forms : [];
+  const layoutView = readLayoutView(rootModel, errors);
+  const nav = Array.isArray(layoutView.sort) ? layoutView.sort : [];
+  const navByListId = new Map(nav.map((item) => [asString(item.ListID), item]));
+  const rootLayoutsById = new Map(rootLayouts.map((layout) => [asString(layout.LayoutID), layout]));
+  const childById = new Map(childLists.map((child) => [asString(child?.ListModel?.ListID), child]));
+
+  if (!rootListId) errors.push({ code: "ROOT_LIST_ID_MISSING", message: "Root app ListModel.ListID is missing." });
+  if (Number(rootModel.Type) !== 1024) errors.push({ code: "ROOT_TYPE_NOT_APP", message: "Root ListModel.Type should be 1024.", detail: { type: rootModel.Type } });
+  for (const [field, value] of Object.entries({ TenantID: rootModel.TenantID, CreatedBy: rootModel.CreatedBy, ModifiedBy: rootModel.ModifiedBy })) {
+    if (looksLikeLocalId(value) && asString(value).slice(0, 4) === rootListId.slice(0, 4)) {
+      errors.push({
+        code: "ROOT_METADATA_USES_LOCAL_ID_FAMILY",
+        message: "Root tenant/user metadata appears to have been remapped into the generated local app ID family. Preserve real tenant/user metadata from a working baseline.",
+        detail: { field, value: asString(value), rootListId },
+      });
+    }
+  }
+  if (!nav.length) errors.push({ code: "ROOT_NAV_EMPTY", message: "Root navigation LayoutView.sort is empty, which can import as an empty shell." });
+  if (!rootLayouts.length) errors.push({ code: "ROOT_LAYOUTS_EMPTY", message: "Root app has no Item.Layouts pages." });
+  if (!childLists.length) warnings.push({ code: "NO_CHILD_LISTS", message: "App has no child data lists." });
+  if (!forms.length) warnings.push({ code: "NO_FORMS", message: "App has no approval forms." });
+
+  const dashboardNav = nav.filter((item) => Number(item.Type) === 103);
+  if (!dashboardNav.length) errors.push({ code: "NO_DASHBOARD_NAV", message: "Root navigation has no Type 103 dashboard/page entry." });
+  for (const item of dashboardNav) {
+    const navListId = asString(item.ListID);
+    const layout = rootLayoutsById.get(navListId);
+    if (!layout) {
+      errors.push({ code: "DASHBOARD_NAV_LAYOUT_MISSING", message: "Type 103 navigation item points to a missing root layout.", detail: { title: item.Title, listId: navListId } });
+      continue;
+    }
+    if (asString(layout.ListID) !== rootListId) {
+      errors.push({
+        code: "ROOT_DASHBOARD_LAYOUT_OWNING_LIST_MISMATCH",
+        message: "Type 103 root dashboard layout must be owned by the root app ListID, not by its LayoutID.",
+        detail: { title: layout.Title, layoutId: asString(layout.LayoutID), layoutListId: asString(layout.ListID), rootListId },
+      });
+    }
+    const lir = layout.LayoutInResources?.[0];
+    if (!lir) {
+      errors.push({ code: "DASHBOARD_LAYOUT_RESOURCE_MISSING", message: "Type 103 root dashboard layout has no LayoutInResources[0].", detail: { layoutId: navListId } });
+    } else {
+      if (asString(lir.ID) !== asString(layout.LayoutID) || asString(lir.RefId) !== asString(layout.LayoutID)) {
+        errors.push({
+          code: "DASHBOARD_LAYOUT_RESOURCE_ID_MISMATCH",
+          message: "Type 103 dashboard LayoutInResources[0].ID and RefId must equal LayoutID.",
+          detail: { layoutId: asString(layout.LayoutID), resourceId: asString(lir.ID), refId: asString(lir.RefId) },
+        });
+      }
+      const page = tryParseJson(lir.Resource);
+      if (!page || typeof page !== "object") {
+        errors.push({ code: "DASHBOARD_LAYOUT_RESOURCE_INVALID", message: "Type 103 dashboard page resource is missing or invalid JSON.", detail: { layoutId: navListId } });
+      }
+    }
+  }
+
+  for (const child of childLists) {
+    const listId = asString(child?.ListModel?.ListID);
+    if (!listId) {
+      errors.push({ code: "CHILD_LIST_ID_MISSING", message: "A child list is missing ListModel.ListID.", detail: { title: child?.ListModel?.Title } });
+      continue;
+    }
+    const navItem = navByListId.get(listId);
+    if (!navItem) {
+      errors.push({ code: "CHILD_LIST_NOT_IN_NAV", message: "Child data list is not reachable from root navigation.", detail: { title: child?.ListModel?.Title, listId } });
+    } else if (Number(navItem.Type) !== Number(child?.ListModel?.Type || 1)) {
+      warnings.push({ code: "CHILD_LIST_NAV_TYPE_MISMATCH", message: "Child data-list navigation type differs from ListModel.Type.", detail: { title: child?.ListModel?.Title, listId, navType: navItem.Type, listType: child?.ListModel?.Type } });
+    }
+    const layouts = Array.isArray(child?.Layouts) ? child.Layouts : [];
+    if (!layouts.length) errors.push({ code: "CHILD_LIST_LAYOUTS_EMPTY", message: "Child data list has no layouts.", detail: { title: child?.ListModel?.Title, listId } });
+    for (const layout of layouts) {
+      if (asString(layout.ListID) !== listId) {
+        errors.push({ code: "CHILD_LAYOUT_LIST_MISMATCH", message: "Child list layout is owned by the wrong ListID.", detail: { title: child?.ListModel?.Title, layoutId: asString(layout.LayoutID), layoutListId: asString(layout.ListID), listId } });
+      }
+    }
+  }
+
+  for (const item of nav.filter((entry) => Number(entry.Type) === 1)) {
+    if (!childById.has(asString(item.ListID))) {
+      errors.push({ code: "NAV_CHILD_LIST_MISSING", message: "Data-list navigation item points to a missing child list.", detail: { title: item.Title, listId: asString(item.ListID) } });
+    }
+  }
+
+  const formKeys = new Set((resource?.FormKeys || []).map(asString));
+  const formNav = nav.filter((item) => Number(item.Type) === 105);
+  for (const form of forms) {
+    const key = asString(form.FlowKey || form.FormKey || form.Key || form.ProcCode || "");
+    const procModelId = asString(form.ProcModelID);
+    if (form.ListID !== 0) errors.push({ code: "FORM_LIST_ID_NOT_ZERO", message: "Packaged approval forms should use Data.Forms[].ListID = 0.", detail: { name: form.Name, listId: form.ListID } });
+    if (!procModelId) errors.push({ code: "FORM_PROC_MODEL_ID_MISSING", message: "Approval form is missing ProcModelID.", detail: { name: form.Name } });
+    if (key && resource && !formKeys.has(key)) warnings.push({ code: "FORM_KEY_NOT_IN_RESOURCE_FORM_KEYS", message: "Approval form key is not listed in resource.FormKeys.", detail: { name: form.Name, key } });
+  }
+  if (forms.length && !formNav.length) errors.push({ code: "FORM_NAV_MISSING", message: "Package includes approval forms but root navigation has no Type 105 form entry." });
+
+  const report = {
+    input: inputPath,
+    status: errors.length ? "fail" : warnings.length ? "pass_with_warnings" : "pass",
+    wrapperPresent: Boolean(wrapper),
+    resourcePresent: Boolean(resource),
+    root: {
+      title: rootModel.Title || null,
+      listId: rootListId || null,
+      type: rootModel.Type ?? null,
+      rootLayouts: rootLayouts.length,
+      childLists: childLists.length,
+      forms: forms.length,
+      navItems: nav.length,
+      dashboardNavItems: dashboardNav.length,
+    },
+    errors,
+    warnings,
+    largeNumericIdsPreserved: largeNumbers.length,
+  };
+  return report;
+}
+
+const args = parseArgs(process.argv);
+const report = inspect(args.input);
+if (args.out) fs.writeFileSync(args.out, `${JSON.stringify(report, null, 2)}\n`);
+console.log(JSON.stringify(report, null, 2));
+process.exit(report.errors.length ? 1 : 0);

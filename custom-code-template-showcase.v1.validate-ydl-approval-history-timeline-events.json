@@ -2,7 +2,7 @@
   "status": "pass_with_warnings",
   "mode": "generator",
   "stage": "final",
-  "input": "/tmp/cct-lists/approval-history-timeline-events.json",
+  "input": "/tmp/approval-history-timeline-events.ydl.json",
   "inputKind": "decodedData",
   "errors": [],
   "warnings": [

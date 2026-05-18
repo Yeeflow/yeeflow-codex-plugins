@@ -18,6 +18,7 @@ const TITLE = "Enterprise Service Request & Compliance Review";
 const DESCRIPTION = "Generated showcase app for all 13 reusable Yeeflow Custom Code templates. Runtime proof remains pending until imported and tested.";
 const FLOW_KEY = "CCTSHOW";
 const ID_BASE = 6182000000000000000n;
+const LOCAL_ID_PREFIX = "6182";
 
 const TEMPLATE_NAMES = [
   "activity-timeline",
@@ -65,6 +66,15 @@ function setJson(target, key, value) {
 
 function nextId(offset) {
   return String(ID_BASE + BigInt(offset));
+}
+
+function localIdPrefixFrom(resource) {
+  const firstId = resource.ReplaceIds.find((id) => /^\d{16,}$/.test(String(id)));
+  return firstId ? String(firstId).slice(0, 4) : "";
+}
+
+function isLocalId(value, prefix = LOCAL_ID_PREFIX) {
+  return typeof value === "string" && /^\d{16,}$/.test(value) && value.startsWith(prefix);
 }
 
 function textExpr(value) {
@@ -833,7 +843,7 @@ function updateRootNavigation(data, ids) {
   root.IconUrl = JSON.stringify({ b: "#E6F0FF", i: "fa-solid fa-layer-group", c: "#0065FF" });
   const layout = data.Item.Layouts[0];
   layout.LayoutID = nextId(1);
-  layout.ListID = nextId(1);
+  layout.ListID = nextId(0);
   layout.Title = "Service Request & Compliance Dashboard";
   layout.LayoutInResources[0].ID = nextId(1);
   layout.LayoutInResources[0].RefId = nextId(1);
@@ -862,6 +872,16 @@ function collectLargeIds(value, ids = new Set()) {
   else if (isObject(value)) Object.entries(value).forEach(([key, child]) => {
     collectLargeIds(key, ids);
     collectLargeIds(child, ids);
+  });
+  return ids;
+}
+
+function collectLocalIds(value, ids = new Set()) {
+  if (isLocalId(value)) ids.add(value);
+  else if (Array.isArray(value)) value.forEach((item) => collectLocalIds(item, ids));
+  else if (isObject(value)) Object.entries(value).forEach(([key, child]) => {
+    collectLocalIds(key, ids);
+    collectLocalIds(child, ids);
   });
   return ids;
 }
@@ -921,14 +941,18 @@ function main() {
   const baseResource = JSON.parse(fs.readFileSync(BASE_RESOURCE, "utf8"));
   const baseData = JSON.parse(fs.readFileSync(BASE_APP, "utf8"));
   const idMap = new Map();
-  baseResource.ReplaceIds.forEach((oldId, index) => idMap.set(String(oldId), nextId(index)));
+  const oldLocalPrefix = localIdPrefixFrom(baseResource);
+  baseResource.ReplaceIds.forEach((oldId, index) => {
+    const id = String(oldId);
+    if (isLocalId(id, oldLocalPrefix)) idMap.set(id, nextId(index));
+  });
   const resource = remapIds(clone(baseResource), idMap);
   const data = remapIds(clone(baseData), idMap);
   resource.Title = TITLE;
   resource.Description = DESCRIPTION;
   resource.FormKeys = [FLOW_KEY];
   resource.ReportIds = [];
-  resource.ReplaceIds = [...new Set([...baseResource.ReplaceIds.map((_, index) => nextId(index))])];
+  resource.ReplaceIds = [...new Set([...baseResource.ReplaceIds.filter((id) => isLocalId(String(id), oldLocalPrefix)).map((_, index) => nextId(index))])];
 
   const baseList = data.Childs[0];
   const lists = {};
@@ -948,7 +972,7 @@ function main() {
   updateServiceListForm(lists, scripts, ids);
   data.OtherModules = [];
   resource.Data = JSON.stringify(data);
-  for (const id of collectLargeIds({ resource, data })) {
+  for (const id of collectLocalIds({ resource, data })) {
     if (!resource.ReplaceIds.includes(id)) resource.ReplaceIds.push(id);
   }
   updateSpecReadiness();

@@ -4,7 +4,7 @@ App: Enterprise Service Request & Compliance Review
 
 Phase 2 generated a local `.yap` showcase package with all 13 custom code templates embedded in Custom Code controls.
 
-Runtime status: blocked at import component materialization. Do not claim runtime proof from this baseline.
+Runtime status: import materialization is still pending after the latest metadata-preservation patch. Do not claim runtime proof from this baseline.
 
 Public form support: not claimed.
 
@@ -15,44 +15,10 @@ Included contexts:
 - Approval form: dependent selector, hierarchical selector, Smart Lookup Picker, multi-entry tags, checklist, approval timeline, activity timeline, related-record grid, approval decision panel.
 - Data-list custom form: Smart Lookup Picker regression placement using `__list_` output targets.
 
-## Local Validation Summary
+Local validation results are recorded in the generated `custom-code-template-showcase.v1.validate-*.json` artifacts.
 
-- Package validation: pass with warnings.
-- Graph validation: pass.
-- Approval form validation: pass with warnings.
-- Data-list validation: all 9 generated lists pass with warnings.
-- Workflow action validation: pass through the package/YWF validators.
-- Wrapper round trip: pass.
-- Custom-code inspection: 25 controls found; dashboard 7, approval form 17, data-list form 1, public form 0.
-- Custom-code parameter validation: pass.
-- Dashboard structure inspection: pass with one native data-list reporting fallback plus custom-code analytics components.
-- Duplicate field/internal-name check: pass.
-- Lookup dependency check: pass; no native lookup fields were generated, and custom lookup sources are local seeded lists.
-- FlowKey safety and corrupted `prefix`/`pr<id>x` checks: pass.
-- Expression smoke test: pass.
-- TSX check: pass via esbuild parse/bundle check for all 13 templates.
-
-Validator warnings remain expected because Custom Code controls are schema-supported but runtime-unproven for 12 of the 13 templates until this generated package is imported and exercised.
-
-## Runtime Import Attempt
-
-Date: 2026-05-18
-
-Environment: `https://codex.yeeflow.com/`
-
-Result: blocked before component-level testing.
-
-Observed behavior:
-- The Yeeflow import wizard accepted `custom-code-template-showcase.v1.yap` and displayed the generated app metadata.
-- The first import created an app named `Enterprise Service Request & Compliance Review`.
-- A second import using the shorter name `Custom Code Template Showcase Runtime 2` also created an app shell.
-- Opening `Custom Code Template Showcase Runtime 2` landed on `/list-set/41/2056156817023320065` and showed Yeeflow's empty `Start to build with Components` state.
-- The generated data lists, dashboard, approval form, workflow, and custom code controls were not visible in the runtime app.
-
-Classification:
-- Package import: partially passed; app shells were created.
-- Component materialization: blocked; generated resources did not appear in the imported app.
-- Template runtime proof: not established for this showcase package.
-- Public form support: not claimed.
-
-Next follow-up requirement: inspect the generated `.yap` resource/wrapper shape against a runtime-proven multi-component app export to find why local validators pass while Yeeflow imports only the app shell.
+Latest local materialization checks:
+- Root Type `103` dashboard layout is owned by the root app/listset `ListID`.
+- `LayoutInResources[0].ID` and `RefId` match the dashboard page `LayoutID`.
+- Root tenant/user metadata is preserved from the working baseline instead of being remapped into the generated local ID family.
+- Child data lists, approval form, navigation entries, and Custom Code controls are present in the decoded package.

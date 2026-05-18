@@ -1,0 +1,19 @@
+{
+  "input": "custom-code-template-showcase.v1.yap",
+  "status": "pass",
+  "wrapperPresent": true,
+  "resourcePresent": true,
+  "root": {
+    "title": "Enterprise Service Request & Compliance Review",
+    "listId": "6182000000000000000",
+    "type": 1024,
+    "rootLayouts": 1,
+    "childLists": 9,
+    "forms": 1,
+    "navItems": 11,
+    "dashboardNavItems": 1
+  },
+  "errors": [],
+  "warnings": [],
+  "largeNumericIdsPreserved": 0
+}

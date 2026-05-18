@@ -2,7 +2,7 @@
   "status": "pass_with_warnings",
   "mode": "generator",
   "stage": "final",
-  "input": "/tmp/cct-lists/request-categories.json",
+  "input": "/tmp/request-categories.ydl.json",
   "inputKind": "decodedData",
   "errors": [],
   "warnings": [
