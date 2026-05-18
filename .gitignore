@@ -103,6 +103,7 @@ yeeflow-data-list-generator/
 !yeeflow-expression-function-knowledge-base.normalized.json
 !yeeflow-expression-operators.normalized.json
 !yeeflow-expression-first-generation-test-spec.json
+!docs/studies/normalized/*.normalized.json
 !skills/installed/yeeflow-application-generator/scripts/workflow-action-configurations.normalized.json
 !skills/installed/**/*.json
 *-app-def*.json
@@ -126,6 +127,7 @@ yeeflow-data-list-generator/
 *decomposition*.json
 *mapping*.json
 *manifest*.json
+!docs/studies/normalized/*.normalized.json
 
 # Keep repository scaffolding under these otherwise-generated folders.
 !generated/

@@ -553,6 +553,7 @@ function validate(inputPath, mode, stage) {
   validateForms(data, listsById, fieldsByList, replaceIds, localIds, report);
   validateGeneratedListRuntimeUsage(data, report);
   validateReportsDashboardsModules(data, listsById, fieldsByList, replaceIds, localIds, report);
+  validateAgentCopilotModules(data, listsById, report);
   validateLookupRelationships(listsById, fieldsByList, report);
   validateSensitiveResources(data, report);
   validateDesignSystemColorUsage({ resource, data }, report);
@@ -1917,11 +1918,141 @@ function validateReportsDashboardsModules(data, listsById, fieldsByList, replace
     const type = safeString(module.Type || module.type || "unknown");
     const count = Array.isArray(module.Data) ? module.Data.length : isObject(module.Data) ? Object.keys(module.Data).length : 0;
     report.inventories.modules.push({ type, count });
-    if (/agent/i.test(type)) report.summary.agents += count || 1;
-    else if (/knowledge/i.test(type)) report.summary.knowledges += count || 1;
-    else if (/copilot/i.test(type)) report.summary.copilots += count || 1;
-    else if (/connection/i.test(type)) report.summary.connections += count || 1;
-    else issue(report, report.mode === "generator" ? "warning" : "warning", "UNKNOWN_OTHER_MODULE", "OtherModules entry has an unknown module type.", { type, index });
+    if (!/^(Agents|Knowledges|Connections)$/i.test(type)) issue(report, report.mode === "generator" ? "warning" : "warning", "UNKNOWN_OTHER_MODULE", "OtherModules entry has an unknown module type.", { type, index });
+  });
+}
+
+function parseOtherModuleData(module, report, expectedType) {
+  if (!module) return [];
+  const raw = module.Data;
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === "string") {
+    const parsed = tryParseJson(raw);
+    if (Array.isArray(parsed)) return parsed;
+    issue(report, "warning", "OTHER_MODULE_DATA_JSON_INVALID", "OtherModules Data should parse to an array for studied AI/resource modules.", { type: expectedType || module.Type || null });
+    return [];
+  }
+  if (raw === undefined || raw === null) return [];
+  issue(report, "warning", "OTHER_MODULE_DATA_NOT_ARRAY", "OtherModules Data should be an array for studied AI/resource modules.", { type: expectedType || module.Type || null, dataType: typeof raw });
+  return [];
+}
+
+function validateConnectionModuleEntry(connection, index, report) {
+  const name = safeString(connection && connection.Name);
+  const id = safeString(connection && connection.ID);
+  const type = Number(connection && connection.Type);
+  if (!id) issue(report, generatorFinalSeverity(report), "CONNECTION_ID_MISSING", "Connection entries should include ID so Agent/Copilot tools can reference them.", { index, name });
+  if (!name) issue(report, "warning", "CONNECTION_NAME_MISSING", "Connection entries should include a display name.", { index, id });
+  if (!Number.isFinite(type)) {
+    issue(report, "warning", "CONNECTION_TYPE_MISSING", "Connection entry Type is missing or not numeric.", { index, name });
+  } else if (![10, 11].includes(type)) {
+    issue(report, "warning", "CONNECTION_TYPE_UNSTUDIED", "Connection entry uses a Type that is not yet proven by the AI Agent/Copilot application-resource export study.", { index, name, type });
+  }
+
+  const config = tryParseJson(connection && connection.Config) || connection && connection.Config;
+  if (!isObject(config)) {
+    issue(report, generatorFinalSeverity(report), "CONNECTION_CONFIG_INVALID", "Connection Config should be parseable object metadata.", { index, name, id });
+    return;
+  }
+
+  const configKeys = Object.keys(config);
+  if (type === 10) {
+    for (const key of ["Environment", "Timeout", "BaseUrl", "AuthenticationMethod", "AllowedMethods"]) {
+      if (config[key] === undefined) issue(report, "warning", "HTTP_CONNECTION_CONFIG_KEY_MISSING", "HTTP API / Generic connection is missing an export-proven Config key.", { connection: name, key });
+    }
+  }
+  if (type === 11) {
+    for (const key of ["Environment", "Timeout", "BaseUrl", "GrantType", "AuthorizationMode", "AuthorizationEndpoint", "TokenEndpoint", "ClientId", "Scopes", "AllowedMethods", "AuthenticationMethod"]) {
+      if (config[key] === undefined) issue(report, "warning", "OAUTH_CONNECTION_CONFIG_KEY_MISSING", "OAuth 2.0 connection is missing an export-proven Config key.", { connection: name, key });
+    }
+  }
+  if (configKeys.some((key) => /(access[_-]?token|refresh[_-]?token|id[_-]?token|secret|password|api[_-]?key|accesskey)/i.test(key) && safeString(config[key]))) {
+    issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "dependency", "CONNECTION_CONFIG_SECRET_FIELD_PRESENT", "Connection Config contains a secret/token-like field. Do not commit raw values; generated packages must use placeholders or require reconfiguration.", { connection: name });
+  }
+  if (configKeys.some((key) => /(clientid|endpoint|baseurl|authorization)/i.test(key) && safeString(config[key]))) {
+    issue(report, "dependency", "CONNECTION_CONFIG_SENSITIVE_FIELD_PRESENT", "Connection Config contains tenant/environment-sensitive metadata. Reports and references must redact the value.", { connection: name, keys: configKeys.filter((key) => /(clientid|endpoint|baseurl|authorization)/i.test(key)) });
+  }
+}
+
+function validateAgentCopilotModules(data, listsById, report) {
+  const modules = new Map(asArray(data && data.OtherModules).map((module) => [safeString(module.Type), module]));
+  const connections = parseOtherModuleData(modules.get("Connections"), report, "Connections");
+  const aiResources = parseOtherModuleData(modules.get("Agents"), report, "Agents");
+  const knowledges = parseOtherModuleData(modules.get("Knowledges"), report, "Knowledges");
+
+  report.summary.connections = connections.length;
+  report.summary.knowledges = knowledges.length;
+
+  const connectionIds = new Set(connections.map((connection) => safeString(connection.ID)).filter(Boolean));
+  const aiResourceIds = new Set(aiResources.map((resource) => safeString(resource.ID)).filter(Boolean));
+  const knowledgeNames = new Set(knowledges.map((knowledge) => safeString(knowledge.Name)).filter(Boolean));
+  const rootListSetId = safeString(data && data.Item && data.Item.ListModel && data.Item.ListModel.ListID);
+
+  connections.forEach((connection, index) => validateConnectionModuleEntry(connection, index, report));
+
+  report.summary.agents = aiResources.filter((resource) => Number(resource.Type) === 0).length;
+  report.summary.copilots = aiResources.filter((resource) => Number(resource.Type) === 1).length;
+
+  aiResources.forEach((aiResource, index) => {
+    const resourceName = safeString(aiResource.Name);
+    const resourceId = safeString(aiResource.ID);
+    const resourceType = Number(aiResource.Type);
+    if (!resourceId) issue(report, generatorFinalSeverity(report), "AI_RESOURCE_ID_MISSING", "AI Agent/Copilot resource is missing ID.", { index, name: resourceName });
+    if (!resourceName) issue(report, "warning", "AI_RESOURCE_NAME_MISSING", "AI Agent/Copilot resource is missing Name.", { index, id: resourceId });
+    if (![0, 1].includes(resourceType)) {
+      issue(report, "warning", "AI_RESOURCE_TYPE_UNSTUDIED", "AI resources in the studied Agents module use Type 0 for AI Agent and Type 1 for Copilot.", { index, name: resourceName, type: aiResource.Type });
+    }
+    const settings = tryParseJson(aiResource.Settings);
+    const draft = tryParseJson(aiResource.Draft);
+    if (!isObject(settings)) issue(report, generatorFinalSeverity(report), "AI_RESOURCE_SETTINGS_INVALID", "AI Agent/Copilot Settings should be parseable JSON object.", { name: resourceName, id: resourceId });
+    if (aiResource.Draft !== undefined && !isObject(draft)) issue(report, "warning", "AI_RESOURCE_DRAFT_INVALID", "AI Agent/Copilot Draft should be parseable JSON object when present.", { name: resourceName, id: resourceId });
+    if (resourceType === 0 && isObject(settings) && settings.Prompt === undefined) {
+      issue(report, "warning", "AI_AGENT_PROMPT_MISSING", "Studied AI Agent resources store persona/prompt content in Settings.Prompt.", { name: resourceName, id: resourceId });
+    }
+    if (resourceType === 1 && isObject(settings) && settings.Instructions === undefined) {
+      issue(report, "warning", "COPILOT_INSTRUCTIONS_MISSING", "Studied Copilot resources store user-facing guidance in Settings.Instructions.", { name: resourceName, id: resourceId });
+    }
+    if (!Array.isArray(aiResource.Components)) {
+      issue(report, generatorFinalSeverity(report), "AI_RESOURCE_COMPONENTS_NOT_ARRAY", "AI Agent/Copilot Components should be an array of knowledge/tool bindings.", { name: resourceName, id: resourceId });
+      return;
+    }
+    aiResource.Components.forEach((component, componentIndex) => {
+      const componentName = safeString(component.Name);
+      const componentType = Number(component.Type);
+      if (![1, 2].includes(componentType)) {
+        issue(report, "warning", "AI_COMPONENT_TYPE_UNSTUDIED", "Studied AI resource Components use Type 1 for knowledge and Type 2 for tools.", { aiResource: resourceName, component: componentName, componentType });
+      }
+      if (componentType === 1 && componentName && !knowledgeNames.has(componentName)) {
+        issue(report, "warning", "AI_KNOWLEDGE_COMPONENT_NAME_UNRESOLVED", "Knowledge component name does not match an included Knowledges module entry. Confirm import remapping before generation.", { aiResource: resourceName, component: componentName });
+      }
+      if (componentType !== 2) return;
+      const componentSettings = tryParseJson(component.Settings);
+      if (!isObject(componentSettings)) {
+        issue(report, generatorFinalSeverity(report), "AI_TOOL_SETTINGS_INVALID", "AI tool component Settings should be parseable JSON object.", { aiResource: resourceName, component: componentName, componentIndex });
+        return;
+      }
+      const dataRef = isObject(componentSettings.Data) ? componentSettings.Data : null;
+      const value = safeString(dataRef && dataRef.Value);
+      if (!dataRef || !value) {
+        issue(report, "warning", "AI_TOOL_DATA_REFERENCE_MISSING", "AI tool component has no Settings.Data.Value reference. It may be configuration-only, but generation should not assume a target.", { aiResource: resourceName, component: componentName });
+        return;
+      }
+      if (connectionIds.has(value)) {
+        issue(report, "dependency", "AI_TOOL_EXTERNAL_CONNECTION_REFERENCE", "AI tool references an application connection. Runtime testing must not call the external system without safe test credentials.", { aiResource: resourceName, component: componentName, connectionId: value, credentialstype: componentSettings.credentialstype || null });
+      } else if (listsById.has(value)) {
+        const list = listsById.get(value);
+        if (!Array.isArray(componentSettings.Inputs)) issue(report, "warning", "AI_LIST_TOOL_INPUTS_NOT_ARRAY", "List-backed AI tool Settings.Inputs should be an array.", { aiResource: resourceName, component: componentName, list: list.title });
+        if (!Array.isArray(componentSettings.Outputs)) issue(report, "warning", "AI_LIST_TOOL_OUTPUTS_NOT_ARRAY", "List-backed AI tool Settings.Outputs should be an array.", { aiResource: resourceName, component: componentName, list: list.title });
+      } else if (aiResourceIds.has(value)) {
+        issue(report, "dependency", "AI_TOOL_CONNECTED_AGENT_REFERENCE", "AI tool references another AI Agent resource. Generated packages must include and remap the target Agent/Copilot together or defer the binding.", { aiResource: resourceName, component: componentName, targetResourceId: value });
+      } else if (value === rootListSetId) {
+        if (!Array.isArray(componentSettings.resources)) {
+          issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_RESOURCES_MISSING", "Application-resource access tool should include Settings.resources when exporting selectable app resources; absence may mean all resources are implied.", { aiResource: resourceName, component: componentName });
+        }
+      } else {
+        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "dependency", "AI_TOOL_DATA_REFERENCE_UNRESOLVED", "AI tool Settings.Data.Value does not resolve to an included list, connection, or current app/listset.", { aiResource: resourceName, component: componentName, value });
+      }
+    });
   });
 }
 

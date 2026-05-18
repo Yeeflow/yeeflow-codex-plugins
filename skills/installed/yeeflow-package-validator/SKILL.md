@@ -92,3 +92,11 @@ Report validation as:
 - exact follow-up needed
 
 Do not claim runtime proof from local validation alone.
+
+<!-- agent-copilot-application-resource-learning:start -->
+## AI Agent/Copilot Validation Addendum
+
+Validate app-level OtherModules for Connections, Agents, and Knowledges. Count AI Agent resources as Agents module entries with Type = 0 and Copilots as Type = 1. Validate Settings/Draft JSON, Components arrays, tool Settings.Data.Value references, connected-Agent references, connection references, and redaction-sensitive Config keys.
+
+Use hard errors only for generated-final invalid JSON, missing generated IDs, unresolved generated-final tool references, or embedded secret/token/password/API-key values. Use warnings/dependencies for connection-backed tools, credentialstype/run-as settings, OpenAPI operations, application-resource access, and runtime-sensitive external calls.
+<!-- agent-copilot-application-resource-learning:end -->
