@@ -43,6 +43,21 @@ Load [yap-materialization-rules.md](references/yap-materialization-rules.md) whe
 - unique `FieldName`, `InternalName`, and `DisplayName` inside each list
 - no remapping of `TenantID`, `CreatedBy`, or `ModifiedBy`
 
+For document libraries, also check:
+
+- `ListModel.Type = 16`
+- root app navigation references the library as `Type = 16` for mixed/richer apps; document-library-only packages may use the sample-proven root `LayoutView = {"sortVer":1}` with no Type `103` page or nav, reported as warnings
+- top-level `Resource.SimplePortal = null`
+- default fields exist: `Title`, `Bigint1`, `Text1`, `Bigint2`, `Text2`, `Text3`, and `Text4`
+- `Text4` uses `Type = "file-upload"` and library upload rules
+- `Title` keeps document-library native metadata and is not forced into normal data-list `Status = 0`
+- field `ListID` values match the parent library `ListID`
+- `FieldID` values are unique across the app
+- Type `0` view field references resolve when view JSON is present
+- Type `1` custom form bindings resolve to library fields
+- partial document-library `ListModel.LayoutView` assignments are warnings; the runtime-proven minimal base is the `New Document Library` shape with default Type `0` view `LayoutView = ""` and the single `New file` form unassigned, while configured libraries assign `add`, `edit`, and `view` together
+- generated packages do not embed raw file/document payloads unless focused runtime export-back proof exists
+
 ## Severity
 
 Use [validation-error-severity.md](references/validation-error-severity.md) to decide what blocks import. When uncertain, mark the finding as blocking until a proven Yeeflow import/runtime counterexample exists.

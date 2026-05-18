@@ -1,0 +1,196 @@
+{
+  "source": [
+    "Projects Center.yap",
+    "Document Library Sample.yap"
+  ],
+  "sanitization": {
+    "rawExportCommitted": false,
+    "tenantUserMetadataIncluded": false,
+    "documentFilePayloadsIncluded": false
+  },
+  "resourceType": {
+    "name": "documentLibrary",
+    "listModelType": 16,
+    "normalDataListType": 1,
+    "appRootType": 1024
+  },
+  "childResourceEnvelope": [
+    "ListModel",
+    "Defs",
+    "Layouts",
+    "ListDatas",
+    "FlowMappings",
+    "PublicForms",
+    "RemindRules"
+  ],
+  "wrapperSignature": {
+    "MainListType": 1024,
+    "AppID": 41,
+    "ReportIds": [],
+    "FormKeys": [],
+    "SimplePortal": null,
+    "simplePortalStatus": "observed in both known-good document-library exports; generated [] failed runtime create in v1/v2"
+  },
+  "documentLibraryOnlyRootSignature": {
+    "ItemLayouts": [],
+    "rootLayoutView": {
+      "sortVer": 1
+    },
+    "navigationSort": [],
+    "status": "observed in Document Library Sample.yap; warning-only for validators"
+  },
+  "runtimeProvenBaseDefinition": {
+    "sourceResourceName": "New Document Library",
+    "generatedPackage": "document-library-sample-new-library-only.v1.yap",
+    "runtimeStatus": "import/open runtime-proven by user manual test",
+    "useAsBaseDefinition": true,
+    "notBaseDefinition": "Baseline Documents",
+    "notes": [
+      "The canonical minimal document-library definition is the New Document Library resource shape from Document Library Sample.yap.",
+      "The default Type 0 view preserves LayoutView as an empty string.",
+      "The New file Type 1 upload form remains unassigned in ListModel.LayoutView.",
+      "The package contains no uploaded document rows or document binaries."
+    ]
+  },
+  "listModelSignature": {
+    "Type": 16,
+    "CustomTypePattern": "ListSite_<rootListId>",
+    "IsItemPerm": true,
+    "Perm": 4,
+    "Flags": 1,
+    "TableCode": "flowcraft",
+    "IndexCode": "flowcraft",
+    "AdvanceList": []
+  },
+  "defaultFields": [
+    {
+      "purpose": "fileName",
+      "displayName": "Name",
+      "fieldName": "Title",
+      "internalName": "Title",
+      "fieldType": "Text",
+      "controlType": "input",
+      "isSystem": true,
+      "isIndex": true,
+      "rules": {
+        "displayLabel": true,
+        "isLibrary": true
+      }
+    },
+    {
+      "purpose": "folderParent",
+      "displayName": "ParentID",
+      "fieldName": "Bigint1",
+      "internalName": "ParentID",
+      "fieldType": "Bigint",
+      "controlType": "input_number",
+      "rules": {
+        "displayLabel": true,
+        "isNotInListFiles": true
+      }
+    },
+    {
+      "purpose": "fileType",
+      "displayName": "Type",
+      "fieldName": "Text1",
+      "internalName": "Type",
+      "fieldType": "Text",
+      "controlType": "input",
+      "rules": {
+        "displayLabel": true
+      }
+    },
+    {
+      "purpose": "fileSize",
+      "displayName": "FileSize",
+      "viewDisplayName": "Size",
+      "fieldName": "Bigint2",
+      "internalName": "FileSize",
+      "fieldType": "Bigint",
+      "controlType": "input_number",
+      "rules": {
+        "displayLabel": true,
+        "readonly": true
+      }
+    },
+    {
+      "purpose": "fileExtension",
+      "displayName": "Extension",
+      "fieldName": "Text2",
+      "internalName": "Extension",
+      "fieldType": "Text",
+      "controlType": "input",
+      "rules": {
+        "displayLabel": true,
+        "readonly": true
+      }
+    },
+    {
+      "purpose": "uniqueStoredName",
+      "displayName": "UniqueName",
+      "fieldName": "Text3",
+      "internalName": "UniqueName",
+      "fieldType": "Text",
+      "controlType": "input",
+      "isUnique": true,
+      "rules": {
+        "displayLabel": true,
+        "isNotInListFiles": true
+      }
+    },
+    {
+      "purpose": "uploadedFile",
+      "displayName": "Upload File",
+      "fieldName": "Text4",
+      "internalName": "FileInfo",
+      "fieldType": "Text",
+      "controlType": "file-upload",
+      "rules": {
+        "displayLabel": true,
+        "required": true,
+        "isLabrary": true,
+        "PROP_MAXSIZE": 2147483648
+      }
+    }
+  ],
+  "viewSignature": {
+    "layoutType": 0,
+    "configuredViewKeys": [
+      "layout",
+      "query",
+      "sort",
+      "filter",
+      "rowColor"
+    ],
+    "newLibraryMayHaveEmptyLayoutView": true,
+    "minimalBaseLayoutView": ""
+  },
+  "customFormSignature": {
+    "layoutType": 1,
+    "layoutView": null,
+    "ext2": {
+      "src": true
+    },
+    "layoutInResourceIdMatchesLayoutId": true,
+    "resourceKeys": [
+      "children",
+      "title",
+      "filterVars",
+      "attrs",
+      "ver",
+      "tempVars"
+    ],
+    "uploadControlBinding": "Text4"
+  },
+  "formAssignmentSignature": {
+    "location": "ListModel.LayoutView",
+    "keys": [
+      "add",
+      "edit",
+      "view",
+      "opentype",
+      "modalsize"
+    ],
+    "status": "export-proven on configured Documents library; absent on minimal New Document Library"
+  }
+}

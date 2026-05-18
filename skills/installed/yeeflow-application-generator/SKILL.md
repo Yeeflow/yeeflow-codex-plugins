@@ -134,9 +134,26 @@ Keep these out of scope in v1 unless the user asks for research only:
 - dashboards beyond a minimal Type `103` shell page
 - data reports and form reports
 - AI Agents, Copilots, Connections, Knowledges
-- document libraries, document generation, templates
+- document generation and templates
 - external HTTP/API actions
 - complex list workflows or scheduled workflows
+
+## Document Library Resource Rules
+
+Use these only after the document-library study docs and validators are present in the active workspace. `Projects Center.yap` proved that Yeeflow Document Library is a first-class app child resource, similar to a data list but not identical.
+
+- Generate document libraries with `ListModel.Type = 16`.
+- Keep the normal child-resource envelope: `ListModel`, `Defs`, `Layouts`, `ListDatas`, `FlowMappings`, `PublicForms`, and `RemindRules`.
+- Link the library from root app navigation with `Type = 16` for mixed/richer apps. The focused `Document Library Sample.yap` proves document-library-only apps may omit root pages and navigation, using root `LayoutView = {"sortVer":1}`.
+- Set top-level wrapper `Resource.SimplePortal = null` for generated document-library `.yap` packages. Both known-good document-library exports use `null`; generated `[]` wrappers failed at Yeeflow create.
+- Use `CustomType = "ListSite_<root app ListID>"` for app-owned libraries.
+- Preserve the default document fields: `Title` Name, `Bigint1` ParentID, `Text1` Type, `Bigint2` FileSize/Size, `Text2` Extension, `Text3` UniqueName, and `Text4` Upload File.
+- `Text4` is export-backed as `FieldType = "Text"` plus `Type = "file-upload"` with `Rules.isLabrary = true`; do not invent an unproven Attachment field schema.
+- Do not apply normal generated data-list `Title.Status = 0` rules to document libraries; studied document libraries keep `Title` native/system/indexed but use `Status = 1`.
+- Support custom fields, lookup fields, views, and custom forms using existing data-list rules where compatible.
+- For a minimal newly-created library baseline, use the runtime-proven `New Document Library` resource shape from `Document Library Sample.yap`: default Type `0` view `LayoutView = ""`, one unassigned `New file` form, no `ListModel.LayoutView` add/edit/view mapping, and no uploaded rows. Do not use the earlier generated `Baseline Documents` experiment as the base definition.
+- Do not fake uploaded document rows, folders, or private document payloads in baseline packages.
+- Do not claim folder or upload runtime proof until Yeeflow import/open/upload/persistence behavior is tested.
 
 ## Hard Stop Conditions
 
