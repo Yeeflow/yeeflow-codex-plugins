@@ -70,12 +70,14 @@ Evidence:
   - Company Policies root-bound control with generated folders.
   - HR Policies folder-bound control with disabled search/add and folder context label.
   - Project Documents / Contracts folder-bound control.
-- Publishing the first runtime import failed because the approval task had no assignee.
-- The generator was patched so the `Requester` variable is a current-user identity variable and the approval task uses the proven requester expression-assignment pattern.
+- Publishing the first runtime import failed because the approval task node was not configured correctly.
+- The blocker is in workflow generation for the `Document Review` assignment task: the task assignee and task form setting are not right.
+- This is not treated as a Doc library control schema failure because the controls rendered in Form Builder preview before the workflow publish blocker.
 
 Remaining proof required:
 
 - Import the patched package fresh.
+- Fix the workflow/task-node assignee and task form setting.
 - Publish the approval form successfully.
 - Open the published request page outside the designer and confirm the Doc library controls render there.
 
@@ -98,7 +100,7 @@ Remaining proof required:
 
 - Shortened the generated app description to stay within Yeeflow's import field limit.
 - Corrected approval page metadata to keep approval `pageurls[].pagetype = 1` while the embedded approval page form keeps `formdef.pagetype = 2`.
-- Added current-user `Requester` identity variable and approval task expression assignment so publish validation has a task assignee.
+- Added a first-pass current-user `Requester` identity variable and approval task expression assignment, but the approval workflow still needs a focused task-node configuration fix before live request-page proof.
 - Updated schema validation so `{LayoutID}` enum placeholders also accept concrete large numeric layout IDs in `attrs.caption.layout`.
 
 ## Deferred
@@ -106,5 +108,5 @@ Remaining proof required:
 - Dynamic expression folder binding remains unproven.
 - Direct static sub-folder binding remains unproven.
 - Data-list custom-form Doc library controls remain validation-only until opened in runtime.
-- Published approval-form Doc library controls remain partial until the patched package is freshly imported and published.
+- Published approval-form Doc library controls remain partial until the workflow/task-node assignee and task form setting are fixed, the patched package is freshly imported, and the request page opens outside Builder preview.
 - Actual upload persistence was not tested.

@@ -75,6 +75,6 @@ Actual upload persistence is optional runtime testing only. If tested, use a har
 
 The first imported runtime app proved the document-library custom form host: `Company Policies > Add > New File` opened `Policy File With Template Reference`, and its embedded `Templates and Forms` Doc library control rendered generated folders with search/add disabled.
 
-Approval form hosting is partial. The form imported and the Doc library controls rendered in the form builder preview, but the live request page required publishing. The publish attempt exposed a missing task-assignee issue, which is now patched in the generator with a current-user requester identity variable and expression assignment. A fresh import/publish pass is still required before claiming published approval-form runtime proof.
+Approval form hosting is partial. The form imported and the Doc library controls rendered in the form builder preview, but the live request page required publishing. The publish blocker is a workflow-generation issue on the `Document Review` assignment task node: the task assignee and task form setting are not configured correctly. Treat this as a workflow/task-node follow-up, not as evidence against the Doc library control schema. A fresh import/publish pass is still required before claiming published approval-form runtime proof.
 
 Data-list custom-form hosting remains validation-only in this pass because `Document Review Tasks` was generated and validated but was not reachable in the imported app navigation during runtime testing.

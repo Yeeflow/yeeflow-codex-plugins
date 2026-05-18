@@ -83,9 +83,9 @@ The form-host pass generated `Enterprise Document Center - Form Hosted Doc Libra
 - The same `type = "document-library"` control schema can be embedded in approval-form page JSON and renders in the form designer/runtime preview.
 - The same control schema can be embedded in document-library custom forms; the generated `Company Policies` custom add form opened at runtime and rendered a `Templates and Forms` Doc library control.
 - `caption.search = false` and `caption.add = false` are accepted for a document-library-form-hosted control; the runtime modal showed no search box and no add button for the related templates control.
-- Approval-form publishing requires a non-empty task assignee on approval tasks. Use a user workflow variable, such as a current-user `Requester`, and assign the review task with `usertaskassignment[{ type: "user", method: "expression", value: <Requester variable button> }]`.
+- Approval-form live request proof is currently blocked by workflow task-node configuration, not by the Doc library control schema. The `Document Review` assignment task must set both a valid task assignee and the correct task form setting before publish/live-open proof can be claimed.
 
-Do not claim fully published approval-form host runtime until a fresh generated package is imported, published, opened as a request form, and the Doc library controls are checked outside designer preview. Do not claim data-list custom-form host runtime until the data list can be reached in the imported app and its custom forms open with the controls rendered.
+Do not claim fully published approval-form host runtime until a fresh generated package fixes the workflow/task-node configuration, imports, publishes, opens as a request form, and the Doc library controls are checked outside designer preview. Do not claim data-list custom-form host runtime until the data list can be reached in the imported app and its custom forms open with the controls rendered.
 
 ## Validator Recommendations
 
