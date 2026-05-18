@@ -2,25 +2,25 @@
 
 Source: `Custom Code templates.zip` extracted read-only to a temporary working folder.
 
-This study inventories all 13 Yeeflow custom code templates before app generation. Runtime support is claimed only where already proven by prior Smart Lookup Picker testing. Public form support remains untested and is not claimed for any template.
+This study inventories all 13 Yeeflow custom code templates before app generation. Runtime support is claimed only where runtime testing has actually observed render, interaction, writeback, or persistence behavior. Public form support remains untested and is not claimed for any template.
 
 ## Summary
 
 | Template | Category | Business purpose | Planned safe contexts | Mode | Writable targets | Runtime proof |
 | --- | --- | --- | --- | --- | --- | --- |
-| activity-timeline | Dashboard / analytics | Show record events, changes, comments, and operational actions in chronological order. | dashboard, approvalForm, dataListForm | Read-only | none | Inventory-only. Runtime rendering is not proven for this template. |
-| approval-decision-panel | Approval / workflow experience | Capture or display reviewer decision and comments in an approval context. | approvalForm | Interactive | none | Inventory-only. Needs focused approval-task runtime proof before relying on decision writeback. |
-| approval-timeline | Approval / workflow experience | Show approval history, actors, timestamps, decisions, and comments. | approvalForm, dataListForm | Read-only | none | Inventory-only. Runtime rendering against generated approval-history records is not proven. |
-| checklist-compliance-block | Data entry / picker / selection | Render compliance checklist items and save checked state. | approvalForm, dataListForm | Interactive | saveToField | Inventory-only. Needs runtime proof for checklist writeback in each form context. |
-| dependent-selector | Data entry / picker / selection | Provide cascading parent-child selection from a source list. | approvalForm, dataListForm | Interactive | parentSaveToField, childSaveToField | Inventory-only. Needs runtime proof for source-list query, filtering, and dual writeback. |
-| distribution-chart-module | Dashboard / analytics | Render grouped category/count analytics from a Yeeflow data list. | dashboard | Read-only | none | Inventory-only. Needs dashboard runtime proof with real list records. |
-| exception-alert-panel | Dashboard / analytics | Highlight anomalies, SLA breaches, missing data, and records needing attention. | dashboard, approvalForm, dataListForm | Read-only | none | Inventory-only. Needs runtime proof for rule/filter behavior. |
-| hierarchical-selector | Data entry / picker / selection | Render and select values from a tree structure. | approvalForm, dataListForm | Interactive | saveToField | Inventory-only. Needs runtime proof for hierarchy query and save target. |
-| kpi-card-set | Dashboard / analytics | Display configurable KPI cards from static JSON or mapped data. | dashboard, approvalForm, dataListForm | Read-only | none | Inventory-only. Render proof needed for each context; dashboard is the primary target. |
-| multi-entry-tag-input | Data entry / picker / selection | Capture multiple tags, emails, IDs, labels, or SKUs as chips. | approvalForm, dataListForm | Interactive | saveToField | Inventory-only. Needs runtime proof for add/remove and writeback. |
-| related-record-summary-grid | Dashboard / analytics | Display related records inline as cards or table rows. | dashboard, approvalForm, dataListForm | Read-only | none | Inventory-only. Needs runtime proof for relation filtering and display fields. |
-| smart-lookup-picker | Data entry / picker / selection | Search, select, and optionally manually add lookup records from a target list. | dashboard, approvalForm, dataListForm | Interactive | none | Export-backed and runtime-proven for dashboard, approval form, and data-list custom form. Public form is not tested. |
-| trend-chart-module | Dashboard / analytics | Render time-based list trends by day, week, or month. | dashboard | Read-only | none | Inventory-only. Needs dashboard runtime proof with dated records. |
+| activity-timeline | Dashboard / analytics | Show record events, changes, comments, and operational actions in chronological order. | dashboard, approvalForm, dataListForm | Read-only | none | Blocked by configuration in showcase smoke: rendered empty states despite seeded records. |
+| approval-decision-panel | Approval / workflow experience | Capture or display reviewer decision and comments in an approval context. | approvalForm | Interactive | none | Not tested in showcase smoke because reviewer/task context was not reached. |
+| approval-timeline | Approval / workflow experience | Show approval history, actors, timestamps, decisions, and comments. | approvalForm, dataListForm | Read-only | none | Blocked by configuration in showcase smoke: rendered `No history yet` despite seeded records. |
+| checklist-compliance-block | Data entry / picker / selection | Render compliance checklist items and save checked state. | approvalForm, dataListForm | Interactive | saveToField | Runtime-proven in approval form smoke for checkbox interaction and JSON writeback. |
+| dependent-selector | Data entry / picker / selection | Provide cascading parent-child selection from a source list. | approvalForm, dataListForm | Interactive | parentSaveToField, childSaveToField | Blocked by configuration in showcase smoke: parent options did not populate and child selector stayed disabled. |
+| distribution-chart-module | Dashboard / analytics | Render grouped category/count analytics from a Yeeflow data list. | dashboard | Read-only | none | Blocked by configuration in showcase smoke: rendered `No request records found` despite seeded Service Requests rows. |
+| exception-alert-panel | Dashboard / analytics | Highlight anomalies, SLA breaches, missing data, and records needing attention. | dashboard, approvalForm, dataListForm | Read-only | none | Blocked by configuration in showcase smoke: rendered `No exceptions found` despite seeded exception rows. |
+| hierarchical-selector | Data entry / picker / selection | Render and select values from a tree structure. | approvalForm, dataListForm | Interactive | saveToField | Blocked by configuration in showcase smoke: rendered `No hierarchy records`. |
+| kpi-card-set | Dashboard / analytics | Display configurable KPI cards from static JSON or mapped data. | dashboard, approvalForm, dataListForm | Read-only | none | Render-only proven in dashboard smoke with configured values; data-bound KPI calculation is not proven. |
+| multi-entry-tag-input | Data entry / picker / selection | Capture multiple tags, emails, IDs, labels, or SKUs as chips. | approvalForm, dataListForm | Interactive | saveToField | Runtime-proven in approval form smoke for add-tag interaction and JSON writeback. |
+| related-record-summary-grid | Dashboard / analytics | Display related records inline as cards or table rows. | dashboard, approvalForm, dataListForm | Read-only | none | Blocked by configuration in showcase smoke: rendered empty states despite seeded related records. |
+| smart-lookup-picker | Data entry / picker / selection | Search, select, and optionally manually add lookup records from a target list. | dashboard, approvalForm, dataListForm | Interactive | none | Runtime-proven in prior focused app and retested in showcase approval form and data-list custom form for search/select/writeback. Dashboard instance was visible; dashboard temp output was not retested. Public form is not tested. |
+| trend-chart-module | Dashboard / analytics | Render time-based list trends by day, week, or month. | dashboard | Read-only | none | Blocked by configuration in showcase smoke: rendered `No dated request records found` despite seeded dated rows. |
 
 ## Functional Classification
 

@@ -1,78 +1,100 @@
 {
   "appName": "Enterprise Service Request & Compliance Review",
-  "phase": "Phase 2 local generation",
-  "runtimeStatus": "materialization passed; component-level runtime testing not completed",
+  "phase": "Phase 2 runtime materialization and component smoke",
+  "runtimeStatus": "materialization passed; component-level smoke partially completed",
   "materializationStatus": "resolved",
-  "materializationEvidence": "User confirmed the regenerated package installs, application content materializes, and all data-list custom fields show correctly.",
+  "materializationEvidence": "Branch b678738 was pushed. The latest rebuilt package opened in Yeeflow as Enterprise Service Request & Compliance Review-fix fields. The app did not show Start to build with Components. The dashboard/home page appeared, navigation contained all generated lists and the approval form, Service Requests displayed custom fields and sample rows, the approval form opened, the workflow designer prompt appeared for Enterprise Service Request Review, and custom code controls were visible on dashboard, approval form, and data-list custom form surfaces.",
   "publicFormSupport": "not claimed",
   "generatedPackage": "custom-code-template-showcase.v1.yap",
+  "latestLocalValidation": {
+    "package": "pass_with_warnings; errors 0, warnings 20",
+    "graph": "pass; errors 0",
+    "materialization": "pass; errors 0",
+    "customCodeInspection": "errors 0, warnings 305",
+    "approvalForm": "pass_with_warnings; errors 0, warnings 19",
+    "dataLists": "all 9 lists pass_with_warnings; errors 0",
+    "wrapperRoundTrip": "pass; errors 0, warnings 2"
+  },
   "templates": [
     {
       "name": "activity-timeline",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by configuration",
+      "runtimeEvidence": "Dashboard and approval form instances were visible but rendered empty states such as No activity yet despite seeded activity/timeline list records."
     },
     {
       "name": "approval-decision-panel",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "not tested",
+      "runtimeEvidence": "The review/task context that contains the approval-decision-panel was not reached during this smoke test."
     },
     {
       "name": "approval-timeline",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by configuration",
+      "runtimeEvidence": "Approval form instance was visible but rendered No history yet despite seeded approval-history records."
     },
     {
       "name": "checklist-compliance-block",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "runtime-proven",
+      "runtimeEvidence": "Approval form checklist rendered three items, checkbox interaction changed the completion count from 1 / 3 to 3 / 3, removed the missing-required warning, and wrote checked-state JSON into the configured output field."
     },
     {
       "name": "dependent-selector",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by configuration",
+      "runtimeEvidence": "Approval form parent selector rendered, but the parent dropdown only showed Select and the child selector remained disabled, so source-list options/filtering were not proven."
     },
     {
       "name": "distribution-chart-module",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by configuration",
+      "runtimeEvidence": "Dashboard instance was visible but rendered No request records found despite Service Requests sample rows being present."
     },
     {
       "name": "exception-alert-panel",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by configuration",
+      "runtimeEvidence": "Dashboard instance was visible but rendered No exceptions found despite Exception Rules / Alerts sample rows being present."
     },
     {
       "name": "hierarchical-selector",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by configuration",
+      "runtimeEvidence": "Approval form instance was visible but rendered No hierarchy records, so hierarchy query and selection were not proven."
     },
     {
       "name": "kpi-card-set",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "render-only proven",
+      "runtimeEvidence": "Dashboard rendered KPI cards with configured values Open Requests 42, Approval Rate 91.4%, and Overdue Items 7. Data-bound KPI calculation was not proven."
     },
     {
       "name": "multi-entry-tag-input",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "runtime-proven",
+      "runtimeEvidence": "Approval form tag input accepted urgent with Return, displayed the chip, updated the count to 1 / 20, and wrote [\"urgent\"] into the configured JSON output field."
     },
     {
       "name": "related-record-summary-grid",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by configuration",
+      "runtimeEvidence": "Dashboard and approval form instances were visible but rendered No related records despite seeded related-record rows."
     },
     {
       "name": "smart-lookup-picker",
       "localGeneration": "included",
-      "runtimeClassification": "previously proven elsewhere; regression not yet tested in this app"
+      "runtimeClassification": "runtime-proven",
+      "runtimeEvidence": "Approval form search for a returned related-record options and selecting Acme Managed Services wrote combined JSON. Data-list custom form search also returned options, selected Acme Managed Services, and wrote combined JSON plus selected values to list output fields. Dashboard instance was visible; dashboard temp-variable output was not retested in this run."
     },
     {
       "name": "trend-chart-module",
       "localGeneration": "included",
-      "runtimeClassification": "not tested"
+      "runtimeClassification": "blocked by configuration",
+      "runtimeEvidence": "Dashboard instance was visible but rendered No dated request records found despite Service Requests sample rows with dates."
     }
   ],
   "localValidation": "pass with warnings; package, graph, materialization, YWF, YDL, custom-code inspection, and wrapper round-trip checks completed with zero blocking errors",
-  "runtimeProofBoundary": "Do not claim all 13 custom code templates are runtime-proven until component render, interaction, writeback, and persistence tests are completed."
+  "runtimeProofBoundary": "Do not claim all 13 custom code templates are runtime-proven. Public form support remains untested. Analytics/timeline/query components need parameter or query-shape fixes and focused retesting before runtime support can be claimed."
 }

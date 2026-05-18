@@ -140,6 +140,16 @@ Every generated `.yap` application must satisfy these rules before runtime impor
 
 The patched showcase package passes local materialization inspection and the normal local validation chain. Runtime retesting confirmed that the final package installs, application content materializes, and custom data-list fields appear correctly.
 
+Follow-up runtime smoke on the rebuilt package after commit `b678738` confirmed the materialization path directly in Yeeflow:
+
+- The app opened to real content instead of `Start to build with Components`.
+- The dashboard/home page appeared.
+- Generated data-list navigation appeared.
+- `Service Requests` opened with custom fields and sample rows.
+- The approval form opened.
+- The workflow designer prompt appeared for `Enterprise Service Request Review`.
+- Custom Code controls were visible on dashboard, approval form, and data-list custom form surfaces.
+
 To isolate whether generated `.yap` import was broadly broken, a separate minimal package was generated:
 
 - Package: `one-list-materialization-smoke-test.v1.yap`
@@ -150,8 +160,12 @@ To isolate whether generated `.yap` import was broadly broken, a separate minima
 
 This proves the current Yeeflow tenant can import and materialize generated app packages when app-resource IDs, field ownership, navigation, and dashboard/root linkage follow the learned rules.
 
-Template runtime proof status is unchanged:
+Template runtime proof status after this smoke is still intentionally conservative:
 
-- `smart-lookup-picker`: previously runtime-proven in the focused app, not yet retested in this showcase package.
-- Other 12 templates: not runtime-proven.
+- `smart-lookup-picker`: runtime-proven in the prior focused app and retested in this showcase app for approval-form and data-list custom-form search/select/writeback.
+- `checklist-compliance-block`: runtime-proven in this showcase app for approval-form checkbox interaction and JSON writeback.
+- `multi-entry-tag-input`: runtime-proven in this showcase app for approval-form tag add and JSON writeback.
+- `kpi-card-set`: render-only proven on the dashboard; configured KPI values rendered, but data-bound KPI calculation is not proven.
+- `activity-timeline`, `approval-timeline`, `dependent-selector`, `distribution-chart-module`, `exception-alert-panel`, `hierarchical-selector`, `related-record-summary-grid`, and `trend-chart-module`: visible but blocked by configuration/query wiring because they rendered empty states or did not populate options despite seeded source lists.
+- `approval-decision-panel`: not tested because the reviewer/task context was not reached.
 - Public form support: not claimed.
