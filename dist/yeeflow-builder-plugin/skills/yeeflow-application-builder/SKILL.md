@@ -1,0 +1,275 @@
+---
+name: yeeflow-application-builder
+description: build real Yeeflow business applications from requirements, process documents, forms, screenshots, SOPs, sample exports, and app ideas by acting as a business solution architect, designing the safest Yeeflow-native app structure, generating and validating .yap new-app packages or .yapk upgrade packages, runtime-testing when requested, documenting baselines, and coordinating Yeeflow generator skills.
+---
+
+# Yeeflow Application Builder
+
+Use this skill when the user provides business requirements, process documents, forms, screenshots, SOPs, sample exports, workflow requirements, or app ideas and asks Codex to build, implement, create, generate, test, or output a Yeeflow application package, `.yap`, or `.yapk`.
+
+This skill is the top-level application-building controller. It coordinates proven generator skills:
+
+- `yeeflow-application-generator`
+- `yeeflow-data-list-generator`
+- `yeeflow-approval-form-generator`
+- `yeeflow-dashboard-generator`
+- `yeeflow-expression-generator`
+
+Use `yeeflow-feature-learning-orchestrator` instead when the task is primarily to learn an unknown Yeeflow platform feature from exports, screenshots, runtime tests, or manual fixes.
+
+## Custom Code Planning
+
+Use custom code as an advanced application component only when the business interaction cannot be delivered cleanly with standard Yeeflow controls, lookup settings, expressions, form actions, workflow actions, or dashboard widgets.
+
+Use custom code when:
+
+- standard Yeeflow controls cannot provide the required interaction
+- advanced lookup/picker behavior is needed, such as a reusable search-select component over a large master list
+- dynamic UI logic is too complex for standard controls, form actions, lookup filters, or expressions
+- a reusable business component already exists and is appropriate for the target app
+- the business value justifies the maintenance and runtime-test cost
+
+Avoid custom code when:
+
+- standard controls can solve the requirement
+- behavior is simple enough with form actions, lookup, Query data, expressions, dynamic display, or workflow actions
+- the script depends on unsupported or unproven runtime APIs
+- the app must remain fully no-code for maintainability
+- the behavior affects approval routing, financial authority, security, or persistence and can be implemented server/workflow-side
+
+Planning questions before adding a Custom Code control:
+
+- Which page or form needs the component?
+- Is the placement a dashboard, approval form, data-list custom form, or public form?
+- What inputs does the component need?
+- Are inputs static, field-based, variable-based, temp-variable-based, or expression-based?
+- Does the component write back to Yeeflow variables, fields, or temp variables?
+- Is the component read-only or interactive?
+- Is the component safe for public forms and anonymous/limited-permission users?
+- What native fallback exists if the component fails?
+
+When an existing script is used in an app package, coordinate with `yeeflow-custom-code-generator` for the script's parameters and with the relevant page/form generator for placement. Do not generate a Custom Code control unless the script is available or generated as part of the app package, required input parameters are configured, and a focused runtime test plan exists.
+
+## Core Behavior
+
+Think like an experienced business consultant and Yeeflow solution architect:
+
+- understand the business goal before designing fields
+- identify mandatory core business capabilities before proposing v1 scope
+- do not defer a feature that is central to the stated business process merely because it is technically sensitive; mark it as a required v1 runtime proof item with fallback behavior instead
+- recommend the best Yeeflow-native application structure
+- separate v1 must-have scope from v2/v3 enhancements
+- separate business decision gates from technical runtime assumptions
+- ask the user/business owner to confirm business decision gates before generation, unless they explicitly approve default assumptions
+- present unanswered business decision gates directly in the Codex chat and stop before generation until the user answers or explicitly approves defaults
+- prefer a working, high-quality app over an overloaded first package
+- use proven runtime-safe patterns from the installed skills
+- mark unproven features clearly and test them before depending on them
+- make reasonable assumptions when requirements are unclear, document them, and keep moving unless the assumption would be risky
+- when requirements imply multiple selectable business items, evaluate a sublist/listref design early instead of forcing a single lookup field
+- when requirements include requester/applicant/employee identity, decide whether proxy submission is allowed; if the applicant field is editable, its change action must rerun profile snapshot and dependent policy/quota calculations
+- when requirements include quota, benefit eligibility, or tenure rules, decide the quota cycle, occupation timing, release behavior, and eligibility source before generation
+- every generated data list must have an active runtime purpose in v1 or be explicitly deferred out of the package
+- master/reference data lists named in requirements must be real active generated lists with fields, views, current-standard custom forms, and sample/reference rows when forms, lookups, dashboards, or workflows depend on them; do not leave them as placeholder concepts
+- line-item planning must explicitly choose one persistence model: workflow sublist summary only, direct child-row persistence, or a separate transaction item list with its own runtime proof and reporting purpose
+- availability, stock, booking, quota, or capacity logic must be labeled honestly as manual review only, query-based availability, or inventory/reservation based; never present review routing as true stock control
+- generated dashboards must be meaningful enough for the app's v1 workflow while staying inside runtime-proven dashboard patterns
+- dashboard KPIs, summaries, report sections, queues, analytics, trends, and charts must be implemented with data-bound dashboard controls, not static Text mockups. Use Summary controls for counts/totals, data-list or proven Collection controls for queues/report tables, and chart controls when the chart model is known/proven. Do not remove planned chart controls merely because the initial source list is empty; seed or confirm representative records before deciding chart validity. Use functional list/table fallbacks only for structural chart failures, or as complementary drill-down/reporting views beside working charts
+- do not mark dashboard runtime proof as passed only because a page renders; verify source-list bindings, dashboard `exts`, ReportIds, and at least one value/list/empty-state coming from the expected data source
+- runtime-unproven features must be marked as required focused proof items or deferred with fallback behavior before final package claims
+- workflow routing variables must be required, auto-derived, or protected by fallback branches so no approval path can dead-end on empty/unexpected values
+- decide package type before generation: output `.yap` for a new/cloned application, and output `.yapk` only for an existing-app upgrade from a Yeeflow Version management baseline package
+- for `.yapk` upgrades, preserve app identity and stable object IDs; do not apply fresh-ID `.yap` import-generation rules unless adding newly proven resources
+
+## Default Lifecycle
+
+For requirement-to-application requests, load `references/requirement-to-yap-generation-lifecycle.md` and follow it end to end:
+
+1. Requirement intake
+2. Initial business analysis
+3. Initial app plan/spec
+4. Business clarification gate
+5. Wait for user answers when business-critical decisions are missing
+6. Apply confirmed answers to plan/spec
+7. Generation-readiness review
+8. Generate the correct package type only if ready: `.yap` for new applications, `.yapk` for existing-app upgrades when a safe baseline exists
+9. Local validation
+10. Runtime import testing when requested or included in the user's build/test request
+11. Runtime issue fixing
+12. Documentation
+13. Skill updates only if new reusable knowledge is learned
+14. Git commit/push
+15. Final package output
+
+## Package Type Gate
+
+Before generation, clarify whether the user wants:
+
+- a new application package (`.yap`) for import as a separate app, or
+- an existing application upgrade package (`.yapk`) for Application Settings -> Version management -> Upgrade application.
+
+For new applications, use normal `.yap` rules: fresh ID family, safe FlowKey/form key, `ReplaceIds`, full local app/form/list validation, and import as a new app.
+
+For existing application upgrades, request a baseline `.yapk` downloaded from Yeeflow Version management. Preserve `PackageId`, `TenantID`, `AppID`, `ListID`, stable object IDs, and other app identity fields required for upgrade. Do not generate a `.yap` when the user asked to modify the already-imported app unless they explicitly want a cloned app.
+
+Current `.yapk` limitation: studied Version management packages store `Resource` as opaque high-entropy base64 payloads with signature-like `Sign` values; they are not normal `[______gizp______]` `.yap` resources. A runtime test rejected a metadata-only wrapper edit even when `Resource` and `Sign` were preserved, and multi-version comparison showed `PackageId`, `Sign`, and `Resource` change across Yeeflow-generated versions. Until Yeeflow `.yapk` resource encoding/signing is proven, Codex must not output externally edited `.yapk` packages as valid upgrades; use Yeeflow Version management to generate official `.yapk` packages.
+
+Also load `references/business-solution-design-principles.md` before designing the app structure.
+For generation-readiness reviews, also load `references/business-decision-gates.md`, `references/application-design-quality-gates.md`, and `references/application-planning-key-design-decisions.md`.
+During final validation and runtime planning, also use the active workspace checklists when present:
+
+- `docs/yeeflow-runtime-test-checklist-template.md`
+- `docs/yeeflow-application-generation-review-checklist.md`
+
+## Business Decision Gates
+
+Before generating a real `.yap`, identify business choices that materially change workflow, validation, data persistence, pricing, quota logic, attachment rules, dashboards, or approval responsibility.
+
+Treat these as confirmation gates, not technical notes. Stop before generation if business-critical gates are unanswered and the user has not explicitly approved default assumptions.
+
+### Business Clarification Gate
+
+When unanswered business-critical decisions exist, ask them directly in the Codex chat after the initial app plan/spec is created or updated.
+
+Use this exact chat format:
+
+```text
+Business clarification required before generation:
+
+1. <Question>
+   - Option A:
+   - Option B:
+   - Recommended default:
+   - Why this matters:
+
+2. <Question>
+   - Option A:
+   - Option B:
+   - Recommended default:
+   - Why this matters:
+
+Generation is paused until these questions are answered or defaults are explicitly approved.
+```
+
+After outputting this block, do not continue to `.yap` generation in the same turn. Wait for the user's answers or explicit approval of the recommended defaults.
+
+Examples:
+
+- quota cycle policy
+- quota occupation/release timing
+- mandatory approval roles
+- pricing ownership and manual override policy
+- exact attachment requirements by scenario
+- whether dashboard surfaces belong in v1
+- status lifecycle
+- compliance/audit handling
+- integration responsibility
+- role permissions
+- what happens on approval, rejection, or resubmission
+
+Technical assumptions are different. Token shapes, tenant profile completeness, query-data behavior, conditional ContentList behavior, route-condition behavior, and validator/runtime quirks should be tested during generation/runtime validation and handled with fallback.
+
+App specs should record decision gates using this shape:
+
+```json
+"businessDecisionGates": [
+  {
+    "key": "quotaCycle",
+    "question": "Should quota reset by calendar year or employee anniversary year?",
+    "options": ["calendarYear", "employeeAnniversaryYear"],
+    "recommendedDefault": "calendarYear",
+    "requiredBeforeGeneration": true,
+    "status": "unanswered"
+  }
+]
+```
+
+## Mandatory V1 Capability Rule
+
+Do not incorrectly move core business capabilities to v2. If a capability is essential to the requested business process, keep it in v1 as either:
+
+- a proven implementation item, or
+- a required v1 runtime proof item with a documented fallback.
+
+Only defer true enhancements, integrations, advanced analytics, admin configurability, scheduled automation, or optional polish.
+
+## Design Quality Gate
+
+Before accepting generated approval forms, run a design-quality review using `yeeflow-approval-form-generator`.
+
+Generated app packages must fail readiness if the approval form does not follow the learned Yeeflow design structure:
+
+- page-level background, not `Main` background
+- `Main` / `Content` / `Form body` / `Form bottom`
+- Form header / request summary
+- two-column grids for normal fields
+- full-row layout for textarea, upload, list/sublist, rich text, and long helper/guidance content
+- learned Text control standard, inline width by default
+- meaningful `nv_label`
+- Action Panel and Flow History in Form bottom
+
+## Proven Standards To Apply
+
+Use the current Yeeflow generation foundation by default:
+
+- fresh ID family
+- fresh FlowKey/form key
+- FlowKey/form key must be safe against Yeeflow import replacement: its lowercase text must not appear inside reserved JSON property names such as `prefix`, `suffix`, `field`, `fields`, `profile`, `definition`, `workflow`, `variable`, `filter`, `ref`, `href`, `control`, `collection`, `condition`, `expression`, `attributes`, `actions`, or `binding`. Known failure: FlowKey `EFI` corrupted summary binding key `prefix` into `pr<runtimeFlowKey>x`.
+- `Data.Forms[].ListID = 0`
+- native Title metadata on generated data lists
+- requester/current-user assignment instead of hardcoded tenant users
+- page-level background, not `Main` background
+- learned Text control standard
+- Text controls inline width by default
+- Main / Content / Form body / Form bottom
+- Action Panel and Flow History in Form bottom
+- two-column grids for normal fields
+- full-row long controls and sublists
+- meaningful `nv_label`
+- approval-control runtime coverage
+- expression generation rules
+- sublist current-object expressions
+- sublist summary binding
+- workflow numeric routing
+- latest workflow transition condition operand wrappers for direct selectors, direct values, and expression-editor operands
+- form actions Phase 1 and Phase 2
+- correct `attrs.querydata_filters`
+- expression-editor token arrays with `showCus: false` for Query data filter values that reference workflow variables or calculations
+- `arraySum`
+- `JSONStringfy`
+- readable lookup summary variables
+- multi-item product/service/request lines should use sublists with row calculations and summary-bound total variables when the business process allows multiple selections
+- policy-critical totals from sublists should be recalculated in quota/submit/routing/persistence preflight actions with `arraySum(<ListVariableId>, "<SubtotalFieldId>", [], [])`, even when a visible summary binding is present
+- applicant/requester variables should be fixed business identities; Current User may default the applicant on a new request, but applicant profile reads, quota checks, workflow routes, and persistence should use the requester/applicant variable or snapshot variables
+- editable applicant/requester controls must rerun dependent snapshot/profile/quota form actions on change when proxy submission is allowed
+- user-profile-derived applicant data should be snapshotted into workflow/form variables, displayed readonly, and persisted through ContentList when needed for reporting/audit
+- quota and benefit usage lists should include applicant identity, readable applicant name, cycle number/year, amount, status, and source application number
+- if quota is occupied on submission, create the usage/occupation record when the workflow starts, include in-progress and approved/confirmed records in future quota checks, and release/update the matching record on rejection or final approval using a stored request/form/workflow correlation key
+- employee-anniversary quota cycles should use a numeric cycle field when comparing usage records; for boarding-year eligibility, `ApplicantBoardingYears = dateDiff(ApplicantBoardingDate, now(), "year", [])`, with `0` meaning no family quota and values greater than `0` meaning eligible
+- configuration lists such as attachment requirement rules must be read by form actions, workflows, dashboards, or reports in v1; otherwise remove/defer them instead of shipping dead configuration
+- master data lists such as Equipment Catalog, Visitors, Departments, Products, or Resource Catalog must be generated as usable runtime lists when lookups/forms depend on them; include maintainable sample/reference rows for local validation unless the dependency is deliberately external and mapped
+- do not ship generated data lists that only make the app plan look complete; each list must be opened by navigation/dashboard, queried by form actions, written by workflow, or explicitly identified as a maintained master/reference list
+- request line items must declare whether they are stored only as a parent readable summary, stored as direct child rows, or stored in a separate transaction item list; direct child-row persistence remains runtime-proof scoped unless a current baseline proves it for the target pattern
+- review-only availability decisions may route to an admin/security/equipment reviewer, but they are not inventory control. True stock/availability requires query-backed stock status or reservation/decrement/update behavior with focused runtime proof
+- workflow branches from approval/review nodes must cover normal, exception, empty, and unexpected routing-variable cases; unknown policy values should route to review/fallback, not to a dead end
+- core policy checks such as quota validation should run automatically on submit, not only through a manual check button
+- submit guard actions should prove both the invalid/warning path and the valid path; conditional warning/confirm/check steps before submit usually need step-level `continue: true` so valid requests skip the warning and still reach Submit form
+- required applicant identity controls with Default value = Current User should not also get redundant page-load Set variable default steps
+- multi-value Set variables should be used only for independent assignments; keep ordered Set variable steps when later values depend on earlier assignments
+- temp variables are frontend-only
+- ContentList persistence rules
+
+## Stop And Defer
+
+Do not blindly implement every requested detail in v1. Defer features when they are optional, integration-heavy, advanced, unclear, or likely to make the first package hard to import and test.
+
+Do not use "runtime-sensitive" alone as a reason to defer a core business capability. For core capabilities, require focused runtime proof and fallback behavior.
+
+Stop before generation when:
+
+- mandatory business decision gates are unanswered
+- required v1 capabilities have been misclassified as v2 enhancements
+- approval form design quality gates are not represented in the plan/spec
+- generated form structure lacks grid-based field layout or Form bottom action/history placement
+
+Use `yeeflow-feature-learning-orchestrator` when a requested app needs an unproven platform capability that should be learned from exports before production-style generation.
