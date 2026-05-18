@@ -62,7 +62,7 @@ For document libraries, also check:
 - folder rows should warn if they include uploaded file payloads or document binaries
 - generated packages do not embed raw file/document payloads unless focused runtime export-back proof exists
 
-For dashboard Doc library controls, also check:
+For Doc library controls on dashboards and form-hosted JSON surfaces, also check:
 
 - controls use `type = "document-library"`
 - `attrs.data.list.ListID` resolves to an included Type `16` document library
@@ -70,9 +70,10 @@ For dashboard Doc library controls, also check:
 - `attrs.listarr[].Field` values resolve to target library fields
 - `attrs.data.folder.path` folder IDs resolve to `ListDatas` rows in the target library when present
 - folder rows referenced by controls use `Text1 = "folder"` and contain no `Text4` upload payload
-- `attrs.caption.layout` resolves to a layout on the target document library when present
+- `attrs.caption.layout` resolves to a layout on the target document library when present; accept concrete large numeric layout IDs for enum placeholders such as `{LayoutID}`
 - caption `display`, `add`, and `search` values are booleans when present
 - dynamic `attrs.data.customPath` is an expression-token array when present; warn rather than claim runtime proof
+- document-library custom-form controls are runtime-proven for root-bound display and disabled search/add; approval-form controls remain partial until live published request-page proof; data-list custom-form controls remain validation-only
 
 ## Severity
 
