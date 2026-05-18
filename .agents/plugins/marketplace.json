@@ -10,6 +10,10 @@
         "source": "local",
         "path": "./dist/yeeflow-builder-plugin"
       },
+      "interface": {
+        "logo": "./dist/yeeflow-builder-plugin/assets/logo.png",
+        "composerIcon": "./dist/yeeflow-builder-plugin/assets/icon.png"
+      },
       "policy": {
         "installation": "AVAILABLE",
         "authentication": "ON_INSTALL"
