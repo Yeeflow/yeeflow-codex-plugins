@@ -2,7 +2,7 @@
 
 The Yeeflow Builder Plugin is a private, skills-only Codex plugin for internal Yeeflow application builders. It packages the current repo's proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth, Yeeflow API integration, or MCP servers.
 
-Package status: v0.2.0 release candidate is prepared from latest `origin/main` with updated materialization-validation skill guidance. v0.1.0 private Git marketplace install passed on 2026-05-18. Production/public marketplace release is not applicable, and the partner-safe edition is planned but not released.
+Package status: v0.2.0 private Git marketplace install smoke test passed with RC tag `yeeflow-builder-plugin-v0.2.0-rc1`. Production/public marketplace release is not applicable, and the partner-safe edition is planned but not released.
 
 ## Package Contents
 
@@ -114,7 +114,7 @@ If no repo-specific packaging command is available, use `dist/yeeflow-builder-pl
 
 ## Verified Install
 
-For v0.2.0 RC install smoke testing, use the RC tag created for this release candidate. Do not create or use a final non-RC tag until private marketplace install smoke test passes.
+The v0.2.0 private marketplace install smoke test passed with RC tag `yeeflow-builder-plugin-v0.2.0-rc1`.
 
 Install through Codex's private marketplace flow with:
 
@@ -123,7 +123,7 @@ Source:
 https://github.com/rengerhu/yeeflow-ai-builder-research.git
 
 Git ref:
-yeeflow-builder-plugin-v0.1.0-rc6
+yeeflow-builder-plugin-v0.2.0-rc1
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -134,13 +134,24 @@ Expected result: marketplace `Yeeflow Internal`, plugin `Yeeflow Builder`, categ
 
 If metadata or icon changes do not appear after updating the Git ref, remove and re-add the marketplace. The package includes plugin and marketplace icon paths, but fallback icon display may still occur because of Codex marketplace UI/cache behavior and is not an install blocker.
 
+Smoke prompts tested for v0.2.0:
+
+- Application builder lifecycle summary.
+- Feature-learning orchestrator use cases.
+- Custom-code-generator Smart Lookup Picker support.
+- Materialization validation behavior for generated `.yap` packages.
+
 ## Release Notes
 
-### v0.2.0-rc1
+### v0.2.0
 
 Previous version: `0.1.0`.
 
 New version: `0.2.0`.
+
+RC tag tested: `yeeflow-builder-plugin-v0.2.0-rc1`.
+
+Private marketplace install smoke test: passed.
 
 Changed bundled skills:
 

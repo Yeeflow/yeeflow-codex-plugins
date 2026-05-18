@@ -27,14 +27,22 @@ Use this when Codex asks to add a plugin marketplace from a GitHub repo, Git URL
 
 Verified install status: passed on 2026-05-18.
 
-Use these values in Codex's Add marketplace dialog:
+v0.2.0 RC install smoke test result:
+
+- RC tag tested: `yeeflow-builder-plugin-v0.2.0-rc1`
+- Install result: passed
+- Marketplace name: `Yeeflow Internal`
+- Category: `Developer Tools`
+- Plugin name: `Yeeflow Builder`
+
+Use these values in Codex's Add marketplace dialog for the tested RC:
 
 ```text
 Source:
 https://github.com/rengerhu/yeeflow-ai-builder-research.git
 
 Git ref:
-yeeflow-builder-plugin-v0.1.0-rc6
+yeeflow-builder-plugin-v0.2.0-rc1
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -61,11 +69,11 @@ Icon behavior: `rc6` includes plugin-level and marketplace-entry icon paths. If 
 
 ## Release Status
 
-v0.2.0 release-candidate status:
+v0.2.0 status:
 
-- Private Git marketplace install: pending RC smoke test.
+- Private Git marketplace install: passed with `yeeflow-builder-plugin-v0.2.0-rc1`.
 - ZIP package smoke test: passed locally.
-- Git marketplace install: pending RC smoke test.
+- Git marketplace install: passed.
 - Production/public marketplace: not applicable.
 - Partner-safe edition: planned, not released.
 
@@ -238,6 +246,13 @@ Use yeeflow-custom-code-generator. Explain the runtime-proven support boundaries
 ```
 
 Expected result: Codex describes custom code support only for runtime-proven contexts, does not claim untested public form support, and avoids presenting custom code as the default when native Yeeflow controls can solve the requirement.
+
+v0.2.0 install smoke prompts tested:
+
+- Application builder lifecycle summary.
+- Feature-learning orchestrator use cases.
+- Custom-code-generator Smart Lookup Picker support.
+- Materialization validation behavior for generated `.yap` packages.
 
 ## Known Limitations
 

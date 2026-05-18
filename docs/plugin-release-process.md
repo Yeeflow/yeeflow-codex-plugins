@@ -25,9 +25,9 @@ dist/yeeflow-builder-plugin-0.2.0.zip
 Current release status:
 
 - v0.1.0 private Git marketplace install: passed.
-- v0.2.0 release candidate: prepared, pending private marketplace install smoke test.
-- ZIP package smoke test: passed locally for the release candidate.
-- Git marketplace install: pending for v0.2.0 until RC smoke test passes.
+- v0.2.0 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.2.0-rc1`.
+- ZIP package smoke test: passed locally.
+- Git marketplace install: passed.
 - Production/public marketplace: not applicable.
 - Partner-safe edition: planned, not released.
 
@@ -38,7 +38,7 @@ Source:
 https://github.com/rengerhu/yeeflow-ai-builder-research.git
 
 Git ref:
-yeeflow-builder-plugin-v0.1.0-rc6
+yeeflow-builder-plugin-v0.2.0-rc1
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -47,13 +47,24 @@ dist/yeeflow-builder-plugin
 
 Expected Codex result: marketplace `Yeeflow Internal`, plugin `Yeeflow Builder`, category `Developer Tools`, and successful plugin install. If metadata or icon assets do not refresh after a tag update, remove and re-add the marketplace. Fallback icon rendering is not a release blocker when install succeeds and the package includes icon paths.
 
+Smoke prompts tested:
+
+- Application builder lifecycle summary.
+- Feature-learning orchestrator use cases.
+- Custom-code-generator Smart Lookup Picker support.
+- Materialization validation behavior for generated `.yap` packages.
+
 ## Release Notes
 
-### v0.2.0-rc1
+### v0.2.0
 
 Previous version: `0.1.0`.
 
 New version: `0.2.0`.
+
+RC tag tested: `yeeflow-builder-plugin-v0.2.0-rc1`.
+
+Private marketplace install smoke test: passed.
 
 Changed bundled skills:
 
