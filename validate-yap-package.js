@@ -794,6 +794,9 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
     if (dataList && safeString(dataList.ListID) && !listsById.has(safeString(dataList.ListID))) {
       issue(report, severity, "DASHBOARD_CONTROL_LIST_REFERENCE_UNRESOLVED", "Dashboard control data.list references a list not included in the package.", { title, layoutId, pointer, listId: safeString(dataList.ListID) });
     }
+    if (safeString(node.type) === "document-library") {
+      validateDashboardDocLibraryControl(node, title, layoutId, pointer, listsById, fieldsByList, report);
+    }
     const dataForm = node.attrs && node.attrs.data && node.attrs.data.form;
     if (dataForm && safeString(dataForm.ListSetID) && safeString(dataForm.ListSetID) !== safeString(resource.ListSetID || (resource.Item && resource.Item.ListID)) && !listsById.has(safeString(dataForm.ListSetID))) {
       issue(report, report.mode === "generator" ? "error" : "dependency", "DASHBOARD_FORM_EXTERNAL_LISTSET_REFERENCE", "Dashboard action references a form/listset outside the package; generated dashboards should model or exclude external dependencies.", { title, layoutId, pointer, listSetId: safeString(dataForm.ListSetID), procKey: safeString(dataForm.ProcKey) });
@@ -1060,6 +1063,91 @@ function validateDashboardListId(title, layoutId, pointer, value, listsById, rep
   }
 }
 
+function validateDashboardDocLibraryControl(node, title, layoutId, pointer, listsById, fieldsByList, report) {
+  const attrs = node.attrs || {};
+  const data = attrs.data || {};
+  const listRef = data.list || {};
+  const listId = safeString(listRef.ListID);
+  if (!listId) {
+    issue(report, "warning", "DOC_LIBRARY_CONTROL_LIST_MISSING", "Doc library dashboard control should include attrs.data.list.ListID.", { title, layoutId, pointer });
+    return;
+  }
+
+  const list = listsById.get(listId);
+  if (!list) {
+    issue(report, generatorFinalSeverity(report), "DOC_LIBRARY_CONTROL_LIST_UNRESOLVED", "Doc library dashboard control references a list not included in the package.", { title, layoutId, pointer, listId });
+    return;
+  }
+  if (list.resourceType !== "document library" || Number(list.item && list.item.ListModel && list.item.ListModel.Type) !== 16) {
+    issue(report, "warning", "DOC_LIBRARY_CONTROL_TARGET_NOT_TYPE16", "Doc library dashboard control should target a Type 16 document library resource.", { title, layoutId, pointer, listId, targetType: list.resourceType });
+  }
+  if (safeString(listRef.Type) && safeString(listRef.Type) !== "16") {
+    issue(report, "warning", "DOC_LIBRARY_CONTROL_LIST_TYPE_UNUSUAL", "Doc library dashboard control attrs.data.list.Type should be 16.", { title, layoutId, pointer, listId, type: listRef.Type });
+  }
+  if (safeString(listRef.Title) && safeString(listRef.Title) !== list.title) {
+    issue(report, "warning", "DOC_LIBRARY_CONTROL_LIST_TITLE_MISMATCH", "Doc library dashboard control list title should match the referenced document library.", { title, layoutId, pointer, listId, controlTitle: listRef.Title, targetTitle: list.title });
+  }
+
+  const fields = fieldsByList.get(listId) || new Map();
+  asArray(attrs.listarr).forEach((column, index) => {
+    const fieldName = safeString(column && column.Field);
+    if (fieldName && !fields.has(fieldName)) {
+      issue(report, "warning", "DOC_LIBRARY_CONTROL_FIELD_UNRESOLVED", "Doc library dashboard control listarr field should resolve to a field on the target document library.", { title, layoutId, pointer: `${pointer}.attrs.listarr[${index}]`, listId, fieldName });
+    }
+  });
+
+  const folder = data.folder;
+  if (folder !== undefined) {
+    const pathValue = safeString(folder && folder.path);
+    if (!pathValue) {
+      issue(report, "warning", "DOC_LIBRARY_CONTROL_FOLDER_PATH_MISSING", "Folder-bound Doc library dashboard controls should include attrs.data.folder.path.", { title, layoutId, pointer, listId });
+    } else {
+      const folderIds = pathValue.split("/").filter((part) => part && part !== "0");
+      const rows = list.item && isObject(list.item.ListDatas) ? list.item.ListDatas : {};
+      for (const folderId of folderIds) {
+        const row = rows[folderId] || Object.values(rows).find((candidate) => safeString(candidate && candidate.ListDataID) === folderId);
+        if (!row) {
+          issue(report, "warning", "DOC_LIBRARY_CONTROL_FOLDER_UNRESOLVED", "Doc library dashboard control folder.path should resolve to folder rows in the target document library.", { title, layoutId, pointer, listId, folderId, path: pathValue });
+          continue;
+        }
+        if (safeString(row.Text1).toLowerCase() !== "folder") {
+          issue(report, "warning", "DOC_LIBRARY_CONTROL_FOLDER_ROW_NOT_FOLDER", "Doc library dashboard control folder.path should point to rows with Text1 = folder.", { title, layoutId, pointer, listId, folderId, rowType: row.Text1 });
+        }
+        if (row.Text4) {
+          issue(report, "warning", "DOC_LIBRARY_CONTROL_FOLDER_ROW_HAS_UPLOAD_PAYLOAD", "Folder rows referenced by Doc library controls should not include uploaded file payloads.", { title, layoutId, pointer, listId, folderId });
+        }
+      }
+    }
+  }
+
+  if (data.customPath !== undefined) {
+    if (!Array.isArray(data.customPath)) {
+      issue(report, "warning", "DOC_LIBRARY_CONTROL_CUSTOMPATH_NOT_ARRAY", "Dynamic folder customPath should be an expression-token array when present.", { title, layoutId, pointer, listId });
+    } else {
+      const result = validateExpressionTokens(data.customPath);
+      result.issues.forEach((expressionIssue) => {
+        issue(report, "warning", `DOC_LIBRARY_CONTROL_CUSTOMPATH_${expressionIssue.code}`, expressionIssue.message, { title, layoutId, pointer: `${pointer}.attrs.data.customPath`, listId });
+      });
+    }
+  }
+
+  const caption = attrs.caption;
+  if (caption !== undefined && isObject(caption)) {
+    const captionLayout = safeString(caption.layout);
+    if (captionLayout) {
+      const layoutIds = new Set(asArray(list.item && list.item.Layouts).map((candidate) => safeString(candidate.LayoutID)).filter(Boolean));
+      if (!layoutIds.has(captionLayout)) {
+        issue(report, "warning", "DOC_LIBRARY_CONTROL_CAPTION_LAYOUT_UNRESOLVED", "Doc library dashboard control caption.layout should reference a layout on the target document library.", { title, layoutId, pointer, listId, captionLayout });
+      }
+    }
+    for (const key of ["display", "add", "search"]) {
+      if (caption[key] !== undefined && typeof caption[key] !== "boolean") {
+        issue(report, "warning", "DOC_LIBRARY_CONTROL_CAPTION_FLAG_NOT_BOOLEAN", "Doc library dashboard control caption display/add/search settings should be booleans.", { title, layoutId, pointer: `${pointer}.attrs.caption.${key}`, key, value: caption[key] });
+      }
+    }
+  }
+}
+
 function flattenNavigationItems(items) {
   const out = [];
   for (const item of asArray(items)) {
@@ -1259,7 +1347,19 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   const recordCount = item.ListDatas && isObject(item.ListDatas) ? Object.keys(item.ListDatas).length : 0;
   if (item.ListDatas && !isObject(item.ListDatas)) issue(report, "error", "LISTDATAS_BAD_TYPE", "Item.ListDatas must be an object when present.", { path: `${pathPrefix}.ListDatas`, list: title });
   if (recordCount) {
+    const recordIds = new Set();
+    const documentFolderIds = new Set(Object.entries(item.ListDatas)
+      .filter(([, record]) => isObject(record) && safeString(record.Text1).toLowerCase() === "folder")
+      .flatMap(([recordId, record]) => [safeString(recordId), safeString(record.ListDataID)])
+      .filter(Boolean));
     for (const [recordId, record] of Object.entries(item.ListDatas)) {
+      const normalizedRecordId = safeString(recordId);
+      const listDataId = safeString(record && record.ListDataID);
+      const canonicalRecordId = listDataId || normalizedRecordId;
+      if (canonicalRecordId) {
+        if (recordIds.has(canonicalRecordId)) issue(report, "error", "LISTDATA_ID_DUPLICATE", "ListDataID/sample record IDs must be unique within a resource.", { list: title, recordId: canonicalRecordId });
+        recordIds.add(canonicalRecordId);
+      }
       if (recordId && LARGE_INTEGER_RE.test(recordId)) localIds.add(recordId);
       if (record && record.ListDataID && LARGE_INTEGER_RE.test(String(record.ListDataID))) localIds.add(String(record.ListDataID));
       if (isObject(record)) {
@@ -1271,6 +1371,17 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
             issue(report, "warning", "DOCUMENT_LIBRARY_SAMPLE_FILE_CONTENT_PRESENT", "Document library sample data includes a Text4 upload value. Do not include raw file/document payloads in generated packages unless a focused runtime export proves the expected safe shape.", { list: title, recordId, field: key });
           }
         });
+        if (resourceType === "document library" && safeString(record.Text1).toLowerCase() === "folder") {
+          if (!listDataId) issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_LISTDATAID_MISSING", "Document library folder rows should include ListDataID.", { list: title, recordId });
+          if (!safeString(record.Title)) issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_TITLE_MISSING", "Document library folder rows should include Title/Name.", { list: title, recordId });
+          const parentId = safeString(record.Bigint1);
+          if (parentId === "") issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_PARENT_MISSING", "Document library folder rows should include Bigint1/ParentID; root folders use \"0\" in studied exports.", { list: title, recordId });
+          if (parentId && parentId !== "0" && !documentFolderIds.has(parentId)) {
+            issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_PARENT_UNRESOLVED", "Document library folder ParentID should be 0 or point to another folder row.", { list: title, recordId, parentId });
+          }
+          if (record.Text4) issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_UPLOAD_PAYLOAD_PRESENT", "Document library folder rows should not include uploaded file payloads.", { list: title, recordId });
+          if (record.Bigint2 !== undefined && record.Bigint2 !== "") issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_SIZE_UNUSUAL", "Studied document-library folder rows leave Bigint2/FileSize blank.", { list: title, recordId, value: record.Bigint2 });
+        }
       }
     }
   }
