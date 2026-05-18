@@ -1,7 +1,7 @@
 {
   "appName": "Enterprise Service Request & Compliance Review",
   "phase": "Phase 2 materialization fix",
-  "runtimeStatus": "pending_after_latest_patch",
+  "runtimeStatus": "showcase_still_empty_after_latest_patch_one_list_control_passed",
   "publicFormSupport": "not claimed",
   "generatedPackage": "custom-code-template-showcase.v1.yap",
   "templates": [
@@ -74,7 +74,7 @@
   "localValidation": "pass_with_warnings",
   "materialization": {
     "latestLocalStatus": "pass",
-    "runtimeStatus": "not retested after metadata-preservation patch",
+    "runtimeStatus": "showcase runtime retest still opened empty; one-list materialization control passed manually",
     "previousRuntimeSmoke": {
       "package": "pre-metadata-fix import smoke",
       "result": "imported app tile but opened to Start to build with Components"
@@ -84,6 +84,20 @@
       "LayoutInResources[0].ID and RefId match the dashboard LayoutID.",
       "Baseline TenantID, CreatedBy, and ModifiedBy metadata are preserved and not included in ReplaceIds.",
       "ReplaceIds is limited to generated local app-resource IDs plus flow keys where applicable."
-    ]
+    ],
+    "latestRuntimeSmoke": {
+      "package": "custom-code-template-showcase.v1.yap",
+      "appName": "Custom Code Template Showcase Materialization Retest 20260518",
+      "result": "imported app tile but opening detected route still showed Start to build with Components",
+      "componentTesting": "not started because materialization did not pass"
+    },
+    "controlPackage": {
+      "package": "one-list-materialization-smoke-test.v1.yap",
+      "appName": "One Data List Materialization Smoke Test",
+      "contents": "one root Type 103 home page, one data list, two sample records, no approval forms, no custom code controls",
+      "localValidation": "package pass_with_warnings; graph pass; wrapper pass; wrapper graph pass; materialization pass_with_warnings only because no approval forms were included",
+      "runtimeResult": "installed and manual test passed, reported by user on 2026-05-18",
+      "conclusion": "Yeeflow can materialize a simple generated one-list app package; remaining showcase blocker is specific to richer showcase resource structure."
+    }
   }
 }

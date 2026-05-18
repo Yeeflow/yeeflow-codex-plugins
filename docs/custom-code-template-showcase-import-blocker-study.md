@@ -97,7 +97,17 @@ This catches both locally detectable empty-shell risks found during this investi
 
 ## Current Status
 
-The patched package passes local materialization inspection and the normal local validation chain. A pre-metadata-fix runtime smoke import still opened as an empty shell. The post-metadata-fix package has not yet been runtime-proven as materialized, so runtime import smoke must still be repeated before any component-level Custom Code runtime claims are made.
+The patched showcase package passes local materialization inspection and the normal local validation chain. A pre-metadata-fix runtime smoke import still opened as an empty shell. A fresh post-metadata-fix runtime import was created as `Custom Code Template Showcase Materialization Retest 20260518`, but opening the detected runtime route still showed the empty `Start to build with Components` state. This means the showcase package is still not runtime-proven as materialized.
+
+To isolate whether generated `.yap` import was broadly broken, a separate minimal package was generated:
+
+- Package: `one-list-materialization-smoke-test.v1.yap`
+- App: `One Data List Materialization Smoke Test`
+- Contents: one root Type `103` home page, one data list, two sample records, no approval forms, no Custom Code controls
+- Local result: package, graph, wrapper round trip, and materialization inspection passed; materialization inspection only warned that no approval forms were present
+- Runtime result reported by user on 2026-05-18: installed and test passed
+
+This proves the current Yeeflow tenant can import and materialize a simple generated app package. The remaining showcase blocker is therefore not a blanket import/wrapper failure. Focus the next investigation on structural differences between the one-list materialization smoke package, the Smart Lookup focused package, and the full showcase package.
 
 Template runtime proof status is unchanged:
 
