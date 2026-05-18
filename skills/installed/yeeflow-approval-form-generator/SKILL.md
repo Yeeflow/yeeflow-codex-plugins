@@ -50,7 +50,7 @@ When an approval form depends on master/reference data, treat the dependency as 
 
 Use custom code only when the requirement is justified client-side behavior that native Yeeflow features cannot model safely.
 
-Doc library control note: the product exposes the `Doc library` control on approval forms, data-list forms, document-library forms, and dashboards, but the current export-backed generated proof is dashboard-only. If adding a Doc library control to an approval form, reuse the studied `type = "document-library"` / `attrs.data.list` / optional `attrs.data.folder` pattern only as a hypothesis, validate locally, and do not claim approval-form runtime proof until a focused generated package imports and opens successfully.
+Doc library control note: the product exposes the `Doc library` control on approval forms, data-list forms, document-library forms, and dashboards. Dashboard controls are runtime-proven. The form-host study showed approval-form Doc library controls render in Form Builder preview, but live request-page proof remained partial because the generated `Document Review` workflow assignment task did not set the task assignee and task form setting correctly. Treat that as a workflow/task-node generation follow-up, not a Doc library control schema failure. If adding a Doc library control to an approval form, reuse the studied `type = "document-library"` / `attrs.data.list` / optional `attrs.data.folder` pattern, validate locally, configure assignment task assignee and task form settings from a proven workflow pattern, and do not claim published approval-form runtime proof until import, publish, and live request-page open all pass.
 
 ## Generated Approval Form UI/UX Standard
 

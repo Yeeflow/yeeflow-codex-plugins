@@ -116,7 +116,9 @@ function collectKnownPathIssues(target, typeName, schemaEntry, options = {}) {
     }
     if (spec.enum && !valueMissing(normalizedValue)) {
       const stringValue = String(normalizedValue);
-      if (!spec.enum.map(String).includes(stringValue)) {
+      const enumValues = spec.enum.map(String);
+      const acceptsRuntimeId = enumValues.includes("{LayoutID}") && /^\d{16,}$/.test(stringValue);
+      if (!enumValues.includes(stringValue) && !acceptsRuntimeId) {
         issues.push({
           code: "SCHEMA_ENUM_VALUE_INVALID",
           message: `${typeName}.${propertyPath} has a value outside the normalized enum.`,

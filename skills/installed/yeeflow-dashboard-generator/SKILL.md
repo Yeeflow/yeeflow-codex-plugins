@@ -94,7 +94,8 @@ Use dashboard Doc library controls when a dashboard should expose Yeeflow Docume
 - for a root-folder view, set `attrs.data.folder.path = "0/<folder ListDataID>"` and `attrs.data.folder.label` to the folder title
 - populate `attrs.listarr[]` with target-library fields; the first Name column may use the observed `Attrs.table.cw = [null, 40]` and `cwu = [null, "%"]`
 - when using a caption, the export-proven settings are `display: true`, `add: true`, `search: true`, `placeholder`, `addtext`, `layout` pointing to the target library `New file` form `LayoutID`, and `op: "modal"`
-- do not claim add/search/caption disabled states, dynamic folder paths, or non-dashboard form contexts as runtime-proven until focused generated packages test them
+- disabled search/add settings are runtime-proven for a document-library custom-form hosted Doc library control, but disabled dashboard states are still untested; do not generalize the disabled-state proof across hosts without a focused runtime test
+- do not claim dynamic folder paths or non-dashboard approval/data-list form contexts as runtime-proven until focused generated packages test them
 - do not generate uploaded document rows or document binaries for dashboard control tests
 
 ## Custom Code Controls On Dashboards

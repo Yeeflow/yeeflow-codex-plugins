@@ -549,6 +549,7 @@ function validate(inputPath, mode, stage) {
 
   validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList, report, resource);
   validateReplaceIds(replaceIds, localIds, report);
+  validateCustomFormDocLibraryControls(data, listsById, fieldsByList, report);
   validateForms(data, listsById, fieldsByList, replaceIds, localIds, report);
   validateGeneratedListRuntimeUsage(data, report);
   validateReportsDashboardsModules(data, listsById, fieldsByList, replaceIds, localIds, report);
@@ -1475,6 +1476,26 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
   }));
 }
 
+function validateCustomFormDocLibraryControls(data, listsById, fieldsByList, report) {
+  const items = [data && data.Item, ...asArray(data && data.Childs)];
+  items.forEach((item, itemIndex) => {
+    const pathPrefix = itemIndex === 0 ? "$.Item" : `$.Childs[${itemIndex - 1}]`;
+    asArray(item && item.Layouts).forEach((layout, layoutIndex) => {
+      if (Number(layout.Type) !== 1) return;
+      const resource = asArray(layout.LayoutInResources)[0];
+      const form = resource && tryParseJson(resource.Resource);
+      if (!form) return;
+      const layoutId = safeString(layout.LayoutID);
+      asArray(form.children).forEach((child, childIndex) => {
+        walkControls(child, (control, pointer) => {
+          if (safeString(control.type) !== "document-library") return;
+          validateDashboardDocLibraryControl(control, layout.Title, layoutId, `${pathPrefix}.Layouts[${layoutIndex}].LayoutInResources[0].Resource.children[${childIndex}]${pointer.slice(1)}`, listsById, fieldsByList, report);
+        });
+      });
+    });
+  });
+}
+
 function validateEmbeddedControlSchema(control, report, context) {
   validateControlAgainstSchema(control, report._controlFieldSchemas).forEach((schemaIssue) => {
     issue(report, "warning", `CONTROL_SCHEMA_${schemaIssue.code}`, schemaIssue.message, {
@@ -1589,7 +1610,7 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     }
     if (!def) return;
     if (def.defkey && key && String(def.defkey) !== key) issue(report, "warning", "FORM_DEFKEY_MISMATCH", "Form Key and decoded Def defkey differ.", { form: formName, key, defkey: def.defkey });
-    if (approvalLike) validateApprovalDef(def, form, report);
+    if (approvalLike) validateApprovalDef(def, form, report, listsById, fieldsByList);
     validateFormLookupControls(def, form, listsById, fieldsByList, report);
     validateWorkflowGraph(def, form, report);
     validateWorkflowActionConfigurations(def, form, report);
@@ -1633,7 +1654,7 @@ function validateFormLookupControls(def, form, listsById, fieldsByList, report) 
   }
 }
 
-function validateApprovalDef(def, form, report) {
+function validateApprovalDef(def, form, report, listsById = new Map(), fieldsByList = new Map()) {
   const pages = asArray(def.pageurls);
   if (!pages.length) issue(report, "error", "APPROVAL_PAGEURLS_MISSING", "Approval form must include pageurls.", { form: form.Name, key: form.Key });
   const ids = new Set();
@@ -1653,6 +1674,9 @@ function validateApprovalDef(def, form, report) {
             path: `Data.Forms[${form.Name || form.Key}].pageurls[${index}].formdef.children[${childIndex}]${pointer.slice(1)}`,
             surface: "approval form page",
           });
+          if (safeString(control.type) === "document-library") {
+            validateDashboardDocLibraryControl(control, page.title || page.name || page.id, page.id || index, `Data.Forms[${form.Name || form.Key}].pageurls[${index}].formdef.children[${childIndex}]${pointer.slice(1)}`, listsById, fieldsByList, report);
+          }
         });
       });
     }

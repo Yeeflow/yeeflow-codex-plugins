@@ -76,7 +76,16 @@ Generation of dynamic folder controls is deferred until a focused generated-pack
 
 ## Form Contexts
 
-The user confirmed the control is available on dashboards, approval forms, data-list forms, and document-library forms. This pass only studied dashboard usage. For other contexts, document the same control schema as likely reusable, but do not claim runtime proof until a generated package is tested in that context.
+The user confirmed the control is available on dashboards, approval forms, data-list forms, and document-library forms.
+
+The form-host pass generated `Enterprise Document Center - Form Hosted Doc Library` and confirmed these additional patterns:
+
+- The same `type = "document-library"` control schema can be embedded in approval-form page JSON and renders in the form designer/runtime preview.
+- The same control schema can be embedded in document-library custom forms; the generated `Company Policies` custom add form opened at runtime and rendered a `Templates and Forms` Doc library control.
+- `caption.search = false` and `caption.add = false` are accepted for a document-library-form-hosted control; the runtime modal showed no search box and no add button for the related templates control.
+- Approval-form live request proof is currently blocked by workflow task-node configuration, not by the Doc library control schema. The `Document Review` assignment task must set both a valid task assignee and the correct task form setting before publish/live-open proof can be claimed.
+
+Do not claim fully published approval-form host runtime until a fresh generated package fixes the workflow/task-node configuration, imports, publishes, opens as a request form, and the Doc library controls are checked outside designer preview. Do not claim data-list custom-form host runtime until the data list can be reached in the imported app and its custom forms open with the controls rendered.
 
 ## Validator Recommendations
 
