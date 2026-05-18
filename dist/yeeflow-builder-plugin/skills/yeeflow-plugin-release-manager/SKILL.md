@@ -1,0 +1,50 @@
+---
+name: yeeflow-plugin-release-manager
+description: Standardize Yeeflow Builder Plugin rebuild and release workflows. Use when bundled Yeeflow skills are updated, the user asks to rebuild or update the Yeeflow Builder Plugin, create a new plugin version, prepare a release candidate, validate a plugin package, or finalize an RC after private marketplace install smoke testing.
+---
+
+# Yeeflow Plugin Release Manager
+
+## Core Rule
+
+RC tag equals build ready for testing. Final tag equals install-tested and accepted for users.
+
+Never create a final non-RC release tag before the private marketplace install smoke test passes and the result is documented.
+
+## Release Workflow
+
+1. Fetch tags and latest `origin/main`.
+2. Detect the latest final plugin release tag automatically. Ignore `-rc*` tags when deciding the latest final release.
+3. Read the current plugin version from `dist/yeeflow-builder-plugin/.codex-plugin/plugin.json`.
+4. Compare latest main with the latest final plugin release tag for bundled skill paths.
+5. If no bundled skills changed, report that no rebuild is required and stop.
+6. If skills changed, choose the next version, create a rebuild branch, rebuild the plugin folder and zip, update metadata and docs, validate, commit, push, and create an RC tag.
+7. After the user confirms private marketplace install smoke passed, record the result and create the final annotated tag.
+
+Use [plugin-rebuild-lifecycle.md](references/plugin-rebuild-lifecycle.md) for the detailed command flow.
+
+## Versioning
+
+Use [plugin-versioning-rules.md](references/plugin-versioning-rules.md) to choose patch or minor:
+
+- patch for minor docs, rules, validator, packaging, or clarification updates
+- minor for meaningful new capability, new bundled support skill, or runtime-proven feature expansion
+
+Do not create a final tag as part of the rebuild task. Create only the RC tag until install smoke passes.
+
+## Validation And Smoke
+
+Use [plugin-release-checklist.md](references/plugin-release-checklist.md) before committing or tagging. Use [plugin-install-smoke-test.md](references/plugin-install-smoke-test.md) to document:
+
+- install source
+- Git ref
+- sparse paths
+- marketplace name
+- plugin name
+- smoke prompts tested
+- UI cache or icon behavior
+- install result
+
+## Reporting
+
+Report latest detected version, changed bundled skills, version decision, archive path, validation results, commit hash, branch status, RC tag or final tag, and whether plugin rebuild is still pending.

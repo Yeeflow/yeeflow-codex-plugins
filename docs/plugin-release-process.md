@@ -19,15 +19,16 @@ dist/yeeflow-builder-plugin/
 Current release archive:
 
 ```text
-dist/yeeflow-builder-plugin-0.2.0.zip
+dist/yeeflow-builder-plugin-0.3.0.zip
 ```
 
 Current release status:
 
 - v0.1.0 private Git marketplace install: passed.
 - v0.2.0 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.2.0-rc1`.
-- ZIP package smoke test: passed locally.
-- Git marketplace install: passed.
+- v0.3.0 release candidate: prepared, pending private marketplace install smoke test.
+- ZIP package smoke test: passed locally for the release candidate.
+- Git marketplace install: pending for v0.3.0 until RC smoke test passes.
 - Production/public marketplace: not applicable.
 - Partner-safe edition: planned, not released.
 
@@ -38,7 +39,7 @@ Source:
 https://github.com/rengerhu/yeeflow-ai-builder-research.git
 
 Git ref:
-yeeflow-builder-plugin-v0.2.0-rc1
+yeeflow-builder-plugin-v0.3.0-rc1
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -55,6 +56,41 @@ Smoke prompts tested:
 - Materialization validation behavior for generated `.yap` packages.
 
 ## Release Notes
+
+### v0.3.0-rc1
+
+Previous version: `0.2.0`.
+
+New version: `0.3.0`.
+
+Release status: release candidate only. Final non-RC tag must wait for private marketplace install smoke test.
+
+Added bundled skills:
+
+- `yeeflow-runtime-test-orchestrator`
+- `yeeflow-package-validator`
+- `yeeflow-plugin-release-manager`
+
+Changed bundled skills:
+
+- None of the existing eight core bundled skills changed since `yeeflow-builder-plugin-v0.2.0`.
+
+Main improvements:
+
+- Adds a runtime test orchestration skill for import/open smoke tests, dashboard/data-bound validation, forms, workflows, expressions, ContentList persistence, lifecycle tests, and runtime result classification.
+- Adds a package validator skill for package graph checks, workflow/list/form/dashboard/custom-code inspection, materialization rules, FlowKey safety, field/list integrity, and `.yap` versus `.yapk` policy.
+- Adds a plugin release manager skill for detecting changed bundled skills, choosing versions, rebuilding the private plugin package, creating RC tags, recording install smoke tests, and finalizing non-RC tags only after install proof.
+
+Known limitations:
+
+- Skills-only plugin.
+- No OAuth.
+- No Yeeflow API integration.
+- No MCP server.
+- `.yapk` mutation is not supported.
+- Runtime testing still requires Yeeflow access.
+- Public form custom code support is not claimed unless tested.
+- Partner-safe edition is planned but not released.
 
 ### v0.2.0
 
