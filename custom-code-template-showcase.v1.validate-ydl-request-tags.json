@@ -2,8 +2,8 @@
   "status": "pass_with_warnings",
   "mode": "generator",
   "stage": "final",
-  "input": "/tmp/request-tags.ydl.json",
-  "inputKind": "decodedData",
+  "input": "/tmp/cct-request-tags-resource.json",
+  "inputKind": "decodedResource",
   "errors": [],
   "warnings": [
     {
@@ -13,8 +13,18 @@
     {
       "code": "DESIGN_SYSTEM_RESOLVED_TOKEN_COLOR",
       "message": "Generated list UI contains literal hex colors that match known Yeeflow root tokens. Prefer token references where supported, but do not fail exports that store resolved values.",
-      "count": 2,
+      "count": 4,
       "examples": [
+        {
+          "color": "#E6F0FF",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#0065FF",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
         {
           "color": "#E6F0FF",
           "path": "$.data.Item.ListModel.IconUrl",

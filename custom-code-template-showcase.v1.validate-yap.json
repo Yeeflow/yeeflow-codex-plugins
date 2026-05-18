@@ -274,7 +274,7 @@
     "copilots": 0,
     "connections": 0,
     "knowledges": 0,
-    "replaceIds": 67,
+    "replaceIds": 211,
     "lookupRelationships": 0,
     "contentListReferences": 1,
     "workflowActionConfig": {
@@ -398,8 +398,8 @@
     "modules": []
   },
   "wrapper": {
-    "inputType": "decoded-resource-json",
+    "inputType": "wrapped-yap",
     "wrapperJsonValid": true,
-    "resourcePrefixValid": null
+    "resourcePrefixValid": true
   }
 }

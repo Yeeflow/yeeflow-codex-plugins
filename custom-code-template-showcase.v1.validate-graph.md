@@ -1,6 +1,6 @@
 # Yeeflow .yap Graph Validation
 
-- Input: `custom-code-template-showcase.v1.resource.json`
+- Input: `custom-code-template-showcase.v1.yap`
 - Status: `pass`
 - Mode: `generator`
 - Stage: `final`
@@ -25,7 +25,7 @@
 | unresolvedEdges | 0 |
 | cycles | 0 |
 | workflowActionConfig | [object Object] |
-| replaceIds | 69 |
+| replaceIds | 211 |
 
 ## Errors
 

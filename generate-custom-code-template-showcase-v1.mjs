@@ -150,11 +150,17 @@ function renameFields(list, mapping) {
 }
 
 function makeList(baseList, meta, index) {
-  const list = clone(baseList);
+  let list = clone(baseList);
+  const originalListId = String(list.ListModel.ListID);
   const listId = nextId(100 + index * 100);
   const viewId = nextId(101 + index * 100);
   const editId = nextId(102 + index * 100);
   const viewFormId = nextId(103 + index * 100);
+  const idMap = new Map([[originalListId, listId]]);
+  for (const [fieldIndex, def] of list.Defs.entries()) {
+    idMap.set(String(def.FieldID), nextId(10000 + index * 1000 + fieldIndex + 1));
+  }
+  list = remapIds(list, idMap);
   list.ListModel.ListID = listId;
   list.ListModel.Title = meta.title;
   list.ListModel.Description = `${meta.title} for the Custom Code Template Showcase app.`;
@@ -177,6 +183,9 @@ function makeList(baseList, meta, index) {
   list.Layouts[2].LayoutID = viewFormId;
   list.Layouts[2].ListID = listId;
   list.Layouts[2].Title = "View Item";
+  for (const def of list.Defs) {
+    def.ListID = listId;
+  }
   for (const layout of list.Layouts) {
     if (layout.LayoutInResources?.[0]) {
       layout.LayoutInResources[0].ID = layout.LayoutID;

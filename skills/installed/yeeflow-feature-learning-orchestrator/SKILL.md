@@ -117,11 +117,12 @@ Also read the relevant installed feature skills when the task touches their area
 4. Compare with known baselines from the app, list, and approval-form skills. Mark what is known, new, similar, risky, or externally dependent.
 5. Extract a reusable feature pattern: location, required fields, IDs, `ReplaceIds`, navigation/menu links, related child resources, data sources, runtime dependencies, and export-back behavior.
 6. Update or design validator rules before generating. For workflow actions, first normalize the official action configuration reference into `workflow-action-configurations.normalized.json` and document it in `docs/workflow-action-configuration-reference.md` plus `docs/workflow-action-generation-rules.md`. For control/field schema references, first normalize `control-configurations.json` and `field-configurations.json`, document approval control rules, data-list field rules, and control-to-field mappings, then update validators and generator skills before app generation.
+   For generated `.yap` materialization learning, promote app-resource ID rules into validators before retesting: do not remap `TenantID`, `CreatedBy`, or `ModifiedBy`; keep `FieldID` globally unique across the application; keep every `field.ListID` equal to its parent list; and verify root Type `103` dashboard/navigation linkage with materialization inspection.
 7. Write a dedicated study doc such as `docs/dashboard-feature-pattern-study.md`, `docs/document-library-feature-pattern-study.md`, `docs/report-feature-pattern-study.md`, or `docs/ai-agent-feature-pattern-study.md`.
 8. Generate only the smallest possible test package, using fresh local ID families and minimal dependencies.
 9. Run component and package validators. Build wrappers only after validators pass.
 10. If the user explicitly asks for runtime testing, import into `https://codex.yeeflow.com/` and capture runtime evidence.
-11. If runtime fails, isolate with smaller packages instead of guessing.
+11. If runtime fails, isolate with smaller packages instead of guessing. If app materialization fails or imports as an empty shell, stop before testing custom controls and focus on app shell/resource linkage, global field IDs, field ownership, duplicate field names, `ReplaceIds`, and dashboard/navigation references.
 12. If possible, export the imported app back and compare generated source, wrapper, and exported-back `.yap`.
 13. Patch minimally with fresh IDs, retest, and preserve known-good baselines.
 14. Document the successful baseline.

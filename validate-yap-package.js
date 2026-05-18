@@ -446,9 +446,10 @@ function validate(inputPath, mode, stage) {
   const listsById = new Map();
   const fieldsByList = new Map();
   const localIds = new Set();
+  const fieldIdsByApp = new Map();
 
   resourceItems.forEach((item, index) => {
-    validateResourceItem(item, index, index === 0, rootListSetId, replaceIds, localIds, listsById, fieldsByList, report);
+    validateResourceItem(item, index, index === 0, rootListSetId, replaceIds, localIds, listsById, fieldsByList, fieldIdsByApp, report);
   });
 
   validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList, report, resource);
@@ -488,6 +489,12 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
   }
   if (!safeString(root.CreatedBy) || !safeString(root.ModifiedBy)) {
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_AUDIT_USERS_MISSING", "Root app/ListSet CreatedBy and ModifiedBy should be populated; real imports/exports preserve creator metadata used by app access/open flows.", { createdByPresent: Boolean(safeString(root.CreatedBy)), modifiedByPresent: Boolean(safeString(root.ModifiedBy)) });
+  }
+  for (const key of ["TenantID", "CreatedBy", "ModifiedBy"]) {
+    const value = safeString(root[key]);
+    if (value && replaceIds.has(value)) {
+      issue(report, generatorFinalSeverity(report), "ROOT_METADATA_IN_REPLACEIDS", "Generated .yap packages must preserve TenantID, CreatedBy, and ModifiedBy as real baseline metadata; do not include them in Resource.ReplaceIds or generated fake-ID remapping.", { field: key, value });
+    }
   }
   for (const key of ["AppTags", "AppMetadatas", "AppComponents"]) {
     if (!Array.isArray(data[key])) {
@@ -977,7 +984,7 @@ function validateBasicStructure(data, resource, report) {
   }
 }
 
-function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, localIds, listsById, fieldsByList, report) {
+function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, localIds, listsById, fieldsByList, fieldIdsByApp, report) {
   const pathPrefix = isRoot ? "$.Item" : `$.Childs[${index - 1}]`;
   if (!isObject(item) || !isObject(item.ListModel)) {
     issue(report, "error", "RESOURCE_LISTMODEL_MISSING", "Resource Item.ListModel is required.", { path: pathPrefix });
@@ -1008,6 +1015,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   const fieldsByName = new Map();
   const fieldNames = new Set();
   const fieldInternal = new Set();
+  const fieldDisplayNames = new Set();
   for (const [fieldIndex, field] of fields.entries()) {
     const fp = `${pathPrefix}.Defs[${fieldIndex}]`;
     const fieldId = safeString(field.FieldID);
@@ -1015,7 +1023,31 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
     const internalName = safeString(field.InternalName);
     const displayName = safeString(field.DisplayName);
     if (!fieldId) issue(report, "error", "FIELD_ID_MISSING", "FieldID is required.", { path: `${fp}.FieldID`, list: title });
-    else localIds.add(fieldId);
+    else {
+      localIds.add(fieldId);
+      const previous = fieldIdsByApp.get(fieldId);
+      if (previous) {
+        issue(report, generatorFinalSeverity(report), "APP_FIELD_ID_DUPLICATE", "Duplicate FieldID across application resources; generated .yap data-list fields must use app-wide unique FieldID values to avoid blank-app materialization failures.", {
+          fieldId,
+          list: title,
+          fieldName,
+          previousList: previous.list,
+          previousFieldName: previous.fieldName,
+        });
+      } else {
+        fieldIdsByApp.set(fieldId, { list: title, fieldName });
+      }
+    }
+    if (safeString(field.ListID) && listId && safeString(field.ListID) !== listId) {
+      issue(report, generatorFinalSeverity(report), "FIELD_LIST_ID_MISMATCH", "Field ListID must match its parent data-list ListID; otherwise Yeeflow may materialize the list shell without custom fields.", {
+        list: title,
+        fieldName,
+        fieldId,
+        fieldListId: safeString(field.ListID),
+        parentListId: listId,
+        path: `${fp}.ListID`,
+      });
+    }
     if (!fieldName) issue(report, "error", "FIELD_NAME_MISSING", "FieldName is required.", { path: `${fp}.FieldName`, list: title });
     if (!displayName) issue(report, "warning", "FIELD_DISPLAY_NAME_MISSING", "Field DisplayName is missing.", { path: `${fp}.DisplayName`, list: title, fieldName });
     if (fieldName) {
@@ -1028,7 +1060,13 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
       fieldInternal.add(internalName);
       fieldsByName.set(internalName, field);
     }
-    if (displayName) fieldsByName.set(displayName, field);
+    if (displayName) {
+      if (fieldDisplayNames.has(displayName)) {
+        issue(report, generatorFinalSeverity(report), "FIELD_DISPLAY_NAME_DUPLICATE", "Duplicate DisplayName in data-list resource; Yeeflow runtime import may skip materializing the list/app shell.", { list: title, displayName });
+      }
+      fieldDisplayNames.add(displayName);
+      fieldsByName.set(displayName, field);
+    }
     if (fieldId) fieldsByName.set(fieldId, field);
     if (!isRoot && resourceType === "data list" && fieldName === "Title" && (field.Status !== 0 || field.IsSystem !== true || field.IsIndex !== true || field.FieldIndex !== 0)) {
       issue(

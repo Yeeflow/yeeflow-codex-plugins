@@ -8,7 +8,7 @@ Public form support remains untested and is not claimed.
 
 ## Finding
 
-Two package materialization issues were found.
+Multiple package materialization issues were found across the showcase package and a smaller Visitor Access comparison package.
 
 Primary root cause: the generator remapped tenant/user metadata from the Smart Lookup baseline into the showcase local ID family. The failed resource used generated `6182...` IDs for `TenantID`, `CreatedBy`, and `ModifiedBy`, and also listed those metadata IDs in `ReplaceIds`. Working generated apps keep tenant/user metadata as the real tenant values from the known-good baseline and reserve generated local IDs for app resources.
 
@@ -61,6 +61,25 @@ Both working references also keep root Type `103` layouts owned by the root app/
 
 The patched showcase package now matches that materialization shape and passes the focused materialization inspection.
 
+Additional runtime investigation found two data-list field materialization blockers:
+
+1. Field IDs were initially unique inside each list but reused across lists. Yeeflow `.yap` applications require `FieldID` values to be unique across the whole application package, not just within one data list.
+2. After the first FieldID fix, each field's own `ListID` was accidentally remapped to its new `FieldID`. Yeeflow created the list shell but did not attach custom fields because `field.ListID` no longer matched the parent list.
+
+Correct field ownership shape:
+
+```json
+{
+  "parentListId": "6182000000000000100",
+  "field": {
+    "FieldID": "6182000000000010001",
+    "ListID": "6182000000000000100",
+    "FieldName": "Title",
+    "DisplayName": "Request Title"
+  }
+}
+```
+
 ## Patch
 
 Patched `generate-custom-code-template-showcase-v1.mjs`:
@@ -95,9 +114,31 @@ The validator checks:
 
 This catches both locally detectable empty-shell risks found during this investigation.
 
+The validator was then strengthened to also check:
+
+- app-wide duplicate `FieldID` values
+- fields whose `ListID` does not match the parent data list
+- duplicate `FieldName`, `InternalName`, and materialization-risk `DisplayName` values inside a list
+- tenant/user metadata accidentally included in `ReplaceIds`
+
+## YAP App Materialization Rules
+
+Every generated `.yap` application must satisfy these rules before runtime import:
+
+- Every `ListID` must be unique.
+- Every `FieldID` must be unique across the whole application, not only inside each data list.
+- Every `field.ListID` must equal the parent data list `ListID`.
+- Every `FieldName`, `InternalName`, and `DisplayName` must be unique inside its own data list.
+- Do not remap `TenantID`, `CreatedBy`, or `ModifiedBy` as generated app-resource IDs.
+- Do not include `TenantID`, `CreatedBy`, or `ModifiedBy` in `Resource.ReplaceIds`.
+- Build `ReplaceIds` from generated local app/list/field/layout/form/sample IDs only.
+- Root Type `103` dashboard/page layout ownership must connect back to the root app/ListSet `ListID`.
+- Root navigation must reference real packaged dashboards/pages, child lists, and approval forms.
+- Do not runtime-test custom code controls until the app shell, dashboard, lists, forms, and data-list fields materialize.
+
 ## Current Status
 
-The patched showcase package passes local materialization inspection and the normal local validation chain. A pre-metadata-fix runtime smoke import still opened as an empty shell. A fresh post-metadata-fix runtime import was created as `Custom Code Template Showcase Materialization Retest 20260518`, but opening the detected runtime route still showed the empty `Start to build with Components` state. This means the showcase package is still not runtime-proven as materialized.
+The patched showcase package passes local materialization inspection and the normal local validation chain. Runtime retesting confirmed that the final package installs, application content materializes, and custom data-list fields appear correctly.
 
 To isolate whether generated `.yap` import was broadly broken, a separate minimal package was generated:
 
@@ -107,7 +148,7 @@ To isolate whether generated `.yap` import was broadly broken, a separate minima
 - Local result: package, graph, wrapper round trip, and materialization inspection passed; materialization inspection only warned that no approval forms were present
 - Runtime result reported by user on 2026-05-18: installed and test passed
 
-This proves the current Yeeflow tenant can import and materialize a simple generated app package. The remaining showcase blocker is therefore not a blanket import/wrapper failure. Focus the next investigation on structural differences between the one-list materialization smoke package, the Smart Lookup focused package, and the full showcase package.
+This proves the current Yeeflow tenant can import and materialize generated app packages when app-resource IDs, field ownership, navigation, and dashboard/root linkage follow the learned rules.
 
 Template runtime proof status is unchanged:
 

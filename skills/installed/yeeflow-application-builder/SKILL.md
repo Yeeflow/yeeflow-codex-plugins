@@ -110,6 +110,15 @@ Before generation, clarify whether the user wants:
 
 For new applications, use normal `.yap` rules: fresh ID family, safe FlowKey/form key, `ReplaceIds`, full local app/form/list validation, and import as a new app.
 
+Materialization hard rules for new `.yap` packages:
+
+- allocate `FieldID` values globally across the app; do not reset per data list
+- preserve parent `ListID` on every field
+- keep `FieldName`, `InternalName`, and `DisplayName` unique inside each data list
+- preserve real `TenantID`, `CreatedBy`, and `ModifiedBy`; do not remap them and do not include them in `ReplaceIds`
+- verify root dashboard/page navigation and Type `103` ownership with materialization inspection
+- do not runtime-test custom code controls until the imported app opens with real dashboard/list/form content and generated fields are visible
+
 For existing application upgrades, request a baseline `.yapk` downloaded from Yeeflow Version management. Preserve `PackageId`, `TenantID`, `AppID`, `ListID`, stable object IDs, and other app identity fields required for upgrade. Do not generate a `.yap` when the user asked to modify the already-imported app unless they explicitly want a cloned app.
 
 Current `.yapk` limitation: studied Version management packages store `Resource` as opaque high-entropy base64 payloads with signature-like `Sign` values; they are not normal `[______gizp______]` `.yap` resources. A runtime test rejected a metadata-only wrapper edit even when `Resource` and `Sign` were preserved, and multi-version comparison showed `PackageId`, `Sign`, and `Resource` change across Yeeflow-generated versions. Until Yeeflow `.yapk` resource encoding/signing is proven, Codex must not output externally edited `.yapk` packages as valid upgrades; use Yeeflow Version management to generate official `.yapk` packages.

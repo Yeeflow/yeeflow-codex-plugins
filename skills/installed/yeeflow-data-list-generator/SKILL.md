@@ -93,8 +93,11 @@ Load only the relevant reference:
 
 - Use `AppID: 41` for sandbox/test packages unless target metadata says otherwise.
 - Generate large numeric string IDs for sandbox `ListSetID`, `ListID`, `FieldID`, `LayoutID`, and sample `ListDataID`.
+- For child lists inside a `.yap`, allocate `FieldID` values from a global app-level field ID allocator; do not reset or reuse the same field IDs per list.
+- For child lists inside a `.yap`, every field's `ListID` must equal the parent data-list `ListID`; changing `FieldID` must not change `field.ListID`.
 - For production or existing apps, use confirmed metadata only.
 - HARD RULE: preserve `FieldName: "Title"` as Yeeflow's native primary/display field in every generated data list. `Title` must keep `Status: 0`, `IsSystem: true`, and `IsIndex: true`. Do not treat `Title` as a normal custom business field.
+- Generated fields must keep `FieldName`, `InternalName`, and `DisplayName` unique inside each list. Duplicate display names are a Yeeflow materialization risk for generated app packages.
 - HARD RULE: every generated list must pass standalone `validate-ydl-list.js --mode generator --stage final`. App-level `.yap` package validation does not replace list-level validation.
 - Generated list metadata must include required list type metadata (`MainListType` for wrappers or `ListModel.ListType` for extracted list objects).
 - Generated fields must have unique `FieldName` and `InternalName` values. Duplicate internal names are blocking because they can pass broad package checks while breaking list import/query behavior.
@@ -121,6 +124,16 @@ Load only the relevant reference:
 - Sample lookup values must map to actual referenced target rows. If the master/reference list is local, include sample/reference rows; if it is external, provide a dependency map or omit unsafe sample lookup values.
 - Master/reference lists referenced by generated forms, dashboards, or workflows must be usable runtime lists, not placeholders. Include sample data where needed for local validation and runtime smoke testing.
 - For generated lists intended as approval-form storage targets, build/import/export the `.ydl` first, then use exported-back list and field metadata to patch the approval form `ContentList` target.
+
+## YAP App Materialization Rules
+
+When data lists are embedded in a generated `.yap` application:
+
+- Every `FieldID` must be unique across the whole `.yap`.
+- Every `field.ListID` must equal the parent list `ListID`.
+- Every list must contain fields owned by that list before import.
+- The app generator must not remap `field.ListID` when remapping `FieldID`.
+- Run standalone `validate-ydl-list`, app-level `validate-yap-package`, and `scripts/inspect-yap-materialization.mjs` before runtime import.
 
 ## Benefit / Quota Usage Lists
 

@@ -1,7 +1,9 @@
 {
   "appName": "Enterprise Service Request & Compliance Review",
-  "phase": "Phase 2 materialization fix",
-  "runtimeStatus": "showcase_still_empty_after_latest_patch_one_list_control_passed",
+  "phase": "Phase 2 local generation",
+  "runtimeStatus": "materialization passed; component-level runtime testing not completed",
+  "materializationStatus": "resolved",
+  "materializationEvidence": "User confirmed the regenerated package installs, application content materializes, and all data-list custom fields show correctly.",
   "publicFormSupport": "not claimed",
   "generatedPackage": "custom-code-template-showcase.v1.yap",
   "templates": [
@@ -63,7 +65,7 @@
     {
       "name": "smart-lookup-picker",
       "localGeneration": "included",
-      "runtimeClassification": "previously proven elsewhere; showcase regression pending"
+      "runtimeClassification": "previously proven elsewhere; regression not yet tested in this app"
     },
     {
       "name": "trend-chart-module",
@@ -71,33 +73,6 @@
       "runtimeClassification": "not tested"
     }
   ],
-  "localValidation": "pass_with_warnings",
-  "materialization": {
-    "latestLocalStatus": "pass",
-    "runtimeStatus": "showcase runtime retest still opened empty; one-list materialization control passed manually",
-    "previousRuntimeSmoke": {
-      "package": "pre-metadata-fix import smoke",
-      "result": "imported app tile but opened to Start to build with Components"
-    },
-    "fixesApplied": [
-      "Root Type 103 dashboard layout ListID now points to root app/listset ID.",
-      "LayoutInResources[0].ID and RefId match the dashboard LayoutID.",
-      "Baseline TenantID, CreatedBy, and ModifiedBy metadata are preserved and not included in ReplaceIds.",
-      "ReplaceIds is limited to generated local app-resource IDs plus flow keys where applicable."
-    ],
-    "latestRuntimeSmoke": {
-      "package": "custom-code-template-showcase.v1.yap",
-      "appName": "Custom Code Template Showcase Materialization Retest 20260518",
-      "result": "imported app tile but opening detected route still showed Start to build with Components",
-      "componentTesting": "not started because materialization did not pass"
-    },
-    "controlPackage": {
-      "package": "one-list-materialization-smoke-test.v1.yap",
-      "appName": "One Data List Materialization Smoke Test",
-      "contents": "one root Type 103 home page, one data list, two sample records, no approval forms, no custom code controls",
-      "localValidation": "package pass_with_warnings; graph pass; wrapper pass; wrapper graph pass; materialization pass_with_warnings only because no approval forms were included",
-      "runtimeResult": "installed and manual test passed, reported by user on 2026-05-18",
-      "conclusion": "Yeeflow can materialize a simple generated one-list app package; remaining showcase blocker is specific to richer showcase resource structure."
-    }
-  }
+  "localValidation": "pass with warnings; package, graph, materialization, YWF, YDL, custom-code inspection, and wrapper round-trip checks completed with zero blocking errors",
+  "runtimeProofBoundary": "Do not claim all 13 custom code templates are runtime-proven until component render, interaction, writeback, and persistence tests are completed."
 }

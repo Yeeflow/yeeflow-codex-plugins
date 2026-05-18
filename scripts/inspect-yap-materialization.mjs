@@ -137,6 +137,8 @@ function inspect(inputPath) {
   const navByListId = new Map(nav.map((item) => [asString(item.ListID), item]));
   const rootLayoutsById = new Map(rootLayouts.map((layout) => [asString(layout.LayoutID), layout]));
   const childById = new Map(childLists.map((child) => [asString(child?.ListModel?.ListID), child]));
+  const replaceIds = new Set((resource?.ReplaceIds || []).map(asString));
+  const appFieldIds = new Map();
 
   if (!rootListId) errors.push({ code: "ROOT_LIST_ID_MISSING", message: "Root app ListModel.ListID is missing." });
   if (Number(rootModel.Type) !== 1024) errors.push({ code: "ROOT_TYPE_NOT_APP", message: "Root ListModel.Type should be 1024.", detail: { type: rootModel.Type } });
@@ -146,6 +148,13 @@ function inspect(inputPath) {
         code: "ROOT_METADATA_USES_LOCAL_ID_FAMILY",
         message: "Root tenant/user metadata appears to have been remapped into the generated local app ID family. Preserve real tenant/user metadata from a working baseline.",
         detail: { field, value: asString(value), rootListId },
+      });
+    }
+    if (replaceIds.has(asString(value))) {
+      errors.push({
+        code: "ROOT_METADATA_IN_REPLACEIDS",
+        message: "TenantID, CreatedBy, and ModifiedBy must not be included in Resource.ReplaceIds for generated .yap packages.",
+        detail: { field, value: asString(value) },
       });
     }
   }
@@ -201,6 +210,47 @@ function inspect(inputPath) {
       warnings.push({ code: "CHILD_LIST_NAV_TYPE_MISMATCH", message: "Child data-list navigation type differs from ListModel.Type.", detail: { title: child?.ListModel?.Title, listId, navType: navItem.Type, listType: child?.ListModel?.Type } });
     }
     const layouts = Array.isArray(child?.Layouts) ? child.Layouts : [];
+    const fields = Array.isArray(child?.Defs) ? child.Defs : [];
+    const fieldNames = new Set();
+    const internalNames = new Set();
+    const displayNames = new Set();
+    if (!fields.length) errors.push({ code: "CHILD_LIST_FIELDS_EMPTY", message: "Child data list has no fields attached.", detail: { title: child?.ListModel?.Title, listId } });
+    for (const field of fields) {
+      const fieldId = asString(field.FieldID);
+      const fieldName = asString(field.FieldName);
+      const internalName = asString(field.InternalName);
+      const displayName = asString(field.DisplayName);
+      if (fieldId) {
+        if (appFieldIds.has(fieldId)) {
+          errors.push({
+            code: "APP_FIELD_ID_DUPLICATE",
+            message: "FieldID must be unique across the whole .yap application, not only within each data list.",
+            detail: { fieldId, list: child?.ListModel?.Title, fieldName, previous: appFieldIds.get(fieldId) },
+          });
+        } else {
+          appFieldIds.set(fieldId, { list: child?.ListModel?.Title, fieldName });
+        }
+      }
+      if (asString(field.ListID) !== listId) {
+        errors.push({
+          code: "FIELD_LIST_ID_MISMATCH",
+          message: "Field ListID must match its parent data-list ListID so Yeeflow attaches the field to the list during import.",
+          detail: { title: child?.ListModel?.Title, fieldName, fieldId, fieldListId: asString(field.ListID), parentListId: listId },
+        });
+      }
+      if (fieldName) {
+        if (fieldNames.has(fieldName)) errors.push({ code: "FIELD_NAME_DUPLICATE", message: "Duplicate FieldName inside one data list.", detail: { title: child?.ListModel?.Title, fieldName } });
+        fieldNames.add(fieldName);
+      }
+      if (internalName) {
+        if (internalNames.has(internalName)) errors.push({ code: "DUPLICATE_INTERNAL_NAME", message: "Duplicate InternalName inside one data list.", detail: { title: child?.ListModel?.Title, internalName } });
+        internalNames.add(internalName);
+      }
+      if (displayName) {
+        if (displayNames.has(displayName)) warnings.push({ code: "FIELD_DISPLAY_NAME_DUPLICATE", message: "Duplicate DisplayName inside one data list is a materialization risk.", detail: { title: child?.ListModel?.Title, displayName } });
+        displayNames.add(displayName);
+      }
+    }
     if (!layouts.length) errors.push({ code: "CHILD_LIST_LAYOUTS_EMPTY", message: "Child data list has no layouts.", detail: { title: child?.ListModel?.Title, listId } });
     for (const layout of layouts) {
       if (asString(layout.ListID) !== listId) {
