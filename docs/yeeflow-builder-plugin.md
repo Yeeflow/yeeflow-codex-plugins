@@ -109,3 +109,11 @@ Local validation is not the same as Yeeflow runtime proof. Accepted baselines mu
 ## Manual Install or Upload
 
 If no repo-specific packaging command is available, use `dist/yeeflow-builder-plugin/` as the plugin root. The manifest is `dist/yeeflow-builder-plugin/.codex-plugin/plugin.json`, and bundled skills are under `dist/yeeflow-builder-plugin/skills/`.
+
+## Distribution Docs
+
+Use these docs for release and sharing workflows:
+
+- [Plugin installation](plugin-installation.md)
+- [Plugin release process](plugin-release-process.md)
+- [Partner-safe edition](plugin-partner-safe-edition.md)
