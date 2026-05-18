@@ -26,9 +26,9 @@ Current release status:
 
 - v0.1.0 private Git marketplace install: passed.
 - v0.2.0 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.2.0-rc1`.
-- v0.3.0 release candidate: prepared, pending private marketplace install smoke test.
-- ZIP package smoke test: passed locally for the release candidate.
-- Git marketplace install: pending for v0.3.0 until RC smoke test passes.
+- v0.3.0 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.3.0-rc1`.
+- ZIP package smoke test: passed locally.
+- Git marketplace install: passed.
 - Production/public marketplace: not applicable.
 - Partner-safe edition: planned, not released.
 
@@ -54,16 +54,21 @@ Smoke prompts tested:
 - Feature-learning orchestrator use cases.
 - Custom-code-generator Smart Lookup Picker support.
 - Materialization validation behavior for generated `.yap` packages.
+- Runtime-test-orchestrator lifecycle summary and result classifications.
+- Package-validator import-safety and `.yap` versus `.yapk` policy.
+- Plugin-release-manager RC versus final tag workflow.
 
 ## Release Notes
 
-### v0.3.0-rc1
+### v0.3.0
 
 Previous version: `0.2.0`.
 
 New version: `0.3.0`.
 
-Release status: release candidate only. Final non-RC tag must wait for private marketplace install smoke test.
+RC tag tested: `yeeflow-builder-plugin-v0.3.0-rc1`.
+
+Private marketplace install smoke test: passed.
 
 Added bundled skills:
 

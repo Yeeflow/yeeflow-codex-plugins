@@ -2,7 +2,7 @@
 
 The Yeeflow Builder Plugin is a private, skills-only Codex plugin for internal Yeeflow application builders. It packages the current repo's proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth, Yeeflow API integration, or MCP servers.
 
-Package status: v0.3.0 release candidate is prepared from latest `origin/main` with three added support orchestration skills. v0.2.0 remains the latest install-tested final release until the v0.3.0 private marketplace install smoke test passes. Production/public marketplace release is not applicable, and the partner-safe edition is planned but not released.
+Package status: v0.3.0 private Git marketplace install smoke test passed with RC tag `yeeflow-builder-plugin-v0.3.0-rc1`. Production/public marketplace release is not applicable, and the partner-safe edition is planned but not released.
 
 ## Package Contents
 
@@ -123,6 +123,29 @@ If no repo-specific packaging command is available, use `dist/yeeflow-builder-pl
 
 ## Verified Install
 
+The v0.3.0 private marketplace install smoke test passed with RC tag `yeeflow-builder-plugin-v0.3.0-rc1`.
+
+Install source:
+
+```text
+https://github.com/rengerhu/yeeflow-ai-builder-research.git
+```
+
+Sparse paths:
+
+```text
+.agents/plugins/marketplace.json
+dist/yeeflow-builder-plugin
+```
+
+Expected result: marketplace `Yeeflow Internal`, plugin `Yeeflow Builder`, category `Developer Tools`, and successful plugin install.
+
+New bundled skills verified in v0.3.0:
+
+- `yeeflow-runtime-test-orchestrator`
+- `yeeflow-package-validator`
+- `yeeflow-plugin-release-manager`
+
 The v0.2.0 private marketplace install smoke test passed with RC tag `yeeflow-builder-plugin-v0.2.0-rc1`.
 
 Install through Codex's private marketplace flow with:
@@ -152,13 +175,15 @@ Smoke prompts tested for v0.2.0:
 
 ## Release Notes
 
-### v0.3.0-rc1
+### v0.3.0
 
 Previous version: `0.2.0`.
 
 New version: `0.3.0`.
 
-Release status: release candidate only. Do not create or use the final `yeeflow-builder-plugin-v0.3.0` tag until private marketplace install smoke testing passes.
+RC tag tested: `yeeflow-builder-plugin-v0.3.0-rc1`.
+
+Private marketplace install smoke test: passed.
 
 Added bundled skills:
 
