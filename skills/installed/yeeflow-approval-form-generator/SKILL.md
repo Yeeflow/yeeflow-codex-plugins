@@ -50,6 +50,8 @@ When an approval form depends on master/reference data, treat the dependency as 
 
 Use custom code only when the requirement is justified client-side behavior that native Yeeflow features cannot model safely.
 
+Doc library control note: the product exposes the `Doc library` control on approval forms, data-list forms, document-library forms, and dashboards, but the current export-backed generated proof is dashboard-only. If adding a Doc library control to an approval form, reuse the studied `type = "document-library"` / `attrs.data.list` / optional `attrs.data.folder` pattern only as a hypothesis, validate locally, and do not claim approval-form runtime proof until a focused generated package imports and opens successfully.
+
 ## Generated Approval Form UI/UX Standard
 
 When the active workspace contains `docs/yeeflow-application-design-system.md` and `docs/yeeflow-approval-form-design-standards.md`, use them as the default approval-form design standard. Use `docs/yeeflow-approval-form-ui-ux-patterns.md` for export-level evidence. The first official UI/UX reference export is `UI and UX design (1).yap`.

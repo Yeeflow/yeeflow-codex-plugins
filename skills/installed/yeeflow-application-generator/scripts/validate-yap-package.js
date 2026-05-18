@@ -794,6 +794,9 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
     if (dataList && safeString(dataList.ListID) && !listsById.has(safeString(dataList.ListID))) {
       issue(report, severity, "DASHBOARD_CONTROL_LIST_REFERENCE_UNRESOLVED", "Dashboard control data.list references a list not included in the package.", { title, layoutId, pointer, listId: safeString(dataList.ListID) });
     }
+    if (safeString(node.type) === "document-library") {
+      validateDashboardDocLibraryControl(node, title, layoutId, pointer, listsById, fieldsByList, report);
+    }
     const dataForm = node.attrs && node.attrs.data && node.attrs.data.form;
     if (dataForm && safeString(dataForm.ListSetID) && safeString(dataForm.ListSetID) !== safeString(resource.ListSetID || (resource.Item && resource.Item.ListID)) && !listsById.has(safeString(dataForm.ListSetID))) {
       issue(report, report.mode === "generator" ? "error" : "dependency", "DASHBOARD_FORM_EXTERNAL_LISTSET_REFERENCE", "Dashboard action references a form/listset outside the package; generated dashboards should model or exclude external dependencies.", { title, layoutId, pointer, listSetId: safeString(dataForm.ListSetID), procKey: safeString(dataForm.ProcKey) });
@@ -1057,6 +1060,91 @@ function validateDashboardListId(title, layoutId, pointer, value, listsById, rep
   if (!listId) return;
   if (!listsById.has(listId)) {
     issue(report, generatorFinalSeverity(report), "DASHBOARD_DATA_SOURCE_UNRESOLVED", "Dashboard data source ListID/listid does not resolve to a package list or report resource.", { title, layoutId, pointer, listId });
+  }
+}
+
+function validateDashboardDocLibraryControl(node, title, layoutId, pointer, listsById, fieldsByList, report) {
+  const attrs = node.attrs || {};
+  const data = attrs.data || {};
+  const listRef = data.list || {};
+  const listId = safeString(listRef.ListID);
+  if (!listId) {
+    issue(report, "warning", "DOC_LIBRARY_CONTROL_LIST_MISSING", "Doc library dashboard control should include attrs.data.list.ListID.", { title, layoutId, pointer });
+    return;
+  }
+
+  const list = listsById.get(listId);
+  if (!list) {
+    issue(report, generatorFinalSeverity(report), "DOC_LIBRARY_CONTROL_LIST_UNRESOLVED", "Doc library dashboard control references a list not included in the package.", { title, layoutId, pointer, listId });
+    return;
+  }
+  if (list.resourceType !== "document library" || Number(list.item && list.item.ListModel && list.item.ListModel.Type) !== 16) {
+    issue(report, "warning", "DOC_LIBRARY_CONTROL_TARGET_NOT_TYPE16", "Doc library dashboard control should target a Type 16 document library resource.", { title, layoutId, pointer, listId, targetType: list.resourceType });
+  }
+  if (safeString(listRef.Type) && safeString(listRef.Type) !== "16") {
+    issue(report, "warning", "DOC_LIBRARY_CONTROL_LIST_TYPE_UNUSUAL", "Doc library dashboard control attrs.data.list.Type should be 16.", { title, layoutId, pointer, listId, type: listRef.Type });
+  }
+  if (safeString(listRef.Title) && safeString(listRef.Title) !== list.title) {
+    issue(report, "warning", "DOC_LIBRARY_CONTROL_LIST_TITLE_MISMATCH", "Doc library dashboard control list title should match the referenced document library.", { title, layoutId, pointer, listId, controlTitle: listRef.Title, targetTitle: list.title });
+  }
+
+  const fields = fieldsByList.get(listId) || new Map();
+  asArray(attrs.listarr).forEach((column, index) => {
+    const fieldName = safeString(column && column.Field);
+    if (fieldName && !fields.has(fieldName)) {
+      issue(report, "warning", "DOC_LIBRARY_CONTROL_FIELD_UNRESOLVED", "Doc library dashboard control listarr field should resolve to a field on the target document library.", { title, layoutId, pointer: `${pointer}.attrs.listarr[${index}]`, listId, fieldName });
+    }
+  });
+
+  const folder = data.folder;
+  if (folder !== undefined) {
+    const pathValue = safeString(folder && folder.path);
+    if (!pathValue) {
+      issue(report, "warning", "DOC_LIBRARY_CONTROL_FOLDER_PATH_MISSING", "Folder-bound Doc library dashboard controls should include attrs.data.folder.path.", { title, layoutId, pointer, listId });
+    } else {
+      const folderIds = pathValue.split("/").filter((part) => part && part !== "0");
+      const rows = list.item && isObject(list.item.ListDatas) ? list.item.ListDatas : {};
+      for (const folderId of folderIds) {
+        const row = rows[folderId] || Object.values(rows).find((candidate) => safeString(candidate && candidate.ListDataID) === folderId);
+        if (!row) {
+          issue(report, "warning", "DOC_LIBRARY_CONTROL_FOLDER_UNRESOLVED", "Doc library dashboard control folder.path should resolve to folder rows in the target document library.", { title, layoutId, pointer, listId, folderId, path: pathValue });
+          continue;
+        }
+        if (safeString(row.Text1).toLowerCase() !== "folder") {
+          issue(report, "warning", "DOC_LIBRARY_CONTROL_FOLDER_ROW_NOT_FOLDER", "Doc library dashboard control folder.path should point to rows with Text1 = folder.", { title, layoutId, pointer, listId, folderId, rowType: row.Text1 });
+        }
+        if (row.Text4) {
+          issue(report, "warning", "DOC_LIBRARY_CONTROL_FOLDER_ROW_HAS_UPLOAD_PAYLOAD", "Folder rows referenced by Doc library controls should not include uploaded file payloads.", { title, layoutId, pointer, listId, folderId });
+        }
+      }
+    }
+  }
+
+  if (data.customPath !== undefined) {
+    if (!Array.isArray(data.customPath)) {
+      issue(report, "warning", "DOC_LIBRARY_CONTROL_CUSTOMPATH_NOT_ARRAY", "Dynamic folder customPath should be an expression-token array when present.", { title, layoutId, pointer, listId });
+    } else {
+      const result = validateExpressionTokens(data.customPath);
+      result.issues.forEach((expressionIssue) => {
+        issue(report, "warning", `DOC_LIBRARY_CONTROL_CUSTOMPATH_${expressionIssue.code}`, expressionIssue.message, { title, layoutId, pointer: `${pointer}.attrs.data.customPath`, listId });
+      });
+    }
+  }
+
+  const caption = attrs.caption;
+  if (caption !== undefined && isObject(caption)) {
+    const captionLayout = safeString(caption.layout);
+    if (captionLayout) {
+      const layoutIds = new Set(asArray(list.item && list.item.Layouts).map((candidate) => safeString(candidate.LayoutID)).filter(Boolean));
+      if (!layoutIds.has(captionLayout)) {
+        issue(report, "warning", "DOC_LIBRARY_CONTROL_CAPTION_LAYOUT_UNRESOLVED", "Doc library dashboard control caption.layout should reference a layout on the target document library.", { title, layoutId, pointer, listId, captionLayout });
+      }
+    }
+    for (const key of ["display", "add", "search"]) {
+      if (caption[key] !== undefined && typeof caption[key] !== "boolean") {
+        issue(report, "warning", "DOC_LIBRARY_CONTROL_CAPTION_FLAG_NOT_BOOLEAN", "Doc library dashboard control caption display/add/search settings should be booleans.", { title, layoutId, pointer: `${pointer}.attrs.caption.${key}`, key, value: caption[key] });
+      }
+    }
   }
 }
 

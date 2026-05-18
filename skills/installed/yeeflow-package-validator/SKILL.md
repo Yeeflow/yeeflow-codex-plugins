@@ -62,6 +62,18 @@ For document libraries, also check:
 - folder rows should warn if they include uploaded file payloads or document binaries
 - generated packages do not embed raw file/document payloads unless focused runtime export-back proof exists
 
+For dashboard Doc library controls, also check:
+
+- controls use `type = "document-library"`
+- `attrs.data.list.ListID` resolves to an included Type `16` document library
+- `attrs.data.list.Type` is `16`
+- `attrs.listarr[].Field` values resolve to target library fields
+- `attrs.data.folder.path` folder IDs resolve to `ListDatas` rows in the target library when present
+- folder rows referenced by controls use `Text1 = "folder"` and contain no `Text4` upload payload
+- `attrs.caption.layout` resolves to a layout on the target document library when present
+- caption `display`, `add`, and `search` values are booleans when present
+- dynamic `attrs.data.customPath` is an expression-token array when present; warn rather than claim runtime proof
+
 ## Severity
 
 Use [validation-error-severity.md](references/validation-error-severity.md) to decide what blocks import. When uncertain, mark the finding as blocking until a proven Yeeflow import/runtime counterexample exists.

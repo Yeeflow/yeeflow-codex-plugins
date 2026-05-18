@@ -170,3 +170,23 @@ This pass supports the following generation rule:
 - Actual uploaded-file behavior with a harmless test file.
 - Rich assigned New/Edit/View custom-form mappings beyond the unassigned `New file` base form.
 - Whether a Type 103 dashboard/page should be added to avoid root-app warnings in larger app packages.
+
+## Follow-up: Doc Library Dashboard Control
+
+The v3 follow-up package `enterprise-document-center-doc-library-control-v3.yap` added a Type `103` dashboard named `Document Center` with four `type = "document-library"` controls.
+
+Runtime result: dashboard Doc library controls are runtime-proven for root-library display, static root-folder display, caption/search/add enabled settings, and opening the target library `New file` modal. The generated `.yap` artifact remains ignored/uncommitted.
+
+Runtime-proven dashboard controls:
+
+- `Company Policies Root`: root-bound Company Policies control showing generated root folders.
+- `HR Policies Folder`: static folder-bound control for Company Policies / HR Policies.
+- `Project Contracts Folder`: static folder-bound control for Project Documents / Contracts.
+- `Templates Root`: root-bound Templates and Forms control showing generated root folders.
+
+Still unproven:
+
+- Actual file upload/persistence through a dashboard Doc library control.
+- Dynamic expression-based folder paths in generated packages.
+- Disabled caption/search/add states.
+- Doc library controls hosted on approval forms, data-list forms, or document-library forms.

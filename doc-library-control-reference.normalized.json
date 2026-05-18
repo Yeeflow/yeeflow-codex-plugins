@@ -1,0 +1,146 @@
+{
+  "source": [
+    "Enterprise Document Center Folders Runtime.yap"
+  ],
+  "sanitization": {
+    "rawExportCommitted": false,
+    "tenantUserMetadataIncluded": false,
+    "documentFilePayloadsIncluded": false
+  },
+  "control": {
+    "type": "document-library",
+    "nv_label": "Doc library",
+    "contexts": {
+      "dashboard": "export-observed",
+      "approvalForm": "product-supported but not generated-package runtime-proven in this pass",
+      "dataListForm": "product-supported but not generated-package runtime-proven in this pass",
+      "documentLibraryForm": "product-supported but not generated-package runtime-proven in this pass"
+    }
+  },
+  "rootBoundExample": {
+    "attrs": {
+      "data": {
+        "list": {
+          "AppID": "__APP_ID__",
+          "ListID": "__DOCUMENT_LIBRARY_LIST_ID__",
+          "Type": 16,
+          "Title": "__DOCUMENT_LIBRARY_TITLE__",
+          "ListSetID": "__APP_ROOT_LISTSET_ID__"
+        }
+      },
+      "listarr": [
+        {
+          "DisplayName": "",
+          "FieldName": "Name",
+          "Field": "Title",
+          "Attrs": {
+            "table": {
+              "cw": [
+                null,
+                40
+              ],
+              "cwu": [
+                null,
+                "%"
+              ]
+            }
+          }
+        },
+        {
+          "DisplayName": "",
+          "FieldName": "__CUSTOM_FIELD_LABEL__",
+          "Field": "__CUSTOM_FIELD_NAME__"
+        }
+      ]
+    }
+  },
+  "folderBoundExample": {
+    "attrs": {
+      "data": {
+        "list": {
+          "AppID": "__APP_ID__",
+          "ListID": "__DOCUMENT_LIBRARY_LIST_ID__",
+          "Type": 16,
+          "Title": "__DOCUMENT_LIBRARY_TITLE__",
+          "ListSetID": "__APP_ROOT_LISTSET_ID__"
+        },
+        "folder": {
+          "path": "0/__FOLDER_LISTDATA_ID__",
+          "label": "__FOLDER_TITLE__"
+        }
+      }
+    },
+    "notes": [
+      "The folder id is a ListDatas folder row id from the target Type 16 library.",
+      "The studied static root-folder path shape is 0/<folder ListDataID>."
+    ]
+  },
+  "dynamicFolderPathExample": {
+    "attrs": {
+      "data": {
+        "folder": {
+          "path": "0/__ROOT_FOLDER_LISTDATA_ID__",
+          "label": "__ROOT_FOLDER_TITLE__"
+        },
+        "customPath": [
+          {
+            "type": "str",
+            "value": "__CHILD_FOLDER_LITERAL__"
+          },
+          {
+            "type": "op",
+            "op": "&"
+          },
+          {
+            "type": "str",
+            "value": "/"
+          },
+          {
+            "type": "op",
+            "op": "&"
+          },
+          {
+            "exprType": "variable",
+            "valueType": "string",
+            "id": "__temp_var_Name",
+            "type": "expr",
+            "name": "var_Name"
+          }
+        ]
+      }
+    },
+    "status": "export-observed on dashboard; generation deferred until a focused runtime test proves dynamic folder behavior"
+  },
+  "captionExample": {
+    "attrs": {
+      "caption": {
+        "display": true,
+        "add": true,
+        "search": true,
+        "placeholder": "__SEARCH_PLACEHOLDER__",
+        "addtext": "__ADD_BUTTON_TEXT__",
+        "layout": "__NEW_FILE_FORM_LAYOUT_ID__",
+        "op": "modal"
+      }
+    },
+    "settingsObserved": [
+      "display true",
+      "add true",
+      "search true",
+      "placeholder text",
+      "addtext",
+      "layout points to the target library New file form",
+      "op modal"
+    ],
+    "settingsNotObserved": [
+      "add false",
+      "search false",
+      "caption display false"
+    ]
+  },
+  "idReplacementRules": [
+    "Replace ListID, ListSetID, caption.layout, and folder path ListDataID values when generating.",
+    "Dashboard control UUID ids are not Yeeflow large numeric ids and do not belong in ReplaceIds.",
+    "Folder ListDataID values used in folder.path should already be included in ReplaceIds as folder rows."
+  ]
+}

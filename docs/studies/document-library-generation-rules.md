@@ -6,6 +6,8 @@ Runtime update: `document-library-sample-new-library-only.v1.yap`, generated fro
 
 V2 runtime update: `Enterprise Document Center` imported and opened in Yeeflow with three Type `16` document libraries generated from the canonical `New Document Library` base. Runtime accepted multiple libraries, simple custom fields, multiple configured views, and export-backed root-level folder rows. The package still generated no uploaded file rows or document binaries. Manual folder creation was also runtime-tested across all three libraries.
 
+Dashboard control study update: `Enterprise Document Center Folders Runtime.yap` proves dashboard `Doc library` controls use `type = "document-library"` inside a Type `103` dashboard page resource. Root-bound controls reference the target Type `16` library through `attrs.data.list`; folder-bound controls add `attrs.data.folder.path = "0/<folder ListDataID>"`; one export-observed dynamic folder example adds `attrs.data.customPath` expression tokens. See `docs/studies/doc-library-control-dashboard-study.md` and `doc-library-control-reference.normalized.json`.
+
 ## Generator Rules
 
 - Treat Document Library as a first-class app child resource.
@@ -30,6 +32,7 @@ V2 runtime update: `Enterprise Document Center` imported and opened in Yeeflow w
   - include folder row IDs in `ReplaceIds`.
 - Do not generate nested folder rows until nested folder behavior is export-backed and runtime-tested.
 - Do not include raw file/document content, private document metadata, or downloaded files in generated packages.
+- Dashboard Doc library controls can be generated after the target Type `16` libraries and folder rows exist. Use `type = "document-library"`, `attrs.data.list`, optional `attrs.data.folder`, `attrs.listarr`, and optional `attrs.caption`. Keep approval form, data-list form, and document-library form contexts unclaimed until generated runtime tests prove those contexts.
 
 ## Required Default Fields
 

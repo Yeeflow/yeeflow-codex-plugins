@@ -428,7 +428,7 @@ function validateIdentity(item, resource, report) {
   if (!model.AppID && !(resource && resource.AppID)) issue(report, "error", "APP_ID_MISSING", "AppID is required.");
   if (!model.ListID) issue(report, "error", "LIST_ID_MISSING", "ListID is required.");
   if (!model.ListSetID) issue(report, "warning", "LISTSET_ID_MISSING", "ListSetID is missing or not included in this standalone list export.");
-  if (!((resource && resource.MainListType !== undefined) || model.ListType !== undefined)) {
+  if (!isDocumentLibrary && !((resource && resource.MainListType !== undefined) || model.ListType !== undefined)) {
     issue(report, "error", "MAIN_LIST_TYPE_MISSING", "MainListType or ListModel.ListType is required.");
   }
   validateGeneratedAppId(report, model.AppID || (resource && resource.AppID), { path: "Item.ListModel.AppID" });

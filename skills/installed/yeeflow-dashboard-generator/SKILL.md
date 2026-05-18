@@ -84,6 +84,19 @@ Form Actions carry-forward: approval-form exports and generated runtime tests pr
 
 For app-shell navigation around dashboards, keep the menu readable by inverting the root header colors: `navigator-menu.bgc` should equal `appearance.color`, and `navigator-menu.color` should equal `appearance.bgc`.
 
+## Doc Library Controls On Dashboards
+
+Use dashboard Doc library controls when a dashboard should expose Yeeflow Document Library resources directly. `Enterprise Document Center Folders Runtime.yap` proves the dashboard control shape:
+
+- place the control in `Item.Layouts[].LayoutInResources[0].Resource`
+- use `type: "document-library"` and `nv_label: "Doc library"`
+- set `attrs.data.list` with `AppID`, target Type `16` `ListID`, `Type: 16`, target `Title`, and app root `ListSetID`
+- for a root-folder view, set `attrs.data.folder.path = "0/<folder ListDataID>"` and `attrs.data.folder.label` to the folder title
+- populate `attrs.listarr[]` with target-library fields; the first Name column may use the observed `Attrs.table.cw = [null, 40]` and `cwu = [null, "%"]`
+- when using a caption, the export-proven settings are `display: true`, `add: true`, `search: true`, `placeholder`, `addtext`, `layout` pointing to the target library `New file` form `LayoutID`, and `op: "modal"`
+- do not claim add/search/caption disabled states, dynamic folder paths, or non-dashboard form contexts as runtime-proven until focused generated packages test them
+- do not generate uploaded document rows or document binaries for dashboard control tests
+
 ## Custom Code Controls On Dashboards
 
 Use a dashboard Custom Code control only when native dashboard controls, Collections, filters, summaries, charts, and actions cannot deliver the needed interaction.
