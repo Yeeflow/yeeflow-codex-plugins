@@ -868,10 +868,17 @@ function validateCustomForms(item, fieldByName, report) {
     });
   });
   if (customFormLayoutIds.length) {
+    const isDocumentLibrary = Number(item.ListModel && item.ListModel.Type) === 16;
     const parsedLayoutView = tryParseJson(item.ListModel && item.ListModel.LayoutView);
     if (parsedLayoutView.ok) {
       const assigned = ["add", "edit", "view"].filter((key) => customFormLayoutIds.includes(String(parsedLayoutView.value[key])));
-      if (!assigned.length) {
+      if (isDocumentLibrary && assigned.length > 0 && assigned.length < 3) {
+        issue(report, "warning", "DOCUMENT_LIBRARY_LAYOUTVIEW_PARTIAL_ASSIGNMENT", "Document Library Sample uses null LayoutView for the minimal library, while configured libraries assign add/edit/view together. A partial New-only assignment is runtime-sensitive.", {
+          customFormLayoutIds,
+          assigned,
+        });
+      }
+      if (!assigned.length && !isDocumentLibrary) {
         issue(report, "warning", "CUSTOM_FORM_NOT_ASSIGNED_TO_DISPLAY_SETTINGS", "Custom form exists, but ListModel.LayoutView does not assign it to New/Edit/View display settings.", {
           customFormLayoutIds,
           layoutView: parsedLayoutView.value,
@@ -896,7 +903,7 @@ function validateCustomForms(item, fieldByName, report) {
           issue(report, "warning", "UI_STANDARD_VIEW_NOT_USING_VIEW_ITEM_FORM", "UI/UX standard View item display setting should use the View Item custom form.", { expectedLayoutId: viewLayout.LayoutID, actualLayoutId: parsedLayoutView.value.view });
         }
       }
-    } else if (report.mode === "generator") {
+    } else if (report.mode === "generator" && !isDocumentLibrary) {
       issue(report, "warning", "CUSTOM_FORM_DISPLAY_SETTINGS_UNPARSEABLE", "Custom form exists, but ListModel.LayoutView could not be parsed to confirm display setting assignment.", {
         customFormLayoutIds,
       });

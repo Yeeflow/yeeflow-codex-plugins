@@ -310,6 +310,11 @@ function classifyListResource(item, isRoot = false) {
   return "unknown";
 }
 
+function isDocumentLibraryOnlyPackage(data) {
+  const children = asArray(data && data.Childs);
+  return children.length > 0 && children.every((child) => classifyListResource(child) === "document library");
+}
+
 function validateDocumentLibraryFields(item, fieldsByName, pathPrefix, report) {
   const list = item.ListModel || {};
   const title = safeString(list.Title);
@@ -600,8 +605,14 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
   }
   const rootLayouts = asArray(data.Item && data.Item.Layouts);
   const rootPageLayouts = new Set(rootLayouts.filter((layout) => safeString(layout.Type) === "103").map((layout) => safeString(layout.LayoutID)).filter(Boolean));
+  const documentLibraryOnlyPackage = isDocumentLibraryOnlyPackage(data);
   if (!rootPageLayouts.size) {
-    issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_LAYOUT_MISSING", "Root app/ListSet should include at least one Type 103 app page layout; real app exports use it as an openable app shell.");
+    issue(
+      report,
+      documentLibraryOnlyPackage ? "warning" : report.mode === "generator" && report.stage === "final" ? "error" : "warning",
+      "ROOT_APP_PAGE_LAYOUT_MISSING",
+      "Root app/ListSet has no Type 103 app page layout. Document-library-only exports can omit root pages; richer generated apps usually need an openable app shell.",
+    );
   }
   for (const layout of rootLayouts.filter((candidate) => safeString(candidate.Type) === "103")) {
     const layoutId = safeString(layout.LayoutID);
@@ -659,7 +670,12 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
   validateRootNavigationStyle(layoutView, report);
   const navItems = flattenNavigationItems(layoutView.sort || []);
   if (!navItems.length) {
-    issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_NAVIGATION_EMPTY", "Root app/ListSet LayoutView.sort is empty; generated apps need navigation entries to open reliably.");
+    issue(
+      report,
+      documentLibraryOnlyPackage ? "warning" : report.mode === "generator" && report.stage === "final" ? "error" : "warning",
+      "ROOT_NAVIGATION_EMPTY",
+      "Root app/ListSet LayoutView.sort is empty. The minimal Document Library Sample export uses only {sortVer:1}; richer generated apps usually need navigation entries.",
+    );
     return;
   }
   const formKeys = new Set(asArray(data.Forms).map((form) => safeString(form.Key || form.FlowKey || form.key)).filter(Boolean));
@@ -1071,6 +1087,9 @@ function validateBasicStructure(data, resource, report) {
     if (resource.AppID === undefined || resource.AppID === null || resource.AppID === "") {
       issue(report, "error", "RESOURCE_APPID_MISSING", "Resource.AppID is required in wrapped .yap packages.");
     }
+    if (isDocumentLibraryOnlyPackage(data) && resource.SimplePortal !== null) {
+      issue(report, "warning", "DOCUMENT_LIBRARY_SIMPLEPORTAL_NOT_NULL", "Known-good document-library exports use Resource.SimplePortal = null. Generated [] wrappers failed Yeeflow create in v1/v2.", { simplePortalType: Array.isArray(resource.SimplePortal) ? "array" : typeof resource.SimplePortal });
+    }
   }
 }
 
@@ -1198,6 +1217,12 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   if (!isRoot && item.ListModel && item.ListModel.LayoutView) {
     const listLayoutView = tryParseJson(item.ListModel.LayoutView);
     if (listLayoutView) {
+      if (resourceType === "document library") {
+        const assignedKeys = ["add", "edit", "view"].filter((key) => safeString(listLayoutView[key]));
+        if (assignedKeys.length > 0 && assignedKeys.length < 3) {
+          issue(report, "warning", "DOCUMENT_LIBRARY_LAYOUTVIEW_PARTIAL_ASSIGNMENT", "Document Library Sample uses null LayoutView for the minimal library, while configured libraries assign add/edit/view together. A partial New-only assignment is runtime-sensitive.", { list: title, assignedKeys });
+        }
+      }
       for (const key of ["add", "edit", "view"]) {
         const assignedLayoutId = safeString(listLayoutView[key]);
         if (assignedLayoutId && !layoutIds.has(assignedLayoutId)) {

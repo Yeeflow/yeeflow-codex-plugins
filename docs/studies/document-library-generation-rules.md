@@ -1,14 +1,15 @@
 # Yeeflow Document Library Generation Rules
 
-These rules are promoted from the `Projects Center.yap` export study.
+These rules are promoted from the `Projects Center.yap` and `Document Library Sample.yap` export studies.
 
 ## Generator Rules
 
 - Treat Document Library as a first-class app child resource.
 - Generate it with `ListModel.Type = 16`.
 - Keep the same child-resource envelope used by data lists: `ListModel`, `Defs`, `Layouts`, `ListDatas`, `FlowMappings`, `PublicForms`, and `RemindRules`.
-- Link it into root app navigation with `Type = 16`.
+- Link it into root app navigation with `Type = 16` for mixed/richer apps. For document-library-only packages that intentionally mirror `Document Library Sample.yap`, root `LayoutView = {"sortVer":1}` and `Item.Layouts = []` are export-proven and should validate with warnings.
 - Use `CustomType = "ListSite_<root app list id>"` for app-owned libraries.
+- Keep top-level `Resource.SimplePortal = null`; both known-good document-library exports use `null`, while generated packages with `[]` failed at Yeeflow create.
 - Preserve native document-library metadata instead of applying normal data-list `Title` rules blindly.
 - Do not fake uploaded document rows in baseline packages.
 - Do not generate folders until folder runtime behavior is proven.
@@ -30,7 +31,7 @@ Generate these export-proven document-library fields:
 
 ## Views
 
-Document-library views can reuse data-list view generation where compatible. A newly created library may export an empty default view `LayoutView`; this is allowed as compatibility evidence. Generated runtime baselines should include at least one configured view with `layout`, `query`, `sort`, `filter`, and `rowColor` when possible.
+Document-library views can reuse data-list view generation where compatible. A newly created library may export an empty default view `LayoutView`; this is allowed as compatibility evidence. For the minimal runtime baseline, prefer the sample-proven empty default view before adding configured view JSON.
 
 ## Custom Forms
 
@@ -40,7 +41,7 @@ Document-library custom forms reuse the data-list custom form storage shape. Gen
 - `ListModel.LayoutView.edit`
 - `ListModel.LayoutView.view`
 
-The first baseline may use a single upload form only. New/Edit/View mapping is validation-only until generated runtime proof confirms behavior.
+The minimal sample has one `New file` upload form but no `ListModel.LayoutView` assignment. Configured libraries assign `add`, `edit`, and `view` together. Avoid partial New-only assignment until runtime proof confirms it is safe.
 
 ## Validator Rules
 
@@ -57,7 +58,7 @@ The first baseline may use a single upload form only. New/Edit/View mapping is v
 ## Remaining Unknowns
 
 - Runtime import behavior for generated Type `16` libraries.
-- The first generated fresh-ID baseline uploaded successfully but Yeeflow returned `Created failed` at the final import step. No structural patch should be made until the server response or a smaller exported-back Type `16` package identifies the missing property.
+- Baseline v1 and v2 uploaded successfully but Yeeflow returned `Created failed` at the final import step. The clearest root-cause candidate isolated by `Document Library Sample.yap` is top-level `Resource.SimplePortal`: known-good exports use `null`, while v1/v2 used `[]`. Baseline v3 corrects this locally, but runtime proof is still pending.
 - Folder create/open/query behavior.
 - Upload persistence and how Name, Type, Extension, Size, UniqueName, and Upload File are populated after upload.
 - Whether New/Edit/View custom form assignment has additional document-library-specific runtime constraints.

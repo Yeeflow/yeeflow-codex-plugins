@@ -89,3 +89,31 @@ Observed evidence:
 - the app was not created, so app open, library open, upload, folder, and persistence checks were not reached.
 
 Do not patch this baseline until the failing import response or an exported-back Type `16` minimal package identifies the missing or invalid property. Current status is validation-only, not runtime-proven.
+
+## Sample Isolation Attempt
+
+Source studied: `/Users/Renger/Downloads/Document Library Sample.yap`
+
+What the sample proved:
+
+- document-library-only app exports can have `Item.Layouts = []`.
+- root `LayoutView` can be only `{"sortVer":1}` with no navigation `sort[]`.
+- top-level `Resource.SimplePortal` is `null` in both known-good exports.
+- the minimal document library has seven native fields, one empty Type `0` view, and one `New file` upload form with no `ListModel.LayoutView` assignment.
+
+Baseline v2 changes:
+
+- generated from `Document Library Sample.yap` rather than `Projects Center.yap`.
+- removed generated root Type `103` Home page and root navigation.
+- removed partial New-only custom-form assignment.
+- kept one Type `16` library with no uploaded rows.
+
+Runtime result: still blocked by Yeeflow runtime context / import create failure. Yeeflow accepted the upload and metadata dialog, then returned `Tip: Created failed`.
+
+Baseline v3 changes:
+
+- changed top-level `Resource.SimplePortal` from `[]` to `null`.
+- switched to a fresh Yeeflow-like `2059...` ID family.
+- local package, graph, materialization, wrapper round-trip, and standalone document-library validation pass with warnings only.
+
+Runtime status for v3: validation-only. A clean v3 import attempt still needs to be repeated with reliable browser/network evidence before claiming runtime proof.

@@ -36,7 +36,7 @@ Load [runtime-test-checklist.md](references/runtime-test-checklist.md) when crea
 - Family Quota Usage and audit lifecycle style tests
 - custom code control runtime proof
 
-For document-library runtime tests, use `docs/studies/document-library-runtime-test-plan.md` when present. Prove import/open separately from upload behavior: the app must not open as an empty shell, the Type `16` document library must appear in navigation, the library must open, default fields must be visible or inspectable, and upload/folder behavior may only be tested with disposable non-private files. Do not claim folder or upload persistence proof from local validation alone.
+For document-library runtime tests, use `docs/studies/document-library-runtime-test-plan.md` when present. Prove import/open separately from upload behavior: the app must not open as an empty shell, the Type `16` document library must be reachable from the imported app, the library must open, default fields must be visible or inspectable, and upload/folder behavior may only be tested with disposable non-private files. `Document Library Sample.yap` proves document-library-only apps may omit root navigation and Type `103` pages, so judge reachability from the runtime UI rather than assuming a navigation item must exist. Do not claim folder or upload persistence proof from local validation alone.
 
 If the repo contains `docs/yeeflow-runtime-test-checklist-template.md` or `docs/yeeflow-application-generation-review-checklist.md`, use them as project-local reporting templates.
 

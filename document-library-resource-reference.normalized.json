@@ -1,5 +1,8 @@
 {
-  "source": "Projects Center.yap",
+  "source": [
+    "Projects Center.yap",
+    "Document Library Sample.yap"
+  ],
   "sanitization": {
     "rawExportCommitted": false,
     "tenantUserMetadataIncluded": false,
@@ -20,6 +23,22 @@
     "PublicForms",
     "RemindRules"
   ],
+  "wrapperSignature": {
+    "MainListType": 1024,
+    "AppID": 41,
+    "ReportIds": [],
+    "FormKeys": [],
+    "SimplePortal": null,
+    "simplePortalStatus": "observed in both known-good document-library exports; generated [] failed runtime create in v1/v2"
+  },
+  "documentLibraryOnlyRootSignature": {
+    "ItemLayouts": [],
+    "rootLayoutView": {
+      "sortVer": 1
+    },
+    "navigationSort": [],
+    "status": "observed in Document Library Sample.yap; warning-only for validators"
+  },
   "listModelSignature": {
     "Type": 16,
     "CustomTypePattern": "ListSite_<rootListId>",
@@ -158,6 +177,6 @@
       "opentype",
       "modalsize"
     ],
-    "status": "export-proven on configured Documents library"
+    "status": "export-proven on configured Documents library; absent on minimal New Document Library"
   }
 }

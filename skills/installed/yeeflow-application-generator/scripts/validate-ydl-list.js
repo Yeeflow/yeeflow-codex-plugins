@@ -3,11 +3,30 @@
 const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
+const {
+  loadControlFieldSchemas,
+  validateFieldAgainstSchema,
+} = require("./yeeflow-control-field-schema-utils");
 
 const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
 const PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
 const SECRET_KEY_RE = /(token|secret|password|credential|clientsecret|apikey|api_key|accesskey)/i;
+const HEX_COLOR_RE = /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/g;
+const ROOT_STYLE_TOKEN_HEX = new Map([
+  ["#0065ff", "--c--primary"],
+  ["#e6f0ff", "--c--primary-light"],
+  ["#00d1ff", "--c--secondary"],
+  ["#15df42", "--c--success"],
+  ["#f9c434", "--c--warning"],
+  ["#f61515", "--c--danger"],
+  ["#b3b7c0", "--c--neutral"],
+  ["#ffffff", "--c--background"],
+  ["#071638", "--c--text"],
+  ["#e7e9eb", "--c--neutral-light-active"],
+  ["#f7f8f9", "--c--neutral-light"],
+  ["#f4f4f6", "--c--neutral-light-hover"],
+]);
 
 const KNOWN_SYSTEM_FIELDS = new Set([
   "ListDataID",
@@ -132,6 +151,12 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function zeroPadding(padding) {
+  const value = Array.isArray(padding) ? padding[1] : padding;
+  if (!isObject(value)) return false;
+  return ["top", "right", "bottom", "left"].every((side) => value[side] === "--sp--s0" || value[side] === 0 || value[side] === "0" || value[side] === "");
+}
+
 function safeString(value) {
   if (value === null || value === undefined) return "";
   return String(value);
@@ -173,6 +198,23 @@ function walkControls(control, visitor, pointer = "$") {
       control[key].forEach((child, index) => walkControls(child, visitor, `${pointer}.${key}[${index}]`));
     }
   }
+}
+
+function findControlByLabel(root, label) {
+  let found = null;
+  walkControls(root, (control) => {
+    if (!found && control && control.nv_label === label) found = control;
+  });
+  return found;
+}
+
+function controlContains(parent, child) {
+  if (!parent || !child) return false;
+  let found = false;
+  walkControls(parent, (control) => {
+    if (control === child) found = true;
+  });
+  return found;
 }
 
 function normalizeType(field, rules = {}) {
@@ -335,6 +377,34 @@ function detectPlaceholders(root, report) {
   });
 }
 
+function validateDesignSystemColorUsage(root, report) {
+  if (report.mode !== "generator") return;
+  const literalHits = [];
+  const arbitraryHits = [];
+  walk(root, (node, pointer) => {
+    if (typeof node !== "string") return;
+    for (const match of node.matchAll(HEX_COLOR_RE)) {
+      const color = match[0].toLowerCase();
+      const token = ROOT_STYLE_TOKEN_HEX.get(color);
+      const hit = { color: match[0], path: pointer, token: token || null };
+      if (token) literalHits.push(hit);
+      else arbitraryHits.push(hit);
+    }
+  });
+  if (literalHits.length) {
+    issue(report, "warning", "DESIGN_SYSTEM_RESOLVED_TOKEN_COLOR", "Generated list UI contains literal hex colors that match known Yeeflow root tokens. Prefer token references where supported, but do not fail exports that store resolved values.", {
+      count: literalHits.length,
+      examples: literalHits.slice(0, 8),
+    });
+  }
+  if (arbitraryHits.length > 8) {
+    issue(report, "warning", "DESIGN_SYSTEM_ARBITRARY_COLOR_USAGE", "Generated list UI contains many hard-coded hex colors. Prefer semantic Yeeflow root tokens where supported.", {
+      count: arbitraryHits.length,
+      examples: arbitraryHits.slice(0, 8),
+    });
+  }
+}
+
 function validateStructure(data, resource, report) {
   if (!isObject(data)) {
     issue(report, "error", "DATA_NOT_OBJECT", "Decoded Data must be an object.");
@@ -353,6 +423,7 @@ function validateStructure(data, resource, report) {
 
 function validateIdentity(item, resource, report) {
   const model = item.ListModel || {};
+  const isDocumentLibrary = Number(model.Type || (resource && resource.MainListType)) === 16;
   if (!model.Title && !model.Name) issue(report, "error", "LIST_TITLE_MISSING", "ListModel title/name is required.");
   if (!model.AppID && !(resource && resource.AppID)) issue(report, "error", "APP_ID_MISSING", "AppID is required.");
   if (!model.ListID) issue(report, "error", "LIST_ID_MISSING", "ListID is required.");
@@ -363,6 +434,10 @@ function validateIdentity(item, resource, report) {
   validateGeneratedAppId(report, model.AppID || (resource && resource.AppID), { path: "Item.ListModel.AppID" });
   validateGeneratedId(report, model.ListSetID, "GENERATED_LISTSET_ID_NOT_LARGE_NUMERIC_STRING", "Generated ListSetID should be a large numeric string ID.", { path: "Item.ListModel.ListSetID" });
   validateGeneratedId(report, model.ListID, "GENERATED_LIST_ID_NOT_LARGE_NUMERIC_STRING", "Generated ListID should be a large numeric string ID.", { path: "Item.ListModel.ListID" });
+  if (isDocumentLibrary) {
+    if (model.Type !== 16) issue(report, "warning", "DOCUMENT_LIBRARY_TYPE_UNUSUAL", "Standalone document library ListModel.Type should be 16.", { type: model.Type });
+    if (model.IsItemPerm !== true) issue(report, "warning", "DOCUMENT_LIBRARY_ITEM_PERMISSION_UNUSUAL", "Studied document libraries keep IsItemPerm true; confirm generated permission behavior if this differs.", { isItemPerm: model.IsItemPerm });
+  }
 }
 
 function parsedRulesForField(field, index, report) {
@@ -383,13 +458,48 @@ function parsedRulesForField(field, index, report) {
   return redact(parsed.value);
 }
 
+function validateDocumentLibraryFields(item, fieldByName, report) {
+  const required = [
+    { fieldName: "Title", fieldType: "Text", controlType: "input", rule: "isLibrary" },
+    { fieldName: "Text1", fieldType: "Text", controlType: "input" },
+    { fieldName: "Bigint2", fieldType: "Bigint", controlType: "input_number", rule: "readonly" },
+    { fieldName: "Text4", fieldType: "Text", controlType: "file-upload", rule: "isLabrary" },
+  ];
+  for (const spec of required) {
+    const field = fieldByName.get(spec.fieldName);
+    if (!field) {
+      issue(report, "warning", "DOCUMENT_LIBRARY_DEFAULT_FIELD_MISSING", "Document library is missing an export-proven default field.", { fieldName: spec.fieldName });
+      continue;
+    }
+    const rules = parsedRulesForField(field, -1, report);
+    const mismatches = [];
+    if (safeString(field.FieldType) !== spec.fieldType) mismatches.push(`FieldType expected ${spec.fieldType}`);
+    if (safeString(field.Type) !== spec.controlType) mismatches.push(`Type expected ${spec.controlType}`);
+    if (spec.rule && rules[spec.rule] !== true) mismatches.push(`Rules.${spec.rule} expected true`);
+    if (spec.fieldName === "Title" && (field.IsSystem !== true || field.IsIndex !== true)) mismatches.push("Title should keep IsSystem and IsIndex true");
+    if (mismatches.length) {
+      issue(report, "warning", "DOCUMENT_LIBRARY_DEFAULT_FIELD_SIGNATURE_UNUSUAL", "Document library default field signature differs from Projects Center export evidence.", {
+        fieldName: spec.fieldName,
+        displayName: field.DisplayName || null,
+        mismatches,
+      });
+    }
+  }
+  const parent = fieldByName.get("Bigint1");
+  if (!parent) {
+    issue(report, "warning", "DOCUMENT_LIBRARY_PARENT_FIELD_MISSING", "Document library exports include Bigint1/ParentID for folder hierarchy support; keep it unless a focused export proves it is optional.", {});
+  }
+}
+
 function validateFields(item, report) {
   const fields = asArray(item.Defs);
+  const isDocumentLibrary = Number(item.ListModel && item.ListModel.Type) === 16;
   const fieldByName = new Map();
   const fieldNames = new Set();
   const internalNames = new Set();
   const displayNames = new Set();
   const lookupRelationships = [];
+  const controlFieldSchemas = loadControlFieldSchemas(__dirname);
 
   fields.forEach((field, index) => {
     const location = `Item.Defs[${index}]`;
@@ -406,7 +516,7 @@ function validateFields(item, report) {
       fieldNames.add(field.FieldName);
       fieldByName.set(field.FieldName, field);
     }
-    if (field.FieldName === "Title" && (field.Status !== 0 || field.IsSystem !== true || field.IsIndex !== true)) {
+    if (!isDocumentLibrary && field.FieldName === "Title" && (field.Status !== 0 || field.IsSystem !== true || field.IsIndex !== true)) {
       issue(
         report,
         generatorFinalSeverity(report),
@@ -427,11 +537,19 @@ function validateFields(item, report) {
       internalNames.add(field.InternalName);
     }
     if (field.DisplayName) {
-      if (displayNames.has(field.DisplayName)) issue(report, "warning", "DUPLICATE_DISPLAY_NAME", `Duplicate DisplayName ${field.DisplayName}.`, { location });
+      if (displayNames.has(field.DisplayName)) issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DUPLICATE_DISPLAY_NAME", `Duplicate DisplayName ${field.DisplayName}. Yeeflow generated data-list fields should use unique visible field names to avoid import/materialization failures.`, { location });
       displayNames.add(field.DisplayName);
     }
 
     const rules = parsedRulesForField(field, index, report);
+    validateFieldAgainstSchema(field, controlFieldSchemas).forEach((schemaIssue) => {
+      issue(report, "warning", `FIELD_SCHEMA_${schemaIssue.code}`, schemaIssue.message, {
+        location,
+        fieldName: field.FieldName || null,
+        fieldType: field.Type || null,
+        ...(schemaIssue.detail || {}),
+      });
+    });
     const normalizedType = normalizeType(field, rules);
     if (normalizedType === "unknown") {
       issue(report, "warning", "UNKNOWN_FIELD_CONTROL_TYPE", "Could not determine normalized field type.", {
@@ -500,6 +618,8 @@ function validateFields(item, report) {
     }
   });
 
+  if (isDocumentLibrary) validateDocumentLibraryFields(item, fieldByName, report);
+
   return { fieldByName, lookupRelationships };
 }
 
@@ -523,6 +643,7 @@ function parseLayoutView(layout, index, report) {
 
 function validateViews(item, fieldByName, report) {
   const layouts = asArray(item.Layouts);
+  const isDocumentLibrary = Number(item.ListModel && item.ListModel.Type) === 16;
   let viewCount = 0;
   let defaultViews = 0;
   const knownTypes = new Set(["", "0", "104"]);
@@ -540,7 +661,21 @@ function validateViews(item, fieldByName, report) {
     if (report.mode === "generator" && !knownTypes.has(type)) {
       issue(report, "warning", "UNKNOWN_VIEW_TYPE", "Unknown view Type; generated lists should use confirmed view types.", { title: layout.Title || null, type });
     }
+    if (isDocumentLibrary && (layout.LayoutView === null || layout.LayoutView === undefined || layout.LayoutView === "")) {
+      issue(report, "warning", "DOCUMENT_LIBRARY_VIEW_LAYOUTVIEW_EMPTY", "A newly created document library export may have an empty default view LayoutView; configured libraries should use normal list view JSON.", {
+        location: `Item.Layouts[${index}].LayoutView`,
+        title: layout.Title || null,
+      });
+      return;
+    }
     const view = parseLayoutView(layout, index, report);
+    if (!view && isDocumentLibrary) {
+      issue(report, "warning", "DOCUMENT_LIBRARY_VIEW_LAYOUTVIEW_EMPTY_OR_INVALID", "A newly created document library export may have an empty default view LayoutView; configured libraries should use normal list view JSON.", {
+        location: `Item.Layouts[${index}].LayoutView`,
+        title: layout.Title || null,
+      });
+      return;
+    }
     if (!view) return;
 
     for (const [columnIndex, column] of asArray(view.layout).entries()) {
@@ -612,6 +747,7 @@ function isAllowedUnboundControl(type) {
 function validateCustomForms(item, fieldByName, report) {
   const layouts = asArray(item.Layouts);
   const customFormLayoutIds = [];
+  const customFormsByTitle = new Map();
   let customFormCount = 0;
   layouts.forEach((layout, index) => {
     if (layoutType(layout) !== "1") return;
@@ -635,6 +771,7 @@ function validateCustomForms(item, fieldByName, report) {
     }
     customFormCount += 1;
     if (layout.LayoutID) customFormLayoutIds.push(String(layout.LayoutID));
+    if (layout.Title) customFormsByTitle.set(String(layout.Title).toLowerCase(), layout);
     if (report.mode === "generator" && (!layoutResource.ID || !layoutResource.RefId)) {
       issue(report, "error", "CUSTOM_FORM_RESOURCE_ID_MISSING", "Generated custom form resources should include LayoutInResources ID and RefId like real exports.", {
         location: `Item.Layouts[${index}].LayoutInResources[0]`,
@@ -678,6 +815,10 @@ function validateCustomForms(item, fieldByName, report) {
       });
     }
     const form = redact(parsed.value);
+    validateUiUxStandardListForm(form, report, {
+      location: `Item.Layouts[${index}].LayoutInResources[0].Resource`,
+      title: layout.Title || null,
+    });
     const children = asArray(form.children);
     if (children.length === 0) {
       generatorOrWarning(report, "CUSTOM_FORM_CHILDREN_EMPTY", "Custom form Resource has no children, so the designer/form will be empty.", {
@@ -727,22 +868,71 @@ function validateCustomForms(item, fieldByName, report) {
     });
   });
   if (customFormLayoutIds.length) {
+    const isDocumentLibrary = Number(item.ListModel && item.ListModel.Type) === 16;
     const parsedLayoutView = tryParseJson(item.ListModel && item.ListModel.LayoutView);
     if (parsedLayoutView.ok) {
       const assigned = ["add", "edit", "view"].filter((key) => customFormLayoutIds.includes(String(parsedLayoutView.value[key])));
-      if (!assigned.length) {
+      if (isDocumentLibrary && assigned.length > 0 && assigned.length < 3) {
+        issue(report, "warning", "DOCUMENT_LIBRARY_LAYOUTVIEW_PARTIAL_ASSIGNMENT", "Document Library Sample uses null LayoutView for the minimal library, while configured libraries assign add/edit/view together. A partial New-only assignment is runtime-sensitive.", {
+          customFormLayoutIds,
+          assigned,
+        });
+      }
+      if (!assigned.length && !isDocumentLibrary) {
         issue(report, "warning", "CUSTOM_FORM_NOT_ASSIGNED_TO_DISPLAY_SETTINGS", "Custom form exists, but ListModel.LayoutView does not assign it to New/Edit/View display settings.", {
           customFormLayoutIds,
           layoutView: parsedLayoutView.value,
         });
       }
-    } else if (report.mode === "generator") {
+      const editLayout = customFormsByTitle.get("edit item");
+      const viewLayout = customFormsByTitle.get("view item");
+      if (report.mode === "generator") {
+        if (!editLayout) {
+          issue(report, "warning", "UI_STANDARD_EDIT_ITEM_FORM_MISSING", "UI/UX standard generated data lists should include a custom form titled \"Edit Item\".", {});
+        }
+        if (!viewLayout) {
+          issue(report, "warning", "UI_STANDARD_VIEW_ITEM_FORM_MISSING", "UI/UX standard generated data lists should include a custom form titled \"View Item\".", {});
+        }
+        if (editLayout && String(parsedLayoutView.value.add) !== String(editLayout.LayoutID)) {
+          issue(report, "warning", "UI_STANDARD_NEW_NOT_USING_EDIT_ITEM_FORM", "UI/UX standard New item display setting should use the Edit Item custom form.", { expectedLayoutId: editLayout.LayoutID, actualLayoutId: parsedLayoutView.value.add });
+        }
+        if (editLayout && String(parsedLayoutView.value.edit) !== String(editLayout.LayoutID)) {
+          issue(report, "warning", "UI_STANDARD_EDIT_NOT_USING_EDIT_ITEM_FORM", "UI/UX standard Edit item display setting should use the Edit Item custom form.", { expectedLayoutId: editLayout.LayoutID, actualLayoutId: parsedLayoutView.value.edit });
+        }
+        if (viewLayout && String(parsedLayoutView.value.view) !== String(viewLayout.LayoutID)) {
+          issue(report, "warning", "UI_STANDARD_VIEW_NOT_USING_VIEW_ITEM_FORM", "UI/UX standard View item display setting should use the View Item custom form.", { expectedLayoutId: viewLayout.LayoutID, actualLayoutId: parsedLayoutView.value.view });
+        }
+      }
+    } else if (report.mode === "generator" && !isDocumentLibrary) {
       issue(report, "warning", "CUSTOM_FORM_DISPLAY_SETTINGS_UNPARSEABLE", "Custom form exists, but ListModel.LayoutView could not be parsed to confirm display setting assignment.", {
         customFormLayoutIds,
       });
     }
   }
   return customFormCount;
+}
+
+function validateUiUxStandardListForm(form, report, details) {
+  const container = form && form.attrs && form.attrs.container;
+  if (container && container.cw !== "2") {
+    issue(report, "warning", "UI_STANDARD_CONTENT_WIDTH_NOT_FULL", "UI/UX standard custom list forms should use full-width content area: attrs.container.cw = \"2\".", details);
+  }
+  if (!zeroPadding(container && container.padding)) {
+    issue(report, "warning", "UI_STANDARD_FORM_PADDING_NOT_ZERO", "UI/UX standard custom list forms should use zero page padding with --sp--s0 on all sides.", details);
+  }
+  const main = findControlByLabel(form, "Main");
+  const content = findControlByLabel(form, "Content");
+  if (!main) {
+    issue(report, "warning", "UI_STANDARD_MAIN_CONTAINER_MISSING", "UI/UX standard custom list forms should have a container with nv_label \"Main\".", details);
+    return;
+  }
+  if (!content) {
+    issue(report, "warning", "UI_STANDARD_CONTENT_CONTAINER_MISSING", "UI/UX standard custom list forms should have a container with nv_label \"Content\".", details);
+    return;
+  }
+  if (!controlContains(main, content)) {
+    issue(report, "warning", "UI_STANDARD_CONTENT_NOT_INSIDE_MAIN", "UI/UX standard custom list form Content container should be inside Main.", details);
+  }
 }
 
 function stencilId(node) {
@@ -1071,6 +1261,7 @@ function validate(inputPath, mode, stage, dependencyMapPath = null) {
   validateWorkflows(decoded.data, item, fieldByName, knownListIds, report);
   validateSampleData(item, fieldByName, report, dependencyMap, externalLookupFields, decoded.resource);
   validateLookupRelationships(lookupRelationships, knownListIds, report, dependencyMap);
+  validateDesignSystemColorUsage(decoded, report);
 
   report.summary.fields = asArray(item.Defs).length;
   report.summary.views = viewCount;

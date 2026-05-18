@@ -4,6 +4,10 @@ const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
 const { validateWorkflowActionShapes } = require("./workflow-action-config-validator");
+const {
+  loadControlFieldSchemas,
+  validateFieldAgainstSchema,
+} = require("./yeeflow-control-field-schema-utils");
 
 const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
@@ -233,6 +237,11 @@ function classifyListResource(item, isRoot = false) {
   return "unknownResource";
 }
 
+function isDocumentLibraryOnlyPackage(data) {
+  const children = asArray(data && data.Childs);
+  return children.length > 0 && children.every((child) => classifyListResource(child) === "documentLibrary");
+}
+
 function nodeLabel(value, fallback) {
   return safeString(value) || fallback;
 }
@@ -389,6 +398,7 @@ function validate(inputPath, mode, stage) {
       nodes: 0,
       edges: 0,
       lists: 0,
+      documentLibraries: 0,
       fields: 0,
       approvalForms: 0,
       listWorkflows: 0,
@@ -410,6 +420,7 @@ function validate(inputPath, mode, stage) {
       },
     },
     _largeNumbers: new Set(),
+    _controlFieldSchemas: loadControlFieldSchemas(__dirname),
   };
 
   const decoded = decodeInput(inputPath, report);
@@ -440,6 +451,7 @@ function addRootNavigationEdges(context) {
   const root = context.data && context.data.Item && context.data.Item.ListModel ? context.data.Item.ListModel : {};
   const rootId = safeString(root.ListID);
   const appNodeId = rootId ? `app:${rootId}` : null;
+  const documentLibraryOnlyPackage = isDocumentLibraryOnlyPackage(context.data);
   const layoutView = tryParseJson(root.LayoutView);
   if (!layoutView) {
     addIssue(context.report, strictLevel(context.report), "ROOT_LAYOUTVIEW_INVALID", "Root app/ListSet LayoutView must be parseable JSON navigation metadata.");
@@ -458,11 +470,21 @@ function addRootNavigationEdges(context) {
     }));
   }
   if (!rootPageLayouts.size) {
-    addIssue(context.report, strictLevel(context.report), "ROOT_APP_PAGE_LAYOUT_MISSING", "Root app/ListSet should include at least one Type 103 app page layout; real app exports use it as an openable app shell.");
+    addIssue(
+      context.report,
+      documentLibraryOnlyPackage ? "warning" : strictLevel(context.report),
+      "ROOT_APP_PAGE_LAYOUT_MISSING",
+      "Root app/ListSet has no Type 103 app page layout. Document-library-only exports can omit root pages; richer generated apps usually need an openable app shell.",
+    );
   }
   const navItems = flattenNavigationItems(layoutView.sort || []);
   if (!navItems.length) {
-    addIssue(context.report, strictLevel(context.report), "ROOT_NAVIGATION_EMPTY", "Root app/ListSet LayoutView.sort is empty; generated apps need navigation entries to open reliably.");
+    addIssue(
+      context.report,
+      documentLibraryOnlyPackage ? "warning" : strictLevel(context.report),
+      "ROOT_NAVIGATION_EMPTY",
+      "Root app/ListSet LayoutView.sort is empty. The minimal Document Library Sample export uses only {sortVer:1}; richer generated apps usually need navigation entries.",
+    );
     return;
   }
   const formKeys = new Set(asArray(context.data && context.data.Forms).map((form) => safeString(form.Key || form.FlowKey || form.key)).filter(Boolean));
@@ -523,6 +545,9 @@ function validateBasicStructure(context) {
     }
   }
   if (resource && !Array.isArray(resource.ReplaceIds)) addIssue(report, "error", "REPLACEIDS_NOT_ARRAY", "Resource.ReplaceIds must be an array.");
+  if (resource && isDocumentLibraryOnlyPackage(data) && resource.SimplePortal !== null) {
+    addIssue(report, "warning", "DOCUMENT_LIBRARY_SIMPLEPORTAL_NOT_NULL", "Known-good document-library exports use Resource.SimplePortal = null. Generated [] wrappers failed Yeeflow create in v1/v2.", { simplePortalType: Array.isArray(resource.SimplePortal) ? "array" : typeof resource.SimplePortal });
+  }
 }
 
 function inventoryResources(context) {
@@ -549,7 +574,10 @@ function inventoryResources(context) {
         appId: list.AppID || resource && resource.AppID || null,
       }));
       if (resourceType === "dataList") report.summary.lists += 1;
-      if (resourceType === "documentLibrary") addIssue(report, "dependency", "DOCUMENT_LIBRARY_RESOURCE", "Document library resource present; validate document/template dependencies separately.", { title, listId });
+      if (resourceType === "documentLibrary") {
+        report.summary.documentLibraries += 1;
+        addIssue(report, "dependency", "DOCUMENT_LIBRARY_RESOURCE", "Document library resource present; validate Type 16 fields, views, forms, folder behavior, and upload behavior before runtime claims.", { title, listId });
+      }
       if (resourceType === "dataReportResource" || resourceType === "formReportResource") report.summary.reports += 1;
     } else if (report.mode === "generator" && report.stage === "final") {
       addIssue(report, "error", "RESOURCE_LISTID_MISSING", "Resource ListID is missing.", { title, index });
@@ -579,6 +607,16 @@ function inventoryResources(context) {
           }
         );
       }
+      validateFieldAgainstSchema(field, report._controlFieldSchemas).forEach((schemaIssue) => {
+        addIssue(report, "warning", `FIELD_SCHEMA_${schemaIssue.code}`, schemaIssue.message, {
+          list: title,
+          listId,
+          fieldId,
+          fieldName: fieldName || null,
+          fieldType: field.Type || null,
+          ...(schemaIssue.detail || {}),
+        });
+      });
       if (listId && (fieldName || fieldId)) {
         const nodeId = `field:${listId}:${fieldName || fieldId}`;
         addNode(graph, makeNode(nodeId, "field", label, {
@@ -592,6 +630,20 @@ function inventoryResources(context) {
         report.summary.fields += 1;
       }
     });
+    if (!isRoot && resourceType === "documentLibrary") {
+      for (const fieldName of ["Title", "Text1", "Bigint2", "Text4"]) {
+        if (!fieldMap.has(fieldName)) {
+          addIssue(report, "warning", "DOCUMENT_LIBRARY_DEFAULT_FIELD_MISSING", "Document library is missing an export-proven default field.", { title, listId, fieldName });
+        }
+      }
+      const upload = fieldMap.get("Text4");
+      if (upload && safeString(upload.Type) !== "file-upload") {
+        addIssue(report, "warning", "DOCUMENT_LIBRARY_UPLOAD_FIELD_TYPE_UNUSUAL", "Document library Text4 upload field should use the file-upload control type in studied exports.", { title, listId, fieldName: "Text4", controlType: upload.Type || null });
+      }
+      if (!fieldMap.has("Bigint1")) {
+        addIssue(report, "warning", "DOCUMENT_LIBRARY_PARENT_FIELD_MISSING", "Document library exports include Bigint1/ParentID for folder hierarchy support; keep it unless a focused export proves it is optional.", { title, listId });
+      }
+    }
     if (listId) fieldsByList.set(listId, fieldMap);
 
     asArray(item.Layouts).forEach((layout) => {
@@ -1237,6 +1289,7 @@ function detectListCycles(context) {
 
 function finish(report) {
   delete report._largeNumbers;
+  delete report._controlFieldSchemas;
   if (report.errors.length) report.status = "fail";
   else if (report.warnings.length || report.dependencies.length) report.status = "pass_with_warnings";
   else report.status = "pass";

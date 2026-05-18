@@ -237,6 +237,11 @@ function classifyListResource(item, isRoot = false) {
   return "unknownResource";
 }
 
+function isDocumentLibraryOnlyPackage(data) {
+  const children = asArray(data && data.Childs);
+  return children.length > 0 && children.every((child) => classifyListResource(child) === "documentLibrary");
+}
+
 function nodeLabel(value, fallback) {
   return safeString(value) || fallback;
 }
@@ -446,6 +451,7 @@ function addRootNavigationEdges(context) {
   const root = context.data && context.data.Item && context.data.Item.ListModel ? context.data.Item.ListModel : {};
   const rootId = safeString(root.ListID);
   const appNodeId = rootId ? `app:${rootId}` : null;
+  const documentLibraryOnlyPackage = isDocumentLibraryOnlyPackage(context.data);
   const layoutView = tryParseJson(root.LayoutView);
   if (!layoutView) {
     addIssue(context.report, strictLevel(context.report), "ROOT_LAYOUTVIEW_INVALID", "Root app/ListSet LayoutView must be parseable JSON navigation metadata.");
@@ -464,11 +470,21 @@ function addRootNavigationEdges(context) {
     }));
   }
   if (!rootPageLayouts.size) {
-    addIssue(context.report, strictLevel(context.report), "ROOT_APP_PAGE_LAYOUT_MISSING", "Root app/ListSet should include at least one Type 103 app page layout; real app exports use it as an openable app shell.");
+    addIssue(
+      context.report,
+      documentLibraryOnlyPackage ? "warning" : strictLevel(context.report),
+      "ROOT_APP_PAGE_LAYOUT_MISSING",
+      "Root app/ListSet has no Type 103 app page layout. Document-library-only exports can omit root pages; richer generated apps usually need an openable app shell.",
+    );
   }
   const navItems = flattenNavigationItems(layoutView.sort || []);
   if (!navItems.length) {
-    addIssue(context.report, strictLevel(context.report), "ROOT_NAVIGATION_EMPTY", "Root app/ListSet LayoutView.sort is empty; generated apps need navigation entries to open reliably.");
+    addIssue(
+      context.report,
+      documentLibraryOnlyPackage ? "warning" : strictLevel(context.report),
+      "ROOT_NAVIGATION_EMPTY",
+      "Root app/ListSet LayoutView.sort is empty. The minimal Document Library Sample export uses only {sortVer:1}; richer generated apps usually need navigation entries.",
+    );
     return;
   }
   const formKeys = new Set(asArray(context.data && context.data.Forms).map((form) => safeString(form.Key || form.FlowKey || form.key)).filter(Boolean));
@@ -529,6 +545,9 @@ function validateBasicStructure(context) {
     }
   }
   if (resource && !Array.isArray(resource.ReplaceIds)) addIssue(report, "error", "REPLACEIDS_NOT_ARRAY", "Resource.ReplaceIds must be an array.");
+  if (resource && isDocumentLibraryOnlyPackage(data) && resource.SimplePortal !== null) {
+    addIssue(report, "warning", "DOCUMENT_LIBRARY_SIMPLEPORTAL_NOT_NULL", "Known-good document-library exports use Resource.SimplePortal = null. Generated [] wrappers failed Yeeflow create in v1/v2.", { simplePortalType: Array.isArray(resource.SimplePortal) ? "array" : typeof resource.SimplePortal });
+  }
 }
 
 function inventoryResources(context) {
