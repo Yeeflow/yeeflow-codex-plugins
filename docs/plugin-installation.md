@@ -11,7 +11,7 @@ The supported v0 distribution paths are:
 
 Organization-level private marketplace distribution is a future option. Do not assume it is available until Codex admin setup, supported marketplace configuration, and the target environment's install flow are confirmed.
 
-## Add As A Marketplace
+## Verified Private Marketplace Install
 
 The repo includes a marketplace catalog at:
 
@@ -25,14 +25,49 @@ Use this when Codex asks to add a plugin marketplace from a GitHub repo, Git URL
 ./dist/yeeflow-builder-plugin
 ```
 
-For Git-based marketplace install, use the latest release-candidate tag that includes this marketplace catalog. If sparse paths are requested, include both the marketplace catalog and the plugin folder:
+Verified install status: passed on 2026-05-18.
+
+Use these values in Codex's Add marketplace dialog:
+
+```text
+Source:
+https://github.com/rengerhu/yeeflow-ai-builder-research.git
+
+Git ref:
+yeeflow-builder-plugin-v0.1.0-rc6
+
+Sparse paths:
+.agents/plugins/marketplace.json
+dist/yeeflow-builder-plugin
+```
+
+Expected Codex result:
+
+- Marketplace name: `Yeeflow Internal`
+- Category: `Developer Tools`
+- Plugin name: `Yeeflow Builder`
+- Plugin install: succeeds
+
+For future Git-based marketplace installs, use a release tag that includes this marketplace catalog. If sparse paths are requested, include both the marketplace catalog and the plugin folder:
 
 ```text
 .agents/plugins/marketplace.json
 dist/yeeflow-builder-plugin
 ```
 
-After the marketplace is added, the plugin should appear as `Yeeflow Builder`.
+If marketplace metadata or icon assets do not refresh after a tag update, remove and re-add the `Yeeflow Internal` marketplace. Codex may cache marketplace metadata by source/ref.
+
+Icon behavior: `rc6` includes plugin-level and marketplace-entry icon paths. If Codex still shows the fallback four-dot icon, treat it as marketplace UI/cache behavior rather than a package or install failure. Fallback icon rendering is not an install blocker.
+
+## Release Status
+
+v0.1.0 status:
+
+- Private Git marketplace install: passed.
+- ZIP package smoke test: passed.
+- Git marketplace install: passed.
+- Production/public marketplace: not applicable.
+- Partner-safe edition: planned, not released.
 
 ## v0.1.0 Package Smoke Test
 
@@ -56,7 +91,7 @@ Confirmed results:
 - Every bundled skill has `agents/openai.yaml`.
 - Lightweight skill smoke checks passed for application-builder lifecycle guidance, feature-learning routing guidance, and custom-code Smart Lookup Picker support boundaries.
 
-UI install status: pending. This environment does not expose a verified automated Codex UI or API path for installing a private plugin from ZIP. Use the manual Git or ZIP preparation steps below until the target Codex environment's private plugin install flow is confirmed.
+ZIP UI install status: not separately verified. Use the verified private Git marketplace flow above for Codex plugin installation.
 
 ## Install From Git
 

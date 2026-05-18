@@ -2,7 +2,7 @@
 
 The Yeeflow Builder Plugin is a private, skills-only Codex plugin for internal Yeeflow application builders. It packages the current repo's proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth, Yeeflow API integration, or MCP servers.
 
-Package status: v0.1.0 ZIP smoke tested for install preparation on 2026-05-18. Live Codex UI ZIP installation remains pending until a verified private plugin install flow is available in the target environment.
+Package status: v0.1.0 private Git marketplace install passed on 2026-05-18. ZIP package smoke also passed. Production/public marketplace release is not applicable, and the partner-safe edition is planned but not released.
 
 ## Package Contents
 
@@ -111,6 +111,26 @@ Local validation is not the same as Yeeflow runtime proof. Accepted baselines mu
 ## Manual Install or Upload
 
 If no repo-specific packaging command is available, use `dist/yeeflow-builder-plugin/` as the plugin root. The manifest is `dist/yeeflow-builder-plugin/.codex-plugin/plugin.json`, and bundled skills are under `dist/yeeflow-builder-plugin/skills/`.
+
+## Verified Install
+
+Install through Codex's private marketplace flow with:
+
+```text
+Source:
+https://github.com/rengerhu/yeeflow-ai-builder-research.git
+
+Git ref:
+yeeflow-builder-plugin-v0.1.0-rc6
+
+Sparse paths:
+.agents/plugins/marketplace.json
+dist/yeeflow-builder-plugin
+```
+
+Expected result: marketplace `Yeeflow Internal`, plugin `Yeeflow Builder`, category `Developer Tools`, and successful plugin install.
+
+If metadata or icon changes do not appear after updating the Git ref, remove and re-add the marketplace. The package includes plugin and marketplace icon paths, but fallback icon display may still occur because of Codex marketplace UI/cache behavior and is not an install blocker.
 
 ## Distribution Docs
 

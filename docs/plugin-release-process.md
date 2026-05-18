@@ -22,6 +22,30 @@ Current release archive:
 dist/yeeflow-builder-plugin-0.1.0.zip
 ```
 
+Current release status:
+
+- v0.1.0 private Git marketplace install: passed.
+- ZIP package smoke test: passed.
+- Git marketplace install: passed.
+- Production/public marketplace: not applicable.
+- Partner-safe edition: planned, not released.
+
+Verified marketplace install values:
+
+```text
+Source:
+https://github.com/rengerhu/yeeflow-ai-builder-research.git
+
+Git ref:
+yeeflow-builder-plugin-v0.1.0-rc6
+
+Sparse paths:
+.agents/plugins/marketplace.json
+dist/yeeflow-builder-plugin
+```
+
+Expected Codex result: marketplace `Yeeflow Internal`, plugin `Yeeflow Builder`, category `Developer Tools`, and successful plugin install. If metadata or icon assets do not refresh after a tag update, remove and re-add the marketplace. Fallback icon rendering is not a release blocker when install succeeds and the package includes icon paths.
+
 ## Versioning Policy
 
 Use semantic versioning:
