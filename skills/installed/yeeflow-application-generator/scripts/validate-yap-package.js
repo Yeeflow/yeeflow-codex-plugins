@@ -1259,7 +1259,19 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   const recordCount = item.ListDatas && isObject(item.ListDatas) ? Object.keys(item.ListDatas).length : 0;
   if (item.ListDatas && !isObject(item.ListDatas)) issue(report, "error", "LISTDATAS_BAD_TYPE", "Item.ListDatas must be an object when present.", { path: `${pathPrefix}.ListDatas`, list: title });
   if (recordCount) {
+    const recordIds = new Set();
+    const documentFolderIds = new Set(Object.entries(item.ListDatas)
+      .filter(([, record]) => isObject(record) && safeString(record.Text1).toLowerCase() === "folder")
+      .flatMap(([recordId, record]) => [safeString(recordId), safeString(record.ListDataID)])
+      .filter(Boolean));
     for (const [recordId, record] of Object.entries(item.ListDatas)) {
+      const normalizedRecordId = safeString(recordId);
+      const listDataId = safeString(record && record.ListDataID);
+      const canonicalRecordId = listDataId || normalizedRecordId;
+      if (canonicalRecordId) {
+        if (recordIds.has(canonicalRecordId)) issue(report, "error", "LISTDATA_ID_DUPLICATE", "ListDataID/sample record IDs must be unique within a resource.", { list: title, recordId: canonicalRecordId });
+        recordIds.add(canonicalRecordId);
+      }
       if (recordId && LARGE_INTEGER_RE.test(recordId)) localIds.add(recordId);
       if (record && record.ListDataID && LARGE_INTEGER_RE.test(String(record.ListDataID))) localIds.add(String(record.ListDataID));
       if (isObject(record)) {
@@ -1271,6 +1283,17 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
             issue(report, "warning", "DOCUMENT_LIBRARY_SAMPLE_FILE_CONTENT_PRESENT", "Document library sample data includes a Text4 upload value. Do not include raw file/document payloads in generated packages unless a focused runtime export proves the expected safe shape.", { list: title, recordId, field: key });
           }
         });
+        if (resourceType === "document library" && safeString(record.Text1).toLowerCase() === "folder") {
+          if (!listDataId) issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_LISTDATAID_MISSING", "Document library folder rows should include ListDataID.", { list: title, recordId });
+          if (!safeString(record.Title)) issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_TITLE_MISSING", "Document library folder rows should include Title/Name.", { list: title, recordId });
+          const parentId = safeString(record.Bigint1);
+          if (parentId === "") issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_PARENT_MISSING", "Document library folder rows should include Bigint1/ParentID; root folders use \"0\" in studied exports.", { list: title, recordId });
+          if (parentId && parentId !== "0" && !documentFolderIds.has(parentId)) {
+            issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_PARENT_UNRESOLVED", "Document library folder ParentID should be 0 or point to another folder row.", { list: title, recordId, parentId });
+          }
+          if (record.Text4) issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_UPLOAD_PAYLOAD_PRESENT", "Document library folder rows should not include uploaded file payloads.", { list: title, recordId });
+          if (record.Bigint2 !== undefined && record.Bigint2 !== "") issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_SIZE_UNUSUAL", "Studied document-library folder rows leave Bigint2/FileSize blank.", { list: title, recordId, value: record.Bigint2 });
+        }
       }
     }
   }

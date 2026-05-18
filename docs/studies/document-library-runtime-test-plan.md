@@ -55,12 +55,23 @@ If custom forms are included:
 
 ## Folder Behavior
 
-Test only if generated and safe:
+Test only if generated and safe.
+
+For export-backed generated root folders:
+
+- confirm every generated folder row is visible in the default library view.
+- refresh the page and confirm generated folders persist.
+- switch generated views and document whether folders remain visible or are hidden by view filters.
+- open representative generated folders and confirm the folder page/list loads.
+
+For manual folder creation:
 
 - create a folder.
 - open the folder.
-- upload a file into the folder.
-- confirm `ParentID` behavior through export-back or safe metadata inspection.
+- refresh and confirm the manually created folder persists.
+- confirm `ParentID` behavior through export-back or safe metadata inspection when available.
+
+Upload a file into the folder only if a harmless disposable test file is explicitly safe to use.
 
 ## Result Classification
 
@@ -169,5 +180,35 @@ What remains unproven:
 
 - generated folder-row import shape.
 - folder persistence after refresh across all libraries.
+- actual upload persistence with a harmless test file.
+- richer assigned New/Edit/View form mapping beyond the unassigned `New file` base form.
+
+## V2 Generated Folder Runtime Pass
+
+Package: `enterprise-document-center-v2-folders.yap`
+
+Generated app: `Enterprise Document Center`; imported as `Enterprise Document Center Folders Runtime` to avoid duplicate app-name conflict.
+
+Result: partial runtime proof, with generated root folders runtime-proven.
+
+What is proven:
+
+- The generated app imports/opens with three Type `16` document libraries and generated root folder rows.
+- Generated folders appear in all three document libraries:
+  - Company Policies: `HR Policies`, `IT Policies`, `Finance Policies`, `Compliance Policies`.
+  - Project Documents: `Requirements`, `Contracts`, `Meeting Notes`, `Deliverables`.
+  - Templates and Forms: `HR Forms`, `Finance Forms`, `Project Templates`, `Legal Templates`.
+- Generated folders persist after refresh/navigation checks.
+- Manual `New Folder` creation works across all three libraries:
+  - `Runtime Check Policies`
+  - `Runtime Check Project Docs`
+  - `Runtime Check Templates`
+- Company Policies may require a page refresh after the success toast before the newly created manual folder appears; after refresh, the folder persisted.
+- The Add menu still exposes `New Folder`, `New File`, and `Batch Upload`.
+
+What remains unproven:
+
+- nested generated folder rows.
+- exhaustive open/navigation behavior for every generated folder.
 - actual upload persistence with a harmless test file.
 - richer assigned New/Edit/View form mapping beyond the unassigned `New file` base form.

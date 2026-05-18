@@ -5,15 +5,15 @@ import { execFileSync } from "node:child_process";
 const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
 const SOURCE_EXPORT = process.argv[2] || "/Users/Renger/Downloads/Document Library Sample.yap";
-const OUT_PREFIX = "enterprise-document-center-v2";
+const OUT_PREFIX = "enterprise-document-center-v2-folders";
 const OUT_RESOURCE = `${OUT_PREFIX}.resource.json`;
 const OUT_APP_DEF = `${OUT_PREFIX}.app-def.json`;
 const OUT_YAP = `${OUT_PREFIX}.yap`;
 const OUT_REPORT = `${OUT_PREFIX}.generation-report.json`;
 const TITLE = "Enterprise Document Center";
-const DESCRIPTION = "Document Library v2 generation package with multiple Type 16 document libraries, custom fields, and custom views. Contains no uploaded files or document binaries.";
+const DESCRIPTION = "Document Library v2 generation package with multiple Type 16 document libraries, custom fields, custom views, and generated folder rows. Contains no uploaded files or document binaries.";
 const GENERATED_AT = "2026-05-18 20:35:00";
-const ID_BASE = 2064000000001000000n;
+const ID_BASE = 2065000000001000000n;
 
 function quoteLargeIntegers(jsonText, largeNumbers = new Set()) {
   let out = "";
@@ -202,6 +202,25 @@ function createUploadForm(baseForm, listId, layoutId, title, uploadField) {
   return form;
 }
 
+function folderUniqueName(parentId, title) {
+  return `${parentId}_${title.toLowerCase()}`;
+}
+
+function createFolderRow(folderId, title, customFields) {
+  const row = {
+    ListDataID: folderId,
+    Title: title,
+    Bigint1: "0",
+    Text1: "folder",
+    Bigint2: "",
+    Text2: "",
+    Text3: folderUniqueName("0", title),
+  };
+
+  for (const field of customFields) row[field.FieldName] = "";
+  return row;
+}
+
 function createLibrary(baseLibrary, spec, rootId, baseDefaultView, baseForm, textBaseField) {
   const listId = nextId();
   const defaultViewId = nextId();
@@ -243,6 +262,10 @@ function createLibrary(baseLibrary, spec, rootId, baseDefaultView, baseForm, tex
     5 + index,
   ));
   library.Defs.push(...customFields);
+  library.ListDatas = Object.fromEntries((spec.folders || []).map((folderTitle) => {
+    const folderId = nextId();
+    return [folderId, createFolderRow(folderId, folderTitle, customFields)];
+  }));
 
   const uploadField = library.Defs.find((field) => field.FieldName === "Text4");
   library.Layouts = [
@@ -298,6 +321,12 @@ const librarySpecs = [
       { fieldName: "Text7", displayName: "Owner", fieldType: "Text", controlType: "input", rules: { displayLabel: true } },
       { fieldName: "Text8", displayName: "Status", fieldType: "Text", controlType: "radio", rules: { displayLabel: true, choices: ["Draft", "Active", "Pending Review", "Archived"] } },
     ],
+    folders: [
+      "HR Policies",
+      "IT Policies",
+      "Finance Policies",
+      "Compliance Policies",
+    ],
     views: [
       { title: "All Policies", url: "all-policies", visible: ["Title", "Text5", "Text6", "Datetime1", "Datetime2", "Text7", "Text8"], sort: [{ SortName: "Title", SortByDesc: false }] },
       { title: "Active Policies", url: "active-policies", visible: ["Title", "Text5", "Text6", "Datetime1", "Text7", "Text8"], statusField: "Text8", statusEquals: "Active", key: "company-policies-active" },
@@ -316,6 +345,12 @@ const librarySpecs = [
       { fieldName: "Text9", displayName: "Owner", fieldType: "Text", controlType: "input", rules: { displayLabel: true } },
       { fieldName: "Text10", displayName: "Status", fieldType: "Text", controlType: "radio", rules: { displayLabel: true, choices: ["Draft", "Active", "Latest", "Archived"] } },
     ],
+    folders: [
+      "Requirements",
+      "Contracts",
+      "Meeting Notes",
+      "Deliverables",
+    ],
     views: [
       { title: "All Project Documents", url: "all-project-documents", visible: ["Title", "Text5", "Text6", "Text7", "Text8", "Text9", "Text10"], sort: [{ SortName: "Text5", SortByDesc: false }] },
       { title: "By Project", url: "by-project", visible: ["Text5", "Title", "Text6", "Text8", "Text9", "Text10"], sort: [{ SortName: "Text5", SortByDesc: false }] },
@@ -332,6 +367,12 @@ const librarySpecs = [
       { fieldName: "Text7", displayName: "Version", fieldType: "Text", controlType: "input", rules: { displayLabel: true } },
       { fieldName: "Text8", displayName: "Approved By", fieldType: "Text", controlType: "input", rules: { displayLabel: true } },
       { fieldName: "Text9", displayName: "Status", fieldType: "Text", controlType: "radio", rules: { displayLabel: true, choices: ["Draft", "Active", "Retired"] } },
+    ],
+    folders: [
+      "HR Forms",
+      "Finance Forms",
+      "Project Templates",
+      "Legal Templates",
     ],
     views: [
       { title: "All Templates", url: "all-templates", visible: ["Title", "Text5", "Text6", "Text7", "Text8", "Text9"], sort: [{ SortName: "Title", SortByDesc: false }] },
@@ -431,12 +472,12 @@ const buildOutput = execFileSync("node", [
 const report = {
   status: "pass",
   source: SOURCE_EXPORT,
-  strategy: "document-library-v2-multi-library-custom-fields-views-no-folder-rows",
+  strategy: "document-library-v2-multi-library-custom-fields-views-root-folder-rows",
   outputs: { resource: OUT_RESOURCE, appDef: OUT_APP_DEF, yap: OUT_YAP },
   rootId,
   generatedIdFamily: String(ID_BASE).slice(0, 4),
-  folderRowsGenerated: false,
-  folderPlanRuntimeOnly: true,
+  folderRowsGenerated: true,
+  folderPlanRuntimeOnly: false,
   documentLibraries: data.Childs.map((child) => ({
     title: child.ListModel.Title,
     listId: child.ListModel.ListID,
@@ -448,12 +489,20 @@ const report = {
       fieldType: field.FieldType,
       controlType: field.Type,
     })),
+    folders: Object.values(child.ListDatas || {}).map((row) => ({
+      listDataId: row.ListDataID,
+      title: row.Title,
+      parentId: row.Bigint1,
+      type: row.Text1,
+      uniqueName: row.Text3,
+    })),
     views: child.Layouts.filter((layout) => Number(layout.Type) === 0).map((layout) => ({
       title: layout.Title || "Default",
       layoutView: layout.LayoutView,
     })),
     forms: child.Layouts.filter((layout) => Number(layout.Type) === 1).map((layout) => layout.Title),
-    containsUploadedRows: Object.keys(child.ListDatas || {}).length > 0,
+    containsListRows: Object.keys(child.ListDatas || {}).length > 0,
+    containsUploadedRows: Object.values(child.ListDatas || {}).some((row) => Boolean(row && row.Text4)),
   })),
   build: JSON.parse(buildOutput),
 };

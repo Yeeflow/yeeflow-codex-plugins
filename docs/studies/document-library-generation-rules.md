@@ -4,7 +4,7 @@ These rules are promoted from the `Projects Center.yap` and `Document Library Sa
 
 Runtime update: `document-library-sample-new-library-only.v1.yap`, generated from only the `New Document Library` resource in `Document Library Sample.yap`, imported and ran successfully in Yeeflow by user manual test. Treat that `New Document Library` shape as the canonical minimal base definition for future generated document libraries. Do not treat the earlier generated `Baseline Documents` experiment as the base definition.
 
-V2 runtime update: `Enterprise Document Center` imported and opened in Yeeflow with three Type `16` document libraries generated from the canonical `New Document Library` base. Runtime accepted multiple libraries, simple custom fields, and multiple configured views. The package still generated no file rows or document binaries. Folder rows remain ungenerated; manual folder creation was partially runtime-tested after import.
+V2 runtime update: `Enterprise Document Center` imported and opened in Yeeflow with three Type `16` document libraries generated from the canonical `New Document Library` base. Runtime accepted multiple libraries, simple custom fields, multiple configured views, and export-backed root-level folder rows. The package still generated no uploaded file rows or document binaries. Manual folder creation was also runtime-tested across all three libraries.
 
 ## Generator Rules
 
@@ -16,7 +16,19 @@ V2 runtime update: `Enterprise Document Center` imported and opened in Yeeflow w
 - Keep top-level `Resource.SimplePortal = null`; both known-good document-library exports use `null`, while generated packages with `[]` failed at Yeeflow create.
 - Preserve native document-library metadata instead of applying normal data-list `Title` rules blindly.
 - Do not fake uploaded document rows in baseline packages.
-- Do not generate folder rows until their import-safe payload is proven. Runtime may create folders manually after import.
+- Generate root-level folder rows only when using the export-backed shape:
+  - `ListDatas[folderId]` contains the row.
+  - `ListDataID` equals the object key.
+  - `Title` is the folder name.
+  - `Bigint1 = "0"` for root folders.
+  - `Text1 = "folder"`.
+  - `Bigint2 = ""`.
+  - `Text2 = ""`.
+  - `Text3 = "0_<lowercase folder title>"`.
+  - omit `Text4`; do not include upload payloads.
+  - include blank values for generated custom fields on the library.
+  - include folder row IDs in `ReplaceIds`.
+- Do not generate nested folder rows until nested folder behavior is export-backed and runtime-tested.
 - Do not include raw file/document content, private document metadata, or downloaded files in generated packages.
 
 ## Required Default Fields
@@ -53,7 +65,10 @@ The runtime-proven minimal `New Document Library` baseline has one `New file` up
 - Warn on missing or unusual document-library default fields.
 - Warn when `Text4` is not a `file-upload` field with library upload rules.
 - Warn when `Bigint1` / ParentID is missing.
+- Warn when document-library folder rows are missing `ListDataID`, `Title`, `Bigint1`, or use unresolved non-root parent IDs.
+- Warn when folder rows include `Text4` upload payloads or nonblank `Bigint2` file size values.
 - Validate FieldID uniqueness across the app.
+- Validate `ListDataID` uniqueness for sample/folder rows.
 - Validate field `ListID` ownership.
 - Validate view references when view JSON is present.
 - Validate custom form bindings against document-library fields.
@@ -62,8 +77,8 @@ The runtime-proven minimal `New Document Library` baseline has one `New file` up
 ## Remaining Unknowns
 
 - Runtime import/open behavior for the minimal generated Type `16` `New Document Library` shape is proven by `document-library-sample-new-library-only.v1.yap`.
-- Runtime import/open behavior for multiple generated Type `16` libraries with simple custom fields and configured views is partially proven by `Enterprise Document Center`.
+- Runtime import/open behavior for multiple generated Type `16` libraries with simple custom fields, configured views, and root-level generated folder rows is partially proven by `Enterprise Document Center`.
 - Baseline v1 and v2 uploaded successfully but Yeeflow returned `Created failed` at the final import step. Baseline v3 was validation-only and used the misleading generated title `Baseline Documents`; do not use it as the canonical base. The runtime-proven base is the `New Document Library` sample clone with default view `LayoutView = ""`.
-- Generated folder-row import shape and full folder open/query/persistence behavior.
+- Nested generated folder-row behavior and exhaustive open/navigation behavior for every generated folder.
 - Upload persistence and how Name, Type, Extension, Size, UniqueName, and Upload File are populated after upload.
 - Whether New/Edit/View custom form assignment has additional document-library-specific runtime constraints.

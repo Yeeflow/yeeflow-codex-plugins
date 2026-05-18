@@ -57,6 +57,9 @@ For document libraries, also check:
 - Type `1` custom form bindings resolve to library fields
 - partial document-library `ListModel.LayoutView` assignments are warnings; the runtime-proven minimal base is the `New Document Library` shape with default Type `0` view `LayoutView = ""` and the single `New file` form unassigned, while configured libraries assign `add`, `edit`, and `view` together
 - multiple Type `16` document libraries with simple custom fields and configured Type `0` views are runtime-accepted by the `Enterprise Document Center` v2 pass
+- root-level folder rows are runtime-accepted when `Text1 = "folder"`, `Bigint1 = "0"`, `Bigint2 = ""`, `Text2 = ""`, `Text3` carries the export-style unique name, `Text4` is omitted, and folder IDs are included in `ReplaceIds`
+- nested folder rows should warn unless their nonzero `Bigint1` parent resolves to another folder row
+- folder rows should warn if they include uploaded file payloads or document binaries
 - generated packages do not embed raw file/document payloads unless focused runtime export-back proof exists
 
 ## Severity

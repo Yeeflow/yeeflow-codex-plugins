@@ -151,9 +151,11 @@ Use these only after the document-library study docs and validators are present 
 - `Text4` is export-backed as `FieldType = "Text"` plus `Type = "file-upload"` with `Rules.isLabrary = true`; do not invent an unproven Attachment field schema.
 - Do not apply normal generated data-list `Title.Status = 0` rules to document libraries; studied document libraries keep `Title` native/system/indexed but use `Status = 1`.
 - Support simple custom fields and Type `0` views using existing data-list rules where compatible. The `Enterprise Document Center` v2 runtime pass accepted multiple Type `16` libraries with simple custom fields and configured views.
+- Root-level generated folder rows are runtime-proven when using the export-backed shape: put rows in `ListDatas`, set `ListDataID` to the object key, `Title` to the folder name, `Bigint1 = "0"`, `Text1 = "folder"`, `Bigint2 = ""`, `Text2 = ""`, `Text3 = "0_<lowercase folder title>"`, omit `Text4`, include blank generated custom-field values, and include folder IDs in `ReplaceIds`.
+- Keep generated folders root-level unless nested folder behavior is separately export-backed and runtime-tested.
 - For a minimal newly-created library baseline, use the runtime-proven `New Document Library` resource shape from `Document Library Sample.yap`: default Type `0` view `LayoutView = ""`, one unassigned `New file` form, no `ListModel.LayoutView` add/edit/view mapping, and no uploaded rows. Do not use the earlier generated `Baseline Documents` experiment as the base definition.
-- Do not fake uploaded document rows, generated folder rows, or private document payloads in baseline packages.
-- Do not claim folder or upload runtime proof until Yeeflow import/open/upload/persistence behavior is tested.
+- Do not fake uploaded document rows or private document payloads in baseline packages.
+- Do not claim nested folder or upload runtime proof until Yeeflow import/open/upload/persistence behavior is tested.
 
 ## Hard Stop Conditions
 

@@ -1111,12 +1111,23 @@ function validateExternalLookupSample(value, recordId, fieldName, field, depende
 function validateSampleData(item, fieldByName, report, dependencyMap, externalLookupFields = new Set(), resource = null) {
   const replaceIds = collectResourceReplaceIds(resource);
   const records = item.ListDatas || {};
+  const isDocumentLibrary = Number(item.ListModel && item.ListModel.Type) === 16 || Number(resource && resource.MainListType) === 16;
+  const seenRecordIds = new Set();
+  const documentFolderIds = new Set(Object.entries(records)
+    .filter(([, record]) => isObject(record) && String(record.Text1 || "").toLowerCase() === "folder")
+    .flatMap(([recordId, record]) => [String(recordId || ""), String(record.ListDataID || "")])
+    .filter(Boolean));
   for (const [recordId, record] of Object.entries(records)) {
     if (!isObject(record)) {
       issue(report, "warning", "SAMPLE_RECORD_NOT_OBJECT", "Sample record value is not an object.", { recordId });
       continue;
     }
     if (!record.ListDataID) issue(report, "warning", "SAMPLE_RECORD_LISTDATAID_MISSING", "Sample record is missing ListDataID.", { recordId });
+    const listDataId = String(record.ListDataID || recordId || "");
+    if (listDataId) {
+      if (seenRecordIds.has(listDataId)) issue(report, "error", "LISTDATA_ID_DUPLICATE", "ListDataID/sample record IDs must be unique within a resource.", { recordId: listDataId });
+      seenRecordIds.add(listDataId);
+    }
     for (const [fieldName, value] of Object.entries(record)) {
       if (!fieldByName.has(fieldName) && !KNOWN_SYSTEM_FIELDS.has(fieldName)) {
         issue(report, "warning", "SAMPLE_FIELD_UNKNOWN", "Sample record contains a field not defined in Item.Defs.", { recordId, fieldName });
@@ -1153,6 +1164,16 @@ function validateSampleData(item, fieldByName, report, dependencyMap, externalLo
       if (normalizedType === "datetime" && !/^\d{4}-\d{2}-\d{2}/.test(String(value))) {
         issue(report, "warning", "SAMPLE_DATETIME_VALUE_SHAPE", "Datetime sample value does not look like an ISO-ish datetime string.", { recordId, fieldName, value });
       }
+    }
+    if (isDocumentLibrary && String(record.Text1 || "").toLowerCase() === "folder") {
+      if (!record.Title) issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_TITLE_MISSING", "Document library folder rows should include Title/Name.", { recordId });
+      const parentId = String(record.Bigint1 ?? "");
+      if (parentId === "") issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_PARENT_MISSING", "Document library folder rows should include Bigint1/ParentID; root folders use \"0\" in studied exports.", { recordId });
+      if (parentId && parentId !== "0" && !documentFolderIds.has(parentId)) {
+        issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_PARENT_UNRESOLVED", "Document library folder ParentID should be 0 or point to another folder row.", { recordId, parentId });
+      }
+      if (record.Text4) issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_UPLOAD_PAYLOAD_PRESENT", "Document library folder rows should not include uploaded file payloads.", { recordId });
+      if (record.Bigint2 !== undefined && record.Bigint2 !== "") issue(report, "warning", "DOCUMENT_LIBRARY_FOLDER_SIZE_UNUSUAL", "Studied document-library folder rows leave Bigint2/FileSize blank.", { recordId, value: record.Bigint2 });
     }
   }
 }

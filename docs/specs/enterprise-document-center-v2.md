@@ -13,7 +13,8 @@ Every generated document library starts from the runtime-passed `New Document Li
 - `Text4` remains the `file-upload` field
 - default Type `0` view keeps `LayoutView = ""`
 - one unassigned `New file` form
-- no uploaded/list data rows and no document binaries
+- generated root-level folder rows are allowed when using the export-backed folder row shape
+- no uploaded file rows and no document binaries
 
 The older generated `Baseline Documents` shape is not used as the base definition.
 
@@ -40,7 +41,7 @@ Views:
 - Policies Pending Review
 - By Department
 
-Folder plan for runtime testing:
+Generated root folders:
 
 - HR Policies
 - IT Policies
@@ -68,7 +69,7 @@ Views:
 - Contracts
 - Latest Versions
 
-Folder plan for runtime testing:
+Generated root folders:
 
 - Requirements
 - Contracts
@@ -94,7 +95,7 @@ Views:
 - Active Templates
 - By Department
 
-Folder plan for runtime testing:
+Generated root folders:
 
 - HR Forms
 - Finance Forms
@@ -103,7 +104,22 @@ Folder plan for runtime testing:
 
 ## Folder Handling
 
-V2 does not pre-generate folder rows. Current learning only infers folder support from `Bigint1` / `ParentID`; the actual folder row shape is not yet export-backed or runtime-proven for generated packages. Folders should be created manually during runtime testing and documented as runtime proof if they appear and persist after refresh.
+V2 generates root-level folder rows under each document library. The shape is based on folder rows observed in the known-good exports and runtime-tested in `Enterprise Document Center Folders Runtime`.
+
+Generated folder row shape:
+
+- `ListDatas[folderId]` under the Type `16` document-library resource.
+- `ListDataID = folderId`.
+- `Title = folder display name`.
+- `Bigint1 = "0"` for root-level folders.
+- `Text1 = "folder"`.
+- `Bigint2 = ""`.
+- `Text2 = ""`.
+- `Text3 = "0_<lowercase folder title>"`.
+- omit `Text4`; do not include upload payloads or document binaries.
+- include generated custom fields as blank strings.
+
+Nested generated folders are out of scope for v2.
 
 ## Expected V2 Proof
 
@@ -113,10 +129,11 @@ V2 is expected to prove:
 - custom text, choice, and date fields on document libraries.
 - additional Type `0` views with configured `LayoutView` JSON.
 - root app navigation entries for document-library resources.
-- manual folder creation if tested in Yeeflow.
+- generated root-level folder row import/display/persistence.
+- manual folder creation in generated document libraries.
 
 V2 should not overclaim:
 
 - uploaded file persistence unless a safe dummy file is actually uploaded.
-- generated folder row support.
+- nested generated folder rows.
 - assigned New/Edit/View custom form mappings beyond the unassigned `New file` form.
