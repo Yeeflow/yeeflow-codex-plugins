@@ -1,6 +1,6 @@
 {
   "name": "yeeflow-builder",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Private Codex plugin for building, validating, testing, and improving Yeeflow applications using Yeeflow-specific skills.",
   "visibility": "private/internal",
   "category": "developer/productivity/internal tools",
@@ -13,13 +13,16 @@
     "internal-tools",
     "runtime-testing",
     "package-validation",
-    "plugin-release"
+    "plugin-release",
+    "document-library",
+    "materialization",
+    "form-hosts"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Yeeflow Builder",
     "shortDescription": "Private Yeeflow application-building skills for Codex.",
-    "longDescription": "Private Codex plugin for planning Yeeflow applications from requirements, generating and validating new .yap packages, learning from exported Yeeflow packages, generating forms, lists, dashboards, expressions, workflows, and custom code controls, orchestrating runtime tests, validating package materialization, and managing private plugin releases without unsafe .yapk mutation.",
+    "longDescription": "Private Codex plugin for planning Yeeflow applications from requirements, generating and validating new .yap packages, learning from exported Yeeflow packages, generating forms, lists, dashboards, expressions, workflows, document-library patterns, and custom code controls, orchestrating runtime tests, validating package materialization, and managing private plugin releases without unsafe .yapk mutation.",
     "developerName": "Yeeflow",
     "category": "Developer Tools",
     "capabilities": [

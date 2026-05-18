@@ -19,7 +19,7 @@ dist/yeeflow-builder-plugin/
 Current release archive:
 
 ```text
-dist/yeeflow-builder-plugin-0.3.0.zip
+dist/yeeflow-builder-plugin-0.4.0.zip
 ```
 
 Current release status:
@@ -27,8 +27,9 @@ Current release status:
 - v0.1.0 private Git marketplace install: passed.
 - v0.2.0 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.2.0-rc1`.
 - v0.3.0 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.3.0-rc1`.
-- ZIP package smoke test: passed locally.
-- Git marketplace install: passed.
+- v0.4.0 release candidate: prepared, pending private marketplace install smoke test.
+- ZIP package smoke test: passed locally for the release candidate.
+- Git marketplace install: pending for v0.4.0 until RC smoke test passes.
 - Production/public marketplace: not applicable.
 - Partner-safe edition: planned, not released.
 
@@ -39,7 +40,7 @@ Source:
 https://github.com/rengerhu/yeeflow-ai-builder-research.git
 
 Git ref:
-yeeflow-builder-plugin-v0.3.0-rc1
+yeeflow-builder-plugin-v0.4.0-rc1
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -59,6 +60,43 @@ Smoke prompts tested:
 - Plugin-release-manager RC versus final tag workflow.
 
 ## Release Notes
+
+### v0.4.0-rc1
+
+Previous version: `0.3.0`.
+
+New version: `0.4.0`.
+
+Release status: release candidate only. Final non-RC tag must wait for private marketplace install smoke test.
+
+Changed bundled skills:
+
+- `yeeflow-application-generator`
+- `yeeflow-approval-form-generator`
+- `yeeflow-dashboard-generator`
+- `yeeflow-data-list-generator`
+- `yeeflow-feature-learning-orchestrator`
+- `yeeflow-package-validator`
+- `yeeflow-runtime-test-orchestrator`
+
+Main improvements:
+
+- Adds Document Library v2 document center generation guidance and generated-folder support.
+- Promotes New Document Library baseline, dashboard-control learning, and document-library resource learning into bundled skills.
+- Adds document library form-host runtime status and runtime-study guidance.
+- Expands generated `.yap` materialization inspection and package/list/graph validation coverage.
+- Strengthens package-validator and runtime-test-orchestrator guidance for materialization blockers and runtime classification.
+
+Known limitations:
+
+- Skills-only plugin.
+- No OAuth.
+- No Yeeflow API integration.
+- No MCP server.
+- `.yapk` mutation is not supported.
+- Runtime testing still requires Yeeflow access.
+- Public form custom code support is not claimed unless tested.
+- Partner-safe edition is planned but not released.
 
 ### v0.3.0
 

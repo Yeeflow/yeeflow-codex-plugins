@@ -43,6 +43,38 @@ Load [yap-materialization-rules.md](references/yap-materialization-rules.md) whe
 - unique `FieldName`, `InternalName`, and `DisplayName` inside each list
 - no remapping of `TenantID`, `CreatedBy`, or `ModifiedBy`
 
+For document libraries, also check:
+
+- `ListModel.Type = 16`
+- root app navigation references the library as `Type = 16` for mixed/richer apps; document-library-only packages may use the sample-proven root `LayoutView = {"sortVer":1}` with no Type `103` page or nav, reported as warnings
+- top-level `Resource.SimplePortal = null`
+- default fields exist: `Title`, `Bigint1`, `Text1`, `Bigint2`, `Text2`, `Text3`, and `Text4`
+- `Text4` uses `Type = "file-upload"` and library upload rules
+- `Title` keeps document-library native metadata and is not forced into normal data-list `Status = 0`
+- field `ListID` values match the parent library `ListID`
+- `FieldID` values are unique across the app
+- Type `0` view field references resolve when view JSON is present
+- Type `1` custom form bindings resolve to library fields
+- partial document-library `ListModel.LayoutView` assignments are warnings; the runtime-proven minimal base is the `New Document Library` shape with default Type `0` view `LayoutView = ""` and the single `New file` form unassigned, while configured libraries assign `add`, `edit`, and `view` together
+- multiple Type `16` document libraries with simple custom fields and configured Type `0` views are runtime-accepted by the `Enterprise Document Center` v2 pass
+- root-level folder rows are runtime-accepted when `Text1 = "folder"`, `Bigint1 = "0"`, `Bigint2 = ""`, `Text2 = ""`, `Text3` carries the export-style unique name, `Text4` is omitted, and folder IDs are included in `ReplaceIds`
+- nested folder rows should warn unless their nonzero `Bigint1` parent resolves to another folder row
+- folder rows should warn if they include uploaded file payloads or document binaries
+- generated packages do not embed raw file/document payloads unless focused runtime export-back proof exists
+
+For Doc library controls on dashboards and form-hosted JSON surfaces, also check:
+
+- controls use `type = "document-library"`
+- `attrs.data.list.ListID` resolves to an included Type `16` document library
+- `attrs.data.list.Type` is `16`
+- `attrs.listarr[].Field` values resolve to target library fields
+- `attrs.data.folder.path` folder IDs resolve to `ListDatas` rows in the target library when present
+- folder rows referenced by controls use `Text1 = "folder"` and contain no `Text4` upload payload
+- `attrs.caption.layout` resolves to a layout on the target document library when present; accept concrete large numeric layout IDs for enum placeholders such as `{LayoutID}`
+- caption `display`, `add`, and `search` values are booleans when present
+- dynamic `attrs.data.customPath` is an expression-token array when present; warn rather than claim runtime proof
+- document-library custom-form controls are runtime-proven for root-bound display and disabled search/add; approval-form controls remain partial until live published request-page proof; data-list custom-form controls remain validation-only
+
 ## Severity
 
 Use [validation-error-severity.md](references/validation-error-severity.md) to decide what blocks import. When uncertain, mark the finding as blocking until a proven Yeeflow import/runtime counterexample exists.

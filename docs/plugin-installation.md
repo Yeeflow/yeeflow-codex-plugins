@@ -95,6 +95,14 @@ Icon behavior: `rc6` includes plugin-level and marketplace-entry icon paths. If 
 
 ## Release Status
 
+v0.4.0 release-candidate status:
+
+- Private Git marketplace install: pending RC smoke test.
+- ZIP package smoke test: passed locally.
+- Git marketplace install: pending RC smoke test.
+- Production/public marketplace: not applicable.
+- Partner-safe edition: planned, not released.
+
 v0.3.0 status:
 
 - Private Git marketplace install: passed with `yeeflow-builder-plugin-v0.3.0-rc1`.
@@ -294,6 +302,13 @@ v0.3.0 install smoke prompts tested:
 - Package-validator import-safety and `.yap` versus `.yapk` policy.
 - Plugin-release-manager RC versus final tag workflow.
 - Existing application-builder lifecycle summary.
+
+v0.4.0 RC smoke prompts to test:
+
+- Application-generator Document Library v2 generation and generated-folder guidance.
+- Package-validator materialization blocker handling for generated `.yap` packages.
+- Runtime-test-orchestrator document library form-host runtime classification.
+- Dashboard-generator data-bound document-library dashboard guidance.
 
 ## Known Limitations
 

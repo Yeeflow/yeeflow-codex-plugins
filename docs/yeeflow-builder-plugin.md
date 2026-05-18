@@ -2,7 +2,7 @@
 
 The Yeeflow Builder Plugin is a private, skills-only Codex plugin for internal Yeeflow application builders. It packages the current repo's proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth, Yeeflow API integration, or MCP servers.
 
-Package status: v0.3.0 private Git marketplace install smoke test passed with RC tag `yeeflow-builder-plugin-v0.3.0-rc1`. Production/public marketplace release is not applicable, and the partner-safe edition is planned but not released.
+Package status: v0.4.0 release candidate is prepared from latest `origin/main` with Document Library v2, generated-folder, form-host, and package-materialization skill updates. v0.3.0 remains the latest install-tested final release until the v0.4.0 private marketplace install smoke test passes. Production/public marketplace release is not applicable, and the partner-safe edition is planned but not released.
 
 ## Package Contents
 
@@ -174,6 +174,34 @@ Smoke prompts tested for v0.2.0:
 - Materialization validation behavior for generated `.yap` packages.
 
 ## Release Notes
+
+### v0.4.0-rc1
+
+Previous version: `0.3.0`.
+
+New version: `0.4.0`.
+
+Release status: release candidate only. Do not create or use the final `yeeflow-builder-plugin-v0.4.0` tag until private marketplace install smoke testing passes.
+
+Changed bundled skills:
+
+- `yeeflow-application-generator`
+- `yeeflow-approval-form-generator`
+- `yeeflow-dashboard-generator`
+- `yeeflow-data-list-generator`
+- `yeeflow-feature-learning-orchestrator`
+- `yeeflow-package-validator`
+- `yeeflow-runtime-test-orchestrator`
+
+Main improvements:
+
+- Adds Document Library v2 document center generation guidance and generated-folder support.
+- Promotes New Document Library and dashboard-control learning into bundled Yeeflow app-generation guidance.
+- Adds document library form-host runtime status and runtime-study guidance.
+- Expands package materialization validators and list/graph/package checks for generated `.yap` safety.
+- Strengthens runtime/package validation orchestration around materialization blockers and document-library controls.
+
+Known limitations remain unchanged: skills-only package, no OAuth, no Yeeflow API integration, no MCP server, no `.yapk` mutation support, runtime testing still requires Yeeflow access, public form custom code support is not claimed unless tested, and partner-safe edition is planned but not released.
 
 ### v0.3.0
 

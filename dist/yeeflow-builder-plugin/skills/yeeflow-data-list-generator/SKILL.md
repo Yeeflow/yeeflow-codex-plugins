@@ -125,6 +125,23 @@ Load only the relevant reference:
 - Master/reference lists referenced by generated forms, dashboards, or workflows must be usable runtime lists, not placeholders. Include sample data where needed for local validation and runtime smoke testing.
 - For generated lists intended as approval-form storage targets, build/import/export the `.ydl` first, then use exported-back list and field metadata to patch the approval form `ContentList` target.
 
+## Document Library Carry-Forward
+
+Document libraries reuse many data-list mechanics but are not normal data lists. When an app package includes a document library, route app-level generation through `yeeflow-application-generator` and validate the resource as Type `16`.
+
+- `ListModel.Type = 16` identifies document libraries.
+- Document libraries use the same `Defs[]`, Type `0` views, and Type `1` custom form storage model where export-proven.
+- Preserve document default fields exactly from `Projects Center.yap`: `Title`, `Bigint1`, `Text1`, `Bigint2`, `Text2`, `Text3`, and `Text4`.
+- `Text4` Upload File is `FieldType = "Text"` and `Type = "file-upload"` with `Rules.isLabrary = true`.
+- Do not enforce generated data-list `Title.Status = 0` on document libraries; the studied document libraries use `Status = 1`.
+- `Document Library Sample.yap` plus the runtime-passed one-library clone prove the minimal base definition is the `New Document Library` shape: default Type `0` view `LayoutView = ""`, one unassigned `New file` upload form, and no uploaded rows. Do not use the earlier generated `Baseline Documents` package as the base definition.
+- The `Enterprise Document Center` v2 runtime pass accepted multiple generated Type `16` libraries with simple custom fields and configured Type `0` views.
+- Do not require root app navigation or Type `103` pages for document-library-only packages; validate them as warnings in that narrow sample-proven shape.
+- Root-level folder rows are runtime-proven for generated document libraries when represented in `ListDatas` with `ListDataID`, `Title`, `Bigint1 = "0"`, `Text1 = "folder"`, blank `Bigint2`/`Text2`, `Text3 = "0_<lowercase folder title>"`, no `Text4`, and blank generated custom-field values.
+- Treat nested generated folder-row support through nonzero `Bigint1` / ParentID as unproven until export-backed and runtime-tested.
+- Dashboard Doc library controls can display Type `16` libraries and root folders through `type = "document-library"`, `attrs.data.list`, and `attrs.data.folder.path = "0/<folder ListDataID>"`. Document-library custom-form hosting is runtime-proven for a root-bound embedded control with disabled search/add. Data-list custom-form hosting is still validation-only; do not claim it until an imported generated data-list form is reachable and the embedded Doc library control renders at runtime.
+- Do not include raw uploaded document data or private file metadata in generated packages.
+
 ## YAP App Materialization Rules
 
 When data lists are embedded in a generated `.yap` application:

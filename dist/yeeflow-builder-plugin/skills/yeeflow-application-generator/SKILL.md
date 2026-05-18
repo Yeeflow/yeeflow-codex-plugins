@@ -134,9 +134,29 @@ Keep these out of scope in v1 unless the user asks for research only:
 - dashboards beyond a minimal Type `103` shell page
 - data reports and form reports
 - AI Agents, Copilots, Connections, Knowledges
-- document libraries, document generation, templates
+- document generation and templates
 - external HTTP/API actions
 - complex list workflows or scheduled workflows
+
+## Document Library Resource Rules
+
+Use these only after the document-library study docs and validators are present in the active workspace. `Projects Center.yap` proved that Yeeflow Document Library is a first-class app child resource, similar to a data list but not identical.
+
+- Generate document libraries with `ListModel.Type = 16`.
+- Keep the normal child-resource envelope: `ListModel`, `Defs`, `Layouts`, `ListDatas`, `FlowMappings`, `PublicForms`, and `RemindRules`.
+- Link the library from root app navigation with `Type = 16` for mixed/richer apps. The focused `Document Library Sample.yap` proves document-library-only apps may omit root pages and navigation, using root `LayoutView = {"sortVer":1}`.
+- Set top-level wrapper `Resource.SimplePortal = null` for generated document-library `.yap` packages. Both known-good document-library exports use `null`; generated `[]` wrappers failed at Yeeflow create.
+- Use `CustomType = "ListSite_<root app ListID>"` for app-owned libraries.
+- Preserve the default document fields: `Title` Name, `Bigint1` ParentID, `Text1` Type, `Bigint2` FileSize/Size, `Text2` Extension, `Text3` UniqueName, and `Text4` Upload File.
+- `Text4` is export-backed as `FieldType = "Text"` plus `Type = "file-upload"` with `Rules.isLabrary = true`; do not invent an unproven Attachment field schema.
+- Do not apply normal generated data-list `Title.Status = 0` rules to document libraries; studied document libraries keep `Title` native/system/indexed but use `Status = 1`.
+- Support simple custom fields and Type `0` views using existing data-list rules where compatible. The `Enterprise Document Center` v2 runtime pass accepted multiple Type `16` libraries with simple custom fields and configured views.
+- Root-level generated folder rows are runtime-proven when using the export-backed shape: put rows in `ListDatas`, set `ListDataID` to the object key, `Title` to the folder name, `Bigint1 = "0"`, `Text1 = "folder"`, `Bigint2 = ""`, `Text2 = ""`, `Text3 = "0_<lowercase folder title>"`, omit `Text4`, include blank generated custom-field values, and include folder IDs in `ReplaceIds`.
+- Keep generated folders root-level unless nested folder behavior is separately export-backed and runtime-tested.
+- For a minimal newly-created library baseline, use the runtime-proven `New Document Library` resource shape from `Document Library Sample.yap`: default Type `0` view `LayoutView = ""`, one unassigned `New file` form, no `ListModel.LayoutView` add/edit/view mapping, and no uploaded rows. Do not use the earlier generated `Baseline Documents` experiment as the base definition.
+- Dashboard Doc library controls are export-proven in `Enterprise Document Center Folders Runtime.yap`. Generate them with `type = "document-library"` in a Type `103` dashboard page resource, target a Type `16` library through `attrs.data.list`, and target a root folder through `attrs.data.folder.path = "0/<folder ListDataID>"`. Caption/search/add true settings are export-proven when `attrs.caption.layout` points to the target library `New file` form. The form-host study proved document-library custom-form hosting for a root-bound control and disabled search/add settings; approval-form hosting is partial because controls rendered in Form Builder preview but the live request form still needs a fresh import/publish proof after adding a required task assignee. Data-list custom-form hosting remains validation-only until a reachable imported data-list form proves it. Keep dynamic folder paths unclaimed until runtime-tested.
+- Do not fake uploaded document rows or private document payloads in baseline packages.
+- Do not claim nested folder or upload runtime proof until Yeeflow import/open/upload/persistence behavior is tested.
 
 ## Hard Stop Conditions
 
