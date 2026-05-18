@@ -21,11 +21,31 @@ Use `.yapk` when:
 For generated new-app packages:
 
 - generate fresh local IDs
+- allocate data-list `FieldID` values from a global app-level field ID allocator; do not reset the field ID range per list
+- preserve the parent data-list `ListID` on every field; changing `FieldID` must not change `field.ListID`
+- preserve real baseline `TenantID`, `CreatedBy`, and `ModifiedBy` metadata; do not remap tenant/user metadata into the generated ID family
 - use a FlowKey/form key that cannot collide with reserved JSON property names
 - include import-remappable IDs in `Resource.ReplaceIds`
+- keep `Resource.ReplaceIds` limited to generated app-resource IDs, not tenant/user metadata
 - keep app-level approval forms as `Data.Forms[].ListID = 0`
 - validate decoded app data, graph, child lists, approval forms, workflow actions, expressions, and wrapper round trip
+- run materialization inspection before runtime import
 - import through the new application/import flow
+
+## YAP App Materialization Rules
+
+The Custom Code Template Showcase runtime investigation proved that a generated package can pass broad JSON/package checks while importing as an empty app shell or lists without fields. Treat these as hard rules for generated `.yap` packages:
+
+- Every `ListID` must be unique.
+- Every `FieldID` must be unique across the whole application.
+- Every `field.ListID` must equal the parent data list `ListID`.
+- Every `FieldName`, `InternalName`, and `DisplayName` must be unique inside its own data list.
+- Do not remap `TenantID`, `CreatedBy`, or `ModifiedBy` as generated app-resource IDs.
+- Do not include `TenantID`, `CreatedBy`, or `ModifiedBy` in `Resource.ReplaceIds`.
+- Root Type `103` dashboard/page layout ownership must connect to the root app/ListSet `ListID`.
+- Root navigation must reference real packaged dashboard/page, child-list, and approval-form resources.
+- Run `scripts/inspect-yap-materialization.mjs` before runtime import.
+- Do not proceed to custom-code component runtime testing if app materialization fails.
 
 ## `.yapk` Existing Upgrade Rules
 

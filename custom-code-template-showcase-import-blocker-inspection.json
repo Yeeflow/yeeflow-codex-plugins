@@ -1,0 +1,61 @@
+{
+  "title": "Custom Code Template Showcase import blocker inspection",
+  "status": "patched_locally_runtime_materialization_pending",
+  "rootCauses": [
+    {
+      "code": "ROOT_METADATA_USES_LOCAL_ID_FAMILY",
+      "summary": "Generator remapped real TenantID/CreatedBy/ModifiedBy metadata from the working baseline into the generated local 6182... ID family. Working generated packages preserve tenant/user metadata and do not place those real metadata IDs in ReplaceIds.",
+      "patchedValue": {
+        "TenantID": "1697103066096734208",
+        "CreatedBy": "1697103066163843073",
+        "ModifiedBy": "1697103066163843073",
+        "replaceContainsTenant": false,
+        "replaceContainsCreatedBy": false
+      }
+    },
+    {
+      "code": "ROOT_DASHBOARD_LAYOUT_OWNING_LIST_MISMATCH",
+      "summary": "Root Type 103 dashboard layout must be owned by the root app/listset ListID. LayoutID is used for the page identity and LayoutInResources[0].ID/RefId.",
+      "patchedValue": {
+        "rootListId": "6182000000000000000",
+        "layoutId": "6182000000000000001",
+        "layoutListId": "6182000000000000000",
+        "resourceId": "6182000000000000001",
+        "refId": "6182000000000000001"
+      }
+    }
+  ],
+  "workingReferences": [
+    "custom-code-smart-lookup-picker-test.resource.json",
+    "design-system-request-tracker-app-def.v1.json",
+    "employee-family-implant-app-def.v3.json"
+  ],
+  "patchedPackage": {
+    "file": "custom-code-template-showcase.v1.yap",
+    "localMaterializationInspection": {
+      "input": "custom-code-template-showcase.v1.yap",
+      "status": "pass",
+      "wrapperPresent": true,
+      "resourcePresent": true,
+      "root": {
+        "title": "Enterprise Service Request & Compliance Review",
+        "listId": "6182000000000000000",
+        "type": 1024,
+        "rootLayouts": 1,
+        "childLists": 9,
+        "forms": 1,
+        "navItems": 11,
+        "dashboardNavItems": 1
+      },
+      "errors": [],
+      "warnings": [],
+      "largeNumericIdsPreserved": 0
+    },
+    "replaceIdsCount": 67
+  },
+  "runtime": {
+    "latestPatch": "not retested",
+    "previousSmoke": "pre-metadata-fix package imported app tile but opened to Start to build with Components"
+  },
+  "publicFormSupport": "not claimed"
+}

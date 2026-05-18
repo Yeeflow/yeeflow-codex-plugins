@@ -44,6 +44,7 @@ The validator checks:
 - required `Data` sections such as `Item`, `Childs`, `Forms`, reports, modules, groups, and themes
 - root app/ListSet metadata
 - generated app-shell readiness, including wrapper icon, root `CustomType`, root `Perm`, root `WorkspaceID`, root audit users, app theme arrays, and root navigation
+- generated app materialization readiness, including app-wide unique `FieldID` values, parent-owned `field.ListID` values, and tenant/user metadata excluded from `ReplaceIds`
 - root Type `103` app page registration, including the rule that `LayoutInResources` resource IDs are separate from the page `LayoutID`
 - child resource `ListModel`, `Defs`, `Layouts`, custom forms, and sample data
 - workflow/form `DefResource` parsing

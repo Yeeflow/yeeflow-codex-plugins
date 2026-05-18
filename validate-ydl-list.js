@@ -498,7 +498,7 @@ function validateFields(item, report) {
       internalNames.add(field.InternalName);
     }
     if (field.DisplayName) {
-      if (displayNames.has(field.DisplayName)) issue(report, "warning", "DUPLICATE_DISPLAY_NAME", `Duplicate DisplayName ${field.DisplayName}.`, { location });
+      if (displayNames.has(field.DisplayName)) issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DUPLICATE_DISPLAY_NAME", `Duplicate DisplayName ${field.DisplayName}. Yeeflow generated data-list fields should use unique visible field names to avoid import/materialization failures.`, { location });
       displayNames.add(field.DisplayName);
     }
 

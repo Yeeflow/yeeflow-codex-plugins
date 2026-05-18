@@ -1,0 +1,44 @@
+{
+  "status": "pass",
+  "inputData": "/Users/Renger/Documents/Codex Projects/AI Agent and Copilot templates/custom-code-template-showcase.v1.resource.json",
+  "outputWrapper": "/Users/Renger/Documents/Codex Projects/AI Agent and Copilot templates/custom-code-template-showcase.v1.yap",
+  "title": "Enterprise Service Request & Compliance Review",
+  "validationMode": "generator",
+  "errors": [],
+  "warnings": [
+    {
+      "code": "VALIDATION_PASSED_WITH_WARNINGS",
+      "message": "validate-yap-package.js validation passed with warnings/dependencies.",
+      "detail": {
+        "target": "preWritePackage",
+        "warnings": 20,
+        "dependencies": 0
+      }
+    },
+    {
+      "code": "VALIDATION_PASSED_WITH_WARNINGS",
+      "message": "validate-yap-package.js validation passed with warnings/dependencies.",
+      "detail": {
+        "target": "roundTripPackage",
+        "warnings": 20,
+        "dependencies": 0
+      }
+    }
+  ],
+  "preWrite": {
+    "packageValidationStatus": "pass_with_warnings",
+    "graphValidationStatus": "pass"
+  },
+  "roundTrip": {
+    "wrapperJsonValid": true,
+    "resourcePrefixValid": true,
+    "resourceBase64Valid": true,
+    "resourceGunzipValid": true,
+    "resourceJsonValid": true,
+    "resourceDataJsonValid": true,
+    "decodedEqualsSource": true,
+    "packageValidationPassed": true,
+    "graphValidationPassed": true,
+    "placeholdersRemaining": 0
+  }
+}

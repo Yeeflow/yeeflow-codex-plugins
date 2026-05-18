@@ -1,0 +1,168 @@
+{
+  "appName": "Enterprise Service Request & Compliance Review",
+  "phase": "Focused configuration repair runtime smoke",
+  "runtimeStatus": "materialized and component smoke tested",
+  "runtimeAppNameObserved": "Enterprise Service Request & Complian r4ce Review",
+  "runtimeUrlObserved": "https://codex.yeeflow.com/#/list-set/41/2056240203582685185/2056240213344006145",
+  "publicFormSupport": "not claimed",
+  "generatedPackage": "custom-code-template-showcase.v1.yap",
+  "generatedPackagePath": "/Users/Renger/Documents/Codex Projects/AI Agent and Copilot templates/custom-code-template-showcase.v1.yap",
+  "repairSummary": [
+    "Changed app wiring to use Yeeflow runtime field keys such as Text3 and Datetime1 instead of display/internal labels where list query templates read row values.",
+    "Patched embedded generated copies of the query templates to recognize response.listData/ListData and to retry broad queryItems calls without selectedFields when projected queries return empty payloads.",
+    "Preserved the original template source files; the compatibility patch is applied only while embedding scripts into the generated showcase package."
+  ],
+  "localValidation": {
+    "status": "passed before runtime import",
+    "checks": [
+      "TSX esbuild check for all 13 source templates",
+      "node --check generator and inspection scripts",
+      "JSON parse checks",
+      "validate-yap-package",
+      "validate-yap-graph",
+      "validate-ywf-def",
+      "validate-ydl-list for all 9 lists",
+      "wrapper round trip",
+      "custom code inspection",
+      "custom code parameter validation/inspection",
+      "materialization inspection",
+      "dashboard structure inspection",
+      "field/list uniqueness and field.ListID ownership checks",
+      "FlowKey/prefix corruption checks",
+      "git diff --check"
+    ]
+  },
+  "materialization": {
+    "status": "passed",
+    "evidence": [
+      "Fresh import opened to real dashboard/home page, not blank component builder.",
+      "Navigation showed generated dashboard, 9 data lists, and approval form.",
+      "Dashboard and data lists opened with custom fields and seeded records.",
+      "Custom Code controls were visible on dashboard and approval form."
+    ]
+  },
+  "templates": [
+    {
+      "name": "activity-timeline",
+      "previousClassification": "Blocked by configuration",
+      "fixAttempted": "Use runtime FieldName keys for event fields and patch query helper response extraction/fallbacks.",
+      "runtimeClassification": "Runtime-proven",
+      "contextTested": "Dashboard and approval form",
+      "evidence": "Rendered seeded activity events, including Request submitted and Manager review started.",
+      "remainingBlocker": "None for read-only render with seeded list data; persistence is not applicable."
+    },
+    {
+      "name": "approval-decision-panel",
+      "previousClassification": "Not tested",
+      "fixAttempted": "Kept configured on Review Service Request page with decision/comment variables.",
+      "runtimeClassification": "Not tested",
+      "contextTested": "Not reached",
+      "evidence": "Packaged in approval form review page, but no live reviewer task/review page was reached during this smoke.",
+      "remainingBlocker": "Needs reviewer task/runtime approval context to test decision selection and comment writeback."
+    },
+    {
+      "name": "approval-timeline",
+      "previousClassification": "Blocked by configuration",
+      "fixAttempted": "Use runtime FieldName keys for history fields and patch query helper response extraction/fallbacks.",
+      "runtimeClassification": "Runtime-proven",
+      "contextTested": "Approval form",
+      "evidence": "Rendered seeded approval history with Submitted and Manager Review records.",
+      "remainingBlocker": "None for read-only render with seeded list data; live workflow history remains a future deeper test."
+    },
+    {
+      "name": "checklist-compliance-block",
+      "previousClassification": "Runtime-proven",
+      "fixAttempted": "No wiring change needed in this pass.",
+      "runtimeClassification": "Runtime-proven",
+      "contextTested": "Approval form",
+      "evidence": "Checkbox interaction updated progress and wrote checklist JSON to the configured output field.",
+      "remainingBlocker": "Full form submission persistence not retested in this pass."
+    },
+    {
+      "name": "dependent-selector",
+      "previousClassification": "Blocked by configuration",
+      "fixAttempted": "Use source list runtime fields for parent/child and seeded matching category/subcategory records.",
+      "runtimeClassification": "Runtime-proven",
+      "contextTested": "Approval form",
+      "evidence": "Parent select populated; choosing Hardware enabled child options and choosing Laptop wrote Hardware/Laptop to output fields.",
+      "remainingBlocker": "None for selection/writeback smoke."
+    },
+    {
+      "name": "distribution-chart-module",
+      "previousClassification": "Blocked by configuration",
+      "fixAttempted": "Use runtime grouping field Text3 and patch query helper response extraction/fallbacks.",
+      "runtimeClassification": "Runtime-proven",
+      "contextTested": "Dashboard",
+      "evidence": "Rendered Requests by Status with 4 total and seeded Completed, Manager Review, Open, and Overdue segments.",
+      "remainingBlocker": "None for read-only seeded data render."
+    },
+    {
+      "name": "exception-alert-panel",
+      "previousClassification": "Blocked by configuration",
+      "fixAttempted": "Use runtime fields for exception title/severity/description/status and patch query helper response extraction/fallbacks.",
+      "runtimeClassification": "Runtime-proven",
+      "contextTested": "Dashboard",
+      "evidence": "Rendered 3 exception records, including Overdue Laptop Repair, Vendor Security Review, and CRM Access Change.",
+      "remainingBlocker": "None for read-only seeded data render."
+    },
+    {
+      "name": "hierarchical-selector",
+      "previousClassification": "Blocked by configuration",
+      "fixAttempted": "Use source list runtime hierarchy fields and seeded category tree records.",
+      "runtimeClassification": "Runtime-proven",
+      "contextTested": "Approval form",
+      "evidence": "Rendered 4 hierarchy records and selecting Hardware wrote [\"Hardware\"] to the configured output field.",
+      "remainingBlocker": "None for selection/writeback smoke."
+    },
+    {
+      "name": "kpi-card-set",
+      "previousClassification": "Render-only proven",
+      "fixAttempted": "No query wiring change; values remain static JSON config.",
+      "runtimeClassification": "Render-only proven",
+      "contextTested": "Dashboard",
+      "evidence": "Rendered configured KPI values 42, 91.4%, and 7 correctly.",
+      "remainingBlocker": "Data-bound KPI calculation is not proven because the template instance uses static JSON config."
+    },
+    {
+      "name": "multi-entry-tag-input",
+      "previousClassification": "Runtime-proven",
+      "fixAttempted": "No wiring change needed in this pass.",
+      "runtimeClassification": "Runtime-proven",
+      "contextTested": "Approval form",
+      "evidence": "Adding tag security created a chip and wrote [\"security\"] to the configured output field.",
+      "remainingBlocker": "Full form submission persistence not retested in this pass."
+    },
+    {
+      "name": "related-record-summary-grid",
+      "previousClassification": "Blocked by configuration",
+      "fixAttempted": "Use runtime target list fields and patch query helper response extraction/fallbacks.",
+      "runtimeClassification": "Runtime-proven",
+      "contextTested": "Dashboard and approval form",
+      "evidence": "Rendered Acme Managed Services and Finance Laptop Pool related records as table/card data.",
+      "remainingBlocker": "None for read-only seeded data render."
+    },
+    {
+      "name": "smart-lookup-picker",
+      "previousClassification": "Runtime-proven",
+      "fixAttempted": "No template-source change; kept app wiring with runtime list IDs and output bindings.",
+      "runtimeClassification": "Runtime-proven",
+      "contextTested": "Dashboard visibility and approval form search/select/writeback",
+      "evidence": "Search for Acme returned Acme Managed Services, selection created a chip and wrote combined JSON with imported record ID.",
+      "remainingBlocker": "Dashboard temp output and data-list custom form persistence were not retested in this pass; public form not tested."
+    },
+    {
+      "name": "trend-chart-module",
+      "previousClassification": "Blocked by configuration",
+      "fixAttempted": "Use runtime date field Datetime1 and patch query helper response extraction/fallbacks.",
+      "runtimeClassification": "Runtime-proven",
+      "contextTested": "Dashboard",
+      "evidence": "Rendered Monthly Request Trend with 4 total seeded dated records.",
+      "remainingBlocker": "None for read-only seeded data render."
+    }
+  ],
+  "notes": [
+    "Public form support remains untested and is not claimed.",
+    "Approval-decision-panel remains the only unproven template in this pass because a reviewer task context was not reached.",
+    "Original template source files were not modified."
+  ]
+}

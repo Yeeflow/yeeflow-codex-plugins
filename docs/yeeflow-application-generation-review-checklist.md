@@ -24,6 +24,12 @@ Use this checklist before packaging, after local validation, and after runtime t
 - [ ] Data list definitions validate.
 - [ ] Every generated child data list also passes standalone `validate-ydl-list`; app-level package validation alone is not accepted.
 - [ ] Duplicate field names/internal names are absent.
+- [ ] Duplicate display names inside a data list are absent or explicitly accepted as a materialization risk.
+- [ ] Every generated child-list `FieldID` is unique across the whole `.yap`, not only within its own list.
+- [ ] Every generated field's `ListID` equals its parent data-list `ListID`.
+- [ ] `TenantID`, `CreatedBy`, and `ModifiedBy` retain real baseline metadata and are not included in `Resource.ReplaceIds`.
+- [ ] Root Type `103` dashboard/page layout is owned by the root app/ListSet `ListID`, and its navigation entry points to an existing root layout.
+- [ ] `scripts/inspect-yap-materialization.mjs` passes before Yeeflow runtime import.
 - [ ] Lookup targets, display fields, dependency maps, and sample lookup target rows resolve.
 - [ ] Referenced master/reference lists are present and non-empty when form lookup selection is part of v1.
 - [ ] Generated data-list custom forms include current-standard `Edit Item` and `View Item`; New/Edit maps to `Edit Item`, View maps to `View Item`.
@@ -39,6 +45,8 @@ Before claiming runtime proof, complete `docs/yeeflow-runtime-test-checklist-tem
 Minimum runtime smoke proof:
 
 - [ ] App imports and opens.
+- [ ] The app does not open to `Start to build with Components`.
+- [ ] Child data lists show their generated custom fields, not only empty list shells.
 - [ ] Dashboards render and functional controls are data-bound to expected source lists; page render alone is not dashboard proof.
 - [ ] Data lists open without `datas/query` 400 responses.
 - [ ] Approval forms open from the app and, when needed, from submitted workflow tasks.

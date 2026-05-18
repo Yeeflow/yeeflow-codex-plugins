@@ -1,0 +1,52 @@
+{
+  "status": "pass_with_warnings",
+  "mode": "generator",
+  "stage": "final",
+  "input": "/tmp/cct-compliance-checklist-items-resource.json",
+  "inputKind": "decodedResource",
+  "errors": [],
+  "warnings": [
+    {
+      "code": "LISTSET_ID_MISSING",
+      "message": "ListSetID is missing or not included in this standalone list export."
+    },
+    {
+      "code": "DESIGN_SYSTEM_RESOLVED_TOKEN_COLOR",
+      "message": "Generated list UI contains literal hex colors that match known Yeeflow root tokens. Prefer token references where supported, but do not fail exports that store resolved values.",
+      "count": 4,
+      "examples": [
+        {
+          "color": "#E6F0FF",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#0065FF",
+          "path": "$.resource.Data",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#E6F0FF",
+          "path": "$.data.Item.ListModel.IconUrl",
+          "token": "__REDACTED__"
+        },
+        {
+          "color": "#0065FF",
+          "path": "$.data.Item.ListModel.IconUrl",
+          "token": "__REDACTED__"
+        }
+      ]
+    }
+  ],
+  "placeholders": [],
+  "dependencies": [],
+  "dependencyMap": null,
+  "summary": {
+    "fields": 16,
+    "views": 1,
+    "customForms": 2,
+    "workflows": 0,
+    "sampleRecords": 3,
+    "lookupRelationships": 0
+  }
+}

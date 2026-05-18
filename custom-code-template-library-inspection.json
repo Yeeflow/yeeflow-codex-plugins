@@ -1,0 +1,2334 @@
+{
+  "source": {
+    "templatesDir": "/tmp/custom-code-template-showcase/templates",
+    "expectedTemplateCount": 13
+  },
+  "summary": {
+    "templatesInspected": 13,
+    "missingDeliverables": [],
+    "publicFormRuntimeProvenTemplates": [],
+    "smartLookupPickerRuntimeProvenContexts": [
+      "dashboard",
+      "approval form",
+      "data-list custom form"
+    ],
+    "publicFormSupportClaim": "not claimed",
+    "runtimeRepairStatus": "May 18 2026 showcase repair smoke: materialization passed; 11 templates runtime-proven in this pass, kpi-card-set render-only proven, approval-decision-panel not tested because reviewer context was not reached; public form support not claimed.",
+    "generatedPackageRepairFinding": "Use runtime FieldName keys for row values and generated-package query compatibility for response.listData/ListData plus broad queryItems fallback; original template source files unchanged."
+  },
+  "functionalCategories": {
+    "Dashboard / analytics": [
+      "kpi-card-set",
+      "distribution-chart-module",
+      "trend-chart-module",
+      "exception-alert-panel",
+      "related-record-summary-grid",
+      "activity-timeline"
+    ],
+    "Approval / workflow experience": [
+      "approval-decision-panel",
+      "approval-timeline"
+    ],
+    "Data entry / picker / selection": [
+      "smart-lookup-picker",
+      "dependent-selector",
+      "hierarchical-selector",
+      "multi-entry-tag-input",
+      "checklist-compliance-block"
+    ]
+  },
+  "customCodeControlPatternBaseline": {
+    "script": "attrs[\"codein-script\"]",
+    "parameters": "attrs[\"codein-script-param\"]",
+    "dashboardOutputPrefix": "__temp_",
+    "approvalFormOutputPrefix": "__variables_",
+    "dataListFormOutputPrefix": "__list_"
+  },
+  "templates": [
+    {
+      "name": "activity-timeline",
+      "category": "Dashboard / analytics",
+      "files": {
+        "tsx": true,
+        "userGuide": true,
+        "exampleConfig": true,
+        "packageMetadata": false
+      },
+      "componentName": "ReusableTemplatePanel",
+      "description": "Activity Timeline - reusable Yeeflow timeline for record events, changes, comments, and operational actions.",
+      "businessPurpose": "Show record events, changes, comments, and operational actions in chronological order.",
+      "supportedContexts": {
+        "dashboard": true,
+        "approvalForm": true,
+        "dataListForm": true,
+        "publicForm": false
+      },
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for seeded dashboard/form read-only activity rendering.",
+      "readOnly": true,
+      "interactive": false,
+      "inputParameters": [
+        {
+          "id": "sourceListId",
+          "name": "Source List ID",
+          "type": "variable",
+          "desc": "Activity list ID.",
+          "example": "203..."
+        },
+        {
+          "id": "recordIdField",
+          "name": "Record ID Field",
+          "type": "variable",
+          "desc": "Relation field.",
+          "example": "CaseId"
+        },
+        {
+          "id": "recordIdValue",
+          "name": "Record ID Value",
+          "type": "variable",
+          "desc": "Current record id.",
+          "example": ""
+        },
+        {
+          "id": "eventDateField",
+          "name": "Event Date Field",
+          "type": "variable",
+          "desc": "Event timestamp.",
+          "example": "CreatedTime"
+        },
+        {
+          "id": "actorField",
+          "name": "Actor Field",
+          "type": "variable",
+          "desc": "Actor field.",
+          "example": "Actor"
+        },
+        {
+          "id": "titleField",
+          "name": "Title Field",
+          "type": "variable",
+          "desc": "Event title.",
+          "example": "ActivityTitle"
+        },
+        {
+          "id": "descriptionField",
+          "name": "Description Field",
+          "type": "variable",
+          "desc": "Event detail.",
+          "example": "Description"
+        },
+        {
+          "id": "statusField",
+          "name": "Status Field",
+          "type": "variable",
+          "desc": "Status/type field.",
+          "example": "ActivityType"
+        },
+        {
+          "id": "titleText",
+          "name": "Title Text",
+          "type": "string",
+          "desc": "Panel title.",
+          "example": "Activity Timeline"
+        },
+        {
+          "id": "maxItems",
+          "name": "Max Items",
+          "type": "string",
+          "desc": "Max events.",
+          "example": "10"
+        },
+        {
+          "id": "emptyText",
+          "name": "Empty Text",
+          "type": "string",
+          "desc": "Empty text.",
+          "example": "No activity yet"
+        },
+        {
+          "id": "filterExpression",
+          "name": "Filter Expression",
+          "type": "variable",
+          "desc": "Optional filter.",
+          "example": ""
+        }
+      ],
+      "requiredParameters": [
+        "sourceListId",
+        "recordIdField",
+        "recordIdValue",
+        "eventDateField",
+        "actorField",
+        "titleField",
+        "descriptionField",
+        "statusField"
+      ],
+      "optionalParameters": [
+        "titleText",
+        "maxItems",
+        "emptyText",
+        "filterExpression"
+      ],
+      "writableTargets": [],
+      "expectedDataSource": "Activity / timeline event list with relation, date, actor, title, detail, and status/type fields.",
+      "expectedOutputWriteback": "Display-only; no writeback targets.",
+      "yeeflowApis": [
+        "context.params",
+        "context.getFieldValue",
+        "context.modules",
+        "context.modules.yeeSDKClient",
+        "yeeSDKClient.lists.queryItems",
+        "writeback setter candidates"
+      ],
+      "usesListQuery": true,
+      "usesStaticJsonConfig": false,
+      "needsDataListRecords": true,
+      "needsWorkflowVariables": true,
+      "needsCurrentContext": true,
+      "runtimeRisks": [
+        "Public form support is not proven and must not be claimed.",
+        "List query filter/payload shape must be runtime-tested with real Yeeflow records."
+      ],
+      "recommendedUseCases": [
+        "recent request activity",
+        "case history",
+        "audit-style event visibility"
+      ],
+      "validationChecksNeeded": [
+        "script embedded in attrs[\"codein-script\"]",
+        "parameters stored in attrs[\"codein-script-param\"]",
+        "all required parameters configured",
+        "parameter types match inputParameters()",
+        "public form not claimed unless separately tested",
+        "source list exists and sample records cover non-empty display"
+      ],
+      "docsSummary": {
+        "userGuideBytes": 3212,
+        "exampleConfigBytes": 549
+      }
+    },
+    {
+      "name": "approval-decision-panel",
+      "category": "Approval / workflow experience",
+      "files": {
+        "tsx": true,
+        "userGuide": true,
+        "exampleConfig": true,
+        "packageMetadata": false
+      },
+      "componentName": "ApprovalDecisionPanel",
+      "description": "Approval Decision Panel - reusable Yeeflow approval-form decision block with comments and validation.",
+      "businessPurpose": "Capture or display reviewer decision and comments in an approval context.",
+      "supportedContexts": {
+        "dashboard": false,
+        "approvalForm": true,
+        "dataListForm": false,
+        "publicForm": false
+      },
+      "runtimeProofStatus": "Not tested in runtime repair smoke; packaged on review page but reviewer task context was not reached.",
+      "readOnly": false,
+      "interactive": true,
+      "inputParameters": [
+        {
+          "id": "decisionField",
+          "name": "Decision Field",
+          "type": "variable",
+          "desc": "Writable approval form field or variable used to save the selected decision value.",
+          "example": ""
+        },
+        {
+          "id": "commentField",
+          "name": "Comment Field",
+          "type": "variable",
+          "desc": "Writable approval form field or variable used to save approver comments or reason text.",
+          "example": ""
+        },
+        {
+          "id": "titleText",
+          "name": "Title Text",
+          "type": "string",
+          "desc": "Panel title shown above the decision controls.",
+          "example": ""
+        },
+        {
+          "id": "subtitleText",
+          "name": "Subtitle Text",
+          "type": "string",
+          "desc": "Optional helper text shown below the title.",
+          "example": ""
+        },
+        {
+          "id": "approveLabel",
+          "name": "Approve Label",
+          "type": "string",
+          "desc": "Button label for the approve decision. Default is Approve.",
+          "example": ""
+        },
+        {
+          "id": "rejectLabel",
+          "name": "Reject Label",
+          "type": "string",
+          "desc": "Button label for the reject decision. Default is Reject.",
+          "example": ""
+        },
+        {
+          "id": "reviseLabel",
+          "name": "Request Changes Label",
+          "type": "string",
+          "desc": "Button label for the request-changes decision. Default is Request Changes.",
+          "example": ""
+        },
+        {
+          "id": "defaultDecision",
+          "name": "Default Decision",
+          "type": "variable",
+          "desc": "Optional default decision code, such as approve, reject, or revise. Used only when no saved value exists.",
+          "example": ""
+        },
+        {
+          "id": "requireCommentOnReject",
+          "name": "Require Comment On Reject",
+          "type": "variable",
+          "desc": "Whether Reject requires a comment before the decision value is saved. Supports true/false or dynamic expression.",
+          "example": ""
+        },
+        {
+          "id": "requireCommentOnRevise",
+          "name": "Require Comment On Request Changes",
+          "type": "variable",
+          "desc": "Whether Request Changes requires a comment before the decision value is saved. Supports true/false or dynamic expression.",
+          "example": ""
+        },
+        {
+          "id": "showCommentBox",
+          "name": "Show Comment Box",
+          "type": "variable",
+          "desc": "Whether the comment/reason text box is shown. Supports true/false or dynamic expression.",
+          "example": ""
+        },
+        {
+          "id": "commentPlaceholder",
+          "name": "Comment Placeholder",
+          "type": "string",
+          "desc": "Placeholder text shown inside the comment box.",
+          "example": ""
+        },
+        {
+          "id": "panelStyle",
+          "name": "Panel Style",
+          "type": "string",
+          "desc": "Visual style: standard, compact, or bordered. Default is standard.",
+          "example": ""
+        },
+        {
+          "id": "showStatusSummary",
+          "name": "Show Status Summary",
+          "type": "variable",
+          "desc": "Whether selected decision summary text is shown. Supports true/false or dynamic expression.",
+          "example": ""
+        },
+        {
+          "id": "readonlyText",
+          "name": "Readonly Text",
+          "type": "string",
+          "desc": "Text shown when the control is readonly and no decision has been saved.",
+          "example": ""
+        },
+        {
+          "id": "decisionOptionsJson",
+          "name": "Decision Options JSON",
+          "type": "variable",
+          "desc": "Optional JSON array for custom decisions. Each item can include code, label, tone, helper, and requireComment.",
+          "example": ""
+        },
+        {
+          "id": "validationMessageReject",
+          "name": "Reject Validation Message",
+          "type": "string",
+          "desc": "Optional message shown when Reject requires a comment.",
+          "example": ""
+        },
+        {
+          "id": "validationMessageRevise",
+          "name": "Request Changes Validation Message",
+          "type": "string",
+          "desc": "Optional message shown when Request Changes requires a comment.",
+          "example": ""
+        }
+      ],
+      "requiredParameters": [
+        "decisionField",
+        "commentField",
+        "defaultDecision",
+        "requireCommentOnReject",
+        "requireCommentOnRevise",
+        "showCommentBox",
+        "showStatusSummary"
+      ],
+      "optionalParameters": [
+        "titleText",
+        "subtitleText",
+        "approveLabel",
+        "rejectLabel",
+        "reviseLabel",
+        "commentPlaceholder",
+        "panelStyle",
+        "readonlyText",
+        "decisionOptionsJson",
+        "validationMessageReject",
+        "validationMessageRevise"
+      ],
+      "writableTargets": [],
+      "expectedDataSource": "Approval form variables/fields for decision and comment values.",
+      "expectedOutputWriteback": "Writes decision and comment to configured form variables/fields.",
+      "yeeflowApis": [
+        "context.params",
+        "context.getFieldValue",
+        "writeback setter candidates"
+      ],
+      "usesListQuery": false,
+      "usesStaticJsonConfig": true,
+      "needsDataListRecords": false,
+      "needsWorkflowVariables": true,
+      "needsCurrentContext": false,
+      "runtimeRisks": [
+        "Public form support is not proven and must not be claimed."
+      ],
+      "recommendedUseCases": [
+        "manager review",
+        "compliance review",
+        "approval reason capture"
+      ],
+      "validationChecksNeeded": [
+        "script embedded in attrs[\"codein-script\"]",
+        "parameters stored in attrs[\"codein-script-param\"]",
+        "all required parameters configured",
+        "parameter types match inputParameters()",
+        "public form not claimed unless separately tested"
+      ],
+      "docsSummary": {
+        "userGuideBytes": 10549,
+        "exampleConfigBytes": 2108
+      }
+    },
+    {
+      "name": "approval-timeline",
+      "category": "Approval / workflow experience",
+      "files": {
+        "tsx": true,
+        "userGuide": true,
+        "exampleConfig": true,
+        "packageMetadata": false
+      },
+      "componentName": "ReusableTemplatePanel",
+      "description": "Approval Timeline - reusable Yeeflow approval form timeline for approval history, actors, timestamps, and comments.",
+      "businessPurpose": "Show approval history, actors, timestamps, decisions, and comments.",
+      "supportedContexts": {
+        "dashboard": false,
+        "approvalForm": true,
+        "dataListForm": true,
+        "publicForm": false
+      },
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for seeded approval history rendering; live workflow-generated history remains future testing.",
+      "readOnly": true,
+      "interactive": false,
+      "inputParameters": [
+        {
+          "id": "sourceListId",
+          "name": "Source List ID",
+          "type": "variable",
+          "desc": "List containing approval history events.",
+          "example": "203..."
+        },
+        {
+          "id": "recordIdField",
+          "name": "Record ID Field",
+          "type": "variable",
+          "desc": "Field used to match the current approval record.",
+          "example": "RequestId"
+        },
+        {
+          "id": "recordIdValue",
+          "name": "Record ID Value",
+          "type": "variable",
+          "desc": "Current record ID or expression value.",
+          "example": ""
+        },
+        {
+          "id": "eventDateField",
+          "name": "Event Date Field",
+          "type": "variable",
+          "desc": "Timestamp field.",
+          "example": "CreatedTime"
+        },
+        {
+          "id": "actorField",
+          "name": "Actor Field",
+          "type": "variable",
+          "desc": "Approver/actor field.",
+          "example": "Approver"
+        },
+        {
+          "id": "decisionField",
+          "name": "Decision Field",
+          "type": "variable",
+          "desc": "Decision/status field.",
+          "example": "Decision"
+        },
+        {
+          "id": "commentField",
+          "name": "Comment Field",
+          "type": "variable",
+          "desc": "Comment field.",
+          "example": "Comment"
+        },
+        {
+          "id": "titleText",
+          "name": "Title Text",
+          "type": "string",
+          "desc": "Panel title.",
+          "example": "Approval Timeline"
+        },
+        {
+          "id": "subtitleText",
+          "name": "Subtitle Text",
+          "type": "string",
+          "desc": "Panel subtitle.",
+          "example": "Review history"
+        },
+        {
+          "id": "maxItems",
+          "name": "Max Items",
+          "type": "string",
+          "desc": "Max events shown.",
+          "example": "8"
+        },
+        {
+          "id": "emptyText",
+          "name": "Empty Text",
+          "type": "string",
+          "desc": "Empty state text.",
+          "example": "No history yet"
+        },
+        {
+          "id": "filterExpression",
+          "name": "Filter Expression",
+          "type": "variable",
+          "desc": "Optional query filter.",
+          "example": ""
+        }
+      ],
+      "requiredParameters": [
+        "sourceListId",
+        "recordIdField",
+        "recordIdValue",
+        "eventDateField",
+        "actorField",
+        "decisionField",
+        "commentField"
+      ],
+      "optionalParameters": [
+        "titleText",
+        "subtitleText",
+        "maxItems",
+        "emptyText",
+        "filterExpression"
+      ],
+      "writableTargets": [],
+      "expectedDataSource": "Approval history / timeline list filtered by current request id.",
+      "expectedOutputWriteback": "Display-only; no writeback targets.",
+      "yeeflowApis": [
+        "context.params",
+        "context.getFieldValue",
+        "context.modules",
+        "context.modules.yeeSDKClient",
+        "yeeSDKClient.lists.queryItems",
+        "writeback setter candidates"
+      ],
+      "usesListQuery": true,
+      "usesStaticJsonConfig": false,
+      "needsDataListRecords": true,
+      "needsWorkflowVariables": true,
+      "needsCurrentContext": true,
+      "runtimeRisks": [
+        "Public form support is not proven and must not be claimed.",
+        "List query filter/payload shape must be runtime-tested with real Yeeflow records."
+      ],
+      "recommendedUseCases": [
+        "approval history on task pages",
+        "request detail audit trail"
+      ],
+      "validationChecksNeeded": [
+        "script embedded in attrs[\"codein-script\"]",
+        "parameters stored in attrs[\"codein-script-param\"]",
+        "all required parameters configured",
+        "parameter types match inputParameters()",
+        "public form not claimed unless separately tested",
+        "source list exists and sample records cover non-empty display"
+      ],
+      "docsSummary": {
+        "userGuideBytes": 3347,
+        "exampleConfigBytes": 546
+      }
+    },
+    {
+      "name": "checklist-compliance-block",
+      "category": "Data entry / picker / selection",
+      "files": {
+        "tsx": true,
+        "userGuide": true,
+        "exampleConfig": true,
+        "packageMetadata": false
+      },
+      "componentName": "ReusableTemplatePanel",
+      "description": "Checklist Compliance Block - reusable Yeeflow checklist for confirmations, controls, policy items, and compliance steps.",
+      "businessPurpose": "Render compliance checklist items and save checked state.",
+      "supportedContexts": {
+        "dashboard": false,
+        "approvalForm": true,
+        "dataListForm": true,
+        "publicForm": false
+      },
+      "runtimeProofStatus": "Runtime-proven in approval form smoke for checkbox interaction and JSON writeback.",
+      "readOnly": false,
+      "interactive": true,
+      "inputParameters": [
+        {
+          "id": "itemsJson",
+          "name": "Items JSON",
+          "type": "variable",
+          "desc": "Checklist item array.",
+          "example": "[{\\"
+        },
+        {
+          "id": "saveToField",
+          "name": "Save To Field",
+          "type": "variable",
+          "desc": "Writable output field.",
+          "example": "ChecklistJson"
+        },
+        {
+          "id": "requireAllChecked",
+          "name": "Require All Checked",
+          "type": "variable",
+          "desc": "Require all required items.",
+          "example": "true"
+        },
+        {
+          "id": "showProgress",
+          "name": "Show Progress",
+          "type": "variable",
+          "desc": "Show progress bar.",
+          "example": "true"
+        },
+        {
+          "id": "titleText",
+          "name": "Title Text",
+          "type": "string",
+          "desc": "Panel title.",
+          "example": "Compliance Checklist"
+        },
+        {
+          "id": "subtitleText",
+          "name": "Subtitle Text",
+          "type": "string",
+          "desc": "Panel subtitle.",
+          "example": "Confirm before submitting"
+        },
+        {
+          "id": "emptyText",
+          "name": "Empty Text",
+          "type": "string",
+          "desc": "Empty text.",
+          "example": "No checklist configured"
+        }
+      ],
+      "requiredParameters": [
+        "saveToField",
+        "requireAllChecked",
+        "showProgress"
+      ],
+      "optionalParameters": [
+        "itemsJson",
+        "titleText",
+        "subtitleText",
+        "emptyText"
+      ],
+      "writableTargets": [
+        "saveToField"
+      ],
+      "expectedDataSource": "Static JSON checklist item configuration.",
+      "expectedOutputWriteback": "Writes checklist JSON to the configured save target.",
+      "yeeflowApis": [
+        "context.params",
+        "context.getFieldValue",
+        "context.modules",
+        "context.modules.yeeSDKClient",
+        "yeeSDKClient.lists.queryItems",
+        "writeback setter candidates"
+      ],
+      "usesListQuery": true,
+      "usesStaticJsonConfig": true,
+      "needsDataListRecords": false,
+      "needsWorkflowVariables": true,
+      "needsCurrentContext": false,
+      "runtimeRisks": [
+        "Public form support is not proven and must not be claimed.",
+        "List query filter/payload shape must be runtime-tested with real Yeeflow records.",
+        "Writable targets must be bound with the correct context prefix and verified by save/persistence tests."
+      ],
+      "recommendedUseCases": [
+        "policy confirmation",
+        "pre-submit compliance checks",
+        "review checklist"
+      ],
+      "validationChecksNeeded": [
+        "script embedded in attrs[\"codein-script\"]",
+        "parameters stored in attrs[\"codein-script-param\"]",
+        "all required parameters configured",
+        "parameter types match inputParameters()",
+        "public form not claimed unless separately tested",
+        "writeback target exists and uses __temp_, __variables_, or __list_ according to context",
+        "source list exists and sample records cover non-empty display"
+      ],
+      "docsSummary": {
+        "userGuideBytes": 3064,
+        "exampleConfigBytes": 456
+      }
+    },
+    {
+      "name": "dependent-selector",
+      "category": "Data entry / picker / selection",
+      "files": {
+        "tsx": true,
+        "userGuide": true,
+        "exampleConfig": true,
+        "packageMetadata": false
+      },
+      "componentName": "ReusableTemplatePanel",
+      "description": "Dependent Selector - reusable Yeeflow cascading parent-child selector for structured input.",
+      "businessPurpose": "Provide cascading parent-child selection from a source list.",
+      "supportedContexts": {
+        "dashboard": false,
+        "approvalForm": true,
+        "dataListForm": true,
+        "publicForm": false
+      },
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for parent filtering, child selection, and output writeback.",
+      "readOnly": false,
+      "interactive": true,
+      "inputParameters": [
+        {
+          "id": "dataListId",
+          "name": "Data List ID",
+          "type": "variable",
+          "desc": "Source list.",
+          "example": "203..."
+        },
+        {
+          "id": "parentField",
+          "name": "Parent Field",
+          "type": "variable",
+          "desc": "Parent option field.",
+          "example": "Country"
+        },
+        {
+          "id": "childField",
+          "name": "Child Field",
+          "type": "variable",
+          "desc": "Child option field.",
+          "example": "State"
+        },
+        {
+          "id": "parentSaveToField",
+          "name": "Parent Save To Field",
+          "type": "variable",
+          "desc": "Writable parent output.",
+          "example": "SelectedCountry"
+        },
+        {
+          "id": "childSaveToField",
+          "name": "Child Save To Field",
+          "type": "variable",
+          "desc": "Writable child output.",
+          "example": "SelectedState"
+        },
+        {
+          "id": "titleText",
+          "name": "Title Text",
+          "type": "string",
+          "desc": "Panel title.",
+          "example": "Location"
+        },
+        {
+          "id": "subtitleText",
+          "name": "Subtitle Text",
+          "type": "string",
+          "desc": "Panel subtitle.",
+          "example": "Select country and state"
+        },
+        {
+          "id": "maxItems",
+          "name": "Max Items",
+          "type": "string",
+          "desc": "Max loaded records.",
+          "example": "500"
+        },
+        {
+          "id": "emptyText",
+          "name": "Empty Text",
+          "type": "string",
+          "desc": "Empty text.",
+          "example": "No options"
+        },
+        {
+          "id": "filterExpression",
+          "name": "Filter Expression",
+          "type": "variable",
+          "desc": "Optional filter.",
+          "example": ""
+        }
+      ],
+      "requiredParameters": [
+        "dataListId",
+        "parentField",
+        "childField",
+        "parentSaveToField",
+        "childSaveToField"
+      ],
+      "optionalParameters": [
+        "titleText",
+        "subtitleText",
+        "maxItems",
+        "emptyText",
+        "filterExpression"
+      ],
+      "writableTargets": [
+        "parentSaveToField",
+        "childSaveToField"
+      ],
+      "expectedDataSource": "Source list with parent and child option fields.",
+      "expectedOutputWriteback": "Writes parent and child selections to configured targets.",
+      "yeeflowApis": [
+        "context.params",
+        "context.getFieldValue",
+        "context.modules",
+        "context.modules.yeeSDKClient",
+        "yeeSDKClient.lists.queryItems",
+        "writeback setter candidates"
+      ],
+      "usesListQuery": true,
+      "usesStaticJsonConfig": false,
+      "needsDataListRecords": true,
+      "needsWorkflowVariables": true,
+      "needsCurrentContext": false,
+      "runtimeRisks": [
+        "Public form support is not proven and must not be claimed.",
+        "List query filter/payload shape must be runtime-tested with real Yeeflow records.",
+        "Writable targets must be bound with the correct context prefix and verified by save/persistence tests."
+      ],
+      "recommendedUseCases": [
+        "category/subcategory",
+        "country/state",
+        "department/service type"
+      ],
+      "validationChecksNeeded": [
+        "script embedded in attrs[\"codein-script\"]",
+        "parameters stored in attrs[\"codein-script-param\"]",
+        "all required parameters configured",
+        "parameter types match inputParameters()",
+        "public form not claimed unless separately tested",
+        "writeback target exists and uses __temp_, __variables_, or __list_ according to context",
+        "source list exists and sample records cover non-empty display"
+      ],
+      "docsSummary": {
+        "userGuideBytes": 3174,
+        "exampleConfigBytes": 482
+      }
+    },
+    {
+      "name": "distribution-chart-module",
+      "category": "Dashboard / analytics",
+      "files": {
+        "tsx": true,
+        "userGuide": true,
+        "exampleConfig": true,
+        "packageMetadata": false
+      },
+      "componentName": "DistributionChartModule",
+      "description": "Distribution Chart Module - reusable Yeeflow dashboard custom code template for grouped category/count analytics.",
+      "businessPurpose": "Render grouped category/count analytics from a Yeeflow data list.",
+      "supportedContexts": {
+        "dashboard": true,
+        "approvalForm": false,
+        "dataListForm": false,
+        "publicForm": false
+      },
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for seeded dashboard distribution rendering.",
+      "readOnly": true,
+      "interactive": false,
+      "inputParameters": [
+        {
+          "id": "dataListId",
+          "name": "Data List ID",
+          "type": "variable",
+          "desc": "Target Yeeflow data list ID used as the chart data source. Supports expression editor values.",
+          "example": ""
+        },
+        {
+          "id": "categoryField",
+          "name": "Category Field",
+          "type": "variable",
+          "desc": "Field ID/name used to group records, such as Status, Department, Region, Owner, or Category.",
+          "example": ""
+        },
+        {
+          "id": "titleText",
+          "name": "Title Text",
+          "type": "string",
+          "desc": "Optional module title shown above the chart.",
+          "example": ""
+        },
+        {
+          "id": "subtitleText",
+          "name": "Subtitle Text",
+          "type": "string",
+          "desc": "Optional helper text shown below the title.",
+          "example": ""
+        },
+        {
+          "id": "chartType",
+          "name": "Chart Type",
+          "type": "string",
+          "desc": "Chart mode: donut, pie, horizontalBar, bar, or verticalBar. Default is donut.",
+          "example": ""
+        },
+        {
+          "id": "maxCategories",
+          "name": "Max Categories",
+          "type": "string",
+          "desc": "Maximum number of category groups shown before remaining groups are combined as Other. Default is 8.",
+          "example": ""
+        },
+        {
+          "id": "showLegend",
+          "name": "Show Legend",
+          "type": "variable",
+          "desc": "Whether the legend/count list is shown. Supports true/false or dynamic expression.",
+          "example": ""
+        },
+        {
+          "id": "showCount",
+          "name": "Show Count",
+          "type": "variable",
+          "desc": "Whether record counts are shown in chart labels and legend rows. Supports true/false or dynamic expression.",
+          "example": ""
+        },
+        {
+          "id": "emptyText",
+          "name": "Empty Text",
+          "type": "string",
+          "desc": "Text shown when no records or no category values are available.",
+          "example": ""
+        },
+        {
+          "id": "colorMode",
+          "name": "Color Mode",
+          "type": "string",
+          "desc": "Color palette: yeeflow, soft, status, or slate. Default is yeeflow.",
+          "example": ""
+        },
+        {
+          "id": "sortMode",
+          "name": "Sort Mode",
+          "type": "string",
+          "desc": "Sort behavior: countDesc, countAsc, labelAsc, labelDesc, or source. Default is countDesc.",
+          "example": ""
+        },
+        {
+          "id": "filterExpression",
+          "name": "Filter Expression",
+          "type": "variable",
+          "desc": "Optional Yeeflow query filter object/array/JSON from expression editor. Leave blank for all records.",
+          "example": ""
+        },
+        {
+          "id": "height",
+          "name": "Height",
+          "type": "string",
+          "desc": "Optional chart area height in pixels. Default is 280.",
+          "example": ""
+        },
+        {
+          "id": "pageSize",
+          "name": "Page Size",
+          "type": "string",
+          "desc": "Maximum records queried for aggregation. Default is 500.",
+          "example": ""
+        },
+        {
+          "id": "unknownLabel",
+          "name": "Unknown Label",
+          "type": "string",
+          "desc": "Label used when the category field is empty. Default is Unknown.",
+          "example": ""
+        },
+        {
+          "id": "otherLabel",
+          "name": "Other Label",
+          "type": "string",
+          "desc": "Label used when categories beyond Max Categories are combined. Default is Other.",
+          "example": ""
+        }
+      ],
+      "requiredParameters": [
+        "dataListId",
+        "categoryField",
+        "showLegend",
+        "showCount"
+      ],
+      "optionalParameters": [
+        "titleText",
+        "subtitleText",
+        "chartType",
+        "maxCategories",
+        "emptyText",
+        "colorMode",
+        "sortMode",
+        "filterExpression",
+        "height",
+        "pageSize",
+        "unknownLabel",
+        "otherLabel"
+      ],
+      "writableTargets": [],
+      "expectedDataSource": "Data list queried and grouped by a category/status field.",
+      "expectedOutputWriteback": "Display-only; no writeback targets.",
+      "yeeflowApis": [
+        "context.params",
+        "context.modules",
+        "context.modules.yeeSDKClient",
+        "yeeSDKClient.lists.queryItems"
+      ],
+      "usesListQuery": true,
+      "usesStaticJsonConfig": false,
+      "needsDataListRecords": true,
+      "needsWorkflowVariables": false,
+      "needsCurrentContext": false,
+      "runtimeRisks": [
+        "Public form support is not proven and must not be claimed.",
+        "List query filter/payload shape must be runtime-tested with real Yeeflow records."
+      ],
+      "recommendedUseCases": [
+        "requests by status",
+        "work by category",
+        "exceptions by severity"
+      ],
+      "validationChecksNeeded": [
+        "script embedded in attrs[\"codein-script\"]",
+        "parameters stored in attrs[\"codein-script-param\"]",
+        "all required parameters configured",
+        "parameter types match inputParameters()",
+        "public form not claimed unless separately tested",
+        "source list exists and sample records cover non-empty display"
+      ],
+      "docsSummary": {
+        "userGuideBytes": 10354,
+        "exampleConfigBytes": 1455
+      }
+    },
+    {
+      "name": "exception-alert-panel",
+      "category": "Dashboard / analytics",
+      "files": {
+        "tsx": true,
+        "userGuide": true,
+        "exampleConfig": true,
+        "packageMetadata": false
+      },
+      "componentName": "ReusableTemplatePanel",
+      "description": "Exception Alert Panel - reusable Yeeflow panel for highlighting anomalies, SLA breaches, missing data, and records needing attention.",
+      "businessPurpose": "Highlight anomalies, SLA breaches, missing data, and records needing attention.",
+      "supportedContexts": {
+        "dashboard": true,
+        "approvalForm": true,
+        "dataListForm": true,
+        "publicForm": false
+      },
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for seeded exception alert rendering.",
+      "readOnly": true,
+      "interactive": false,
+      "inputParameters": [
+        {
+          "id": "sourceListId",
+          "name": "Source List ID",
+          "type": "variable",
+          "desc": "Source list ID.",
+          "example": "203..."
+        },
+        {
+          "id": "rulesJson",
+          "name": "Rules JSON",
+          "type": "variable",
+          "desc": "Optional rule array.",
+          "example": "[{\\"
+        },
+        {
+          "id": "titleField",
+          "name": "Title Field",
+          "type": "variable",
+          "desc": "Alert title field.",
+          "example": "Title"
+        },
+        {
+          "id": "severityField",
+          "name": "Severity Field",
+          "type": "variable",
+          "desc": "Severity field.",
+          "example": "Severity"
+        },
+        {
+          "id": "descriptionField",
+          "name": "Description Field",
+          "type": "variable",
+          "desc": "Alert message field.",
+          "example": "Description"
+        },
+        {
+          "id": "titleText",
+          "name": "Title Text",
+          "type": "string",
+          "desc": "Panel title.",
+          "example": "Exceptions"
+        },
+        {
+          "id": "subtitleText",
+          "name": "Subtitle Text",
+          "type": "string",
+          "desc": "Panel subtitle.",
+          "example": "Records needing attention"
+        },
+        {
+          "id": "showSeverity",
+          "name": "Show Severity",
+          "type": "variable",
+          "desc": "Show severity styling.",
+          "example": "true"
+        },
+        {
+          "id": "maxItems",
+          "name": "Max Items",
+          "type": "string",
+          "desc": "Max alerts.",
+          "example": "8"
+        },
+        {
+          "id": "emptyText",
+          "name": "Empty Text",
+          "type": "string",
+          "desc": "Empty text.",
+          "example": "No exceptions found"
+        },
+        {
+          "id": "filterExpression",
+          "name": "Filter Expression",
+          "type": "variable",
+          "desc": "Optional filter.",
+          "example": ""
+        }
+      ],
+      "requiredParameters": [
+        "sourceListId",
+        "titleField",
+        "severityField",
+        "descriptionField",
+        "showSeverity"
+      ],
+      "optionalParameters": [
+        "rulesJson",
+        "titleText",
+        "subtitleText",
+        "maxItems",
+        "emptyText",
+        "filterExpression"
+      ],
+      "writableTargets": [],
+      "expectedDataSource": "Exception/source list with title, severity, description, and optional rules.",
+      "expectedOutputWriteback": "Display-only; no writeback targets.",
+      "yeeflowApis": [
+        "context.params",
+        "context.getFieldValue",
+        "context.modules",
+        "context.modules.yeeSDKClient",
+        "yeeSDKClient.lists.queryItems",
+        "writeback setter candidates"
+      ],
+      "usesListQuery": true,
+      "usesStaticJsonConfig": true,
+      "needsDataListRecords": true,
+      "needsWorkflowVariables": true,
+      "needsCurrentContext": false,
+      "runtimeRisks": [
+        "Public form support is not proven and must not be claimed.",
+        "List query filter/payload shape must be runtime-tested with real Yeeflow records."
+      ],
+      "recommendedUseCases": [
+        "overdue requests",
+        "high-risk items",
+        "missing compliance information"
+      ],
+      "validationChecksNeeded": [
+        "script embedded in attrs[\"codein-script\"]",
+        "parameters stored in attrs[\"codein-script-param\"]",
+        "all required parameters configured",
+        "parameter types match inputParameters()",
+        "public form not claimed unless separately tested",
+        "source list exists and sample records cover non-empty display"
+      ],
+      "docsSummary": {
+        "userGuideBytes": 3187,
+        "exampleConfigBytes": 561
+      }
+    },
+    {
+      "name": "hierarchical-selector",
+      "category": "Data entry / picker / selection",
+      "files": {
+        "tsx": true,
+        "userGuide": true,
+        "exampleConfig": true,
+        "packageMetadata": false
+      },
+      "componentName": "ReusableTemplatePanel",
+      "description": "Hierarchical Selector - reusable Yeeflow tree selector for organization, category, geography, or location structures.",
+      "businessPurpose": "Render and select values from a tree structure.",
+      "supportedContexts": {
+        "dashboard": false,
+        "approvalForm": true,
+        "dataListForm": true,
+        "publicForm": false
+      },
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for hierarchy render, selection, and output writeback.",
+      "readOnly": false,
+      "interactive": true,
+      "inputParameters": [
+        {
+          "id": "dataListId",
+          "name": "Data List ID",
+          "type": "variable",
+          "desc": "Hierarchy source list.",
+          "example": "203..."
+        },
+        {
+          "id": "idField",
+          "name": "ID Field",
+          "type": "variable",
+          "desc": "Unique ID field.",
+          "example": "ListDataID"
+        },
+        {
+          "id": "parentField",
+          "name": "Parent Field",
+          "type": "variable",
+          "desc": "Parent ID field.",
+          "example": "ParentId"
+        },
+        {
+          "id": "labelField",
+          "name": "Label Field",
+          "type": "variable",
+          "desc": "Display label field.",
+          "example": "Title"
+        },
+        {
+          "id": "valueField",
+          "name": "Value Field",
+          "type": "variable",
+          "desc": "Saved value field.",
+          "example": "ListDataID"
+        },
+        {
+          "id": "saveToField",
+          "name": "Save To Field",
+          "type": "variable",
+          "desc": "Writable output field.",
+          "example": "SelectedCategoryIds"
+        },
+        {
+          "id": "multiSelect",
+          "name": "Multi Select",
+          "type": "variable",
+          "desc": "Allow multiple selections.",
+          "example": "true"
+        },
+        {
+          "id": "titleText",
+          "name": "Title Text",
+          "type": "string",
+          "desc": "Panel title.",
+          "example": "Category"
+        },
+        {
+          "id": "subtitleText",
+          "name": "Subtitle Text",
+          "type": "string",
+          "desc": "Panel subtitle.",
+          "example": "Select category"
+        },
+        {
+          "id": "maxItems",
+          "name": "Max Items",
+          "type": "string",
+          "desc": "Max loaded records.",
+          "example": "200"
+        },
+        {
+          "id": "emptyText",
+          "name": "Empty Text",
+          "type": "string",
+          "desc": "Empty text.",
+          "example": "No hierarchy records"
+        },
+        {
+          "id": "filterExpression",
+          "name": "Filter Expression",
+          "type": "variable",
+          "desc": "Optional filter.",
+          "example": ""
+        }
+      ],
+      "requiredParameters": [
+        "dataListId",
+        "idField",
+        "parentField",
+        "labelField",
+        "valueField",
+        "saveToField",
+        "multiSelect"
+      ],
+      "optionalParameters": [
+        "titleText",
+        "subtitleText",
+        "maxItems",
+        "emptyText",
+        "filterExpression"
+      ],
+      "writableTargets": [
+        "saveToField"
+      ],
+      "expectedDataSource": "Hierarchy list with id, parent id, label, and value fields.",
+      "expectedOutputWriteback": "Writes selected node value(s) to configured save target.",
+      "yeeflowApis": [
+        "context.params",
+        "context.getFieldValue",
+        "context.modules",
+        "context.modules.yeeSDKClient",
+        "yeeSDKClient.lists.queryItems",
+        "writeback setter candidates"
+      ],
+      "usesListQuery": true,
+      "usesStaticJsonConfig": false,
+      "needsDataListRecords": true,
+      "needsWorkflowVariables": true,
+      "needsCurrentContext": false,
+      "runtimeRisks": [
+        "Public form support is not proven and must not be claimed.",
+        "List query filter/payload shape must be runtime-tested with real Yeeflow records.",
+        "Writable targets must be bound with the correct context prefix and verified by save/persistence tests."
+      ],
+      "recommendedUseCases": [
+        "service taxonomy",
+        "location hierarchy",
+        "organization/category tree"
+      ],
+      "validationChecksNeeded": [
+        "script embedded in attrs[\"codein-script\"]",
+        "parameters stored in attrs[\"codein-script-param\"]",
+        "all required parameters configured",
+        "parameter types match inputParameters()",
+        "public form not claimed unless separately tested",
+        "writeback target exists and uses __temp_, __variables_, or __list_ according to context",
+        "source list exists and sample records cover non-empty display"
+      ],
+      "docsSummary": {
+        "userGuideBytes": 3278,
+        "exampleConfigBytes": 532
+      }
+    },
+    {
+      "name": "kpi-card-set",
+      "category": "Dashboard / analytics",
+      "files": {
+        "tsx": true,
+        "userGuide": true,
+        "exampleConfig": true,
+        "packageMetadata": false
+      },
+      "componentName": "KpiCardSet",
+      "description": "KPI Card Set - reusable Yeeflow dashboard custom code template for displaying configurable KPI cards.",
+      "businessPurpose": "Display configurable KPI cards from static JSON or mapped data.",
+      "supportedContexts": {
+        "dashboard": true,
+        "approvalForm": true,
+        "dataListForm": true,
+        "publicForm": false
+      },
+      "runtimeProofStatus": "Render-only proven in dashboard smoke with configured static values; data-bound KPI calculation is not proven.",
+      "readOnly": true,
+      "interactive": false,
+      "inputParameters": [
+        {
+          "id": "cardsConfig",
+          "name": "Cards Config",
+          "type": "variable",
+          "desc": "Expression-editor value containing KPI card configuration. Supports JSON array, object with cards/items/data, variable, temp variable, or expression result.",
+          "example": ""
+        },
+        {
+          "id": "titleText",
+          "name": "Title Text",
+          "type": "string",
+          "desc": "Optional title shown above the KPI card set.",
+          "example": ""
+        },
+        {
+          "id": "subtitleText",
+          "name": "Subtitle Text",
+          "type": "string",
+          "desc": "Optional supporting text shown below the title.",
+          "example": ""
+        },
+        {
+          "id": "layoutMode",
+          "name": "Layout Mode",
+          "type": "string",
+          "desc": "Card layout: auto, one, two, three, or four. Default is auto.",
+          "example": ""
+        },
+        {
+          "id": "cardTone",
+          "name": "Default Card Tone",
+          "type": "string",
+          "desc": "Default tone for cards without their own tone: blue, green, amber, red, violet, or slate.",
+          "example": ""
+        },
+        {
+          "id": "titleField",
+          "name": "Title Field",
+          "type": "variable",
+          "desc": "Optional source data field used as each KPI card title. Example: MetricName.",
+          "example": ""
+        },
+        {
+          "id": "valueField",
+          "name": "Value Field",
+          "type": "variable",
+          "desc": "Optional source data field used as each KPI card value. Example: MetricValue.",
+          "example": ""
+        },
+        {
+          "id": "subtitleField",
+          "name": "Subtitle Field",
+          "type": "variable",
+          "desc": "Optional source data field used as each KPI card subtitle/helper text.",
+          "example": ""
+        },
+        {
+          "id": "trendField",
+          "name": "Trend Field",
+          "type": "variable",
+          "desc": "Optional source data field used as each KPI card trend/change text.",
+          "example": ""
+        },
+        {
+          "id": "trendDirectionField",
+          "name": "Trend Direction Field",
+          "type": "variable",
+          "desc": "Optional source data field used as trend direction: up, down, or neutral.",
+          "example": ""
+        },
+        {
+          "id": "toneField",
+          "name": "Tone Field",
+          "type": "variable",
+          "desc": "Optional source data field used as card tone: blue, green, amber, red, violet, or slate.",
+          "example": ""
+        },
+        {
+          "id": "formatField",
+          "name": "Format Field",
+          "type": "variable",
+          "desc": "Optional source data field used as value format: auto, number, percent, or text.",
+          "example": ""
+        },
+        {
+          "id": "prefixField",
+          "name": "Prefix Field",
+          "type": "variable",
+          "desc": "Optional source data field used as text before the KPI value.",
+          "example": ""
+        },
+        {
+          "id": "suffixField",
+          "name": "Suffix Field",
+          "type": "variable",
+          "desc": "Optional source data field used as text after the KPI value.",
+          "example": ""
+        },
+        {
+          "id": "iconField",
+          "name": "Icon Field",
+          "type": "variable",
+          "desc": "Optional source data field used as the small card marker/icon text.",
+          "example": ""
+        },
+        {
+          "id": "targetLabelField",
+          "name": "Target Label Field",
+          "type": "variable",
+          "desc": "Optional source data field used as the target label.",
+          "example": ""
+        },
+        {
+          "id": "targetValueField",
+          "name": "Target Value Field",
+          "type": "variable",
+          "desc": "Optional source data field used as the target value.",
+          "example": ""
+        },
+        {
+          "id": "decimalsField",
+          "name": "Decimals Field",
+          "type": "variable",
+          "desc": "Optional source data field used as card-specific decimal places.",
+          "example": ""
+        },
+        {
+          "id": "showTrend",
+          "name": "Show Trend",
+          "type": "variable",
+          "desc": "Whether trend/change text should be shown. Supports true/false or dynamic expression.",
+          "example": ""
+        },
+        {
+          "id": "showIcon",
+          "name": "Show Icon",
+          "type": "variable",
+          "desc": "Whether card icons/initial markers should be shown. Supports true/false or dynamic expression.",
+          "example": ""
+        },
+        {
+          "id": "compactMode",
+          "name": "Compact Mode",
+          "type": "variable",
+          "desc": "Whether compact spacing is enabled. Supports true/false or dynamic expression.",
+          "example": ""
+        },
+        {
+          "id": "emptyStateText",
+          "name": "Empty State Text",
+          "type": "string",
+          "desc": "Text shown when no KPI card configuration is available.",
+          "example": ""
+        },
+        {
+          "id": "numberLocale",
+          "name": "Number Locale",
+          "type": "string",
+          "desc": "Locale used for number formatting, such as en-US. Leave blank for browser default.",
+          "example": ""
+        },
+        {
+          "id": "decimalPlaces",
+          "name": "Decimal Places",
+          "type": "string",
+          "desc": "Default decimal places for numeric KPI values. Default is 0.",
+          "example": ""
+        },
+        {
+          "id": "minCardWidth",
+          "name": "Minimum Card Width",
+          "type": "string",
+          "desc": "Minimum card width in pixels when layoutMode is auto. Default is 220.",
+          "example": ""
+        },
+        {
+          "id": "valueSize",
+          "name": "Value Size",
+          "type": "string",
+          "desc": "Value text size: small, medium, or large. Default is medium.",
+          "example": ""
+        }
+      ],
+      "requiredParameters": [
+        "titleField",
+        "valueField",
+        "subtitleField",
+        "trendField",
+        "trendDirectionField",
+        "toneField",
+        "formatField",
+        "prefixField",
+        "suffixField",
+        "iconField",
+        "targetLabelField",
+        "targetValueField",
+        "decimalsField",
+        "showTrend",
+        "showIcon",
+        "compactMode"
+      ],
+      "optionalParameters": [
+        "cardsConfig",
+        "titleText",
+        "subtitleText",
+        "layoutMode",
+        "cardTone",
+        "emptyStateText",
+        "numberLocale",
+        "decimalPlaces",
+        "minCardWidth",
+        "valueSize"
+      ],
+      "writableTargets": [],
+      "expectedDataSource": "Static JSON cardsConfig or data object/array supplied through expression parameters.",
+      "expectedOutputWriteback": "Display-only; no writeback targets.",
+      "yeeflowApis": [
+        "context.params"
+      ],
+      "usesListQuery": false,
+      "usesStaticJsonConfig": true,
+      "needsDataListRecords": false,
+      "needsWorkflowVariables": true,
+      "needsCurrentContext": false,
+      "runtimeRisks": [
+        "Public form support is not proven and must not be claimed."
+      ],
+      "recommendedUseCases": [
+        "operational scorecards",
+        "request summary",
+        "review-context metrics"
+      ],
+      "validationChecksNeeded": [
+        "script embedded in attrs[\"codein-script\"]",
+        "parameters stored in attrs[\"codein-script-param\"]",
+        "all required parameters configured",
+        "parameter types match inputParameters()",
+        "public form not claimed unless separately tested"
+      ],
+      "docsSummary": {
+        "userGuideBytes": 15039,
+        "exampleConfigBytes": 3577
+      }
+    },
+    {
+      "name": "multi-entry-tag-input",
+      "category": "Data entry / picker / selection",
+      "files": {
+        "tsx": true,
+        "userGuide": true,
+        "exampleConfig": true,
+        "packageMetadata": false
+      },
+      "componentName": "ReusableTemplatePanel",
+      "description": "Multi-Entry Tag Input - reusable Yeeflow chip input for entering multiple emails, IDs, keywords, labels, or SKUs.",
+      "businessPurpose": "Capture multiple tags, emails, IDs, labels, or SKUs as chips.",
+      "supportedContexts": {
+        "dashboard": false,
+        "approvalForm": true,
+        "dataListForm": true,
+        "publicForm": false
+      },
+      "runtimeProofStatus": "Runtime-proven in approval form smoke for add-tag interaction and JSON writeback.",
+      "readOnly": false,
+      "interactive": true,
+      "inputParameters": [
+        {
+          "id": "saveToField",
+          "name": "Save To Field",
+          "type": "variable",
+          "desc": "Writable field for saved tags.",
+          "example": "TagsJson"
+        },
+        {
+          "id": "titleText",
+          "name": "Title Text",
+          "type": "string",
+          "desc": "Panel title.",
+          "example": "Recipients"
+        },
+        {
+          "id": "subtitleText",
+          "name": "Subtitle Text",
+          "type": "string",
+          "desc": "Panel subtitle.",
+          "example": "Press Enter to add each value"
+        },
+        {
+          "id": "placeholderText",
+          "name": "Placeholder Text",
+          "type": "string",
+          "desc": "Input placeholder.",
+          "example": "Type email and press Enter"
+        },
+        {
+          "id": "maxTags",
+          "name": "Max Tags",
+          "type": "string",
+          "desc": "Maximum tags.",
+          "example": "20"
+        },
+        {
+          "id": "allowDuplicates",
+          "name": "Allow Duplicates",
+          "type": "variable",
+          "desc": "Allow duplicate values.",
+          "example": "false"
+        },
+        {
+          "id": "saveMode",
+          "name": "Save Mode",
+          "type": "string",
+          "desc": "json or delimiter.",
+          "example": "json"
+        },
+        {
+          "id": "delimiter",
+          "name": "Delimiter",
+          "type": "string",
+          "desc": "Delimiter for delimiter mode.",
+          "example": ","
+        },
+        {
+          "id": "emptyText",
+          "name": "Empty Text",
+          "type": "string",
+          "desc": "Empty text.",
+          "example": ""
+        }
+      ],
+      "requiredParameters": [
+        "saveToField",
+        "allowDuplicates"
+      ],
+      "optionalParameters": [
+        "titleText",
+        "subtitleText",
+        "placeholderText",
+        "maxTags",
+        "saveMode",
+        "delimiter",
+        "emptyText"
+      ],
+      "writableTargets": [
+        "saveToField"
+      ],
+      "expectedDataSource": "User-entered chip values; no list query required.",
+      "expectedOutputWriteback": "Writes tags as JSON or delimiter text to configured save target.",
+      "yeeflowApis": [
+        "context.params",
+        "context.getFieldValue",
+        "context.modules",
+        "context.modules.yeeSDKClient",
+        "yeeSDKClient.lists.queryItems",
+        "writeback setter candidates"
+      ],
+      "usesListQuery": true,
+      "usesStaticJsonConfig": false,
+      "needsDataListRecords": false,
+      "needsWorkflowVariables": true,
+      "needsCurrentContext": false,
+      "runtimeRisks": [
+        "Public form support is not proven and must not be claimed.",
+        "List query filter/payload shape must be runtime-tested with real Yeeflow records.",
+        "Writable targets must be bound with the correct context prefix and verified by save/persistence tests."
+      ],
+      "recommendedUseCases": [
+        "request tags",
+        "watchers/recipients",
+        "keyword capture"
+      ],
+      "validationChecksNeeded": [
+        "script embedded in attrs[\"codein-script\"]",
+        "parameters stored in attrs[\"codein-script-param\"]",
+        "all required parameters configured",
+        "parameter types match inputParameters()",
+        "public form not claimed unless separately tested",
+        "writeback target exists and uses __temp_, __variables_, or __list_ according to context",
+        "source list exists and sample records cover non-empty display"
+      ],
+      "docsSummary": {
+        "userGuideBytes": 3106,
+        "exampleConfigBytes": 444
+      }
+    },
+    {
+      "name": "related-record-summary-grid",
+      "category": "Dashboard / analytics",
+      "files": {
+        "tsx": true,
+        "userGuide": true,
+        "exampleConfig": true,
+        "packageMetadata": false
+      },
+      "componentName": "ReusableTemplatePanel",
+      "description": "Related Record Summary Grid - reusable Yeeflow component for showing related records inline as cards or table rows.",
+      "businessPurpose": "Display related records inline as cards or table rows.",
+      "supportedContexts": {
+        "dashboard": true,
+        "approvalForm": true,
+        "dataListForm": true,
+        "publicForm": false
+      },
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for seeded related-record rendering.",
+      "readOnly": true,
+      "interactive": false,
+      "inputParameters": [
+        {
+          "id": "targetListId",
+          "name": "Target List ID",
+          "type": "variable",
+          "desc": "Related data list ID.",
+          "example": "203..."
+        },
+        {
+          "id": "relationField",
+          "name": "Relation Field",
+          "type": "variable",
+          "desc": "Field used to match relation.",
+          "example": "RequestId"
+        },
+        {
+          "id": "relationValue",
+          "name": "Relation Value",
+          "type": "variable",
+          "desc": "Current relation value.",
+          "example": ""
+        },
+        {
+          "id": "displayedFieldsJson",
+          "name": "Displayed Fields JSON",
+          "type": "variable",
+          "desc": "JSON/comma list of fields to display.",
+          "example": "[\\"
+        },
+        {
+          "id": "displayType",
+          "name": "Display Type",
+          "type": "string",
+          "desc": "card or table.",
+          "example": "card"
+        },
+        {
+          "id": "titleField",
+          "name": "Title Field",
+          "type": "variable",
+          "desc": "Primary field.",
+          "example": "Title"
+        },
+        {
+          "id": "statusField",
+          "name": "Status Field",
+          "type": "variable",
+          "desc": "Status field.",
+          "example": "Status"
+        },
+        {
+          "id": "titleText",
+          "name": "Title Text",
+          "type": "string",
+          "desc": "Panel title.",
+          "example": "Related Records"
+        },
+        {
+          "id": "subtitleText",
+          "name": "Subtitle Text",
+          "type": "string",
+          "desc": "Panel subtitle.",
+          "example": "Linked records"
+        },
+        {
+          "id": "maxItems",
+          "name": "Max Items",
+          "type": "string",
+          "desc": "Max records.",
+          "example": "6"
+        },
+        {
+          "id": "emptyText",
+          "name": "Empty Text",
+          "type": "string",
+          "desc": "Empty text.",
+          "example": "No related records"
+        },
+        {
+          "id": "filterExpression",
+          "name": "Filter Expression",
+          "type": "variable",
+          "desc": "Optional filter.",
+          "example": ""
+        }
+      ],
+      "requiredParameters": [
+        "targetListId",
+        "relationField",
+        "relationValue",
+        "titleField",
+        "statusField"
+      ],
+      "optionalParameters": [
+        "displayedFieldsJson",
+        "displayType",
+        "titleText",
+        "subtitleText",
+        "maxItems",
+        "emptyText",
+        "filterExpression"
+      ],
+      "writableTargets": [],
+      "expectedDataSource": "Related data list filtered by relation field/value and displayed field list.",
+      "expectedOutputWriteback": "Display-only; no writeback targets.",
+      "yeeflowApis": [
+        "context.params",
+        "context.getFieldValue",
+        "context.modules",
+        "context.modules.yeeSDKClient",
+        "yeeSDKClient.lists.queryItems",
+        "writeback setter candidates"
+      ],
+      "usesListQuery": true,
+      "usesStaticJsonConfig": true,
+      "needsDataListRecords": true,
+      "needsWorkflowVariables": true,
+      "needsCurrentContext": true,
+      "runtimeRisks": [
+        "Public form support is not proven and must not be claimed.",
+        "List query filter/payload shape must be runtime-tested with real Yeeflow records."
+      ],
+      "recommendedUseCases": [
+        "linked assets/vendors",
+        "related incidents",
+        "child request summary"
+      ],
+      "validationChecksNeeded": [
+        "script embedded in attrs[\"codein-script\"]",
+        "parameters stored in attrs[\"codein-script-param\"]",
+        "all required parameters configured",
+        "parameter types match inputParameters()",
+        "public form not claimed unless separately tested",
+        "source list exists and sample records cover non-empty display"
+      ],
+      "docsSummary": {
+        "userGuideBytes": 3296,
+        "exampleConfigBytes": 559
+      }
+    },
+    {
+      "name": "smart-lookup-picker",
+      "category": "Data entry / picker / selection",
+      "files": {
+        "tsx": true,
+        "userGuide": true,
+        "exampleConfig": true,
+        "packageMetadata": false
+      },
+      "componentName": "SmartLookupPicker",
+      "description": "Smart Lookup Picker - reusable Yeeflow lookup/search-select control for approval forms and data list forms.",
+      "businessPurpose": "Search, select, and optionally manually add lookup records from a target list.",
+      "supportedContexts": {
+        "dashboard": true,
+        "approvalForm": true,
+        "dataListForm": true,
+        "publicForm": false
+      },
+      "runtimeProofStatus": "Runtime-proven in prior focused app and retested in showcase approval form for search/select/writeback; public form not tested.",
+      "readOnly": false,
+      "interactive": true,
+      "inputParameters": [
+        {
+          "id": "dataListId",
+          "name": "Data List ID",
+          "type": "variable",
+          "desc": "Target Yeeflow data list ID used for lookup query.",
+          "example": ""
+        },
+        {
+          "id": "displayField",
+          "name": "Display Field",
+          "type": "variable",
+          "desc": "Field ID/name used for display text and keyword search matching.",
+          "example": ""
+        },
+        {
+          "id": "valueField",
+          "name": "Value Field",
+          "type": "variable",
+          "desc": "Field ID/name used as the saved value for selected matched items.",
+          "example": ""
+        },
+        {
+          "id": "saveToField",
+          "name": "Save To Field",
+          "type": "variable",
+          "desc": "Writable current form field or dashboard temp variable used to save the full combined JSON result. Choose the target variable/field from the selector.",
+          "example": ""
+        },
+        {
+          "id": "selectedItemsField",
+          "name": "Selected Items Field",
+          "type": "variable",
+          "desc": "Writable current form field or dashboard temp variable used to save matched selected values only. Choose the target variable/field from the selector.",
+          "example": ""
+        },
+        {
+          "id": "newItemsField",
+          "name": "New Items Field",
+          "type": "variable",
+          "desc": "Writable current form field or dashboard temp variable used to save manual/free-text items only. Choose the target variable/field from the selector.",
+          "example": ""
+        },
+        {
+          "id": "multiSelect",
+          "name": "Multi Select",
+          "type": "variable",
+          "desc": "Whether multi-select is enabled. Use true or false.",
+          "example": ""
+        },
+        {
+          "id": "allowManualEntry",
+          "name": "Allow Manual Entry",
+          "type": "variable",
+          "desc": "Whether manual/free-text entry is enabled. Use true or false.",
+          "example": ""
+        },
+        {
+          "id": "maxResults",
+          "name": "Max Results",
+          "type": "string",
+          "desc": "Maximum number of matched records shown in the suggestion list.",
+          "example": ""
+        },
+        {
+          "id": "placeholderText",
+          "name": "Placeholder Text",
+          "type": "string",
+          "desc": "Placeholder text shown in the lookup input.",
+          "example": ""
+        },
+        {
+          "id": "labelText",
+          "name": "Label Text",
+          "type": "string",
+          "desc": "Optional label/title shown above the control.",
+          "example": ""
+        },
+        {
+          "id": "noResultText",
+          "name": "No Result Text",
+          "type": "string",
+          "desc": "Text shown when no matched records are found.",
+          "example": ""
+        },
+        {
+          "id": "manualTagText",
+          "name": "Manual Tag Text",
+          "type": "string",
+          "desc": "Optional label shown on manual item chips.",
+          "example": ""
+        },
+        {
+          "id": "minSearchChars",
+          "name": "Minimum Search Characters",
+          "type": "string",
+          "desc": "Optional minimum characters before querying. Default is 1.",
+          "example": ""
+        },
+        {
+          "id": "debounceMs",
+          "name": "Search Debounce Milliseconds",
+          "type": "string",
+          "desc": "Optional search debounce delay. Default is 260.",
+          "example": ""
+        }
+      ],
+      "requiredParameters": [
+        "dataListId",
+        "displayField",
+        "valueField",
+        "saveToField",
+        "selectedItemsField",
+        "newItemsField",
+        "multiSelect",
+        "allowManualEntry"
+      ],
+      "optionalParameters": [
+        "maxResults",
+        "placeholderText",
+        "labelText",
+        "noResultText",
+        "manualTagText",
+        "minSearchChars",
+        "debounceMs"
+      ],
+      "writableTargets": [],
+      "expectedDataSource": "Lookup source list queried by display/value fields.",
+      "expectedOutputWriteback": "Writes full JSON, matched selected values, and manual values to configured targets.",
+      "yeeflowApis": [
+        "context.params",
+        "context.getFieldValue",
+        "context.modules",
+        "context.modules.yeeSDKClient",
+        "yeeSDKClient.lists.queryItems",
+        "writeback setter candidates"
+      ],
+      "usesListQuery": true,
+      "usesStaticJsonConfig": false,
+      "needsDataListRecords": true,
+      "needsWorkflowVariables": true,
+      "needsCurrentContext": false,
+      "runtimeRisks": [
+        "Public form support is not proven and must not be claimed.",
+        "List query filter/payload shape must be runtime-tested with real Yeeflow records."
+      ],
+      "recommendedUseCases": [
+        "asset/vendor picker",
+        "supplier search",
+        "large master-data lookup"
+      ],
+      "validationChecksNeeded": [
+        "script embedded in attrs[\"codein-script\"]",
+        "parameters stored in attrs[\"codein-script-param\"]",
+        "all required parameters configured",
+        "parameter types match inputParameters()",
+        "public form not claimed unless separately tested",
+        "source list exists and sample records cover non-empty display"
+      ],
+      "docsSummary": {
+        "userGuideBytes": 15227,
+        "exampleConfigBytes": 787
+      }
+    },
+    {
+      "name": "trend-chart-module",
+      "category": "Dashboard / analytics",
+      "files": {
+        "tsx": true,
+        "userGuide": true,
+        "exampleConfig": true,
+        "packageMetadata": false
+      },
+      "componentName": "TrendChartModule",
+      "description": "Trend Chart Module - reusable Yeeflow dashboard custom code template for time-based list trends.",
+      "businessPurpose": "Render time-based list trends by day, week, or month.",
+      "supportedContexts": {
+        "dashboard": true,
+        "approvalForm": false,
+        "dataListForm": false,
+        "publicForm": false
+      },
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for seeded dated trend rendering.",
+      "readOnly": true,
+      "interactive": false,
+      "inputParameters": [
+        {
+          "id": "dataListId",
+          "name": "Data List ID",
+          "type": "variable",
+          "desc": "Target Yeeflow data list ID used as the trend data source. Supports expression editor values.",
+          "example": ""
+        },
+        {
+          "id": "dateField",
+          "name": "Date Field",
+          "type": "variable",
+          "desc": "Field ID/name used as the time axis, such as CreatedTime, SubmitDate, CompletedDate, or AttendanceDate.",
+          "example": ""
+        },
+        {
+          "id": "titleText",
+          "name": "Title Text",
+          "type": "string",
+          "desc": "Optional module title shown above the chart.",
+          "example": ""
+        },
+        {
+          "id": "subtitleText",
+          "name": "Subtitle Text",
+          "type": "string",
+          "desc": "Optional supporting text shown below the title.",
+          "example": ""
+        },
+        {
+          "id": "chartType",
+          "name": "Chart Type",
+          "type": "string",
+          "desc": "Chart mode: line, area, areaLine, column, or bar. Default is line.",
+          "example": ""
+        },
+        {
+          "id": "timeGranularity",
+          "name": "Time Granularity",
+          "type": "string",
+          "desc": "Time bucket grouping: day, week, or month. Default is day.",
+          "example": ""
+        },
+        {
+          "id": "maxPoints",
+          "name": "Max Points",
+          "type": "string",
+          "desc": "Maximum number of time buckets shown. Default is 12.",
+          "example": ""
+        },
+        {
+          "id": "showPointLabels",
+          "name": "Show Point Labels",
+          "type": "variable",
+          "desc": "Whether value labels are shown on points or columns. Supports true/false or dynamic expression.",
+          "example": ""
+        },
+        {
+          "id": "showXAxisLabels",
+          "name": "Show X Axis Labels",
+          "type": "variable",
+          "desc": "Whether date bucket labels are shown on the x-axis. Supports true/false or dynamic expression.",
+          "example": ""
+        },
+        {
+          "id": "showYAxis",
+          "name": "Show Y Axis",
+          "type": "variable",
+          "desc": "Whether a simple y-axis and grid are shown. Supports true/false or dynamic expression.",
+          "example": ""
+        },
+        {
+          "id": "emptyText",
+          "name": "Empty Text",
+          "type": "string",
+          "desc": "Text shown when no valid dated records are available.",
+          "example": ""
+        },
+        {
+          "id": "colorMode",
+          "name": "Color Mode",
+          "type": "string",
+          "desc": "Color palette: yeeflow, green, amber, red, violet, or slate. Default is yeeflow.",
+          "example": ""
+        },
+        {
+          "id": "sortMode",
+          "name": "Sort Mode",
+          "type": "string",
+          "desc": "Time order: chronological or reverseChronological. Default is chronological.",
+          "example": ""
+        },
+        {
+          "id": "filterExpression",
+          "name": "Filter Expression",
+          "type": "variable",
+          "desc": "Optional Yeeflow query filter object/array/JSON from expression editor. Leave blank for all records.",
+          "example": ""
+        },
+        {
+          "id": "height",
+          "name": "Height",
+          "type": "string",
+          "desc": "Optional chart area height in pixels. Default is 280.",
+          "example": ""
+        },
+        {
+          "id": "pageSize",
+          "name": "Page Size",
+          "type": "string",
+          "desc": "Maximum records queried for aggregation. Default is 500.",
+          "example": ""
+        },
+        {
+          "id": "dateRangeMode",
+          "name": "Date Range Mode",
+          "type": "string",
+          "desc": "Optional local date range: all, last7Days, last30Days, last90Days, thisMonth, or last12Months. Default is all.",
+          "example": ""
+        },
+        {
+          "id": "cumulativeMode",
+          "name": "Cumulative Mode",
+          "type": "variable",
+          "desc": "Whether the chart shows running total values instead of per-bucket counts. Supports true/false or dynamic expression.",
+          "example": ""
+        },
+        {
+          "id": "fillMissingBuckets",
+          "name": "Fill Missing Buckets",
+          "type": "variable",
+          "desc": "Whether missing day/week/month buckets should be shown as zero. Supports true/false or dynamic expression.",
+          "example": ""
+        },
+        {
+          "id": "unknownDateLabel",
+          "name": "Unknown Date Label",
+          "type": "string",
+          "desc": "Internal label used for invalid dates in diagnostics. Invalid dates are excluded from the chart.",
+          "example": ""
+        }
+      ],
+      "requiredParameters": [
+        "dataListId",
+        "dateField",
+        "showPointLabels",
+        "showXAxisLabels",
+        "showYAxis",
+        "cumulativeMode",
+        "fillMissingBuckets"
+      ],
+      "optionalParameters": [
+        "titleText",
+        "subtitleText",
+        "chartType",
+        "timeGranularity",
+        "maxPoints",
+        "emptyText",
+        "colorMode",
+        "sortMode",
+        "filterExpression",
+        "height",
+        "pageSize",
+        "dateRangeMode",
+        "unknownDateLabel"
+      ],
+      "writableTargets": [],
+      "expectedDataSource": "Data list queried and bucketed by a date/datetime field.",
+      "expectedOutputWriteback": "Display-only; no writeback targets.",
+      "yeeflowApis": [
+        "context.params",
+        "context.modules",
+        "context.modules.yeeSDKClient",
+        "yeeSDKClient.lists.queryItems"
+      ],
+      "usesListQuery": true,
+      "usesStaticJsonConfig": false,
+      "needsDataListRecords": true,
+      "needsWorkflowVariables": false,
+      "needsCurrentContext": false,
+      "runtimeRisks": [
+        "Public form support is not proven and must not be claimed.",
+        "List query filter/payload shape must be runtime-tested with real Yeeflow records."
+      ],
+      "recommendedUseCases": [
+        "submission trend",
+        "completion trend",
+        "monthly approval volume"
+      ],
+      "validationChecksNeeded": [
+        "script embedded in attrs[\"codein-script\"]",
+        "parameters stored in attrs[\"codein-script-param\"]",
+        "all required parameters configured",
+        "parameter types match inputParameters()",
+        "public form not claimed unless separately tested",
+        "source list exists and sample records cover non-empty display"
+      ],
+      "docsSummary": {
+        "userGuideBytes": 11680,
+        "exampleConfigBytes": 1640
+      }
+    }
+  ]
+}
