@@ -22,9 +22,7 @@
   <circle cx="169" cy="181" r="28" fill="#FFFFFF" stroke="#2563EB" stroke-width="18"/>
   <circle cx="169" cy="256" r="28" fill="#FFFFFF" stroke="#2563EB" stroke-width="18"/>
   <circle cx="169" cy="331" r="28" fill="#FFFFFF" stroke="#2563EB" stroke-width="18"/>
-  <g transform="translate(286 121) scale(0.31)" aria-label="Yeeflow logo">
-    <path d="M344.115 209.646L256.971 259.955V159.32L344.115 209.646ZM205.675 70.4253V289.575L154.359 259.955V212.212L113.016 236.075L108.541 233.491V185.78L67.2158 209.646L15.8848 180.008L205.675 70.4253ZM154.359 203.977V159.32L115.67 181.664V226.312L154.359 203.977Z" fill="#146FF6"/>
-  </g>
+  <image href="yeeflow-logo-only-blue.png" x="292" y="130" width="92" height="92" preserveAspectRatio="xMidYMid meet" aria-label="Yeeflow logo"/>
   <path d="M306 303h76" stroke="#0F766E" stroke-width="22" stroke-linecap="round"/>
   <path d="M306 347h76" stroke="#0F766E" stroke-width="22" stroke-linecap="round"/>
 </svg>
