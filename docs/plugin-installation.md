@@ -11,6 +11,30 @@ The supported v0 distribution paths are:
 
 Organization-level private marketplace distribution is a future option. Do not assume it is available until Codex admin setup, supported marketplace configuration, and the target environment's install flow are confirmed.
 
+## v0.1.0 Package Smoke Test
+
+Smoke test status: passed for install preparation on 2026-05-18.
+
+Tested archive:
+
+```text
+dist/yeeflow-builder-plugin-0.1.0.zip
+```
+
+Confirmed results:
+
+- Archive exists.
+- `unzip -t` passes.
+- Archive extracts to a single `yeeflow-builder-plugin/` root folder.
+- Extracted package contains `.codex-plugin/plugin.json`.
+- `plugin.json` parses with `name: yeeflow-builder` and display name `Yeeflow Builder`.
+- Extracted package contains all eight bundled skill folders.
+- Every bundled skill has `SKILL.md`.
+- Every bundled skill has `agents/openai.yaml`.
+- Lightweight skill smoke checks passed for application-builder lifecycle guidance, feature-learning routing guidance, and custom-code Smart Lookup Picker support boundaries.
+
+UI install status: pending. This environment does not expose a verified automated Codex UI or API path for installing a private plugin from ZIP. Use the manual Git or ZIP preparation steps below until the target Codex environment's private plugin install flow is confirmed.
+
 ## Install From Git
 
 Internal users can get the plugin from the private Git repository by cloning or fetching the branch that contains the plugin package.

@@ -2,6 +2,8 @@
 
 The Yeeflow Builder Plugin is a private, skills-only Codex plugin for internal Yeeflow application builders. It packages the current repo's proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth, Yeeflow API integration, or MCP servers.
 
+Package status: v0.1.0 ZIP smoke tested for install preparation on 2026-05-18. Live Codex UI ZIP installation remains pending until a verified private plugin install flow is available in the target environment.
+
 ## Package Contents
 
 The plugin lives at `dist/yeeflow-builder-plugin/` and includes:
