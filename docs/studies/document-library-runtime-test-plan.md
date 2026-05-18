@@ -126,6 +126,8 @@ Source shape: `New Document Library` from `/Users/Renger/Downloads/Document Libr
 
 Result: runtime-proven for import/open by user manual test.
 
+Generated baseline alignment: `document-library-runtime-baseline.v4.yap` uses this runtime-passed `New Document Library` base definition with fresh IDs. The generated `.yap` runtime artifact remains ignored/uncommitted; the committed source is the generator and study guidance.
+
 What is proven:
 
 - A document-library-only app can contain a single Type `16` child resource cloned from `New Document Library`.
