@@ -43,6 +43,19 @@ Load [yap-materialization-rules.md](references/yap-materialization-rules.md) whe
 - unique `FieldName`, `InternalName`, and `DisplayName` inside each list
 - no remapping of `TenantID`, `CreatedBy`, or `ModifiedBy`
 
+For document libraries, also check:
+
+- `ListModel.Type = 16`
+- root app navigation references the library as `Type = 16`
+- default fields exist: `Title`, `Bigint1`, `Text1`, `Bigint2`, `Text2`, `Text3`, and `Text4`
+- `Text4` uses `Type = "file-upload"` and library upload rules
+- `Title` keeps document-library native metadata and is not forced into normal data-list `Status = 0`
+- field `ListID` values match the parent library `ListID`
+- `FieldID` values are unique across the app
+- Type `0` view field references resolve when view JSON is present
+- Type `1` custom form bindings resolve to library fields
+- generated packages do not embed raw file/document payloads unless focused runtime export-back proof exists
+
 ## Severity
 
 Use [validation-error-severity.md](references/validation-error-severity.md) to decide what blocks import. When uncertain, mark the finding as blocking until a proven Yeeflow import/runtime counterexample exists.

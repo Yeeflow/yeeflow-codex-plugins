@@ -423,6 +423,7 @@ function validateStructure(data, resource, report) {
 
 function validateIdentity(item, resource, report) {
   const model = item.ListModel || {};
+  const isDocumentLibrary = Number(model.Type || (resource && resource.MainListType)) === 16;
   if (!model.Title && !model.Name) issue(report, "error", "LIST_TITLE_MISSING", "ListModel title/name is required.");
   if (!model.AppID && !(resource && resource.AppID)) issue(report, "error", "APP_ID_MISSING", "AppID is required.");
   if (!model.ListID) issue(report, "error", "LIST_ID_MISSING", "ListID is required.");
@@ -433,6 +434,10 @@ function validateIdentity(item, resource, report) {
   validateGeneratedAppId(report, model.AppID || (resource && resource.AppID), { path: "Item.ListModel.AppID" });
   validateGeneratedId(report, model.ListSetID, "GENERATED_LISTSET_ID_NOT_LARGE_NUMERIC_STRING", "Generated ListSetID should be a large numeric string ID.", { path: "Item.ListModel.ListSetID" });
   validateGeneratedId(report, model.ListID, "GENERATED_LIST_ID_NOT_LARGE_NUMERIC_STRING", "Generated ListID should be a large numeric string ID.", { path: "Item.ListModel.ListID" });
+  if (isDocumentLibrary) {
+    if (model.Type !== 16) issue(report, "warning", "DOCUMENT_LIBRARY_TYPE_UNUSUAL", "Standalone document library ListModel.Type should be 16.", { type: model.Type });
+    if (model.IsItemPerm !== true) issue(report, "warning", "DOCUMENT_LIBRARY_ITEM_PERMISSION_UNUSUAL", "Studied document libraries keep IsItemPerm true; confirm generated permission behavior if this differs.", { isItemPerm: model.IsItemPerm });
+  }
 }
 
 function parsedRulesForField(field, index, report) {
@@ -453,8 +458,42 @@ function parsedRulesForField(field, index, report) {
   return redact(parsed.value);
 }
 
+function validateDocumentLibraryFields(item, fieldByName, report) {
+  const required = [
+    { fieldName: "Title", fieldType: "Text", controlType: "input", rule: "isLibrary" },
+    { fieldName: "Text1", fieldType: "Text", controlType: "input" },
+    { fieldName: "Bigint2", fieldType: "Bigint", controlType: "input_number", rule: "readonly" },
+    { fieldName: "Text4", fieldType: "Text", controlType: "file-upload", rule: "isLabrary" },
+  ];
+  for (const spec of required) {
+    const field = fieldByName.get(spec.fieldName);
+    if (!field) {
+      issue(report, "warning", "DOCUMENT_LIBRARY_DEFAULT_FIELD_MISSING", "Document library is missing an export-proven default field.", { fieldName: spec.fieldName });
+      continue;
+    }
+    const rules = parsedRulesForField(field, -1, report);
+    const mismatches = [];
+    if (safeString(field.FieldType) !== spec.fieldType) mismatches.push(`FieldType expected ${spec.fieldType}`);
+    if (safeString(field.Type) !== spec.controlType) mismatches.push(`Type expected ${spec.controlType}`);
+    if (spec.rule && rules[spec.rule] !== true) mismatches.push(`Rules.${spec.rule} expected true`);
+    if (spec.fieldName === "Title" && (field.IsSystem !== true || field.IsIndex !== true)) mismatches.push("Title should keep IsSystem and IsIndex true");
+    if (mismatches.length) {
+      issue(report, "warning", "DOCUMENT_LIBRARY_DEFAULT_FIELD_SIGNATURE_UNUSUAL", "Document library default field signature differs from Projects Center export evidence.", {
+        fieldName: spec.fieldName,
+        displayName: field.DisplayName || null,
+        mismatches,
+      });
+    }
+  }
+  const parent = fieldByName.get("Bigint1");
+  if (!parent) {
+    issue(report, "warning", "DOCUMENT_LIBRARY_PARENT_FIELD_MISSING", "Document library exports include Bigint1/ParentID for folder hierarchy support; keep it unless a focused export proves it is optional.", {});
+  }
+}
+
 function validateFields(item, report) {
   const fields = asArray(item.Defs);
+  const isDocumentLibrary = Number(item.ListModel && item.ListModel.Type) === 16;
   const fieldByName = new Map();
   const fieldNames = new Set();
   const internalNames = new Set();
@@ -477,7 +516,7 @@ function validateFields(item, report) {
       fieldNames.add(field.FieldName);
       fieldByName.set(field.FieldName, field);
     }
-    if (field.FieldName === "Title" && (field.Status !== 0 || field.IsSystem !== true || field.IsIndex !== true)) {
+    if (!isDocumentLibrary && field.FieldName === "Title" && (field.Status !== 0 || field.IsSystem !== true || field.IsIndex !== true)) {
       issue(
         report,
         generatorFinalSeverity(report),
@@ -579,6 +618,8 @@ function validateFields(item, report) {
     }
   });
 
+  if (isDocumentLibrary) validateDocumentLibraryFields(item, fieldByName, report);
+
   return { fieldByName, lookupRelationships };
 }
 
@@ -602,6 +643,7 @@ function parseLayoutView(layout, index, report) {
 
 function validateViews(item, fieldByName, report) {
   const layouts = asArray(item.Layouts);
+  const isDocumentLibrary = Number(item.ListModel && item.ListModel.Type) === 16;
   let viewCount = 0;
   let defaultViews = 0;
   const knownTypes = new Set(["", "0", "104"]);
@@ -619,7 +661,21 @@ function validateViews(item, fieldByName, report) {
     if (report.mode === "generator" && !knownTypes.has(type)) {
       issue(report, "warning", "UNKNOWN_VIEW_TYPE", "Unknown view Type; generated lists should use confirmed view types.", { title: layout.Title || null, type });
     }
+    if (isDocumentLibrary && (layout.LayoutView === null || layout.LayoutView === undefined || layout.LayoutView === "")) {
+      issue(report, "warning", "DOCUMENT_LIBRARY_VIEW_LAYOUTVIEW_EMPTY", "A newly created document library export may have an empty default view LayoutView; configured libraries should use normal list view JSON.", {
+        location: `Item.Layouts[${index}].LayoutView`,
+        title: layout.Title || null,
+      });
+      return;
+    }
     const view = parseLayoutView(layout, index, report);
+    if (!view && isDocumentLibrary) {
+      issue(report, "warning", "DOCUMENT_LIBRARY_VIEW_LAYOUTVIEW_EMPTY_OR_INVALID", "A newly created document library export may have an empty default view LayoutView; configured libraries should use normal list view JSON.", {
+        location: `Item.Layouts[${index}].LayoutView`,
+        title: layout.Title || null,
+      });
+      return;
+    }
     if (!view) return;
 
     for (const [columnIndex, column] of asArray(view.layout).entries()) {

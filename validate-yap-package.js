@@ -310,6 +310,96 @@ function classifyListResource(item, isRoot = false) {
   return "unknown";
 }
 
+function validateDocumentLibraryFields(item, fieldsByName, pathPrefix, report) {
+  const list = item.ListModel || {};
+  const title = safeString(list.Title);
+  const listId = safeString(list.ListID);
+  const required = [
+    {
+      fieldName: "Title",
+      displayName: "Name",
+      fieldType: "Text",
+      controlType: "input",
+      rules: ["isLibrary"],
+      message: "Document library native Name field should preserve FieldName Title with Text/input metadata and Rules.isLibrary.",
+    },
+    {
+      fieldName: "Text1",
+      displayName: "Type",
+      fieldType: "Text",
+      controlType: "input",
+      message: "Document library Type field should use Text1 with Text/input metadata.",
+    },
+    {
+      fieldName: "Bigint2",
+      displayName: "Size/FileSize",
+      fieldType: "Bigint",
+      controlType: "input_number",
+      rules: ["readonly"],
+      message: "Document library Size/FileSize field should use Bigint2 with Bigint/input_number readonly metadata.",
+    },
+    {
+      fieldName: "Text4",
+      displayName: "Upload File",
+      fieldType: "Text",
+      controlType: "file-upload",
+      rules: ["required", "isLabrary"],
+      message: "Document library Upload File field should use Text4 with file-upload control metadata and library upload rules.",
+    },
+  ];
+
+  for (const spec of required) {
+    const field = fieldsByName.get(spec.fieldName);
+    if (!field) {
+      issue(report, "warning", "DOCUMENT_LIBRARY_DEFAULT_FIELD_MISSING", spec.message, { list: title, listId, fieldName: spec.fieldName });
+      continue;
+    }
+    const rules = parsedFieldRules(field);
+    const mismatches = [];
+    if (safeString(field.FieldType) !== spec.fieldType) mismatches.push(`FieldType expected ${spec.fieldType}`);
+    if (safeString(field.Type) !== spec.controlType) mismatches.push(`Type expected ${spec.controlType}`);
+    if (field.ListID !== undefined && listId && safeString(field.ListID) !== listId) mismatches.push("ListID does not match parent document library");
+    for (const ruleName of spec.rules || []) {
+      if (rules[ruleName] !== true) mismatches.push(`Rules.${ruleName} expected true`);
+    }
+    if (spec.fieldName === "Title") {
+      if (field.IsSystem !== true) mismatches.push("IsSystem expected true");
+      if (field.IsIndex !== true) mismatches.push("IsIndex expected true");
+    }
+    if (mismatches.length) {
+      issue(report, "warning", "DOCUMENT_LIBRARY_DEFAULT_FIELD_SIGNATURE_UNUSUAL", spec.message, {
+        list: title,
+        listId,
+        fieldName: spec.fieldName,
+        displayName: field.DisplayName || null,
+        mismatches,
+      });
+    }
+  }
+
+  const parentField = fieldsByName.get("Bigint1");
+  if (!parentField) {
+    issue(report, "warning", "DOCUMENT_LIBRARY_PARENT_FIELD_MISSING", "Document library exports include Bigint1/ParentID for folder hierarchy support; keep it unless a focused export proves it is optional.", { list: title, listId });
+  } else {
+    const rules = parsedFieldRules(parentField);
+    if (safeString(parentField.FieldType) !== "Bigint" || safeString(parentField.Type) !== "input_number" || rules.isNotInListFiles !== true) {
+      issue(report, "warning", "DOCUMENT_LIBRARY_PARENT_FIELD_SIGNATURE_UNUSUAL", "Document library ParentID field should use Bigint1 with Bigint/input_number metadata and Rules.isNotInListFiles.", {
+        list: title,
+        listId,
+        fieldName: parentField.FieldName,
+        displayName: parentField.DisplayName || null,
+      });
+    }
+  }
+
+  if (safeString(list.CustomType) && !safeString(list.CustomType).startsWith("ListSite_")) {
+    issue(report, "warning", "DOCUMENT_LIBRARY_CUSTOMTYPE_UNUSUAL", "Document library CustomType should usually link back to the app/listset as ListSite_<root ListID>.", { list: title, listId, customType: list.CustomType });
+  }
+  if (list.IsItemPerm !== true) {
+    issue(report, "warning", "DOCUMENT_LIBRARY_ITEM_PERMISSION_UNUSUAL", "Studied document libraries keep ListModel.IsItemPerm true; confirm generated permission behavior if this differs.", { list: title, listId, isItemPerm: list.IsItemPerm });
+  }
+}
+
 function listIdOf(item) {
   return safeString(item && item.ListModel && item.ListModel.ListID);
 }
@@ -1099,6 +1189,9 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
     if (normalizeType(field) === "unknown") issue(report, "warning", "FIELD_TYPE_UNKNOWN", "Field type could not be normalized.", { list: title, field: displayName || fieldName, fieldType: field.FieldType, controlType: field.Type });
   }
   if (listId) fieldsByList.set(listId, fieldsByName);
+  if (!isRoot && resourceType === "document library") {
+    validateDocumentLibraryFields(item, fieldsByName, pathPrefix, report);
+  }
 
   const layouts = asArray(item.Layouts);
   const layoutIds = new Set(layouts.map((layout) => safeString(layout.LayoutID)).filter(Boolean));
@@ -1133,7 +1226,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
     const layoutId = safeString(layout.LayoutID);
     if (!layoutId) issue(report, "error", "LAYOUT_ID_MISSING", "LayoutID is required.", { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutID`, list: title });
     else localIds.add(layoutId);
-    if (!isRoot && Number(layout.Type || 0) === 0) validateDataListViewLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report);
+    if (!isRoot && Number(layout.Type || 0) === 0) validateDataListViewLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report, resourceType);
     if (Number(layout.Type) === 1) validateCustomFormLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report);
     if (Number(layout.Type) === 103 && isRoot) report.summary.dashboards += 1;
   });
@@ -1149,6 +1242,9 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
           if (!["ListDataID", "Created", "CreatedBy", "Modified", "ModifiedBy", "CreatedByName", "ModifiedByName"].includes(key) && !fieldsByName.has(key)) {
             issue(report, "warning", "SAMPLE_FIELD_NOT_FOUND", "Sample data field does not resolve to a known field.", { list: title, recordId, field: key });
           }
+          if (resourceType === "document library" && key === "Text4" && record[key]) {
+            issue(report, "warning", "DOCUMENT_LIBRARY_SAMPLE_FILE_CONTENT_PRESENT", "Document library sample data includes a Text4 upload value. Do not include raw file/document payloads in generated packages unless a focused runtime export proves the expected safe shape.", { list: title, recordId, field: key });
+          }
         });
       }
     }
@@ -1157,14 +1253,18 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   report.inventories.resources.push({ title, listId, listSetId, resourceType, fields: fields.length, layouts: layouts.length, sampleRecords: recordCount });
   if (!isRoot) report.summary.childResources += 1;
   if (resourceType === "data list") report.summary.dataLists += 1;
-  if (resourceType === "document library") report.dependencies.push({ code: "DOCUMENT_LIBRARY_RESOURCE", message: "Document library resource present; confirm document dependencies after import.", list: title, listId });
+  if (resourceType === "document library") report.dependencies.push({ code: "DOCUMENT_LIBRARY_RESOURCE", message: "Document library resource present; validate Type 16 fields, views, forms, folder behavior, and upload behavior before runtime claims.", list: title, listId });
   if (resourceType === "report/data resource" || resourceType === "form report/list resource") report.summary.reports += 1;
 }
 
-function validateDataListViewLayout(layout, fieldsByName, pathPrefix, report) {
+function validateDataListViewLayout(layout, fieldsByName, pathPrefix, report, resourceType = "data list") {
   const view = tryParseJson(layout.LayoutView);
   const severity = report.mode === "generator" && report.stage === "final" ? "error" : "warning";
   if (!view) {
+    if (resourceType === "document library") {
+      issue(report, "warning", "DOCUMENT_LIBRARY_VIEW_LAYOUTVIEW_EMPTY_OR_INVALID", "A newly created document library export may have an empty default view LayoutView; configured libraries should use the normal list view layout JSON.", { path: `${pathPrefix}.LayoutView`, title: layout.Title || null });
+      return;
+    }
     issue(report, severity, "DATA_LIST_VIEW_LAYOUTVIEW_INVALID", "Data-list view LayoutView must be parseable JSON.", { path: `${pathPrefix}.LayoutView`, title: layout.Title });
     return;
   }

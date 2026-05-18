@@ -393,6 +393,7 @@ function validate(inputPath, mode, stage) {
       nodes: 0,
       edges: 0,
       lists: 0,
+      documentLibraries: 0,
       fields: 0,
       approvalForms: 0,
       listWorkflows: 0,
@@ -554,7 +555,10 @@ function inventoryResources(context) {
         appId: list.AppID || resource && resource.AppID || null,
       }));
       if (resourceType === "dataList") report.summary.lists += 1;
-      if (resourceType === "documentLibrary") addIssue(report, "dependency", "DOCUMENT_LIBRARY_RESOURCE", "Document library resource present; validate document/template dependencies separately.", { title, listId });
+      if (resourceType === "documentLibrary") {
+        report.summary.documentLibraries += 1;
+        addIssue(report, "dependency", "DOCUMENT_LIBRARY_RESOURCE", "Document library resource present; validate Type 16 fields, views, forms, folder behavior, and upload behavior before runtime claims.", { title, listId });
+      }
       if (resourceType === "dataReportResource" || resourceType === "formReportResource") report.summary.reports += 1;
     } else if (report.mode === "generator" && report.stage === "final") {
       addIssue(report, "error", "RESOURCE_LISTID_MISSING", "Resource ListID is missing.", { title, index });
@@ -607,6 +611,20 @@ function inventoryResources(context) {
         report.summary.fields += 1;
       }
     });
+    if (!isRoot && resourceType === "documentLibrary") {
+      for (const fieldName of ["Title", "Text1", "Bigint2", "Text4"]) {
+        if (!fieldMap.has(fieldName)) {
+          addIssue(report, "warning", "DOCUMENT_LIBRARY_DEFAULT_FIELD_MISSING", "Document library is missing an export-proven default field.", { title, listId, fieldName });
+        }
+      }
+      const upload = fieldMap.get("Text4");
+      if (upload && safeString(upload.Type) !== "file-upload") {
+        addIssue(report, "warning", "DOCUMENT_LIBRARY_UPLOAD_FIELD_TYPE_UNUSUAL", "Document library Text4 upload field should use the file-upload control type in studied exports.", { title, listId, fieldName: "Text4", controlType: upload.Type || null });
+      }
+      if (!fieldMap.has("Bigint1")) {
+        addIssue(report, "warning", "DOCUMENT_LIBRARY_PARENT_FIELD_MISSING", "Document library exports include Bigint1/ParentID for folder hierarchy support; keep it unless a focused export proves it is optional.", { title, listId });
+      }
+    }
     if (listId) fieldsByList.set(listId, fieldMap);
 
     asArray(item.Layouts).forEach((layout) => {
