@@ -39,6 +39,19 @@
     "navigationSort": [],
     "status": "observed in Document Library Sample.yap; warning-only for validators"
   },
+  "runtimeProvenBaseDefinition": {
+    "sourceResourceName": "New Document Library",
+    "generatedPackage": "document-library-sample-new-library-only.v1.yap",
+    "runtimeStatus": "import/open runtime-proven by user manual test",
+    "useAsBaseDefinition": true,
+    "notBaseDefinition": "Baseline Documents",
+    "notes": [
+      "The canonical minimal document-library definition is the New Document Library resource shape from Document Library Sample.yap.",
+      "The default Type 0 view preserves LayoutView as an empty string.",
+      "The New file Type 1 upload form remains unassigned in ListModel.LayoutView.",
+      "The package contains no uploaded document rows or document binaries."
+    ]
+  },
   "listModelSignature": {
     "Type": 16,
     "CustomTypePattern": "ListSite_<rootListId>",
@@ -149,7 +162,8 @@
       "filter",
       "rowColor"
     ],
-    "newLibraryMayHaveEmptyLayoutView": true
+    "newLibraryMayHaveEmptyLayoutView": true,
+    "minimalBaseLayoutView": ""
   },
   "customFormSignature": {
     "layoutType": 1,

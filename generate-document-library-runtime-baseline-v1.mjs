@@ -5,14 +5,14 @@ import { execFileSync } from "node:child_process";
 const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
 const SOURCE_EXPORT = process.argv[2] || "/Users/Renger/Downloads/Document Library Sample.yap";
-const OUT_RESOURCE = "document-library-runtime-baseline.v3.resource.json";
-const OUT_APP_DEF = "document-library-runtime-baseline.v3.app-def.json";
-const OUT_YAP = "document-library-runtime-baseline.v3.yap";
-const OUT_REPORT = "document-library-runtime-baseline.v3.generation-report.json";
-const TITLE = "Document Library Runtime Baseline - Codex v3";
-const DESCRIPTION = "Minimal generated Yeeflow app for Type 16 document library runtime learning. Contains no uploaded document rows.";
+const OUT_RESOURCE = "document-library-runtime-baseline.v4.resource.json";
+const OUT_APP_DEF = "document-library-runtime-baseline.v4.app-def.json";
+const OUT_YAP = "document-library-runtime-baseline.v4.yap";
+const OUT_REPORT = "document-library-runtime-baseline.v4.generation-report.json";
+const TITLE = "Document Library Runtime Baseline - Codex v4";
+const DESCRIPTION = "Minimal generated Yeeflow app based on the runtime-proven New Document Library sample shape. Contains no uploaded document rows.";
 const GENERATED_AT = "2026-05-18 18:05:00";
-const ID_BASE = 2059000000001000000n;
+const ID_BASE = 2063000000001000000n;
 
 function quoteLargeIntegers(jsonText, largeNumbers = new Set()) {
   let out = "";
@@ -159,7 +159,7 @@ remappedData.Item.Layouts = [];
 
 const library = remappedData.Childs[0];
 library.ListModel.ListID = libraryId;
-library.ListModel.Title = "Baseline Documents";
+library.ListModel.Title = "New Document Library";
 library.ListModel.Description = null;
 library.ListModel.CustomType = `ListSite_${rootId}`;
 library.ListModel.Created = GENERATED_AT;
@@ -176,7 +176,6 @@ library.Layouts.forEach((layout) => {
   layout.Modified = GENERATED_AT;
   if (Number(layout.Type) === 0) {
     layout.Title = "";
-    layout.LayoutView = null;
   }
   if (Number(layout.Type) === 1) {
     layout.Title = "New file";

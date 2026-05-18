@@ -117,3 +117,27 @@ Baseline v3 changes:
 - local package, graph, materialization, wrapper round-trip, and standalone document-library validation pass with warnings only.
 
 Runtime status for v3: validation-only. A clean v3 import attempt still needs to be repeated with reliable browser/network evidence before claiming runtime proof.
+
+## Runtime-Proven Minimal Baseline
+
+Package: `document-library-sample-new-library-only.v1.yap`
+
+Source shape: `New Document Library` from `/Users/Renger/Downloads/Document Library Sample.yap`
+
+Result: runtime-proven for import/open by user manual test.
+
+What is proven:
+
+- A document-library-only app can contain a single Type `16` child resource cloned from `New Document Library`.
+- The base document-library definition is the `New Document Library` shape, not the earlier generated `Baseline Documents` experiment.
+- The seven native fields are sufficient for import/open when paired with the sample's minimal library view/form structure.
+- The default Type `0` view should preserve the sample's empty string `LayoutView = ""`; changing it to `null` is not the canonical base shape.
+- The `New file` Type `1` upload form can remain unassigned in `ListModel.LayoutView` for a newly-created-library baseline.
+- Root app `Item.Layouts = []`, root `LayoutView = {"sortVer":1}`, and top-level `Resource.SimplePortal = null` are valid for this minimal document-library-only package.
+
+What remains unproven:
+
+- upload persistence behavior.
+- folder create/open behavior.
+- custom New/Edit/View form assignment for generated libraries.
+- configured views with additional custom fields in a generated package.

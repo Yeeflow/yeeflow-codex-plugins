@@ -151,7 +151,7 @@ Use these only after the document-library study docs and validators are present 
 - `Text4` is export-backed as `FieldType = "Text"` plus `Type = "file-upload"` with `Rules.isLabrary = true`; do not invent an unproven Attachment field schema.
 - Do not apply normal generated data-list `Title.Status = 0` rules to document libraries; studied document libraries keep `Title` native/system/indexed but use `Status = 1`.
 - Support custom fields, lookup fields, views, and custom forms using existing data-list rules where compatible.
-- For a minimal newly-created library baseline, allow the default Type `0` view `LayoutView` to be null and leave the single `New file` form unassigned in `ListModel.LayoutView`, matching `Document Library Sample.yap`.
+- For a minimal newly-created library baseline, use the runtime-proven `New Document Library` resource shape from `Document Library Sample.yap`: default Type `0` view `LayoutView = ""`, one unassigned `New file` form, no `ListModel.LayoutView` add/edit/view mapping, and no uploaded rows. Do not use the earlier generated `Baseline Documents` experiment as the base definition.
 - Do not fake uploaded document rows, folders, or private document payloads in baseline packages.
 - Do not claim folder or upload runtime proof until Yeeflow import/open/upload/persistence behavior is tested.
 
