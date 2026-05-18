@@ -143,3 +143,31 @@ What remains unproven:
 - folder create/open behavior.
 - custom New/Edit/View form assignment for generated libraries.
 - configured views with additional custom fields in a generated package.
+
+## V2 Enterprise Document Center Runtime Pass
+
+Package: `enterprise-document-center-v2.yap`
+
+Generated app: `Enterprise Document Center`
+
+Result: partial runtime proof.
+
+What is proven:
+
+- A generated app can import/open with three Type `16` document libraries cloned from the canonical `New Document Library` base.
+- Navigation can expose all three generated libraries.
+- Each generated library opens as a document library, not as an empty app shell.
+- Simple custom field definitions can be included in Type `16` libraries.
+- Multiple configured Type `0` views can be included in generated Type `16` libraries.
+- The document-library Add menu exposes New Folder, New File, and Batch Upload in the generated libraries.
+
+What is partially proven:
+
+- Manual folder creation: `Templates and Forms` created `HR Forms` and displayed the row; `Company Policies` accepted `HR Policies` with an `Added Successfully` toast but did not visibly refresh the row during the spot-check.
+
+What remains unproven:
+
+- generated folder-row import shape.
+- folder persistence after refresh across all libraries.
+- actual upload persistence with a harmless test file.
+- richer assigned New/Edit/View form mapping beyond the unassigned `New file` base form.

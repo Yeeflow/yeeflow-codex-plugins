@@ -135,8 +135,9 @@ Document libraries reuse many data-list mechanics but are not normal data lists.
 - `Text4` Upload File is `FieldType = "Text"` and `Type = "file-upload"` with `Rules.isLabrary = true`.
 - Do not enforce generated data-list `Title.Status = 0` on document libraries; the studied document libraries use `Status = 1`.
 - `Document Library Sample.yap` plus the runtime-passed one-library clone prove the minimal base definition is the `New Document Library` shape: default Type `0` view `LayoutView = ""`, one unassigned `New file` upload form, and no uploaded rows. Do not use the earlier generated `Baseline Documents` package as the base definition.
+- The `Enterprise Document Center` v2 runtime pass accepted multiple generated Type `16` libraries with simple custom fields and configured Type `0` views.
 - Do not require root app navigation or Type `103` pages for document-library-only packages; validate them as warnings in that narrow sample-proven shape.
-- Treat folder support through `Bigint1` / ParentID as validation-only until runtime proof.
+- Treat generated folder-row support through `Bigint1` / ParentID as validation-only until import-safe folder-row payloads are proven.
 - Do not include raw uploaded document data or private file metadata in generated packages.
 
 ## YAP App Materialization Rules

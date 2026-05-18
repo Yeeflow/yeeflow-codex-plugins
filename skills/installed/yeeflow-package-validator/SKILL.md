@@ -56,6 +56,7 @@ For document libraries, also check:
 - Type `0` view field references resolve when view JSON is present
 - Type `1` custom form bindings resolve to library fields
 - partial document-library `ListModel.LayoutView` assignments are warnings; the runtime-proven minimal base is the `New Document Library` shape with default Type `0` view `LayoutView = ""` and the single `New file` form unassigned, while configured libraries assign `add`, `edit`, and `view` together
+- multiple Type `16` document libraries with simple custom fields and configured Type `0` views are runtime-accepted by the `Enterprise Document Center` v2 pass
 - generated packages do not embed raw file/document payloads unless focused runtime export-back proof exists
 
 ## Severity
