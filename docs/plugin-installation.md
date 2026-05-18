@@ -27,6 +27,28 @@ Use this when Codex asks to add a plugin marketplace from a GitHub repo, Git URL
 
 Verified install status: passed on 2026-05-18.
 
+v0.4.0 RC install smoke test result:
+
+- RC tag tested: `yeeflow-builder-plugin-v0.4.0-rc1`
+- Install result: passed
+- Marketplace name: `Yeeflow Internal`
+- Category: `Developer Tools`
+- Plugin name: `Yeeflow Builder`
+
+Use these values in Codex's Add marketplace dialog for the tested RC:
+
+```text
+Source:
+https://github.com/rengerhu/yeeflow-ai-builder-research.git
+
+Git ref:
+yeeflow-builder-plugin-v0.4.0-rc1
+
+Sparse paths:
+.agents/plugins/marketplace.json
+dist/yeeflow-builder-plugin
+```
+
 v0.3.0 RC install smoke test result:
 
 - RC tag tested: `yeeflow-builder-plugin-v0.3.0-rc1`
@@ -95,11 +117,11 @@ Icon behavior: `rc6` includes plugin-level and marketplace-entry icon paths. If 
 
 ## Release Status
 
-v0.4.0 release-candidate status:
+v0.4.0 status:
 
-- Private Git marketplace install: pending RC smoke test.
+- Private Git marketplace install: passed with `yeeflow-builder-plugin-v0.4.0-rc1`.
 - ZIP package smoke test: passed locally.
-- Git marketplace install: pending RC smoke test.
+- Git marketplace install: passed.
 - Production/public marketplace: not applicable.
 - Partner-safe edition: planned, not released.
 
@@ -303,7 +325,7 @@ v0.3.0 install smoke prompts tested:
 - Plugin-release-manager RC versus final tag workflow.
 - Existing application-builder lifecycle summary.
 
-v0.4.0 RC smoke prompts to test:
+v0.4.0 install smoke prompts tested:
 
 - Application-generator Document Library v2 generation and generated-folder guidance.
 - Package-validator materialization blocker handling for generated `.yap` packages.

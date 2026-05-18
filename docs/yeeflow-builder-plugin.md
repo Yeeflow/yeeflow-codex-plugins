@@ -2,7 +2,7 @@
 
 The Yeeflow Builder Plugin is a private, skills-only Codex plugin for internal Yeeflow application builders. It packages the current repo's proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth, Yeeflow API integration, or MCP servers.
 
-Package status: v0.4.0 release candidate is prepared from latest `origin/main` with Document Library v2, generated-folder, form-host, and package-materialization skill updates. v0.3.0 remains the latest install-tested final release until the v0.4.0 private marketplace install smoke test passes. Production/public marketplace release is not applicable, and the partner-safe edition is planned but not released.
+Package status: v0.4.0 private Git marketplace install smoke test passed with RC tag `yeeflow-builder-plugin-v0.4.0-rc1`. Production/public marketplace release is not applicable, and the partner-safe edition is planned but not released.
 
 ## Package Contents
 
@@ -123,6 +123,25 @@ If no repo-specific packaging command is available, use `dist/yeeflow-builder-pl
 
 ## Verified Install
 
+The v0.4.0 private marketplace install smoke test passed with RC tag `yeeflow-builder-plugin-v0.4.0-rc1`.
+
+Install source:
+
+```text
+https://github.com/rengerhu/yeeflow-ai-builder-research.git
+```
+
+Sparse paths:
+
+```text
+.agents/plugins/marketplace.json
+dist/yeeflow-builder-plugin
+```
+
+Expected result: marketplace `Yeeflow Internal`, plugin `Yeeflow Builder`, category `Developer Tools`, and successful plugin install.
+
+If metadata or icon changes do not appear after updating the Git ref, remove and re-add the marketplace. The package includes plugin and marketplace icon paths, but fallback icon display may still occur because of Codex marketplace UI/cache behavior and is not an install blocker.
+
 The v0.3.0 private marketplace install smoke test passed with RC tag `yeeflow-builder-plugin-v0.3.0-rc1`.
 
 Install source:
@@ -175,13 +194,15 @@ Smoke prompts tested for v0.2.0:
 
 ## Release Notes
 
-### v0.4.0-rc1
+### v0.4.0
 
 Previous version: `0.3.0`.
 
 New version: `0.4.0`.
 
-Release status: release candidate only. Do not create or use the final `yeeflow-builder-plugin-v0.4.0` tag until private marketplace install smoke testing passes.
+RC tag tested: `yeeflow-builder-plugin-v0.4.0-rc1`.
+
+Private marketplace install smoke test: passed.
 
 Changed bundled skills:
 
