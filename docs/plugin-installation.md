@@ -61,6 +61,14 @@ Icon behavior: `rc6` includes plugin-level and marketplace-entry icon paths. If 
 
 ## Release Status
 
+v0.2.0 release-candidate status:
+
+- Private Git marketplace install: pending RC smoke test.
+- ZIP package smoke test: passed locally.
+- Git marketplace install: pending RC smoke test.
+- Production/public marketplace: not applicable.
+- Partner-safe edition: planned, not released.
+
 v0.1.0 status:
 
 - Private Git marketplace install: passed.
@@ -142,13 +150,13 @@ Recommended branch and release usage:
 The current ZIP artifact is:
 
 ```text
-dist/yeeflow-builder-plugin-0.1.0.zip
+dist/yeeflow-builder-plugin-0.2.0.zip
 ```
 
 Unzip it into a local plugin directory or upload it through a verified Codex plugin install flow if that flow supports ZIP packages.
 
 ```bash
-unzip dist/yeeflow-builder-plugin-0.1.0.zip -d <plugin-parent-directory>
+unzip dist/yeeflow-builder-plugin-0.2.0.zip -d <plugin-parent-directory>
 ```
 
 The extracted plugin root should be:
@@ -168,7 +176,7 @@ Replacement rules:
 
 - Do not overwrite an installed ZIP package silently.
 - Keep one installed folder per released version when testing upgrades.
-- Replace `0.1.0` only with a release that has matching release notes and validation evidence.
+- Replace an installed version only with a release that has matching release notes and validation evidence.
 - Do not rename the plugin manifest `name`; it remains `yeeflow-builder`.
 
 ## Organization Marketplace

@@ -19,14 +19,15 @@ dist/yeeflow-builder-plugin/
 Current release archive:
 
 ```text
-dist/yeeflow-builder-plugin-0.1.0.zip
+dist/yeeflow-builder-plugin-0.2.0.zip
 ```
 
 Current release status:
 
 - v0.1.0 private Git marketplace install: passed.
-- ZIP package smoke test: passed.
-- Git marketplace install: passed.
+- v0.2.0 release candidate: prepared, pending private marketplace install smoke test.
+- ZIP package smoke test: passed locally for the release candidate.
+- Git marketplace install: pending for v0.2.0 until RC smoke test passes.
 - Production/public marketplace: not applicable.
 - Partner-safe edition: planned, not released.
 
@@ -45,6 +46,42 @@ dist/yeeflow-builder-plugin
 ```
 
 Expected Codex result: marketplace `Yeeflow Internal`, plugin `Yeeflow Builder`, category `Developer Tools`, and successful plugin install. If metadata or icon assets do not refresh after a tag update, remove and re-add the marketplace. Fallback icon rendering is not a release blocker when install succeeds and the package includes icon paths.
+
+## Release Notes
+
+### v0.2.0-rc1
+
+Previous version: `0.1.0`.
+
+New version: `0.2.0`.
+
+Changed bundled skills:
+
+- `yeeflow-application-builder`
+- `yeeflow-feature-learning-orchestrator`
+- `yeeflow-application-generator`
+- `yeeflow-data-list-generator`
+- `yeeflow-custom-code-generator`
+
+Main improvements:
+
+- Adds generated `.yap` materialization hard rules to the app build workflow.
+- Requires globally unique `FieldID` values across a generated app package.
+- Requires each field's `ListID` to match its parent data list.
+- Treats duplicate field display names as generated-package materialization risk.
+- Preserves real `TenantID`, `CreatedBy`, and `ModifiedBy` values instead of remapping them into generated ID families.
+- Adds materialization inspection before custom code runtime testing when an imported app opens as an empty shell or fields do not materialize.
+
+Known limitations:
+
+- Skills-only plugin.
+- No OAuth.
+- No Yeeflow API integration.
+- No MCP server.
+- `.yapk` mutation is not supported.
+- Runtime testing still requires Yeeflow access.
+- Public form custom code support is not claimed unless tested.
+- Partner-safe edition is planned but not released.
 
 ## Versioning Policy
 

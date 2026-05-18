@@ -1,6 +1,6 @@
 {
   "name": "yeeflow-builder",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Private Codex plugin for building, validating, testing, and improving Yeeflow applications using Yeeflow-specific skills.",
   "visibility": "private/internal",
   "category": "developer/productivity/internal tools",

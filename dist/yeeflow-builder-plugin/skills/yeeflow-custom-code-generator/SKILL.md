@@ -68,6 +68,7 @@ Given an existing script such as `smart-lookup-picker.tsx`:
 - use expression-token wrappers for expression/static-variable style config values when the export pattern uses them
 - use `{ "type": 1, "value": { "prefix": "__variables_" | "__list_" | "__temp_", "value": "<target>" } }` for field, approval variable, list field, or dashboard temp-variable writable targets when that pattern is export-backed
 - validate that required parameters are present, parameter names are unique, target fields/variables/temp variables exist, and the script is safe for the target context
+- validate app materialization before component runtime testing; if the imported app opens as an empty shell or data lists have no custom fields, fix `.yap` materialization first instead of debugging the custom code script
 - document fallback behavior and runtime test steps; do not claim runtime support until import/open/interaction/save behavior is observed
 
 Export-backed Smart Lookup Picker placement pattern:

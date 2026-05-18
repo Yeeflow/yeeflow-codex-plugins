@@ -51,10 +51,27 @@ Generated child data lists must also be valid as standalone extracted list defin
 
 - include required list type metadata such as `ListModel.ListType` or a wrapper `MainListType`
 - keep `FieldName` and `InternalName` unique
+- keep `DisplayName` unique inside each data list, or treat duplicates as a materialization-risk blocker for generated packages
+- allocate `FieldID` values from a global app-level allocator; never reuse the same FieldID range across multiple child lists
+- ensure every field's `ListID` equals the parent child-list `ListID` after any FieldID remapping
 - resolve local lookup target lists and display fields
 - provide valid referenced sample rows for lookup sample values
 - include usable master/reference sample data when approval forms or dashboards depend on those lists
 - include current-standard `Edit Item` and `View Item` custom forms; map New/Edit to `Edit Item` and View to `View Item`
+
+## YAP App Materialization Rules
+
+Generated `.yap` packages must pass materialization inspection before runtime import:
+
+- Every `ListID` must be unique.
+- Every `FieldID` must be unique across the whole application, not only inside each list.
+- Every `field.ListID` must equal the parent data-list `ListID`.
+- Every `FieldName`, `InternalName`, and `DisplayName` must be unique inside its own data list.
+- Preserve real baseline `TenantID`, `CreatedBy`, and `ModifiedBy`; do not remap them into the generated ID family and do not include them in `Resource.ReplaceIds`.
+- Build `ReplaceIds` from generated app-resource IDs only.
+- Root Type `103` dashboard/page layout ownership must connect to the root app/ListSet `ListID`, and root navigation must reference existing packaged resources.
+- Run `scripts/inspect-yap-materialization.mjs` before runtime import.
+- If app materialization fails, stop and fix the app shell/resource linkage before testing custom code controls or workflow behavior.
 
 ## Generated App UI/UX Standard
 
@@ -128,6 +145,10 @@ Stop before final `.yap` build if any of these are true:
 - unresolved resource graph
 - any generated child data list fails standalone `validate-ydl-list`
 - duplicate data-list field `FieldName` or `InternalName`
+- duplicate data-list field `DisplayName` in a generated final package unless explicitly accepted as a materialization risk
+- duplicate `FieldID` anywhere across the generated `.yap`
+- any field whose `ListID` does not match its parent data-list `ListID`
+- generated fake-ID remapping of `TenantID`, `CreatedBy`, or `ModifiedBy`
 - generated main/child lists are missing required list type metadata
 - missing lookup target list or display/search field
 - lookup target list, display field, dependency map, or sample lookup target row is unresolved
