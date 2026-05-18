@@ -27,6 +27,8 @@
       "Learn this Yeeflow export before generation.",
       "Generate a Yeeflow custom code control."
     ],
-    "brandColor": "#2563EB"
+    "brandColor": "#2563EB",
+    "composerIcon": "./assets/yeeflow-builder-icon.png",
+    "logo": "./assets/yeeflow-builder-icon.png"
   }
 }
