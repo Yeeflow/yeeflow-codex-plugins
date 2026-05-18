@@ -12,7 +12,9 @@
       "approval form",
       "data-list custom form"
     ],
-    "publicFormSupportClaim": "not claimed"
+    "publicFormSupportClaim": "not claimed",
+    "runtimeRepairStatus": "May 18 2026 showcase repair smoke: materialization passed; 11 templates runtime-proven in this pass, kpi-card-set render-only proven, approval-decision-panel not tested because reviewer context was not reached; public form support not claimed.",
+    "generatedPackageRepairFinding": "Use runtime FieldName keys for row values and generated-package query compatibility for response.listData/ListData plus broad queryItems fallback; original template source files unchanged."
   },
   "functionalCategories": {
     "Dashboard / analytics": [
@@ -61,7 +63,7 @@
         "dataListForm": true,
         "publicForm": false
       },
-      "runtimeProofStatus": "Inventory-only. Runtime rendering is not proven for this template.",
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for seeded dashboard/form read-only activity rendering.",
       "readOnly": true,
       "interactive": false,
       "inputParameters": [
@@ -222,7 +224,7 @@
         "dataListForm": false,
         "publicForm": false
       },
-      "runtimeProofStatus": "Inventory-only. Needs focused approval-task runtime proof before relying on decision writeback.",
+      "runtimeProofStatus": "Not tested in runtime repair smoke; packaged on review page but reviewer task context was not reached.",
       "readOnly": false,
       "interactive": true,
       "inputParameters": [
@@ -426,7 +428,7 @@
         "dataListForm": true,
         "publicForm": false
       },
-      "runtimeProofStatus": "Inventory-only. Runtime rendering against generated approval-history records is not proven.",
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for seeded approval history rendering; live workflow-generated history remains future testing.",
       "readOnly": true,
       "interactive": false,
       "inputParameters": [
@@ -586,7 +588,7 @@
         "dataListForm": true,
         "publicForm": false
       },
-      "runtimeProofStatus": "Inventory-only. Needs runtime proof for checklist writeback in each form context.",
+      "runtimeProofStatus": "Runtime-proven in approval form smoke for checkbox interaction and JSON writeback.",
       "readOnly": false,
       "interactive": true,
       "inputParameters": [
@@ -711,7 +713,7 @@
         "dataListForm": true,
         "publicForm": false
       },
-      "runtimeProofStatus": "Inventory-only. Needs runtime proof for source-list query, filtering, and dual writeback.",
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for parent filtering, child selection, and output writeback.",
       "readOnly": false,
       "interactive": true,
       "inputParameters": [
@@ -861,7 +863,7 @@
         "dataListForm": false,
         "publicForm": false
       },
-      "runtimeProofStatus": "Inventory-only. Needs dashboard runtime proof with real list records.",
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for seeded dashboard distribution rendering.",
       "readOnly": true,
       "interactive": false,
       "inputParameters": [
@@ -1052,7 +1054,7 @@
         "dataListForm": true,
         "publicForm": false
       },
-      "runtimeProofStatus": "Inventory-only. Needs runtime proof for rule/filter behavior.",
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for seeded exception alert rendering.",
       "readOnly": true,
       "interactive": false,
       "inputParameters": [
@@ -1205,7 +1207,7 @@
         "dataListForm": true,
         "publicForm": false
       },
-      "runtimeProofStatus": "Inventory-only. Needs runtime proof for hierarchy query and save target.",
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for hierarchy render, selection, and output writeback.",
       "readOnly": false,
       "interactive": true,
       "inputParameters": [
@@ -1370,7 +1372,7 @@
         "dataListForm": true,
         "publicForm": false
       },
-      "runtimeProofStatus": "Inventory-only. Render proof needed for each context; dashboard is the primary target.",
+      "runtimeProofStatus": "Render-only proven in dashboard smoke with configured static values; data-bound KPI calculation is not proven.",
       "readOnly": true,
       "interactive": false,
       "inputParameters": [
@@ -1636,7 +1638,7 @@
         "dataListForm": true,
         "publicForm": false
       },
-      "runtimeProofStatus": "Inventory-only. Needs runtime proof for add/remove and writeback.",
+      "runtimeProofStatus": "Runtime-proven in approval form smoke for add-tag interaction and JSON writeback.",
       "readOnly": false,
       "interactive": true,
       "inputParameters": [
@@ -1777,7 +1779,7 @@
         "dataListForm": true,
         "publicForm": false
       },
-      "runtimeProofStatus": "Inventory-only. Needs runtime proof for relation filtering and display fields.",
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for seeded related-record rendering.",
       "readOnly": true,
       "interactive": false,
       "inputParameters": [
@@ -1938,7 +1940,7 @@
         "dataListForm": true,
         "publicForm": false
       },
-      "runtimeProofStatus": "Export-backed and runtime-proven for dashboard, approval form, and data-list custom form. Public form is not tested.",
+      "runtimeProofStatus": "Runtime-proven in prior focused app and retested in showcase approval form for search/select/writeback; public form not tested.",
       "readOnly": false,
       "interactive": true,
       "inputParameters": [
@@ -2123,7 +2125,7 @@
         "dataListForm": false,
         "publicForm": false
       },
-      "runtimeProofStatus": "Inventory-only. Needs dashboard runtime proof with dated records.",
+      "runtimeProofStatus": "Runtime-proven in showcase repair smoke for seeded dated trend rendering.",
       "readOnly": true,
       "interactive": false,
       "inputParameters": [

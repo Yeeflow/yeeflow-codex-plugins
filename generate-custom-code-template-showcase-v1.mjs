@@ -95,9 +95,90 @@ function readTemplates() {
   const root = path.join(tmp, "templates");
   const scripts = {};
   for (const name of TEMPLATE_NAMES) {
-    scripts[name] = fs.readFileSync(path.join(root, name, `${name}.tsx`), "utf8");
+    scripts[name] = patchTemplateRuntimeCompat(fs.readFileSync(path.join(root, name, `${name}.tsx`), "utf8"));
   }
   return scripts;
+}
+
+function patchTemplateRuntimeCompat(script) {
+  const oldCandidates = `const candidates=[
+      response.items,response.Items,response.data,response.Data,response.rows,response.Rows,response.records,response.Records,response.list,response.List,response.result,response.Result,response.value,response.Value];`;
+  const newCandidates = `const candidates=[
+      response.items,response.Items,response.rows,response.Rows,response.records,response.Records,response.listData,response.ListData,response.data,response.Data,response.list,response.List,response.result,response.Result,response.value,response.Value];`;
+  script = script.split(oldCandidates).join(newCandidates);
+  script = script.split("const candidates=[response.items,response.Items,response.data,response.Data,response.rows,response.Rows,response.records,response.Records,response.list,response.List,response.result,response.Result,response.value,response.Value];")
+    .join("const candidates=[response.items,response.Items,response.rows,response.Rows,response.records,response.Records,response.listData,response.ListData,response.data,response.Data,response.list,response.List,response.result,response.Result,response.value,response.Value];");
+
+  const oldPrettyCandidates = `const candidates = [
+      response.items,
+      response.Items,
+      response.data,
+      response.Data,
+      response.rows,
+      response.Rows,
+      response.records,
+      response.Records,
+      response.list,
+      response.List,
+      response.result,
+      response.Result,
+      response.value,
+      response.Value,
+    ];`;
+  const newPrettyCandidates = `const candidates = [
+      response.items,
+      response.Items,
+      response.rows,
+      response.Rows,
+      response.records,
+      response.Records,
+      response.listData,
+      response.ListData,
+      response.data,
+      response.Data,
+      response.list,
+      response.List,
+      response.result,
+      response.Result,
+      response.value,
+      response.Value,
+    ];`;
+  script = script.split(oldPrettyCandidates).join(newPrettyCandidates);
+
+  const compactAttempts = "const attempts=[()=>client.lists.queryItems(payload),()=>client.lists.queryItems(listId,payload2),()=>client.lists.queryItems(listId,payload),()=>client.lists.queryItems(listId,payload2,{})];";
+  const compactAttemptsWithFallback = "const broadPayload={listId:listId,dataListId:listId,pageIndex:1,pageNo:1,pageSize:pageSize}; const broadPayload2={pageIndex:1,pageNo:1,pageSize:pageSize}; const attempts=[()=>client.lists.queryItems(payload),()=>client.lists.queryItems(listId,payload2),()=>client.lists.queryItems(listId,payload),()=>client.lists.queryItems(listId,payload2,{}),()=>client.lists.queryItems(broadPayload),()=>client.lists.queryItems(listId,broadPayload2)];";
+  script = script.split(compactAttempts).join(compactAttemptsWithFallback);
+
+  const prettyAttempts = `const attempts = [
+      () => client.lists.queryItems(basePayload),
+      () => client.lists.queryItems(config.dataListId, payloadWithoutListId),
+      () => client.lists.queryItems(config.dataListId, basePayload),
+      () => client.lists.queryItems(config.dataListId, payloadWithoutListId, {}),
+      () => client.lists.queryItems(config.dataListId, basePayload, {}),
+    ];`;
+  const prettyAttemptsWithFallback = `const broadPayload: any = {
+      listId: config.dataListId,
+      dataListId: config.dataListId,
+      pageIndex: 1,
+      pageNo: 1,
+      pageSize: config.pageSize,
+    };
+    const broadPayloadWithoutListId: any = {
+      pageIndex: 1,
+      pageNo: 1,
+      pageSize: config.pageSize,
+    };
+    const attempts = [
+      () => client.lists.queryItems(basePayload),
+      () => client.lists.queryItems(config.dataListId, payloadWithoutListId),
+      () => client.lists.queryItems(config.dataListId, basePayload),
+      () => client.lists.queryItems(config.dataListId, payloadWithoutListId, {}),
+      () => client.lists.queryItems(config.dataListId, basePayload, {}),
+      () => client.lists.queryItems(broadPayload),
+      () => client.lists.queryItems(config.dataListId, broadPayloadWithoutListId),
+    ];`;
+  script = script.split(prettyAttempts).join(prettyAttemptsWithFallback);
+  return script;
 }
 
 function findFirst(root, predicate) {
@@ -473,6 +554,7 @@ function dashboardControls(scripts, ids) {
       rulesJson: textExpr("[]"),
       titleField: textExpr("Title"),
       severityField: textExpr("Text1"),
+      statusField: textExpr("Text1"),
       descriptionField: textExpr("Text4"),
       titleText: "Exception Alerts",
       subtitleText: "Seeded high-risk and overdue records",

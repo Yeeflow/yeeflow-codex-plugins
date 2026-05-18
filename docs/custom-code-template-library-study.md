@@ -8,19 +8,19 @@ This study inventories all 13 Yeeflow custom code templates before app generatio
 
 | Template | Category | Business purpose | Planned safe contexts | Mode | Writable targets | Runtime proof |
 | --- | --- | --- | --- | --- | --- | --- |
-| activity-timeline | Dashboard / analytics | Show record events, changes, comments, and operational actions in chronological order. | dashboard, approvalForm, dataListForm | Read-only | none | Blocked by configuration in showcase smoke: rendered empty states despite seeded records. |
-| approval-decision-panel | Approval / workflow experience | Capture or display reviewer decision and comments in an approval context. | approvalForm | Interactive | none | Not tested in showcase smoke because reviewer/task context was not reached. |
-| approval-timeline | Approval / workflow experience | Show approval history, actors, timestamps, decisions, and comments. | approvalForm, dataListForm | Read-only | none | Blocked by configuration in showcase smoke: rendered `No history yet` despite seeded records. |
+| activity-timeline | Dashboard / analytics | Show record events, changes, comments, and operational actions in chronological order. | dashboard, approvalForm, dataListForm | Read-only | none | Runtime-proven in showcase repair smoke for seeded dashboard/form activity rendering. |
+| approval-decision-panel | Approval / workflow experience | Capture or display reviewer decision and comments in an approval context. | approvalForm | Interactive | decision/comment fields | Not tested: packaged on the review page, but an actual reviewer task context was not reached. |
+| approval-timeline | Approval / workflow experience | Show approval history, actors, timestamps, decisions, and comments. | approvalForm, dataListForm | Read-only | none | Runtime-proven in showcase repair smoke for seeded approval-history rendering; live workflow-generated history remains deeper future testing. |
 | checklist-compliance-block | Data entry / picker / selection | Render compliance checklist items and save checked state. | approvalForm, dataListForm | Interactive | saveToField | Runtime-proven in approval form smoke for checkbox interaction and JSON writeback. |
-| dependent-selector | Data entry / picker / selection | Provide cascading parent-child selection from a source list. | approvalForm, dataListForm | Interactive | parentSaveToField, childSaveToField | Blocked by configuration in showcase smoke: parent options did not populate and child selector stayed disabled. |
-| distribution-chart-module | Dashboard / analytics | Render grouped category/count analytics from a Yeeflow data list. | dashboard | Read-only | none | Blocked by configuration in showcase smoke: rendered `No request records found` despite seeded Service Requests rows. |
-| exception-alert-panel | Dashboard / analytics | Highlight anomalies, SLA breaches, missing data, and records needing attention. | dashboard, approvalForm, dataListForm | Read-only | none | Blocked by configuration in showcase smoke: rendered `No exceptions found` despite seeded exception rows. |
-| hierarchical-selector | Data entry / picker / selection | Render and select values from a tree structure. | approvalForm, dataListForm | Interactive | saveToField | Blocked by configuration in showcase smoke: rendered `No hierarchy records`. |
-| kpi-card-set | Dashboard / analytics | Display configurable KPI cards from static JSON or mapped data. | dashboard, approvalForm, dataListForm | Read-only | none | Render-only proven in dashboard smoke with configured values; data-bound KPI calculation is not proven. |
+| dependent-selector | Data entry / picker / selection | Provide cascading parent-child selection from a source list. | approvalForm, dataListForm | Interactive | parentSaveToField, childSaveToField | Runtime-proven in showcase repair smoke for parent filtering, child selection, and output writeback. |
+| distribution-chart-module | Dashboard / analytics | Render grouped category/count analytics from a Yeeflow data list. | dashboard | Read-only | none | Runtime-proven in showcase repair smoke for seeded request-status distribution rendering. |
+| exception-alert-panel | Dashboard / analytics | Highlight anomalies, SLA breaches, missing data, and records needing attention. | dashboard, approvalForm, dataListForm | Read-only | none | Runtime-proven in showcase repair smoke for seeded exception alert rendering. |
+| hierarchical-selector | Data entry / picker / selection | Render and select values from a tree structure. | approvalForm, dataListForm | Interactive | saveToField | Runtime-proven in showcase repair smoke for hierarchy rendering, selection, and output writeback. |
+| kpi-card-set | Dashboard / analytics | Display configurable KPI cards from static JSON or mapped data. | dashboard, approvalForm, dataListForm | Read-only | none | Render-only proven in dashboard smoke with configured static values; data-bound KPI calculation is not proven. |
 | multi-entry-tag-input | Data entry / picker / selection | Capture multiple tags, emails, IDs, labels, or SKUs as chips. | approvalForm, dataListForm | Interactive | saveToField | Runtime-proven in approval form smoke for add-tag interaction and JSON writeback. |
-| related-record-summary-grid | Dashboard / analytics | Display related records inline as cards or table rows. | dashboard, approvalForm, dataListForm | Read-only | none | Blocked by configuration in showcase smoke: rendered empty states despite seeded related records. |
-| smart-lookup-picker | Data entry / picker / selection | Search, select, and optionally manually add lookup records from a target list. | dashboard, approvalForm, dataListForm | Interactive | none | Runtime-proven in prior focused app and retested in showcase approval form and data-list custom form for search/select/writeback. Dashboard instance was visible; dashboard temp output was not retested. Public form is not tested. |
-| trend-chart-module | Dashboard / analytics | Render time-based list trends by day, week, or month. | dashboard | Read-only | none | Blocked by configuration in showcase smoke: rendered `No dated request records found` despite seeded dated rows. |
+| related-record-summary-grid | Dashboard / analytics | Display related records inline as cards or table rows. | dashboard, approvalForm, dataListForm | Read-only | none | Runtime-proven in showcase repair smoke for seeded related-record rendering on dashboard/form. |
+| smart-lookup-picker | Data entry / picker / selection | Search, select, and optionally manually add lookup records from a target list. | dashboard, approvalForm, dataListForm | Interactive | selectedValuesField/manualValuesField/combinedValuesField | Runtime-proven in prior focused app and retested in showcase approval form for search/select/writeback; dashboard visibility confirmed. Public form is not tested. |
+| trend-chart-module | Dashboard / analytics | Render time-based list trends by day, week, or month. | dashboard | Read-only | none | Runtime-proven in showcase repair smoke for seeded dated request trend rendering. |
 
 ## Functional Classification
 
@@ -45,6 +45,11 @@ This study inventories all 13 Yeeflow custom code templates before app generatio
 - `hierarchical-selector`
 - `multi-entry-tag-input`
 - `checklist-compliance-block`
+
+
+## Showcase Repair Runtime Finding
+
+The May 18, 2026 repair pass found that Yeeflow custom-code list-query templates should read imported row values by runtime FieldName keys such as `Text3` and `Datetime1`, not by display labels or generated internal labels. The generated showcase package also applies an embedding-time compatibility patch so query helpers recognize `response.listData`/`response.ListData` and retry broad `queryItems` calls without `selectedFields` when projected calls return no rows. This patch is generated-package wiring only; the original template source files remain unchanged.
 
 ## Export-Backed Custom Code Control Baseline
 
