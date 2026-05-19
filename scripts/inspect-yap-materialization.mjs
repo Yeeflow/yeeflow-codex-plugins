@@ -132,7 +132,8 @@ function inspect(inputPath) {
   const rootLayouts = Array.isArray(app?.Item?.Layouts) ? app.Item.Layouts : [];
   const childLists = Array.isArray(app?.Childs) ? app.Childs : [];
   const forms = Array.isArray(app?.Forms) ? app.Forms : [];
-  const approvalForms = forms.filter((form) => Number(form?.WorkflowType) !== 3);
+  const approvalForms = forms.filter((form) => ![1, 3].includes(Number(form?.WorkflowType)));
+  const listWorkflows = forms.filter((form) => Number(form?.WorkflowType) === 1);
   const scheduledWorkflows = forms.filter((form) => Number(form?.WorkflowType) === 3);
   const documentLibraryOnlyPackage = childLists.length > 0 && childLists.every((child) => Number(child?.ListModel?.Type) === 16);
   const layoutView = readLayoutView(rootModel, errors);
@@ -294,6 +295,15 @@ function inspect(inputPath) {
     if (!procModelId) errors.push({ code: "SCHEDULED_WORKFLOW_PROC_MODEL_ID_MISSING", message: "Scheduled Workflow is missing ProcModelID.", detail: { name: workflow.Name } });
     if (key && resource && !formKeys.has(key)) warnings.push({ code: "SCHEDULED_WORKFLOW_KEY_NOT_IN_RESOURCE_FORM_KEYS", message: "Scheduled Workflow key is not listed in resource.FormKeys; verify import behavior before generated final packages rely on it.", detail: { name: workflow.Name, key } });
   }
+  for (const workflow of listWorkflows) {
+    const key = asString(workflow.Key || workflow.FlowKey || workflow.FormKey || workflow.ProcCode || "");
+    const procModelId = asString(workflow.ProcModelID);
+    const hostListId = asString(workflow.ListID);
+    if (!hostListId || hostListId === "0") errors.push({ code: "LIST_WORKFLOW_LIST_ID_MISSING", message: "Data-list workflows should use the host data-list ID in Data.Forms[].ListID.", detail: { name: workflow.Name, listId: workflow.ListID } });
+    if (hostListId && hostListId !== "0" && !childById.has(hostListId)) errors.push({ code: "LIST_WORKFLOW_HOST_LIST_MISSING", message: "Data-list workflow ListID does not resolve to a packaged child list.", detail: { name: workflow.Name, listId: workflow.ListID } });
+    if (!procModelId) errors.push({ code: "LIST_WORKFLOW_PROC_MODEL_ID_MISSING", message: "Data-list workflow is missing ProcModelID.", detail: { name: workflow.Name } });
+    if (key && resource && !formKeys.has(key)) warnings.push({ code: "LIST_WORKFLOW_KEY_NOT_IN_RESOURCE_FORM_KEYS", message: "Data-list workflow key is not listed in resource.FormKeys; verify import behavior before generated final packages rely on it.", detail: { name: workflow.Name, key } });
+  }
   if (approvalForms.length && !formNav.length) errors.push({ code: "FORM_NAV_MISSING", message: "Package includes approval forms but root navigation has no Type 105 form entry." });
 
   const report = {
@@ -309,6 +319,7 @@ function inspect(inputPath) {
       childLists: childLists.length,
       forms: forms.length,
       approvalForms: approvalForms.length,
+      listWorkflows: listWorkflows.length,
       scheduledWorkflows: scheduledWorkflows.length,
       navItems: nav.length,
       dashboardNavItems: dashboardNav.length,

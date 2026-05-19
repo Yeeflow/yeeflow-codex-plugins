@@ -47,6 +47,10 @@ Run `scripts/validate_ai_agent_manifest.js <manifest.json> [icon_manifest.json]`
 The app-level .yap structure is export-proven but generated import behavior is not yet runtime-proven. In a .yap, AI Agent resources are stored under OtherModules Type "Agents" with resource Type = 0. Components Type = 1 are knowledge bindings; Components Type = 2 are tools. Proven tool subtypes include list query/create/update/delete, connection-backed HTTP/API tools, OpenAPI operation tools, connected-Agent tools, and current application resource access.
 
 Reusable templates should keep operational tools as guidance unless target app resources are explicit. App-bound generation must include a resource graph for lists, knowledge, Agents, Copilots, and connections, with fresh IDs and no real credentials.
+
+Runtime import update: generated app-contained AI Agent resources imported successfully in the Asia Tech visitor Copilot app after setting top-level `Publisher: 0`. Do not generate app-level Agent records with `Publisher: null`; treat missing/null/non-numeric Publisher as an import blocker for generated-final packages. This proves import acceptance only, not Agent execution.
+
+For app-contained Access application resources tools, use compact list-resource entries with numeric bitmask permissions: `{ id: <ListID>, permissions: <number> }`. Permission bits are create/add = `1`, update/edit = `2`, delete = `4`, read/view = `8`; combine with bitwise OR.
 <!-- agent-copilot-application-resource-learning:end -->
 
 <!-- scheduled-workflow-ai-assistant-learning:start -->
