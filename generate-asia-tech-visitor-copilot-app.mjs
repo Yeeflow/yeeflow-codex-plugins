@@ -24,7 +24,8 @@ const meetingsListId = `${family}2000000000000400`;
 const contactWorkflowProcId = `${family}3000000000000001`;
 const extractionAgentId = `${family}4000000000000001`;
 const advisorAgentId = `${family}4000000000000002`;
-const copilotId = `${family}4000000000000003`;
+const outreachAgentId = `${family}4000000000000003`;
+const copilotId = `${family}4000000000000004`;
 const iconUrl = JSON.stringify({ b: "#E6F0FF", i: "fa-regular fa-address-card", c: "#0065FF" });
 const int64Max = 9223372036854775807n;
 
@@ -471,7 +472,7 @@ function dashboardPage(title, description, variant) {
     ? [
         container("Capture guide", { style: { gap: [null, "--sp--s100"], direction: [null, "column"] } }, [
           heading("AI Capture Workspace", "Capture workspace title", "h2-bold"),
-          textBlock("<p>Use the Event Booth Assistant Copilot to add visitors, capture comments, and prepare reviewable AI suggestions. Do not send email from this app during runtime testing.</p>", "Capture workspace instructions"),
+          textBlock("<p>Use the Event Booth Assistant Copilot to add visitors, capture comments, and review AI suggestions. The Contacts workflow can send follow-up email only after the Outreach Email Generator validates a recipient email.</p>", "Capture workspace instructions"),
         ]),
         dataListControl("Recently Extracted Contacts", contactsListId, [["Full Name", "Title"], ["Company", "Text1"], ["Email", "Text3"], ["Extraction Status", "Text22"], ["Follow-up Status", "Text19"]], "Recently extracted contacts table"),
         dataListControl("Follow-up Email Review", contactsListId, [["Full Name", "Title"], ["Company", "Text1"], ["Email Subject", "Text17"], ["Follow-up Status", "Text19"]], "Follow-up email review table"),
@@ -620,6 +621,29 @@ Constraints:
 - Use {{contact_item_id}} when updating the triggering Contact through the configured local application-resource tool.
 - Return {{lead_type}}, {{fit_score}}, {{fit_reason}}, {{suggested_next_step}}, {{email_subject}}, and {{email_body}}.`;
 
+  const outreachPrompt = `Role: Asia Tech Outreach Email Generator
+
+You are an AI Agent that prepares event follow-up emails for Asia Tech x Singapore 2026 contacts.
+
+Your job is to:
+- validate whether {{contact_email}} looks like a usable individual business email address
+- understand {{contact_payload}}, {{company_payload}}, {{notes}}, {{lead_fit}}, and {{value_context}}
+- identify the most relevant value Yeeflow can provide to this contact and company
+- generate a well-designed, friendly, professional follow-up email
+
+Email requirements:
+- mention Asia Tech x Singapore 2026
+- refer to the contact, company, role, or notes when available
+- explain Yeeflow's value around workflow automation, AI Agents/Copilot, forms, approvals, dashboards, document generation, and business process apps when relevant
+- keep the email concise and useful
+- include a clear CTA asking to book a meeting or schedule a demo
+
+Safety:
+- Do not invent personal facts.
+- Do not send email yourself; the workflow Send Email action handles delivery only when {{is_valid_email}} is Yes.
+- If the email is missing, malformed, generic test data, or not appropriate for outreach, return is_valid_email as No and leave recipient_email empty.
+- Return {{is_valid_email}}, {{recipient_email}}, {{email_subject}}, {{email_body}}, and {{value_statement}}.`;
+
   const copilotInstructions = `Role: Event Booth Assistant Copilot
 
 You are the Event Booth Assistant for Asia Tech x Singapore 2026.
@@ -630,12 +654,13 @@ How to work:
 - Use only configured local Yeeflow app resources and app-contained Agents.
 - Ask for missing contact details before creating or updating records.
 - Treat image extraction and lead scoring as AI-assisted suggestions that need human review.
-- Never send a real email or call external systems.
+- Do not send email directly from Copilot chat. The Contacts workflow owns follow-up email sending after the Outreach Email Generator validates the recipient email.
 
 Recommended tool guidance for configured implementations:
 1. Name Card & Badge Extraction Agent: extract contact details from an uploaded name card or badge image and create reviewable local Contact/Company records.
 2. Lead Fit & Follow-up Advisor Agent: classify fit, suggest next steps, create follow-up tasks, and save email draft fields.
-3. Local application resource access: read and write only Contacts, Companies, Follow-up Tasks, and Event Meetings inside this generated app.
+3. Asia Tech Outreach Email Generator: validate a contact email and prepare personalized follow-up email content for workflow delivery.
+4. Local application resource access: read and write only Contacts, Companies, Follow-up Tasks, and Event Meetings inside this generated app.
 
 Output style:
 - Use short headings and practical bullets.
@@ -728,6 +753,54 @@ Output style:
         ],
       },
       {
+        ID: outreachAgentId,
+        Name: "Asia Tech Outreach Email Generator",
+        Description: "Validates contact email and generates personalized event follow-up email content for workflow delivery.",
+        Type: 0,
+        IconUrl: JSON.stringify({ b: "#F3EDFF", i: "fa-regular fa-envelope-open-text", c: "#6B3FD6" }),
+        Settings: agentSettings(outreachPrompt, [
+          { id: "contact_item_id", type: "text", description: "Current Contact ListDataID." },
+          { id: "contact_email", type: "text", description: "Email address from the Contact record." },
+          { id: "contact_payload", type: "text", description: "Serialized current Contact details." },
+          { id: "company_payload", type: "text", description: "Serialized company details if available." },
+          { id: "notes", type: "text", description: "User notes, chat comments, or extracted text." },
+          { id: "lead_fit", type: "text", description: "Lead type, fit score, fit reason, and suggested next step when available." },
+          { id: "value_context", type: "text", description: "Yeeflow value proposition context for Asia Tech follow-up." },
+        ], [
+          { id: "is_valid_email", type: "text", description: "Yes only when the email address is usable for outreach; otherwise No." },
+          { id: "recipient_email", type: "text", description: "Validated recipient email address." },
+          { id: "email_subject", type: "text", description: "Follow-up email subject." },
+          { id: "email_body", type: "richtext", description: "Follow-up email body with CTA." },
+          { id: "value_statement", type: "text", description: "Short Yeeflow value statement used in the email." },
+        ]),
+        Draft: agentSettings(outreachPrompt, [
+          { id: "contact_item_id", type: "text", description: "Current Contact ListDataID." },
+          { id: "contact_email", type: "text", description: "Email address from the Contact record." },
+          { id: "contact_payload", type: "text", description: "Serialized current Contact details." },
+          { id: "company_payload", type: "text", description: "Serialized company details if available." },
+          { id: "notes", type: "text", description: "User notes, chat comments, or extracted text." },
+          { id: "lead_fit", type: "text", description: "Lead type, fit score, fit reason, and suggested next step when available." },
+          { id: "value_context", type: "text", description: "Yeeflow value proposition context for Asia Tech follow-up." },
+        ], [
+          { id: "is_valid_email", type: "text", description: "Yes only when the email address is usable for outreach; otherwise No." },
+          { id: "recipient_email", type: "text", description: "Validated recipient email address." },
+          { id: "email_subject", type: "text", description: "Follow-up email subject." },
+          { id: "email_body", type: "richtext", description: "Follow-up email body with CTA." },
+          { id: "value_statement", type: "text", description: "Short Yeeflow value statement used in the email." },
+        ]),
+        Attr: null,
+        Status: 1,
+        IsPublished: true,
+        Publisher: 0,
+        PublishDate: now,
+        Components: [
+          applicationResourceTool(6, "Save outreach email results", "Read and update local Contacts and Companies with generated outreach email content only inside this generated app.", [
+            [contactsListId, "Contacts", ["read", "update"]],
+            [companiesListId, "Companies", ["read", "update"]],
+          ]),
+        ],
+      },
+      {
         ID: copilotId,
         Name: "Event Booth Assistant",
         Description: "Copilot for capturing booth visitors, searching event contacts, and preparing follow-up drafts.",
@@ -789,6 +862,15 @@ Output style:
             Status: 1,
             Settings: JSON.stringify({ Data: { AppID: appId, ListSetID: rootId, Value: advisorAgentId }, resType: 2, runType: "1", Inputs: [], Outputs: [] }),
           },
+          {
+            ID: componentId(7),
+            Name: "Generate outreach email",
+            Description: "Delegate valid-email checking and outreach email generation to the local Asia Tech Outreach Email Generator Agent.",
+            Type: 2,
+            SubType: 1,
+            Status: 1,
+            Settings: JSON.stringify({ Data: { AppID: appId, ListSetID: rootId, Value: outreachAgentId }, resType: 2, runType: "1", Inputs: [], Outputs: [] }),
+          },
           applicationResourceTool(5, "Access Asia Tech application resources", "Read and write only local event data lists in this generated app.", [
             [contactsListId, "Contacts", ["read", "create", "update"]],
             [companiesListId, "Companies", ["read", "create", "update"]],
@@ -805,12 +887,29 @@ function listFieldValue(fieldSlot, fieldKey, valueType = "input") {
   return { type: 1, value: { exprType: "list_field", valueType, prop: fieldSlot, id: fieldKey, type: "expr" } };
 }
 
+function workflowVariableTarget(variableId) {
+  return { prefix: "__variables_", value: variableId };
+}
+
+function variableButton(variableId, label) {
+  return `<input type="button" data="\${&quot;type&quot;:&quot;variable&quot;, &quot;param&quot;:{&quot;id&quot;:&quot;${variableId}&quot;}}" expr="__" tabindex="-1" value="Workflow Variables:${label}">`;
+}
+
+function stringButton(value, label = value) {
+  return `<input type="button" data="${value}" expr="__" tabindex="-1" value="${label}">`;
+}
+
 function makeContactWorkflow() {
   const startId = `sid-${uuid()}`;
   const aiId = `sid-${uuid()}`;
+  const emailAiId = `sid-${uuid()}`;
+  const mailId = `sid-${uuid()}`;
   const endId = `sid-${uuid()}`;
   const flow1 = `sid-${uuid()}`;
   const flow2 = `sid-${uuid()}`;
+  const flow3 = `sid-${uuid()}`;
+  const flow4 = `sid-${uuid()}`;
+  const flow5 = `sid-${uuid()}`;
   const requestTitleRule = "<input type=\"button\" data=\"${&quot;type&quot;:&quot;application&quot;,&quot;prop&quot;:&quot;FlowNo&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Tracking No.\">";
   const startMailHtml = "Dear <input type=\"button\" data=\"${ &quot;type&quot;:&quot;user&quot;, &quot;param&quot;:{&quot;id&quot;:&quot;${\\&quot;type\\&quot;:\\&quot;application\\&quot;,\\&quot;prop\\&quot;:\\&quot;ApplicantUserID\\&quot;}&quot;},&quot;prop&quot;:&quot;Name&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Applicant:Name\">,<div><br></div><div>Your application form of&nbsp;<input type=\"button\" data=\"${&quot;type&quot;:&quot;instance&quot;,&quot;prop&quot;:&quot;Name&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Workflow Name\"> (tracking no. <input type=\"button\" data=\"${&quot;type&quot;:&quot;application&quot;,&quot;prop&quot;:&quot;FlowNo&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Form No.\">) has been submitted.<br></div><div><br></div><div><a href=\"<input type=&quot;button&quot; data=&quot;${&quot;type&quot;:&quot;application&quot;,&quot;prop&quot;:&quot;ApplicationURL&quot;}&quot; expr=&quot;__&quot; tabindex=&quot;-1&quot; value=&quot;Form Url&quot;>\">View more details</a><br></div>";
   const endMailHtml = "Dear <input type=\"button\" data=\"${ &quot;type&quot;:&quot;user&quot;, &quot;param&quot;:{&quot;id&quot;:&quot;${\\&quot;type\\&quot;:\\&quot;application\\&quot;,\\&quot;prop\\&quot;:\\&quot;ApplicantUserID\\&quot;}&quot;},&quot;prop&quot;:&quot;Name&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Applicant:Name\">,<br><br>Your application form of&nbsp;<input type=\"button\" data=\"${&quot;type&quot;:&quot;instance&quot;,&quot;prop&quot;:&quot;Name&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Workflow Name\"> (tracking no. <input type=\"button\" data=\"${&quot;type&quot;:&quot;application&quot;,&quot;prop&quot;:&quot;FlowNo&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Form No.\">) has been completed.<br><br><a href=\"<input type=&quot;button&quot; data=&quot;${&quot;type&quot;:&quot;application&quot;,&quot;prop&quot;:&quot;ApplicationURL&quot;}&quot; expr=&quot;__&quot; tabindex=&quot;-1&quot; value=&quot;Form Url&quot;>\">View more details</a><br>";
@@ -823,7 +922,17 @@ function makeContactWorkflow() {
     title: "Analyze new contact with AI",
     workflowType: 1,
     pageurls: [],
-    variables: { basic: [], listref: [], filter: [] },
+    variables: {
+      basic: [
+        { idx: `sid-${uuid()}`, id: "IsEmailValid", name: "Is Email Valid", type: "text", editable: true },
+        { idx: `sid-${uuid()}`, id: "RecipientEmail", name: "Recipient Email", type: "text", editable: true },
+        { idx: `sid-${uuid()}`, id: "OutreachEmailSubject", name: "Outreach Email Subject", type: "text", editable: true },
+        { idx: `sid-${uuid()}`, id: "OutreachEmailBody", name: "Outreach Email Body", type: "text", editable: true },
+        { idx: `sid-${uuid()}`, id: "ValueStatement", name: "Value Statement", type: "text", editable: true },
+      ],
+      listref: [],
+      filter: [],
+    },
     flowPage: [],
     ProcModelListID: contactsListId,
     ProcModelAppID: appId,
@@ -831,7 +940,7 @@ function makeContactWorkflow() {
     AppListSetID: rootId,
     iconURL: "",
     lineType: "rounded",
-    graphposition: { x: 200, y: 200, width: 805, height: 60 },
+    graphposition: { x: 200, y: 200, width: 1480, height: 220 },
     graphzoom: 1,
     ext: {},
     graphver: 2,
@@ -852,15 +961,6 @@ function makeContactWorkflow() {
         stencil: { id: "SequenceFlow" },
         source: { id: startId, resourceid: startId },
         target: { id: aiId, resourceid: aiId },
-      },
-      {
-        resourceid: endId,
-        id: endId,
-        properties: { name: "End", isenabledemail: false, html: endMailHtml, to: mailTo, subject: completeSubject },
-        stencil: { id: "EndNoneEvent" },
-        incoming: [{ id: flow2, resourceid: flow2 }],
-        outgoing: [],
-        position: { x: 795, y: 200 },
       },
       {
         resourceid: aiId,
@@ -886,10 +986,110 @@ function makeContactWorkflow() {
       {
         resourceid: flow2,
         id: flow2,
-        properties: { linetype: "rounded", name: "Sequence flow_1" },
+        properties: { linetype: "rounded", name: "Lead analysis to outreach email generation" },
         stencil: { id: "SequenceFlow" },
         source: { id: aiId, resourceid: aiId },
+        target: { id: emailAiId, resourceid: emailAiId },
+      },
+      {
+        resourceid: emailAiId,
+        id: emailAiId,
+        properties: {
+          name: "Validate email and generate outreach",
+          type: "agent",
+          user: null,
+          data: { AppID: appId, ListSetID: rootId, AgentID: outreachAgentId },
+          inputVariables: [
+            { id: "contact_item_id", type: "text", description: "Current Contact ListDataID.", value: listFieldValue("ListDataID", "ListDataID", "input") },
+            { id: "contact_email", type: "text", description: "Email address from the Contact record.", value: listFieldValue("Text3", "Email", "input") },
+            { id: "contact_payload", type: "text", description: "Serialized current Contact details.", value: listFieldValue("Title", "FullName", "input") },
+            { id: "company_payload", type: "text", description: "Serialized company details if available.", value: listFieldValue("Text1", "Company", "input") },
+            { id: "notes", type: "text", description: "User notes, chat comments, or extracted text.", value: listFieldValue("Text10", "UserNotesChatComments", "textarea") },
+            { id: "lead_fit", type: "text", description: "Existing AI fit notes and suggested next step.", value: listFieldValue("Text13", "FitReason", "textarea") },
+            { id: "value_context", type: "text", description: "Yeeflow value proposition context.", value: { type: 2, value: [{ type: "str", value: "Yeeflow helps teams build workflow apps, approval processes, AI Agents and Copilots, dashboards, forms, document generation, and process automation without heavy custom development." }] } },
+          ],
+          outputVariables: [
+            { id: "is_valid_email", type: "text", description: "Yes only when contact_email is usable for outreach; otherwise No.", value: workflowVariableTarget("IsEmailValid") },
+            { id: "recipient_email", type: "text", description: "Validated recipient email address.", value: workflowVariableTarget("RecipientEmail") },
+            { id: "email_subject", type: "text", description: "Personalized follow-up email subject.", value: workflowVariableTarget("OutreachEmailSubject") },
+            { id: "email_body", type: "richtext", description: "Personalized follow-up email body.", value: workflowVariableTarget("OutreachEmailBody") },
+            { id: "value_statement", type: "text", description: "Yeeflow value statement for the contact.", value: workflowVariableTarget("ValueStatement") },
+          ],
+        },
+        stencil: { id: "AI" },
+        incoming: [{ id: flow2, resourceid: flow2 }],
+        outgoing: [{ id: flow3, resourceid: flow3 }, { id: flow4, resourceid: flow4 }],
+        position: { x: 795, y: 200 },
+      },
+      {
+        resourceid: flow3,
+        id: flow3,
+        properties: {
+          linetype: "rounded",
+          name: "Valid email - send outreach",
+          documentation: "Send only when AI validates recipient email.",
+          conditioninfo: [{
+            key: `${flow3}-cond-valid-email`,
+            pre: "and",
+            left: variableButton("IsEmailValid", "Is Email Valid"),
+            op: "s.=",
+            right: stringButton("Yes", "Yes"),
+          }],
+        },
+        stencil: { id: "SequenceFlow" },
+        source: { id: emailAiId, resourceid: emailAiId },
+        target: { id: mailId, resourceid: mailId },
+      },
+      {
+        resourceid: flow4,
+        id: flow4,
+        properties: {
+          linetype: "rounded",
+          name: "No valid email - skip send",
+          documentation: "Skip email when AI validation does not return Yes.",
+          conditioninfo: [{
+            key: `${flow4}-cond-no-valid-email`,
+            pre: "and",
+            left: variableButton("IsEmailValid", "Is Email Valid"),
+            op: "s.!=",
+            right: stringButton("Yes", "Yes"),
+          }],
+        },
+        stencil: { id: "SequenceFlow" },
+        source: { id: emailAiId, resourceid: emailAiId },
         target: { id: endId, resourceid: endId },
+      },
+      {
+        resourceid: mailId,
+        id: mailId,
+        properties: {
+          name: "Send personalized outreach email",
+          to: variableButton("RecipientEmail", "Recipient Email"),
+          cc: "",
+          subject: variableButton("OutreachEmailSubject", "Outreach Email Subject"),
+          html: `<p>${variableButton("OutreachEmailBody", "Outreach Email Body")}</p>`,
+        },
+        stencil: { id: "MailTask" },
+        incoming: [{ id: flow3, resourceid: flow3 }],
+        outgoing: [{ id: flow5, resourceid: flow5 }],
+        position: { x: 1085, y: 200 },
+      },
+      {
+        resourceid: flow5,
+        id: flow5,
+        properties: { linetype: "rounded", name: "Email sent to End" },
+        stencil: { id: "SequenceFlow" },
+        source: { id: mailId, resourceid: mailId },
+        target: { id: endId, resourceid: endId },
+      },
+      {
+        resourceid: endId,
+        id: endId,
+        properties: { name: "End", isenabledemail: false, html: endMailHtml, to: mailTo, subject: completeSubject },
+        stencil: { id: "EndNoneEvent" },
+        incoming: [{ id: flow4, resourceid: flow4 }, { id: flow5, resourceid: flow5 }],
+        outgoing: [],
+        position: { x: 1375, y: 200 },
       },
     ],
   };
@@ -959,7 +1159,7 @@ function buildApp() {
 }
 
 function collectIds(app) {
-  const ids = new Set([rootId, commandCenterLayoutId, captureWorkspaceLayoutId, contactWorkflowProcId, extractionAgentId, advisorAgentId, copilotId]);
+  const ids = new Set([rootId, commandCenterLayoutId, captureWorkspaceLayoutId, contactWorkflowProcId, extractionAgentId, advisorAgentId, outreachAgentId, copilotId]);
   for (const child of app.Childs) {
     ids.add(child.ListModel.ListID);
     for (const field of child.Defs) ids.add(field.FieldID);
@@ -1024,7 +1224,7 @@ const report = {
   dataLists: listSpecs.map((spec, index) => ({ title: spec.title, listId: listId(index), fieldCount: spec.fields.length, views: spec.views })),
   dashboards: ["Event Command Center", "AI Capture Workspace"],
   copilot: "Event Booth Assistant",
-  aiAgents: ["Name Card & Badge Extraction Agent", "Lead Fit & Follow-up Advisor"],
+  aiAgents: ["Name Card & Badge Extraction Agent", "Lead Fit & Follow-up Advisor", "Asia Tech Outreach Email Generator"],
   workflows: ["Analyze new contact with AI"],
   replaceIds: collectIds(app),
   safety: {
@@ -1032,8 +1232,9 @@ const report = {
     noImageBinaries: true,
     noCredentials: true,
     noExternalConnectors: true,
-    noRealEmailSending: true,
-    workflowExecutionDeferred: true,
+    noFixedRealEmailRecipients: true,
+    sendEmailRequiresValidGeneratedRecipient: true,
+    workflowExecutionCanSendEmail: true,
   },
 };
 fs.writeFileSync(outReportPath, `${JSON.stringify(report, null, 2)}\n`);

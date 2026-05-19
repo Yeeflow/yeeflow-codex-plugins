@@ -15,14 +15,14 @@ The package contains:
 - 4 data lists: `Contacts`, `Companies`, `Follow-up Tasks`, `Event Meetings`
 - 2 dashboards: `Event Command Center`, `AI Capture Workspace`
 - 1 Copilot: `Event Booth Assistant`
-- 2 AI Agents: `Name Card & Badge Extraction Agent`, `Lead Fit & Follow-up Advisor`
+- 3 AI Agents: `Name Card & Badge Extraction Agent`, `Lead Fit & Follow-up Advisor`, `Asia Tech Outreach Email Generator`
 - 1 data-list workflow: `Analyze new contact with AI`
 - 0 external connections
 - 0 real visitor records
 - 0 real image binaries
-- 0 email-sending configuration
+- 1 Send Email workflow action using workflow-variable recipient/subject/body; no fixed real recipient is embedded
 
-The workflow is generated as a Contacts new-item workflow with `WorkflowType = 1`, host-list `ListID`, and `FlowMappings[].Setting.NewTrigger = true`. It is included for designer/runtime inspection and remains execution-deferred for safety.
+The workflow is generated as a Contacts new-item workflow with `WorkflowType = 1`, host-list `ListID`, and `FlowMappings[].Setting.NewTrigger = true`. The latest version performs lead analysis, calls the Outreach Email Generator Agent, branches on `IsEmailValid`, sends email only on the `Yes` branch, and skips email on the fallback branch.
 
 ## Local Validation Results
 
@@ -142,6 +142,15 @@ Runtime-fixed and locally validated after failure:
 - Package validation rerun after the fix reports 0 `SYSTEM_INT64_ID_OVERFLOW` errors.
 - App-contained AI Agent/Copilot resources use `Publisher: 0`.
 
+Latest generated email-workflow update:
+
+- Added the `Asia Tech Outreach Email Generator` Agent.
+- Added workflow variables `IsEmailValid`, `RecipientEmail`, `OutreachEmailSubject`, `OutreachEmailBody`, and `ValueStatement`.
+- Added a second workflow AI node to validate the contact email, identify Yeeflow value, and generate follow-up email content.
+- Added conditional SequenceFlows: `IsEmailValid = Yes` routes to `MailTask`; `IsEmailValid != Yes` routes directly to End.
+- Added one `MailTask` named `Send personalized outreach email`.
+- The `MailTask` recipient, subject, and body use workflow variables, not fixed recipient strings.
+
 Locally validated:
 
 - App data model.
@@ -169,9 +178,10 @@ The next runtime pass should inspect the successfully imported package configura
 - Confirm all 4 data lists open.
 - Confirm both dashboards render.
 - Confirm Copilot quick prompts are visible.
-- Confirm both Agent resources open.
+- Confirm all 3 Agent resources open.
 - Confirm Access application resources tools point to local lists only.
 - Confirm the Contacts workflow opens in designer after the DefResource shape fix.
 - Confirm the AI Assistant node references `Lead Fit & Follow-up Advisor`.
-- Confirm no Send Email action is present.
-- Optionally create one fake Contact only if workflow execution can remain disabled or explicitly controlled.
+- Confirm the second AI Assistant node references `Asia Tech Outreach Email Generator`.
+- Confirm the Send Email action uses workflow variables for recipient, subject, and body.
+- Optionally create one fake Contact only with an explicitly safe recipient email if workflow execution and email delivery are intentionally being tested.
