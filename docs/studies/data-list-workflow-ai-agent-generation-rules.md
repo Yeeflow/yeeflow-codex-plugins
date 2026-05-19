@@ -13,6 +13,8 @@ Classification: generation guidance promoted from the `Spark & AI (1).yap` expor
 - Keep `Data.Forms[].Settings = null` for export-like data-list new-item workflows; the trigger configuration lives in `FlowMappings[].Setting`.
 - When a flow-status field is used in `FlowMappings.FieldName`, ensure the field exists on the host list and is `Type = "flowstatus"`.
 
+Runtime caveat: Asia Tech follow-up testing still found unresolved trigger-condition setting issues after the package otherwise tested well. Treat the `FieldName = null` and `Settings = null` guidance as the best current candidate from manual comparison, not a fully generalized runtime-proven rule. Before promoting this into stricter generator behavior for other apps, compare a fresh working runtime export against the generated package and verify the trigger-condition panel and workflow designer both open correctly.
+
 ## AI Assistant Workflow Action
 
 - Use workflow node `stencil.id = "AI"`.

@@ -102,6 +102,12 @@ Follow-up workflow trigger comparison:
 - The regenerated package now emits that trigger shape, preserves the export-like workflow designer graph metadata, and omits the unproven AI node `context` property.
 - The validator now fails generated-final data-list new-item workflows if `FlowMappings.FieldName` is non-null or if `Data.Forms[].Settings` carries trigger configuration.
 
+Latest runtime note on trigger conditions:
+
+- The generated app is otherwise good, but trigger-condition settings for the Contacts data-list workflow still have unresolved runtime issues.
+- Do not treat the current `FlowMappings.FieldName = null` / `Data.Forms[].Settings = null` rule as fully solved for all generated data-list workflows.
+- Keep this as a research follow-up: collect a fresh export of a working imported workflow, compare the full host list `FlowMappings[]`, `Data.Forms[]`, trigger-condition UI metadata, and workflow designer payload, then update the generator and validator only after the pattern is runtime-proven.
+
 Not completed in this pass:
 
 - Opening the imported app from the card.
@@ -168,6 +174,7 @@ Validation-only / safety-deferred:
 - Agent-driven follow-up task creation.
 - Follow-up email draft execution.
 - Workflow execution.
+- Contacts workflow trigger-condition configuration.
 - Dashboard runtime rendering.
 
 ## Follow-Up Runtime Pass

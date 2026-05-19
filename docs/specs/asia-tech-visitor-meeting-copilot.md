@@ -370,5 +370,6 @@ Optional controlled checks:
 
 - App-contained AI Agent and Copilot structures are export-proven, but generated import/runtime behavior needs focused confirmation.
 - AI image extraction can call live AI and mutate records; execution proof must be separately approved and documented.
+- Contacts data-list workflow trigger-condition settings still need a focused export/runtime study before the generator rule is considered fully proven.
 - Data-bound KPI/chart dashboard controls over this generated schema are not claimed in v1.
 - App-resource access tool permissions and runtime mutation scope remain runtime-sensitive.
