@@ -2,7 +2,9 @@
 
 Source export: `/Users/Renger/Downloads/AI Agent and Copilot Local Resource Baseline8.yap`
 
-Current milestone: generated import/open/designer runtime baseline is partially proven. The workflow was imported and opened, but schedule execution, email delivery, and AI execution were intentionally not run.
+Current milestone: generated import/open/designer runtime baseline is partially proven by Codex-observed testing. The workflow was imported and opened, but Codex did not intentionally run the schedule, send email, or execute AI.
+
+Follow-up result: User-confirmed function test passed; exact execution scope not yet documented.
 
 ## Generated Safe Runtime Baseline
 
@@ -35,7 +37,9 @@ The workflow graph is:
 
 The generated `Send Email` action uses only the reserved safe test recipient `workflow.safe.test@example.com`.
 
-Runtime result: partial. Import/open/designer rendering is runtime-proven; execution is not runtime-proven.
+Codex-observed runtime result: partial. Import/open/designer rendering is runtime-proven by Codex; execution was not tested by Codex.
+
+User-confirmed result: User-confirmed function test passed; exact execution scope not yet documented. Until the exact tested path is documented, do not separately claim email delivery, AI Assistant execution, schedule trigger execution, manual run behavior, or workflow-triggered AI Agent execution.
 
 Observed runtime proof:
 
@@ -53,7 +57,7 @@ Observed runtime proof:
 - `AI assistant` node opened, used `Call AI agent`, referenced `Email generation`, accepted `Query Items`, and mapped outputs to `Subject` and `Body Content`
 - `Send Email` node opened and displayed `workflow.safe.test@example.com`, `Workflow Variables:Subject`, and `Workflow Variables:Body Content`
 
-Actions intentionally not tested:
+Actions intentionally not tested by Codex:
 
 - Publish
 - schedule trigger
@@ -111,3 +115,8 @@ Use these labels:
 | partial | Import/open/configuration renders, but schedule/email/AI execution is skipped. |
 | runtime-proven | Import/open and explicitly safe non-private execution pass. |
 | blocked | Runtime would send real email, call live AI unexpectedly, or execute a schedule unsafely. |
+
+For the `Scheduled Workflow Safe Runtime Baseline`, keep the evidence split explicit:
+
+- Codex-observed proof: import/open/designer rendering.
+- User-confirmed proof: function test passed; exact execution scope not yet documented.

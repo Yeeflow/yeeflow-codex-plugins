@@ -2,7 +2,7 @@
 
 Source export: `/Users/Renger/Downloads/AI Agent and Copilot Local Resource Baseline8.yap`
 
-Classification: generation guidance from export-proven structure plus generated import/open/designer runtime proof for the safe local baseline. Schedule execution, email delivery, and AI execution are still unproven.
+Classification: generation guidance from export-proven structure plus generated import/open/designer runtime proof for the safe local baseline. A later user-confirmed function test passed, but the exact execution scope is not yet documented, so schedule trigger execution, email delivery, manual run behavior, and AI execution should not be claimed separately from that result.
 
 ## Minimal Shape
 
@@ -41,7 +41,7 @@ The safe baseline branch generated `scheduled-workflow-safe-runtime-baseline.v1.
 - recipient: `workflow.safe.test@example.com`
 - no external connections or credentials
 
-The generated package imported, opened, displayed the local list, listed the Scheduled Workflow resource, opened the workflow detail page, rendered recurrence settings and variables, opened the workflow designer, and opened the `QueryData`, `AI`, and `MailTask` configuration panels.
+The generated package imported, opened, displayed the local list, listed the Scheduled Workflow resource, opened the workflow detail page, rendered recurrence settings and variables, opened the workflow designer, and opened the `QueryData`, `AI`, and `MailTask` configuration panels. User-confirmed function test passed; exact execution scope not yet documented.
 
 Do not claim that a non-deployed or far-future schedule can never execute under all tenant/runtime conditions. Treat this as an import/open-safe runtime baseline, not an execution baseline.
 
