@@ -32,6 +32,8 @@ For generated application packages:
 - Keep generated numeric-looking IDs inside signed `System.Int64` range (`<= 9223372036854775807`).
 - Keep all tool scopes inside the generated app/listset when possible.
 - Prefer Access application resources tools over external connectors.
+- For Access application resources tools, use compact resource entries. `resources.dataLists.items[]` should contain `{ "id": "<ListID>", "permissions": <number> }`, not verbose `AppID/ListID/ListSetID/Title` entries and not string permission arrays.
+- Calculate `permissions` with bitwise OR: create/add = `1`, update/edit = `2`, delete = `4`, read/view = `8`. For example read/create/update is `8 | 1 | 2 = 11`.
 - Preserve connected-Agent references as explicit dependencies.
 - Keep quick prompts instructional and non-destructive.
 - Do not include external API keys, OAuth connections, real tenant connections, or live email-sending configuration.
@@ -46,6 +48,7 @@ Generated packages should validate:
 - connected-Agent references resolve to generated Agents.
 - AI Agent/Copilot `Publisher` is numeric, normally `0`.
 - Access application resources tool scopes reference generated lists.
+- Access application resources tool list entries use `id` plus numeric bitmask `permissions`.
 - no external connections are required for baseline import.
 - no secrets or credential-looking values appear in generated resources.
 - no numeric-looking generated ID exceeds signed `System.Int64`.

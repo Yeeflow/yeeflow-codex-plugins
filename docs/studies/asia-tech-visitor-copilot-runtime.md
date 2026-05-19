@@ -84,6 +84,16 @@ Final manual import result:
 - The regenerated package with signed-64-bit-safe layout IDs and `Publisher: 0` on all AI Agent/Copilot records imported successfully.
 - This confirms both fixes as generated-package import requirements for this app shape.
 
+Post-import configuration issues found:
+
+- The Contacts data-list workflow `Analyze new contact with AI` imported, but the workflow designer failed to open with `Cannot read properties of undefined (reading 'find')`.
+- The generated workflow DefResource had a simplified graph shape: `variables` was `{}`, designer metadata such as `pageurls`, `flowPage`, `graphposition`, `graphzoom`, and `graphver` was missing, and childshapes used simplified `bounds` metadata instead of export-like `id`/`resourceid`/`position`.
+- The workflow was regenerated with the export-like data-list workflow designer shape from `Spark & AI (1).yap`: `variables.basic/listref/filter` arrays, `pageurls: []`, `flowPage: []`, graph metadata, shape `id` plus `resourceid`, node `position`, and SequenceFlow source/target `id` plus `resourceid`.
+- The Copilot and Agent Access application resources tools used verbose data-list entries and string permission arrays such as `permissions: ["read", "create", "update"]`.
+- Developer feedback confirmed the import/runtime format should be compact `resources.dataLists.items[]` entries with `id` and numeric bitmask `permissions`.
+- The generator now emits compact resource entries. Permission bits are: create/add = `1`, update/edit = `2`, delete = `4`, read/view = `8`. Combined permissions use bitwise OR, so read/create/update is `8 | 1 | 2 = 11`.
+- The validator now fails generated-final app-resource tools with missing `id`, missing permissions, or non-numeric permissions.
+
 Not completed in this pass:
 
 - Opening the imported app from the card.
@@ -153,7 +163,7 @@ The next runtime pass should inspect the successfully imported package configura
 - Confirm Copilot quick prompts are visible.
 - Confirm both Agent resources open.
 - Confirm Access application resources tools point to local lists only.
-- Confirm the Contacts workflow opens in designer.
+- Confirm the Contacts workflow opens in designer after the DefResource shape fix.
 - Confirm the AI Assistant node references `Lead Fit & Follow-up Advisor`.
 - Confirm no Send Email action is present.
 - Optionally create one fake Contact only if workflow execution can remain disabled or explicitly controlled.

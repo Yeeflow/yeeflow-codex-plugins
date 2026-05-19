@@ -44,6 +44,8 @@ Load [yap-materialization-rules.md](references/yap-materialization-rules.md) whe
 - no remapping of `TenantID`, `CreatedBy`, or `ModifiedBy`
 - no numeric-looking generated ID exceeds signed `System.Int64` range (`9223372036854775807`), especially `LayoutID`
 - generated app-contained AI Agent/Copilot resources use numeric `Publisher`, normally `0`, rather than `null`
+- data-list workflow DefResource includes designer-open metadata: pageurls array, variables.basic/listref/filter arrays, flowPage array, graphposition, graphzoom, graphver, childshape id/resourceid, node position, and SequenceFlow source/target id/resourceid
+- app-resource access tool `resources.dataLists.items[]` entries use compact `id` plus numeric bitmask `permissions`
 
 For document libraries, also check:
 
@@ -100,7 +102,7 @@ Do not claim runtime proof from local validation alone.
 
 Validate app-level OtherModules for Connections, Agents, and Knowledges. Count AI Agent resources as Agents module entries with Type = 0 and Copilots as Type = 1. Validate Settings/Draft JSON, Components arrays, tool Settings.Data.Value references, connected-Agent references, connection references, publisher metadata, and redaction-sensitive Config keys.
 
-Use hard errors only for generated-final invalid JSON, missing generated IDs, missing/null/non-numeric generated AI resource `Publisher`, unresolved generated-final tool references, signed `System.Int64` overflow IDs, or embedded secret/token/password/API-key values. Use warnings/dependencies for connection-backed tools, credentialstype/run-as settings, OpenAPI operations, application-resource access, and runtime-sensitive external calls.
+Use hard errors only for generated-final invalid JSON, missing generated IDs, missing/null/non-numeric generated AI resource `Publisher`, unresolved generated-final tool references, invalid app-resource access list entries or non-numeric permissions, list-workflow designer shape gaps, signed `System.Int64` overflow IDs, or embedded secret/token/password/API-key values. Use warnings/dependencies for connection-backed tools, credentialstype/run-as settings, OpenAPI operations, application-resource access, and runtime-sensitive external calls.
 <!-- agent-copilot-application-resource-learning:end -->
 
 <!-- scheduled-workflow-ai-assistant-learning:start -->

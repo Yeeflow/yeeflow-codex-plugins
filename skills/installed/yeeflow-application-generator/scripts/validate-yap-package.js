@@ -1633,6 +1633,7 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     }
     if (!def) return;
     if (def.defkey && key && String(def.defkey) !== key) issue(report, "warning", "FORM_DEFKEY_MISMATCH", "Form Key and decoded Def defkey differ.", { form: formName, key, defkey: def.defkey });
+    validateWorkflowDesignerCompatibility(form, def, report);
     if (scheduledLike) validateScheduledWorkflow(form, def, report);
     else validateListWorkflowRegistration(form, listsById, fieldsByList, report);
     if (approvalLike) validateApprovalDef(def, form, report, listsById, fieldsByList);
@@ -1643,6 +1644,46 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "AI")) issue(report, "dependency", "AI_NODE_PRESENT", "AI node present in workflow; validate agent/tool dependencies before generated package use.", { form: formName, key });
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "HttpRequest")) issue(report, "dependency", "HTTP_REQUEST_NODE_PRESENT", "HTTP request node present; external connection/credential dependency must be resolved.", { form: formName, key });
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "GenerateDocument")) issue(report, "dependency", "GENERATE_DOCUMENT_NODE_PRESENT", "Document generation node present; template/library dependencies must be resolved.", { form: formName, key });
+  });
+}
+
+function validateWorkflowDesignerCompatibility(form, def, report) {
+  const severity = generatorFinalSeverity(report);
+  const formName = safeString(form.Name);
+  const key = safeString(form.Key);
+  if (!Array.isArray(def.pageurls)) issue(report, severity, "WORKFLOW_DEF_PAGEURLS_NOT_ARRAY", "Workflow designer expects DefResource.pageurls to be an array, even for list workflows with no pages.", { form: formName, key });
+  if (!Array.isArray(def.flowPage)) issue(report, severity, "WORKFLOW_DEF_FLOWPAGE_NOT_ARRAY", "Workflow designer expects DefResource.flowPage to be an array.", { form: formName, key });
+  if (!isObject(def.variables)) {
+    issue(report, severity, "WORKFLOW_DEF_VARIABLES_INVALID", "Workflow designer expects DefResource.variables to be an object with basic/listref/filter arrays.", { form: formName, key });
+  } else {
+    for (const group of ["basic", "listref", "filter"]) {
+      if (!Array.isArray(def.variables[group])) {
+        issue(report, severity, "WORKFLOW_DEF_VARIABLE_GROUP_NOT_ARRAY", "Workflow designer expects DefResource.variables.basic/listref/filter to be arrays.", { form: formName, key, group });
+      }
+    }
+  }
+  if (!isObject(def.graphposition)) issue(report, severity, "WORKFLOW_DEF_GRAPHPOSITION_MISSING", "Workflow designer expects DefResource.graphposition metadata.", { form: formName, key });
+  if (def.graphzoom === undefined) issue(report, severity, "WORKFLOW_DEF_GRAPHZOOM_MISSING", "Workflow designer expects DefResource.graphzoom metadata.", { form: formName, key });
+  if (def.graphver === undefined) issue(report, severity, "WORKFLOW_DEF_GRAPHVER_MISSING", "Workflow designer expects DefResource.graphver metadata.", { form: formName, key });
+
+  const shapes = collectShapes(def);
+  shapes.forEach((shape, index) => {
+    const type = shapeType(shape);
+    const id = safeString(shape.id);
+    const resourceId = safeString(shape.resourceid);
+    if (!id || !resourceId) {
+      issue(report, severity, "WORKFLOW_SHAPE_ID_MISSING", "Workflow designer expects each childshape to include both id and resourceid.", { form: formName, key, index, type, id, resourceid: resourceId });
+    }
+    if (type === "SequenceFlow") {
+      if (!shape.source || !safeString(shape.source.id) || !safeString(shape.source.resourceid)) {
+        issue(report, severity, "WORKFLOW_SEQUENCE_SOURCE_INVALID", "SequenceFlow source should include id and resourceid.", { form: formName, key, index });
+      }
+      if (!shape.target || !safeString(shape.target.id) || !safeString(shape.target.resourceid)) {
+        issue(report, severity, "WORKFLOW_SEQUENCE_TARGET_INVALID", "SequenceFlow target should include id and resourceid.", { form: formName, key, index });
+      }
+    } else if (!isObject(shape.position)) {
+      issue(report, severity, "WORKFLOW_NODE_POSITION_MISSING", "Workflow designer expects non-sequence workflow nodes to include position metadata.", { form: formName, key, index, type });
+    }
   });
 }
 
@@ -2208,12 +2249,6 @@ function validateAgentCopilotModules(data, listsById, report) {
       }
       if (connectionIds.has(value)) {
         issue(report, "dependency", "AI_TOOL_EXTERNAL_CONNECTION_REFERENCE", "AI tool references an application connection. Runtime testing must not call the external system without safe test credentials.", { aiResource: resourceName, component: componentName, connectionId: value, credentialstype: componentSettings.credentialstype || null });
-      } else if (listsById.has(value)) {
-        const list = listsById.get(value);
-        if (!Array.isArray(componentSettings.Inputs)) issue(report, "warning", "AI_LIST_TOOL_INPUTS_NOT_ARRAY", "List-backed AI tool Settings.Inputs should be an array.", { aiResource: resourceName, component: componentName, list: list.title });
-        if (!Array.isArray(componentSettings.Outputs)) issue(report, "warning", "AI_LIST_TOOL_OUTPUTS_NOT_ARRAY", "List-backed AI tool Settings.Outputs should be an array.", { aiResource: resourceName, component: componentName, list: list.title });
-      } else if (aiResourceIds.has(value)) {
-        issue(report, "dependency", "AI_TOOL_CONNECTED_AGENT_REFERENCE", "AI tool references another AI Agent resource. Generated packages must include and remap the target Agent/Copilot together or defer the binding.", { aiResource: resourceName, component: componentName, targetResourceId: value });
       } else if (value === rootListSetId) {
         if (!isObject(componentSettings.resources)) {
           issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_RESOURCES_MISSING", "Application-resource access tool should include Settings.resources when exporting selectable app resources; absence may mean all resources are implied.", { aiResource: resourceName, component: componentName });
@@ -2225,7 +2260,7 @@ function validateAgentCopilotModules(data, listsById, report) {
           dataListItems.forEach((entry, entryIndex) => {
             const resourceListId = safeString(entry && entry.id);
             if (!resourceListId) {
-              issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_DATALIST_ID_MISSING", "Application-resource access tool data list entry should include an id.", { aiResource: resourceName, component: componentName, entryIndex });
+              issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_DATALIST_ID_MISSING", "Application-resource access tool data list entry should include an id.", { aiResource: resourceName, component: componentName, entryIndex });
               return;
             }
             if (!listsById.has(resourceListId)) {
@@ -2235,8 +2270,21 @@ function validateAgentCopilotModules(data, listsById, report) {
                 listId: resourceListId,
               });
             }
-            if (entry.permissions !== undefined && Number.isNaN(Number(entry.permissions))) {
-              issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_INVALID", "Application-resource access tool data list permissions should be numeric when present.", {
+            if (entry.permissions === undefined || entry.permissions === null || entry.permissions === "") {
+              issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_MISSING", "Application-resource access tool data list entry should include numeric bitmask permissions.", {
+                aiResource: resourceName,
+                component: componentName,
+                listId: resourceListId,
+              });
+            } else if (Number.isNaN(Number(entry.permissions))) {
+              issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_INVALID", "Application-resource access tool data list permissions should be numeric bitmask values, not arrays or labels.", {
+                aiResource: resourceName,
+                component: componentName,
+                listId: resourceListId,
+                permissions: entry.permissions,
+              });
+            } else if ((Number(entry.permissions) & ~15) !== 0) {
+              issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_UNEXPECTED_BITS", "Application-resource access tool permissions should use known bitmask values: create/add=1, edit/update=2, delete=4, read/view=8.", {
                 aiResource: resourceName,
                 component: componentName,
                 listId: resourceListId,
@@ -2245,6 +2293,12 @@ function validateAgentCopilotModules(data, listsById, report) {
             }
           });
         }
+      } else if (listsById.has(value)) {
+        const list = listsById.get(value);
+        if (!Array.isArray(componentSettings.Inputs)) issue(report, "warning", "AI_LIST_TOOL_INPUTS_NOT_ARRAY", "List-backed AI tool Settings.Inputs should be an array.", { aiResource: resourceName, component: componentName, list: list.title });
+        if (!Array.isArray(componentSettings.Outputs)) issue(report, "warning", "AI_LIST_TOOL_OUTPUTS_NOT_ARRAY", "List-backed AI tool Settings.Outputs should be an array.", { aiResource: resourceName, component: componentName, list: list.title });
+      } else if (aiResourceIds.has(value)) {
+        issue(report, "dependency", "AI_TOOL_CONNECTED_AGENT_REFERENCE", "AI tool references another AI Agent resource. Generated packages must include and remap the target Agent/Copilot together or defer the binding.", { aiResource: resourceName, component: componentName, targetResourceId: value });
       } else {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "dependency", "AI_TOOL_DATA_REFERENCE_UNRESOLVED", "AI tool Settings.Data.Value does not resolve to an included list, connection, or current app/listset.", { aiResource: resourceName, component: componentName, value });
       }

@@ -72,6 +72,20 @@ Warnings are appropriate for:
 
 The Asia Tech visitor Copilot package used this rule for one Contacts new-item workflow and passed local materialization inspection with 0 errors and 0 warnings. This only proves package structure and local materialization, not workflow execution.
 
+## Workflow Designer Shape
+
+Data-list workflow definitions need the same designer-facing graph metadata as export-backed workflows, even when the graph is small:
+
+- `DefResource.pageurls = []`
+- `DefResource.variables = { "basic": [], "listref": [], "filter": [] }`
+- `DefResource.flowPage = []`
+- `DefResource.graphposition`, `graphzoom`, and `graphver`
+- every `childshapes[]` item includes both `id` and `resourceid`
+- non-sequence nodes include `position`
+- `SequenceFlow.source` and `SequenceFlow.target` include both `id` and `resourceid`
+
+The first Asia Tech visitor Copilot workflow used a simplified graph shape and the imported designer failed with `Cannot read properties of undefined (reading 'find')`. Regenerate list workflows with the export-like shape before claiming designer-open readiness.
+
 ## Import-Safe ID Range
 
 Yeeflow import/materialization may parse generated IDs such as `LayoutID` through `System.Int64`. Keep all numeric-looking generated IDs less than or equal to `9223372036854775807`.

@@ -152,6 +152,10 @@ Data-list workflow AI update: `Spark & AI (1).yap` proves list/process workflows
 
 Asia Tech visitor Copilot import learning: app-contained Agents/Copilot plus a data-list workflow imported successfully after two materialization fixes: generated child-list `LayoutID` values were kept inside `System.Int64`, and every AI Agent/Copilot resource used `Publisher: 0` instead of `null`. This proves import acceptance only; Copilot chat, Agent execution, image extraction, workflow execution, and row mutation still require controlled runtime tests.
 
+Asia Tech visitor Copilot post-import learning: list workflow designer opening requires export-like DefResource metadata. Generate `pageurls: []`, `variables.basic/listref/filter` arrays, `flowPage: []`, `graphposition`, `graphzoom`, `graphver`, childshape `id` plus `resourceid`, node `position`, and SequenceFlow source/target `id` plus `resourceid`. The simplified graph shape imported but the designer failed with `Cannot read properties of undefined (reading 'find')`.
+
+For app-contained AI Agent/Copilot Access application resources tools, generate compact resource permissions: `resources.dataLists.items[] = [{ id: <ListID>, permissions: <bitmask> }]`. Permission bits are create/add = `1`, update/edit = `2`, delete = `4`, read/view = `8`; combine with bitwise OR, for example read/create/update = `11`. Do not emit verbose `AppID/ListID/ListSetID/Title` resource entries or string permission arrays.
+
 ## Document Library Resource Rules
 
 Use these only after the document-library study docs and validators are present in the active workspace. `Projects Center.yap` proved that Yeeflow Document Library is a first-class app child resource, similar to a data list but not identical.
