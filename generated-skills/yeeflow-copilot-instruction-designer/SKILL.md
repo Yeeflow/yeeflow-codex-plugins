@@ -69,3 +69,9 @@ App-contained Copilots may have bound tools. Instructions should distinguish con
 
 Connected-Agent tools should be described as delegated workflows only when the target Agent binding exists. External Outlook, SharePoint, OAuth, or HTTP tools must be framed as governed and credential-sensitive.
 <!-- agent-copilot-application-resource-learning:end -->
+
+<!-- scheduled-workflow-ai-assistant-learning:start -->
+## Workflow Boundary Guidance
+
+If a Copilot discusses workflow-generated email or scheduled updates, distinguish that from Copilot tool execution. `AI Agent and Copilot Local Resource Baseline8.yap` proves workflow AI Assistant can call an Agent and a later `MailTask` can send the generated content; the Copilot should not claim it personally sends scheduled email unless a Copilot tool does so.
+<!-- scheduled-workflow-ai-assistant-learning:end -->

@@ -138,6 +138,12 @@ Keep these out of scope in v1 unless the user asks for research only:
 - external HTTP/API actions
 - complex list workflows or scheduled workflows
 
+## Scheduled Workflow Generation Boundary
+
+`AI Agent and Copilot Local Resource Baseline8.yap` proves Scheduled Workflow app resources are `Data.Forms[]` entries with `WorkflowType = 3`, `ListID = 0`, JSON-string `Settings`, and JSON-string `DefResource`. Generation is still validation-only until a safe generated package proves import/open behavior without auto-running schedules.
+
+For future generated Scheduled Workflow packages, validate schedule `Settings` (`TimeZone`, `Times[]`, `StartDate`, `Frequency`, `Interval`, optional `Values[]`, optional `IsWorkday`), workflow variables, `QueryData` list references, `AI` Agent references, and `MailTask` recipient safety. Do not generate a package that can send real email or call live AI automatically during import/open testing.
+
 ## Document Library Resource Rules
 
 Use these only after the document-library study docs and validators are present in the active workspace. `Projects Center.yap` proved that Yeeflow Document Library is a first-class app child resource, similar to a data list but not identical.

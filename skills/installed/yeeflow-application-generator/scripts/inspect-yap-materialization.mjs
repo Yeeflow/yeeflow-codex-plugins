@@ -132,6 +132,8 @@ function inspect(inputPath) {
   const rootLayouts = Array.isArray(app?.Item?.Layouts) ? app.Item.Layouts : [];
   const childLists = Array.isArray(app?.Childs) ? app.Childs : [];
   const forms = Array.isArray(app?.Forms) ? app.Forms : [];
+  const approvalForms = forms.filter((form) => Number(form?.WorkflowType) !== 3);
+  const scheduledWorkflows = forms.filter((form) => Number(form?.WorkflowType) === 3);
   const documentLibraryOnlyPackage = childLists.length > 0 && childLists.every((child) => Number(child?.ListModel?.Type) === 16);
   const layoutView = readLayoutView(rootModel, errors);
   const nav = Array.isArray(layoutView.sort) ? layoutView.sort : [];
@@ -168,7 +170,7 @@ function inspect(inputPath) {
     (documentLibraryOnlyPackage ? warnings : errors).push(issue);
   }
   if (!childLists.length) warnings.push({ code: "NO_CHILD_LISTS", message: "App has no child data lists." });
-  if (!forms.length) warnings.push({ code: "NO_FORMS", message: "App has no approval forms." });
+  if (!forms.length) warnings.push({ code: "NO_FORMS", message: "App has no workflow/form resources." });
 
   const dashboardNav = nav.filter((item) => Number(item.Type) === 103);
   if (!dashboardNav.length) {
@@ -278,14 +280,21 @@ function inspect(inputPath) {
 
   const formKeys = new Set((resource?.FormKeys || []).map(asString));
   const formNav = nav.filter((item) => Number(item.Type) === 105);
-  for (const form of forms) {
+  for (const form of approvalForms) {
     const key = asString(form.FlowKey || form.FormKey || form.Key || form.ProcCode || "");
     const procModelId = asString(form.ProcModelID);
     if (form.ListID !== 0) errors.push({ code: "FORM_LIST_ID_NOT_ZERO", message: "Packaged approval forms should use Data.Forms[].ListID = 0.", detail: { name: form.Name, listId: form.ListID } });
     if (!procModelId) errors.push({ code: "FORM_PROC_MODEL_ID_MISSING", message: "Approval form is missing ProcModelID.", detail: { name: form.Name } });
     if (key && resource && !formKeys.has(key)) warnings.push({ code: "FORM_KEY_NOT_IN_RESOURCE_FORM_KEYS", message: "Approval form key is not listed in resource.FormKeys.", detail: { name: form.Name, key } });
   }
-  if (forms.length && !formNav.length) errors.push({ code: "FORM_NAV_MISSING", message: "Package includes approval forms but root navigation has no Type 105 form entry." });
+  for (const workflow of scheduledWorkflows) {
+    const key = asString(workflow.Key || workflow.FlowKey || workflow.FormKey || workflow.ProcCode || "");
+    const procModelId = asString(workflow.ProcModelID);
+    if (workflow.ListID !== 0) errors.push({ code: "SCHEDULED_WORKFLOW_LIST_ID_NOT_ZERO", message: "Packaged Scheduled Workflow resources should use Data.Forms[].ListID = 0.", detail: { name: workflow.Name, listId: workflow.ListID } });
+    if (!procModelId) errors.push({ code: "SCHEDULED_WORKFLOW_PROC_MODEL_ID_MISSING", message: "Scheduled Workflow is missing ProcModelID.", detail: { name: workflow.Name } });
+    if (key && resource && !formKeys.has(key)) warnings.push({ code: "SCHEDULED_WORKFLOW_KEY_NOT_IN_RESOURCE_FORM_KEYS", message: "Scheduled Workflow key is not listed in resource.FormKeys; verify import behavior before generated final packages rely on it.", detail: { name: workflow.Name, key } });
+  }
+  if (approvalForms.length && !formNav.length) errors.push({ code: "FORM_NAV_MISSING", message: "Package includes approval forms but root navigation has no Type 105 form entry." });
 
   const report = {
     input: inputPath,
@@ -299,6 +308,8 @@ function inspect(inputPath) {
       rootLayouts: rootLayouts.length,
       childLists: childLists.length,
       forms: forms.length,
+      approvalForms: approvalForms.length,
+      scheduledWorkflows: scheduledWorkflows.length,
       navItems: nav.length,
       dashboardNavItems: dashboardNav.length,
     },

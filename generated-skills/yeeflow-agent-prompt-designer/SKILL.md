@@ -57,3 +57,9 @@ App-contained Agents can have Components for knowledge, list query/create/update
 
 Do not imply Outlook, SharePoint, HTTP, OpenAPI, document generation, image generation, image analysis, code interpreter, MCP, or Services runtime access unless the specific tool component is present and validated.
 <!-- agent-copilot-application-resource-learning:end -->
+
+<!-- scheduled-workflow-ai-assistant-learning:start -->
+## Workflow-Called Agent Prompt Guidance
+
+Agents called by workflow AI Assistant actions should have explicit input and output variable instructions that match the workflow mapping. The `Email generation` Agent export uses input `QueryItems` and outputs `Subject` and `Body`; prompt text asks for an email subject and inline-style HTML body. Do not imply the Agent sends email itself unless a separate `MailTask` is configured.
+<!-- scheduled-workflow-ai-assistant-learning:end -->

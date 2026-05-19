@@ -499,6 +499,7 @@ function validate(inputPath, mode, stage) {
       dataLists: 0,
       forms: 0,
       approvalForms: 0,
+      scheduledWorkflows: 0,
       listWorkflows: 0,
       reports: 0,
       dashboards: 0,
@@ -550,7 +551,8 @@ function validate(inputPath, mode, stage) {
   validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList, report, resource);
   validateReplaceIds(replaceIds, localIds, report);
   validateCustomFormDocLibraryControls(data, listsById, fieldsByList, report);
-  validateForms(data, listsById, fieldsByList, replaceIds, localIds, report);
+  const aiResourcesById = buildAiResourcesById(data);
+  validateForms(data, listsById, fieldsByList, replaceIds, localIds, report, aiResourcesById);
   validateGeneratedListRuntimeUsage(data, report);
   validateReportsDashboardsModules(data, listsById, fieldsByList, replaceIds, localIds, report);
   validateAgentCopilotModules(data, listsById, report);
@@ -1580,7 +1582,7 @@ function validateReplaceIds(replaceIds, localIds, report) {
   if (missing > 20) issue(report, "warning", "LOCAL_ID_NOT_IN_REPLACEIDS_TRUNCATED", "Additional local IDs are missing from ReplaceIds.", { additionalCount: missing - 20 });
 }
 
-function validateForms(data, listsById, fieldsByList, replaceIds, localIds, report) {
+function validateForms(data, listsById, fieldsByList, replaceIds, localIds, report, aiResourcesById = new Map()) {
   const forms = asArray(data && data.Forms);
   report.summary.forms = forms.length;
   forms.forEach((form, index) => {
@@ -1598,6 +1600,7 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     const hasApprovalTask = shapes.some((shape) => shapeType(shape) === "MultiAssignmentTask");
     const approvalLike = workflowType === "2" || (!scheduledLike && hasApprovalTask && asArray(def && def.pageurls).length >= 2);
     if (approvalLike) report.summary.approvalForms += 1;
+    else if (scheduledLike) report.summary.scheduledWorkflows += 1;
     else report.summary.listWorkflows += 1;
     report.inventories.forms.push({ name: formName, key, workflowType, kind: approvalLike ? "approval form" : scheduledLike ? "scheduled workflow" : "list/process workflow", pages: asArray(def && def.pageurls).length, nodeTypes });
     if (approvalLike && Object.prototype.hasOwnProperty.call(form, "ListID") && String(form.ListID) !== "0") {
@@ -1611,15 +1614,53 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     }
     if (!def) return;
     if (def.defkey && key && String(def.defkey) !== key) issue(report, "warning", "FORM_DEFKEY_MISMATCH", "Form Key and decoded Def defkey differ.", { form: formName, key, defkey: def.defkey });
+    if (scheduledLike) validateScheduledWorkflow(form, def, report);
     if (approvalLike) validateApprovalDef(def, form, report, listsById, fieldsByList);
     validateFormLookupControls(def, form, listsById, fieldsByList, report);
     validateWorkflowGraph(def, form, report);
     validateWorkflowActionConfigurations(def, form, report);
-    validateWorkflowReferences(def, form, listsById, fieldsByList, report);
+    validateWorkflowReferences(def, form, listsById, fieldsByList, report, aiResourcesById);
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "AI")) issue(report, "dependency", "AI_NODE_PRESENT", "AI node present in workflow; validate agent/tool dependencies before generated package use.", { form: formName, key });
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "HttpRequest")) issue(report, "dependency", "HTTP_REQUEST_NODE_PRESENT", "HTTP request node present; external connection/credential dependency must be resolved.", { form: formName, key });
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "GenerateDocument")) issue(report, "dependency", "GENERATE_DOCUMENT_NODE_PRESENT", "Document generation node present; template/library dependencies must be resolved.", { form: formName, key });
   });
+}
+
+function validateScheduledWorkflow(form, def, report) {
+  const severity = report.mode === "generator" && report.stage === "final" ? "error" : "warning";
+  const formName = safeString(form.Name);
+  const settings = isObject(form.Settings) ? form.Settings : tryParseJson(form.Settings) || {};
+  const workflowType = safeString(form.WorkflowType || def && def.workflowType);
+  if (workflowType !== "3") {
+    issue(report, severity, "SCHEDULED_WORKFLOW_TYPE_MISMATCH", "Scheduled Workflow resources should use WorkflowType = 3.", { form: formName, key: form.Key, workflowType });
+  }
+  for (const key of ["TimeZone", "Times", "StartDate", "Frequency", "Interval"]) {
+    if (settings[key] === undefined || settings[key] === null || settings[key] === "") {
+      issue(report, severity, "SCHEDULED_WORKFLOW_SETTING_MISSING", "Scheduled Workflow Settings is missing a schedule field observed in the export.", { form: formName, key: form.Key, setting: key });
+    }
+  }
+  if (settings.Times !== undefined && !Array.isArray(settings.Times)) {
+    issue(report, severity, "SCHEDULED_WORKFLOW_TIMES_INVALID", "Scheduled Workflow Settings.Times should be an array of time strings.", { form: formName, key: form.Key });
+  }
+  const frequency = safeString(settings.Frequency);
+  if (frequency && !["0", "1", "2"].includes(frequency)) {
+    issue(report, "warning", "SCHEDULED_WORKFLOW_FREQUENCY_UNSTUDIED", "Scheduled Workflow Frequency value is not proven by the current export. Observed values are 0 for daily and 1 for weekly.", { form: formName, key: form.Key, frequency });
+  }
+  if (settings.Interval !== undefined && (Number.isNaN(Number(settings.Interval)) || Number(settings.Interval) < 1)) {
+    issue(report, severity, "SCHEDULED_WORKFLOW_INTERVAL_INVALID", "Scheduled Workflow Interval should be a positive number.", { form: formName, key: form.Key, interval: settings.Interval });
+  }
+  if (frequency === "1" && !Array.isArray(settings.Values)) {
+    issue(report, severity, "SCHEDULED_WORKFLOW_WEEKLY_DAYS_MISSING", "Weekly Scheduled Workflow Settings.Values should contain selected weekday numbers.", { form: formName, key: form.Key });
+  }
+  if (Object.prototype.hasOwnProperty.call(settings, "IsWorkday") && typeof settings.IsWorkday !== "boolean") {
+    issue(report, severity, "SCHEDULED_WORKFLOW_ISWORKDAY_INVALID", "Scheduled Workflow IsWorkday should be boolean when present.", { form: formName, key: form.Key, isWorkday: settings.IsWorkday });
+  }
+  if (safeString(form.ListID) !== "0") {
+    issue(report, severity, "SCHEDULED_WORKFLOW_LISTID_NOT_ZERO", "App-level Scheduled Workflow registration should keep Data.Forms[].ListID as 0.", { form: formName, key: form.Key, listId: safeString(form.ListID) });
+  }
+  if (safeString(form.Deployed) && form.Deployed !== true) {
+    issue(report, "warning", "SCHEDULED_WORKFLOW_DEPLOYED_UNUSUAL", "Studied Scheduled Workflow resources export with Deployed true; confirm runtime behavior if generated packages differ.", { form: formName, key: form.Key, deployed: form.Deployed });
+  }
 }
 
 function validateFormLookupControls(def, form, listsById, fieldsByList, report) {
@@ -1862,7 +1903,7 @@ function validateWorkflowActionConfigurations(def, form, report) {
   });
 }
 
-function validateWorkflowReferences(def, form, listsById, fieldsByList, report) {
+function validateWorkflowReferences(def, form, listsById, fieldsByList, report, aiResourcesById = new Map()) {
   collectShapes(def).forEach((shape) => {
     const type = shapeType(shape);
     const props = shape.properties || {};
@@ -1882,7 +1923,35 @@ function validateWorkflowReferences(def, form, listsById, fieldsByList, report) 
       const listId = safeString(props.listid || props.ListID || props.sourceListId || props.sourceListID);
       if (listId && !listsById.has(listId)) issue(report, report.mode === "generator" ? "error" : "dependency", "QUERYDATA_TARGET_UNRESOLVED", "QueryData target list does not resolve inside package.", { form: form.Name, node: props.name || shapeId(shape), listId });
     }
+    if (type === "AI") {
+      const agentId = safeString(props.data && props.data.AgentID);
+      if (safeString(props.type) === "agent") {
+        if (!agentId) {
+          issue(report, report.mode === "generator" ? "error" : "warning", "AI_ACTION_AGENT_REFERENCE_MISSING", "AI Assistant workflow action in agent mode is missing properties.data.AgentID.", { form: form.Name, node: props.name || shapeId(shape) });
+        } else if (!aiResourcesById.has(agentId)) {
+          issue(report, report.mode === "generator" ? "error" : "dependency", "AI_ACTION_AGENT_REFERENCE_UNRESOLVED", "AI Assistant workflow action references an AI Agent not included in the package.", { form: form.Name, node: props.name || shapeId(shape), agentId });
+        }
+      }
+      for (const output of asArray(props.outputVariables)) {
+        const target = output && output.value;
+        if (!isObject(target) || !safeString(target.prefix) || !safeString(target.value)) {
+          issue(report, report.mode === "generator" ? "error" : "warning", "AI_ACTION_OUTPUT_MAPPING_INVALID", "AI Assistant output variable should map to a workflow variable using value.prefix and value.value.", { form: form.Name, node: props.name || shapeId(shape), outputId: output && output.id || null });
+        }
+      }
+    }
   });
+}
+
+function buildAiResourcesById(data) {
+  const out = new Map();
+  for (const module of asArray(data && data.OtherModules)) {
+    if (safeString(module.Type) !== "Agents") continue;
+    for (const item of asArray(module.Data)) {
+      const id = safeString(item && item.ID);
+      if (id) out.set(id, item);
+    }
+  }
+  return out;
 }
 
 function validateReportsDashboardsModules(data, listsById, fieldsByList, replaceIds, localIds, report) {

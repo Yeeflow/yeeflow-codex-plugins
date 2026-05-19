@@ -41,6 +41,8 @@ Prefer Yeeflow native configuration in this order:
 7. AI actions
 8. custom code control
 
+AI action export learning: `AI Agent and Copilot Local Resource Baseline8.yap` proves the workflow graph `AI` node can call an app-contained AI Agent with `properties.type = "agent"`, `properties.data.AgentID`, input variable mappings, output variable mappings, and optional context enrichment. The export proof is from Scheduled Workflow (`WorkflowType = 3`), but approval/list workflows should validate the same node shape if reused. Do not execute AI actions in runtime tests unless the Agent, input data, and call scope are explicitly safe.
+
 When an approval form depends on master/reference data, treat the dependency as part of the form design:
 
 - lookup controls must resolve to a real local generated list or an explicit external dependency map

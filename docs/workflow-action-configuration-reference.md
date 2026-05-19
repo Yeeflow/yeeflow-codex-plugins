@@ -72,6 +72,8 @@ Nested schema notes:
 - `properties.inputVariables`: Defines configuration for input variables (When properties.type is 'agent') 
 - `properties.outputVariables`: Defines configuration for output variables (When properties.type is 'agent') 
 
+Export-backed scheduled workflow note: `AI Agent and Copilot Local Resource Baseline8.yap` proves `properties.type = "agent"` can invoke an app-contained AI Agent from a Scheduled Workflow. The action stores the Agent reference in `properties.data.AgentID`, passes workflow variables through `properties.inputVariables[].value`, maps Agent outputs back to workflow variables through `properties.outputVariables[].value.prefix = "__variables_"`, and may enable AI Assistant context enrichment under `properties.context.selected`.
+
 ## AcrobatSign
 
 - Control types: `AcrobatSign`
@@ -439,6 +441,8 @@ Nested schema notes:
 | `properties.files.variables` | `array` | no |  |  | Specifies the variables to be replaced in the notification message. |
 | `properties.html` | `string` | no |  |  | Specifies the content of the notification message by a rich editor. |
 
+Export-backed scheduled workflow note: `AI Agent and Copilot Local Resource Baseline8.yap` proves `MailTask` inside Scheduled Workflow graphs stores recipients in `properties.to`, subjects in `properties.subject`, and body HTML in `properties.html`. Subject/body may be expression-button HTML that references workflow variables. Fixed literal recipients must be treated as runtime-sensitive and redacted in documentation.
+
 ## MultiAssignmentTask
 
 - Control types: `MultiAssignmentTask`
@@ -541,6 +545,8 @@ Nested schema notes:
 - `properties.filters`: A list of filter conditions for data filtering, supporting nested conditions(When properties.type is 'add' or 'edit') 
 - `properties.datasource`: Defines the sorting rules for data. 
 - `properties.result.fields`: Field assignment configuration for query results (When properties.result.type is 'multiple' and the selected field in properties.result.listName is of type text) 
+
+Export-backed scheduled workflow note: `AI Agent and Copilot Local Resource Baseline8.yap` proves `QueryData` can target a local app data list from a Scheduled Workflow and save a multiple-result JSON payload into a text workflow variable by using `result.listParent = "__variables_"`, `result.listName`, `result.vartype = "text"`, and `result.fields[]`. The total count can be saved with `result.totalCount` and `result.querycount_prefix = "__variables_"`.
 
 ## ResponseTo
 

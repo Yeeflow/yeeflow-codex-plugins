@@ -21,6 +21,8 @@ Use this with `workflow-action-configurations.normalized.json` when generating o
 
 - `ContentList`: require target metadata for selected-list operations; `add` and `edit` require `listdatas`; `edit` and `remove` require `wheres`; each mapping must name a target column/field and provide a source value/expression.
 - `QueryData`: require source list metadata when the action is used; `filters` must be an array of condition objects; `datasource` sort entries must include sort field and direction; `result.type` must be `single` or `multiple`; multi-result mappings must name a destination variable/list and field assignments when present.
+- `MailTask`: require a recipient, subject, and body before runtime execution. Fixed literal email recipients are runtime-sensitive and must be redacted in docs; do not execute generated tests unless the recipient is explicitly safe.
+- `AI`: for AI Assistant actions in `agent` mode, require `properties.data.AgentID`, `properties.inputVariables[]`, and `properties.outputVariables[]`; resolve `AgentID` to an included app-level AI Agent before generation is considered safe.
 - `SequenceFlow`: `conditioninfo` must be an array when present; each condition object should include an operator plus left/right operands unless it is a recognized task outcome expression from a real export.
 - `Delay`: `type` must be `duration`, `until`, or `condition`; duration mode requires count and unit; until mode requires a specific or dynamic time shape; condition mode requires `condition.conditions` array.
 - `Loop`: `loopType` must be `list`, `values`, or `number`; loop values must include prefix/type/value; `continueCondition` and `breakCondition` must parse as condition arrays when present.
@@ -31,6 +33,8 @@ Use this with `workflow-action-configurations.normalized.json` when generating o
 - Stop before building a `.ywf`, `.ydl`, or `.yap` wrapper if required action properties are missing in final mode.
 - Stop if an enum value is outside the normalized reference.
 - Stop if `ContentList` or `QueryData` targets do not resolve to package or exported-back metadata.
+- Stop if an AI Assistant workflow action references an Agent that is not included in the package.
+- Stop before runtime testing if a scheduled workflow can send real email, call live AI, or run automatically without an explicitly safe test plan.
 
 ## Quota Usage Lifecycle Pattern
 

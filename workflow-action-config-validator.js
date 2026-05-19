@@ -5,6 +5,7 @@ const { validateExpressionTokens } = require("./yeeflow-expression-utils");
 const DEFAULT_REFERENCE_PATH = path.join(__dirname, "workflow-action-configurations.normalized.json");
 const SECRET_KEY_RE = /(token|secret|password|credential|clientsecret|api[_-]?key|accesskey|authorization|bearer|pwd)/i;
 const UNSAFE_ACTION_RE = /^(AI|AzureOpenAI|Connector|HttpRequest|AcrobatSign|DocuSign|PandaDoc)$/i;
+const EMAIL_RE = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i;
 
 let cachedReference = null;
 
@@ -164,11 +165,74 @@ function validateKnownConditionalShapes(issues, action, shape, type, pointer, op
   if (UNSAFE_ACTION_RE.test(type) || action.risk === "external_or_credential_sensitive") {
     validateUnsafeAction(issues, shape, type, pointer, options);
   }
+  if (type === "MailTask") validateMailTask(issues, shape, pointer, options);
+  if (type === "AI") validateAiAction(issues, shape, pointer, options);
   if (type === "ContentList") validateContentList(issues, shape, pointer, options);
   if (type === "QueryData") validateQueryData(issues, shape, pointer, options);
   if (type === "SequenceFlow") validateSequenceFlow(issues, shape, pointer, options);
   if (type === "Delay") validateDelay(issues, shape, pointer, options);
   if (type === "Loop") validateLoop(issues, shape, pointer, options);
+}
+
+function validateMailTask(issues, shape, pointer, options) {
+  const props = shape.properties || {};
+  const severity = strictLevel(options, "warning");
+  if (valueMissing(props.to)) {
+    issue(issues, severity, "MAILTASK_RECIPIENT_MISSING", "Send email action should include a recipient expression or test recipient before runtime execution.", {
+      path: `${pointer}.properties.to`,
+      nodeId: shapeId(shape),
+    });
+  } else if (typeof props.to === "string" && EMAIL_RE.test(props.to) && !/example\.com|test/i.test(props.to)) {
+    issue(issues, "dependency", "MAILTASK_FIXED_EMAIL_RECIPIENT_RUNTIME_RISK", "Send email action contains a fixed email recipient; redact in docs and do not execute generated/runtime tests unless the recipient is explicitly safe.", {
+      path: `${pointer}.properties.to`,
+      nodeId: shapeId(shape),
+      recipientPattern: "<REDACTED_EMAIL>",
+    });
+  }
+  if (valueMissing(props.subject)) {
+    issue(issues, severity, "MAILTASK_SUBJECT_MISSING", "Send email action should include a subject literal or expression.", {
+      path: `${pointer}.properties.subject`,
+      nodeId: shapeId(shape),
+    });
+  }
+  if (valueMissing(props.html)) {
+    issue(issues, severity, "MAILTASK_BODY_MISSING", "Send email action should include body/html content.", {
+      path: `${pointer}.properties.html`,
+      nodeId: shapeId(shape),
+    });
+  }
+}
+
+function validateAiAction(issues, shape, pointer, options) {
+  const props = shape.properties || {};
+  const severity = strictLevel(options, "warning");
+  if (safeString(props.type) === "agent") {
+    const agentId = props.data && props.data.AgentID;
+    if (valueMissing(agentId)) {
+      issue(issues, severity, "AI_ACTION_AGENT_ID_MISSING", "AI Assistant workflow action in agent mode should reference an AI Agent ID.", {
+        path: `${pointer}.properties.data.AgentID`,
+        nodeId: shapeId(shape),
+      });
+    }
+  }
+  if (!Array.isArray(props.inputVariables)) {
+    issue(issues, severity, "AI_ACTION_INPUT_VARIABLES_INVALID", "AI Assistant workflow action should store inputVariables as an array.", {
+      path: `${pointer}.properties.inputVariables`,
+      nodeId: shapeId(shape),
+    });
+  }
+  if (!Array.isArray(props.outputVariables)) {
+    issue(issues, severity, "AI_ACTION_OUTPUT_VARIABLES_INVALID", "AI Assistant workflow action should store outputVariables as an array.", {
+      path: `${pointer}.properties.outputVariables`,
+      nodeId: shapeId(shape),
+    });
+  }
+  if (isObject(props.context) && props.context.enabled === true && !isObject(props.context.selected)) {
+    issue(issues, "warning", "AI_ACTION_CONTEXT_SELECTION_MISSING", "AI Assistant context enrichment is enabled but no selected context object is present.", {
+      path: `${pointer}.properties.context.selected`,
+      nodeId: shapeId(shape),
+    });
+  }
 }
 
 function validateUnsafeAction(issues, shape, type, pointer, options) {
