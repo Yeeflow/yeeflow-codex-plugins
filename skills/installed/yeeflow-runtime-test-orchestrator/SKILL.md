@@ -73,5 +73,7 @@ Do not trigger Outlook, SharePoint, OAuth, HTTP, OpenAPI, document generation, i
 
 Runtime-test Scheduled Workflow packages only after local package, graph, workflow-action, AI Agent reference, email-recipient, ReplaceIds, and secret scans pass. Safe first checks are import, app open, Scheduled Workflow visibility, designer open, recurrence UI render, timezone/working-day setting render, Query data action open, AI Assistant action open, and Send email configuration display.
 
-Do not trigger schedules, run workflows, send email, or execute AI Assistant actions unless the recipient, schedule, AI call scope, and data are explicitly safe. Classify unexecuted scheduled-workflow packages as validation-only or partial.
+The `Scheduled Workflow Safe Runtime Baseline` pass proved import/open/designer rendering for a generated package with local `Runtime Ideas`, local `Email generation`, far-future non-deployed weekly recurrence, `QueryData`, `AI`, and `MailTask` configured to `workflow.safe.test@example.com`. Classify this level as partial: import/open/configuration runtime-proven, execution not proven.
+
+Do not trigger schedules, run workflows, send email, publish workflows, or execute AI Assistant actions unless the recipient, schedule, AI call scope, and data are explicitly safe. Classify unexecuted scheduled-workflow packages as partial only when import/open/designer rendering was actually tested; otherwise classify as validation-only.
 <!-- scheduled-workflow-ai-assistant-learning:end -->

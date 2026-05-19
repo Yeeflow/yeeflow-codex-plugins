@@ -2,7 +2,64 @@
 
 Source export: `/Users/Renger/Downloads/AI Agent and Copilot Local Resource Baseline8.yap`
 
-Current milestone: validation-only. No generated package or runtime test was run in this branch.
+Current milestone: generated import/open/designer runtime baseline is partially proven. The workflow was imported and opened, but schedule execution, email delivery, and AI execution were intentionally not run.
+
+## Generated Safe Runtime Baseline
+
+Generated artifact, kept out of git: `scheduled-workflow-safe-runtime-baseline.v1.yap`
+
+Generated app: `Scheduled Workflow Safe Runtime Baseline`
+
+Runtime test date: 2026-05-19
+
+Runtime environment: `https://codex.yeeflow.com/`
+
+Generated resources:
+
+- one local data list: `Runtime Ideas`
+- one AI Agent: `Email generation`
+- one Scheduled Workflow: `Safe scheduled idea summary`
+- one dashboard/page: `Runtime Baseline`
+
+The generated workflow uses a far-future non-deployed weekly schedule:
+
+- period: `01/01/2099 ~ 31/01/2099`
+- repeat: every `1` week
+- selected days: Monday and Wednesday
+- time: `11:59PM`
+- timezone: Singapore Standard Time in package settings
+
+The workflow graph is:
+
+`Start -> Query Data -> AI assistant -> Send Email -> End`
+
+The generated `Send Email` action uses only the reserved safe test recipient `workflow.safe.test@example.com`.
+
+Runtime result: partial. Import/open/designer rendering is runtime-proven; execution is not runtime-proven.
+
+Observed runtime proof:
+
+- package imported into the `AI Generation` workspace
+- app appeared as `Scheduled Workflow Safe Runtime Baseline`
+- app opened and was not an empty shell
+- `Runtime Ideas` opened and rendered two harmless sample rows
+- Application Settings showed one Scheduled Workflow resource with key `SWRT`
+- Workflow Definition listed `Safe scheduled idea summary` as a Scheduled workflow
+- workflow detail page rendered recurrence settings and workflow variables
+- variables rendered: `EmailBody`, `EmailSubject`, `QueryAmount`, `QueryItems`, plus system attachment variable
+- workflow designer opened
+- designer rendered `Query Data`, `AI assistant`, `Send Email`, `Start`, and `End` nodes
+- `Query Data` node opened and targeted the local `Runtime Ideas` list
+- `AI assistant` node opened, used `Call AI agent`, referenced `Email generation`, accepted `Query Items`, and mapped outputs to `Subject` and `Body Content`
+- `Send Email` node opened and displayed `workflow.safe.test@example.com`, `Workflow Variables:Subject`, and `Workflow Variables:Body Content`
+
+Actions intentionally not tested:
+
+- Publish
+- schedule trigger
+- manual workflow run
+- email send
+- AI Assistant execution
 
 ## Local Gates
 
