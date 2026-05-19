@@ -71,3 +71,11 @@ Warnings are appropriate for:
 - the workflow `Key` is registered from the host list through `FlowMappings[].DefKey`
 
 The Asia Tech visitor Copilot package used this rule for one Contacts new-item workflow and passed local materialization inspection with 0 errors and 0 warnings. This only proves package structure and local materialization, not workflow execution.
+
+## Import-Safe ID Range
+
+Yeeflow import/materialization may parse generated IDs such as `LayoutID` through `System.Int64`. Keep all numeric-looking generated IDs less than or equal to `9223372036854775807`.
+
+The first Asia Tech visitor Copilot package generated 20-digit child-list layout IDs such as `73221000000000001001`, which failed runtime import at `Childs[0].Layouts[0].LayoutID`. Regenerated layout IDs use a 19-digit range such as `7322100000000001001`.
+
+Validators and generators should fail generated-final packages on `SYSTEM_INT64_ID_OVERFLOW` before runtime import.

@@ -26,6 +26,7 @@ const extractionAgentId = `${family}4000000000000001`;
 const advisorAgentId = `${family}4000000000000002`;
 const copilotId = `${family}4000000000000003`;
 const iconUrl = JSON.stringify({ b: "#E6F0FF", i: "fa-regular fa-address-card", c: "#0065FF" });
+const int64Max = 9223372036854775807n;
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -44,7 +45,7 @@ function listId(index) {
 }
 
 function layoutId(index, offset) {
-  return `${family}21000000000${String(index + 1).padStart(3, "0")}${String(offset).padStart(3, "0")}`;
+  return `${family}2100000000${String(index + 1).padStart(3, "0")}${String(offset).padStart(3, "0")}`;
 }
 
 function fieldId(listIndex, fieldIndex) {
@@ -902,7 +903,29 @@ function collectIds(app) {
   return [...ids];
 }
 
+function assertInt64SafeIds(value, path = "$") {
+  const overflows = [];
+  function walk(current, currentPath) {
+    if (typeof current === "string" && /^\d{16,}$/.test(current) && BigInt(current) > int64Max) {
+      overflows.push(`${currentPath}: ${current}`);
+      return;
+    }
+    if (Array.isArray(current)) {
+      current.forEach((item, index) => walk(item, `${currentPath}[${index}]`));
+      return;
+    }
+    if (current && typeof current === "object") {
+      for (const [key, item] of Object.entries(current)) walk(item, `${currentPath}.${key}`);
+    }
+  }
+  walk(value, path);
+  if (overflows.length) {
+    throw new Error(`Generated IDs exceed System.Int64 range:\n${overflows.slice(0, 20).join("\n")}`);
+  }
+}
+
 const app = buildApp();
+assertInt64SafeIds(app);
 fs.writeFileSync(outAppPath, `${JSON.stringify(app, null, 2)}\n`);
 
 const resource = {
@@ -914,6 +937,7 @@ const resource = {
   SimplePortal: null,
   Data: JSON.stringify(app),
 };
+assertInt64SafeIds(resource);
 fs.writeFileSync(outResourcePath, `${JSON.stringify(resource, null, 2)}\n`);
 
 const build = spawnSync(process.execPath, ["build-yap-wrapper.js", outResourcePath, outYapPath, "--title", "Asia Tech Visitor & Meeting Copilot", "--description", "Track visitors and meetings at Asia Tech x Singapore 2026 with Copilot-assisted capture and AI follow-up drafting."], { stdio: "inherit" });

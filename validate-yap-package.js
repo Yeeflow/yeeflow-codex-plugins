@@ -14,6 +14,7 @@ const { validateExpressionTokens } = require("./yeeflow-expression-utils");
 
 const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
+const SYSTEM_INT64_MAX = 9223372036854775807n;
 const PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
 const SECRET_KEY_RE = /(token|secret|password|credential|clientsecret|apikey|api_key|accesskey|authorization|bearer)/i;
 const HEX_COLOR_RE = /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/g;
@@ -561,12 +562,29 @@ function validate(inputPath, mode, stage) {
   validateSensitiveResources(data, report);
   validateDesignSystemColorUsage({ resource, data }, report);
   validatePlaceholders({ wrapper, resource, data }, report);
+  validateSystemInt64Range({ wrapper, resource, data }, report);
 
   if (report._largeNumbers.size) {
     issue(report, "warning", "LARGE_NUMERIC_IDS", "Large numeric IDs were preserved as strings.", { count: report._largeNumbers.size });
   }
 
   return finish(report);
+}
+
+function validateSystemInt64Range(root, report) {
+  const hits = [];
+  walk(root, (value, pointer) => {
+    if (typeof value !== "string" || !/^\d{16,}$/.test(value)) return;
+    if (BigInt(value) <= SYSTEM_INT64_MAX) return;
+    hits.push({ pointer, value });
+  });
+  const severity = generatorFinalSeverity(report);
+  for (const hit of hits.slice(0, 20)) {
+    issue(report, severity, "SYSTEM_INT64_ID_OVERFLOW", "Generated numeric ID exceeds System.Int64 range and can fail Yeeflow import/materialization.", hit);
+  }
+  if (hits.length > 20) {
+    issue(report, severity, "SYSTEM_INT64_ID_OVERFLOW_TRUNCATED", "Additional generated numeric IDs exceed System.Int64 range.", { additionalCount: hits.length - 20 });
+  }
 }
 
 function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList, report, outerResource) {

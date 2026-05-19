@@ -14,6 +14,7 @@ const { validateExpressionTokens } = require("./yeeflow-expression-utils");
 
 const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
+const SYSTEM_INT64_MAX = 9223372036854775807n;
 const PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
 const SECRET_KEY_RE = /(token|secret|password|credential|clientsecret|apikey|api_key|accesskey|authorization|bearer)/i;
 const HEX_COLOR_RE = /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/g;
@@ -286,6 +287,7 @@ function normalizeType(field) {
   if (controlType === "radio" || controlType === "dropdown" || controlType === "select") return "choice";
   if (controlType === "datepicker") return "date";
   if (controlType === "switch" || fieldType === "bit") return "boolean";
+  if (controlType === "flowstatus") return "flowstatus";
   if (controlType === "hyperlink") return "hyperlink";
   if (controlType === "list") return "list";
   if (combined.includes("file")) return "file";
@@ -499,6 +501,7 @@ function validate(inputPath, mode, stage) {
       dataLists: 0,
       forms: 0,
       approvalForms: 0,
+      scheduledWorkflows: 0,
       listWorkflows: 0,
       reports: 0,
       dashboards: 0,
@@ -550,19 +553,38 @@ function validate(inputPath, mode, stage) {
   validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList, report, resource);
   validateReplaceIds(replaceIds, localIds, report);
   validateCustomFormDocLibraryControls(data, listsById, fieldsByList, report);
-  validateForms(data, listsById, fieldsByList, replaceIds, localIds, report);
+  const aiResourcesById = buildAiResourcesById(data);
+  validateForms(data, listsById, fieldsByList, replaceIds, localIds, report, aiResourcesById);
   validateGeneratedListRuntimeUsage(data, report);
   validateReportsDashboardsModules(data, listsById, fieldsByList, replaceIds, localIds, report);
+  validateAgentCopilotModules(data, listsById, report);
   validateLookupRelationships(listsById, fieldsByList, report);
   validateSensitiveResources(data, report);
   validateDesignSystemColorUsage({ resource, data }, report);
   validatePlaceholders({ wrapper, resource, data }, report);
+  validateSystemInt64Range({ wrapper, resource, data }, report);
 
   if (report._largeNumbers.size) {
     issue(report, "warning", "LARGE_NUMERIC_IDS", "Large numeric IDs were preserved as strings.", { count: report._largeNumbers.size });
   }
 
   return finish(report);
+}
+
+function validateSystemInt64Range(root, report) {
+  const hits = [];
+  walk(root, (value, pointer) => {
+    if (typeof value !== "string" || !/^\d{16,}$/.test(value)) return;
+    if (BigInt(value) <= SYSTEM_INT64_MAX) return;
+    hits.push({ pointer, value });
+  });
+  const severity = generatorFinalSeverity(report);
+  for (const hit of hits.slice(0, 20)) {
+    issue(report, severity, "SYSTEM_INT64_ID_OVERFLOW", "Generated numeric ID exceeds System.Int64 range and can fail Yeeflow import/materialization.", hit);
+  }
+  if (hits.length > 20) {
+    issue(report, severity, "SYSTEM_INT64_ID_OVERFLOW_TRUNCATED", "Additional generated numeric IDs exceed System.Int64 range.", { additionalCount: hits.length - 20 });
+  }
 }
 
 function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList, report, outerResource) {
@@ -1579,7 +1601,7 @@ function validateReplaceIds(replaceIds, localIds, report) {
   if (missing > 20) issue(report, "warning", "LOCAL_ID_NOT_IN_REPLACEIDS_TRUNCATED", "Additional local IDs are missing from ReplaceIds.", { additionalCount: missing - 20 });
 }
 
-function validateForms(data, listsById, fieldsByList, replaceIds, localIds, report) {
+function validateForms(data, listsById, fieldsByList, replaceIds, localIds, report, aiResourcesById = new Map()) {
   const forms = asArray(data && data.Forms);
   report.summary.forms = forms.length;
   forms.forEach((form, index) => {
@@ -1597,6 +1619,7 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     const hasApprovalTask = shapes.some((shape) => shapeType(shape) === "MultiAssignmentTask");
     const approvalLike = workflowType === "2" || (!scheduledLike && hasApprovalTask && asArray(def && def.pageurls).length >= 2);
     if (approvalLike) report.summary.approvalForms += 1;
+    else if (scheduledLike) report.summary.scheduledWorkflows += 1;
     else report.summary.listWorkflows += 1;
     report.inventories.forms.push({ name: formName, key, workflowType, kind: approvalLike ? "approval form" : scheduledLike ? "scheduled workflow" : "list/process workflow", pages: asArray(def && def.pageurls).length, nodeTypes });
     if (approvalLike && Object.prototype.hasOwnProperty.call(form, "ListID") && String(form.ListID) !== "0") {
@@ -1610,15 +1633,97 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     }
     if (!def) return;
     if (def.defkey && key && String(def.defkey) !== key) issue(report, "warning", "FORM_DEFKEY_MISMATCH", "Form Key and decoded Def defkey differ.", { form: formName, key, defkey: def.defkey });
+    if (scheduledLike) validateScheduledWorkflow(form, def, report);
+    else validateListWorkflowRegistration(form, listsById, fieldsByList, report);
     if (approvalLike) validateApprovalDef(def, form, report, listsById, fieldsByList);
     validateFormLookupControls(def, form, listsById, fieldsByList, report);
     validateWorkflowGraph(def, form, report);
     validateWorkflowActionConfigurations(def, form, report);
-    validateWorkflowReferences(def, form, listsById, fieldsByList, report);
+    validateWorkflowReferences(def, form, listsById, fieldsByList, report, aiResourcesById);
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "AI")) issue(report, "dependency", "AI_NODE_PRESENT", "AI node present in workflow; validate agent/tool dependencies before generated package use.", { form: formName, key });
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "HttpRequest")) issue(report, "dependency", "HTTP_REQUEST_NODE_PRESENT", "HTTP request node present; external connection/credential dependency must be resolved.", { form: formName, key });
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "GenerateDocument")) issue(report, "dependency", "GENERATE_DOCUMENT_NODE_PRESENT", "Document generation node present; template/library dependencies must be resolved.", { form: formName, key });
   });
+}
+
+function validateListWorkflowRegistration(form, listsById, fieldsByList, report) {
+  const workflowType = safeString(form.WorkflowType);
+  if (workflowType !== "1") return;
+  const formName = safeString(form.Name);
+  const key = safeString(form.Key);
+  const listId = safeString(form.ListID);
+  if (!listId) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "LIST_WORKFLOW_LISTID_MISSING", "Data-list workflow should include a ListID that links it to its host data list.", { form: formName, key });
+    return;
+  }
+  const list = listsById.get(listId);
+  if (!list) {
+    issue(report, report.mode === "generator" ? "error" : "dependency", "LIST_WORKFLOW_LISTID_UNRESOLVED", "Data-list workflow ListID does not resolve to a package data list.", { form: formName, key, listId });
+    return;
+  }
+  const mappings = asArray(list.item && list.item.FlowMappings);
+  const mapping = mappings.find((entry) => safeString(entry.DefKey) === key);
+  if (!mapping) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "LIST_WORKFLOW_FLOWMAPPING_MISSING", "Data-list workflow has no matching FlowMappings registration on the host list.", { form: formName, key, list: list.title, listId });
+    return;
+  }
+  const mappingSetting = tryParseJson(mapping.Setting) || {};
+  if (!isObject(mappingSetting)) {
+    issue(report, "warning", "LIST_WORKFLOW_FLOWMAPPING_SETTING_INVALID", "Data-list workflow FlowMappings Setting should be parseable JSON.", { form: formName, key, list: list.title });
+  }
+  const fieldName = safeString(mapping.FieldName);
+  if (fieldName) {
+    const fields = fieldsByList.get(listId) || new Map();
+    const field = fields.get(fieldName);
+    if (!field) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "LIST_WORKFLOW_FLOWSTATUS_FIELD_UNRESOLVED", "FlowMappings FieldName does not resolve on the host data list.", { form: formName, key, list: list.title, fieldName });
+    } else if (normalizeType(field) !== "flowstatus") {
+      issue(report, "warning", "LIST_WORKFLOW_FLOWSTATUS_FIELD_TYPE_UNEXPECTED", "The mapped FlowMappings field is present but is not export-proven as a flowstatus field.", {
+        form: formName,
+        key,
+        list: list.title,
+        fieldName,
+        fieldType: normalizeType(field),
+      });
+    }
+  }
+}
+
+function validateScheduledWorkflow(form, def, report) {
+  const severity = report.mode === "generator" && report.stage === "final" ? "error" : "warning";
+  const formName = safeString(form.Name);
+  const settings = isObject(form.Settings) ? form.Settings : tryParseJson(form.Settings) || {};
+  const workflowType = safeString(form.WorkflowType || def && def.workflowType);
+  if (workflowType !== "3") {
+    issue(report, severity, "SCHEDULED_WORKFLOW_TYPE_MISMATCH", "Scheduled Workflow resources should use WorkflowType = 3.", { form: formName, key: form.Key, workflowType });
+  }
+  for (const key of ["TimeZone", "Times", "StartDate", "Frequency", "Interval"]) {
+    if (settings[key] === undefined || settings[key] === null || settings[key] === "") {
+      issue(report, severity, "SCHEDULED_WORKFLOW_SETTING_MISSING", "Scheduled Workflow Settings is missing a schedule field observed in the export.", { form: formName, key: form.Key, setting: key });
+    }
+  }
+  if (settings.Times !== undefined && !Array.isArray(settings.Times)) {
+    issue(report, severity, "SCHEDULED_WORKFLOW_TIMES_INVALID", "Scheduled Workflow Settings.Times should be an array of time strings.", { form: formName, key: form.Key });
+  }
+  const frequency = safeString(settings.Frequency);
+  if (frequency && !["0", "1", "2"].includes(frequency)) {
+    issue(report, "warning", "SCHEDULED_WORKFLOW_FREQUENCY_UNSTUDIED", "Scheduled Workflow Frequency value is not proven by the current export. Observed values are 0 for daily and 1 for weekly.", { form: formName, key: form.Key, frequency });
+  }
+  if (settings.Interval !== undefined && (Number.isNaN(Number(settings.Interval)) || Number(settings.Interval) < 1)) {
+    issue(report, severity, "SCHEDULED_WORKFLOW_INTERVAL_INVALID", "Scheduled Workflow Interval should be a positive number.", { form: formName, key: form.Key, interval: settings.Interval });
+  }
+  if (frequency === "1" && !Array.isArray(settings.Values)) {
+    issue(report, severity, "SCHEDULED_WORKFLOW_WEEKLY_DAYS_MISSING", "Weekly Scheduled Workflow Settings.Values should contain selected weekday numbers.", { form: formName, key: form.Key });
+  }
+  if (Object.prototype.hasOwnProperty.call(settings, "IsWorkday") && typeof settings.IsWorkday !== "boolean") {
+    issue(report, severity, "SCHEDULED_WORKFLOW_ISWORKDAY_INVALID", "Scheduled Workflow IsWorkday should be boolean when present.", { form: formName, key: form.Key, isWorkday: settings.IsWorkday });
+  }
+  if (safeString(form.ListID) !== "0") {
+    issue(report, severity, "SCHEDULED_WORKFLOW_LISTID_NOT_ZERO", "App-level Scheduled Workflow registration should keep Data.Forms[].ListID as 0.", { form: formName, key: form.Key, listId: safeString(form.ListID) });
+  }
+  if (safeString(form.Deployed) && form.Deployed !== true) {
+    issue(report, "warning", "SCHEDULED_WORKFLOW_DEPLOYED_UNUSUAL", "Studied Scheduled Workflow resources export with Deployed true; confirm runtime behavior if generated packages differ.", { form: formName, key: form.Key, deployed: form.Deployed });
+  }
 }
 
 function validateFormLookupControls(def, form, listsById, fieldsByList, report) {
@@ -1861,7 +1966,7 @@ function validateWorkflowActionConfigurations(def, form, report) {
   });
 }
 
-function validateWorkflowReferences(def, form, listsById, fieldsByList, report) {
+function validateWorkflowReferences(def, form, listsById, fieldsByList, report, aiResourcesById = new Map()) {
   collectShapes(def).forEach((shape) => {
     const type = shapeType(shape);
     const props = shape.properties || {};
@@ -1881,7 +1986,67 @@ function validateWorkflowReferences(def, form, listsById, fieldsByList, report) 
       const listId = safeString(props.listid || props.ListID || props.sourceListId || props.sourceListID);
       if (listId && !listsById.has(listId)) issue(report, report.mode === "generator" ? "error" : "dependency", "QUERYDATA_TARGET_UNRESOLVED", "QueryData target list does not resolve inside package.", { form: form.Name, node: props.name || shapeId(shape), listId });
     }
+    if (type === "AI") {
+      const agentId = safeString(props.data && props.data.AgentID);
+      if (safeString(props.type) === "agent") {
+        if (!agentId) {
+          issue(report, report.mode === "generator" ? "error" : "warning", "AI_ACTION_AGENT_REFERENCE_MISSING", "AI Assistant workflow action in agent mode is missing properties.data.AgentID.", { form: form.Name, node: props.name || shapeId(shape) });
+        } else if (!aiResourcesById.has(agentId)) {
+          issue(report, report.mode === "generator" ? "error" : "dependency", "AI_ACTION_AGENT_REFERENCE_UNRESOLVED", "AI Assistant workflow action references an AI Agent not included in the package.", { form: form.Name, node: props.name || shapeId(shape), agentId });
+        }
+      }
+      if (!Array.isArray(props.inputVariables)) {
+        issue(report, report.mode === "generator" ? "error" : "warning", "AI_ACTION_INPUT_VARIABLES_INVALID", "AI Assistant workflow action should store inputVariables as an array.", { form: form.Name, node: props.name || shapeId(shape) });
+      } else {
+        for (const input of props.inputVariables) {
+          if (!isObject(input) || !safeString(input.id)) {
+            issue(report, report.mode === "generator" ? "error" : "warning", "AI_ACTION_INPUT_VARIABLE_ID_MISSING", "AI Assistant workflow action input variable should include an id.", { form: form.Name, node: props.name || shapeId(shape) });
+            continue;
+          }
+          if (!safeString(input.type)) {
+            issue(report, report.mode === "generator" ? "error" : "warning", "AI_ACTION_INPUT_VARIABLE_TYPE_MISSING", "AI Assistant workflow action input variable should include a type.", { form: form.Name, node: props.name || shapeId(shape), inputId: input.id });
+          }
+          const expr = isObject(input.value) ? input.value.value : null;
+          if (safeString(input.type) === "img") {
+            if (!isObject(input.value)) {
+              issue(report, report.mode === "generator" ? "error" : "warning", "AI_ACTION_IMAGE_INPUT_VALUE_MISSING", "AI Assistant workflow image input should include a structured value mapping.", { form: form.Name, node: props.name || shapeId(shape), inputId: input.id });
+            } else if (isObject(expr) && safeString(expr.exprType) === "list_field") {
+              const valueType = safeString(expr.valueType);
+              if (valueType && !["icon-upload", "file-upload"].includes(valueType)) {
+                issue(report, "warning", "AI_ACTION_IMAGE_INPUT_VALUE_TYPE_UNSTUDIED", "Studied workflow image inputs map from list fields using valueType icon-upload or file-upload.", {
+                  form: form.Name,
+                  node: props.name || shapeId(shape),
+                  inputId: input.id,
+                  valueType,
+                });
+              }
+            }
+          }
+        }
+      }
+      if (!Array.isArray(props.outputVariables)) {
+        issue(report, report.mode === "generator" ? "error" : "warning", "AI_ACTION_OUTPUT_VARIABLES_INVALID", "AI Assistant workflow action should store outputVariables as an array.", { form: form.Name, node: props.name || shapeId(shape) });
+      }
+      for (const output of asArray(props.outputVariables)) {
+        const target = output && output.value;
+        if (!isObject(target) || !safeString(target.prefix) || !safeString(target.value)) {
+          issue(report, report.mode === "generator" ? "error" : "warning", "AI_ACTION_OUTPUT_MAPPING_INVALID", "AI Assistant output variable should map to a workflow variable using value.prefix and value.value.", { form: form.Name, node: props.name || shapeId(shape), outputId: output && output.id || null });
+        }
+      }
+    }
   });
+}
+
+function buildAiResourcesById(data) {
+  const out = new Map();
+  for (const module of asArray(data && data.OtherModules)) {
+    if (safeString(module.Type) !== "Agents") continue;
+    for (const item of asArray(module.Data)) {
+      const id = safeString(item && item.ID);
+      if (id) out.set(id, item);
+    }
+  }
+  return out;
 }
 
 function validateReportsDashboardsModules(data, listsById, fieldsByList, replaceIds, localIds, report) {
@@ -1917,11 +2082,168 @@ function validateReportsDashboardsModules(data, listsById, fieldsByList, replace
     const type = safeString(module.Type || module.type || "unknown");
     const count = Array.isArray(module.Data) ? module.Data.length : isObject(module.Data) ? Object.keys(module.Data).length : 0;
     report.inventories.modules.push({ type, count });
-    if (/agent/i.test(type)) report.summary.agents += count || 1;
-    else if (/knowledge/i.test(type)) report.summary.knowledges += count || 1;
-    else if (/copilot/i.test(type)) report.summary.copilots += count || 1;
-    else if (/connection/i.test(type)) report.summary.connections += count || 1;
-    else issue(report, report.mode === "generator" ? "warning" : "warning", "UNKNOWN_OTHER_MODULE", "OtherModules entry has an unknown module type.", { type, index });
+    if (!/^(Agents|Knowledges|Connections)$/i.test(type)) issue(report, report.mode === "generator" ? "warning" : "warning", "UNKNOWN_OTHER_MODULE", "OtherModules entry has an unknown module type.", { type, index });
+  });
+}
+
+function parseOtherModuleData(module, report, expectedType) {
+  if (!module) return [];
+  const raw = module.Data;
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === "string") {
+    const parsed = tryParseJson(raw);
+    if (Array.isArray(parsed)) return parsed;
+    issue(report, "warning", "OTHER_MODULE_DATA_JSON_INVALID", "OtherModules Data should parse to an array for studied AI/resource modules.", { type: expectedType || module.Type || null });
+    return [];
+  }
+  if (raw === undefined || raw === null) return [];
+  issue(report, "warning", "OTHER_MODULE_DATA_NOT_ARRAY", "OtherModules Data should be an array for studied AI/resource modules.", { type: expectedType || module.Type || null, dataType: typeof raw });
+  return [];
+}
+
+function validateConnectionModuleEntry(connection, index, report) {
+  const name = safeString(connection && connection.Name);
+  const id = safeString(connection && connection.ID);
+  const type = Number(connection && connection.Type);
+  if (!id) issue(report, generatorFinalSeverity(report), "CONNECTION_ID_MISSING", "Connection entries should include ID so Agent/Copilot tools can reference them.", { index, name });
+  if (!name) issue(report, "warning", "CONNECTION_NAME_MISSING", "Connection entries should include a display name.", { index, id });
+  if (!Number.isFinite(type)) {
+    issue(report, "warning", "CONNECTION_TYPE_MISSING", "Connection entry Type is missing or not numeric.", { index, name });
+  } else if (![10, 11].includes(type)) {
+    issue(report, "warning", "CONNECTION_TYPE_UNSTUDIED", "Connection entry uses a Type that is not yet proven by the AI Agent/Copilot application-resource export study.", { index, name, type });
+  }
+
+  const config = tryParseJson(connection && connection.Config) || connection && connection.Config;
+  if (!isObject(config)) {
+    issue(report, generatorFinalSeverity(report), "CONNECTION_CONFIG_INVALID", "Connection Config should be parseable object metadata.", { index, name, id });
+    return;
+  }
+
+  const configKeys = Object.keys(config);
+  if (type === 10) {
+    for (const key of ["Environment", "Timeout", "BaseUrl", "AuthenticationMethod", "AllowedMethods"]) {
+      if (config[key] === undefined) issue(report, "warning", "HTTP_CONNECTION_CONFIG_KEY_MISSING", "HTTP API / Generic connection is missing an export-proven Config key.", { connection: name, key });
+    }
+  }
+  if (type === 11) {
+    for (const key of ["Environment", "Timeout", "BaseUrl", "GrantType", "AuthorizationMode", "AuthorizationEndpoint", "TokenEndpoint", "ClientId", "Scopes", "AllowedMethods", "AuthenticationMethod"]) {
+      if (config[key] === undefined) issue(report, "warning", "OAUTH_CONNECTION_CONFIG_KEY_MISSING", "OAuth 2.0 connection is missing an export-proven Config key.", { connection: name, key });
+    }
+  }
+  if (configKeys.some((key) => /(access[_-]?token|refresh[_-]?token|id[_-]?token|secret|password|api[_-]?key|accesskey)/i.test(key) && safeString(config[key]))) {
+    issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "dependency", "CONNECTION_CONFIG_SECRET_FIELD_PRESENT", "Connection Config contains a secret/token-like field. Do not commit raw values; generated packages must use placeholders or require reconfiguration.", { connection: name });
+  }
+  if (configKeys.some((key) => /(clientid|endpoint|baseurl|authorization)/i.test(key) && safeString(config[key]))) {
+    issue(report, "dependency", "CONNECTION_CONFIG_SENSITIVE_FIELD_PRESENT", "Connection Config contains tenant/environment-sensitive metadata. Reports and references must redact the value.", { connection: name, keys: configKeys.filter((key) => /(clientid|endpoint|baseurl|authorization)/i.test(key)) });
+  }
+}
+
+function validateAgentCopilotModules(data, listsById, report) {
+  const modules = new Map(asArray(data && data.OtherModules).map((module) => [safeString(module.Type), module]));
+  const connections = parseOtherModuleData(modules.get("Connections"), report, "Connections");
+  const aiResources = parseOtherModuleData(modules.get("Agents"), report, "Agents");
+  const knowledges = parseOtherModuleData(modules.get("Knowledges"), report, "Knowledges");
+
+  report.summary.connections = connections.length;
+  report.summary.knowledges = knowledges.length;
+
+  const connectionIds = new Set(connections.map((connection) => safeString(connection.ID)).filter(Boolean));
+  const aiResourceIds = new Set(aiResources.map((resource) => safeString(resource.ID)).filter(Boolean));
+  const knowledgeNames = new Set(knowledges.map((knowledge) => safeString(knowledge.Name)).filter(Boolean));
+  const rootListSetId = safeString(data && data.Item && data.Item.ListModel && data.Item.ListModel.ListID);
+
+  connections.forEach((connection, index) => validateConnectionModuleEntry(connection, index, report));
+
+  report.summary.agents = aiResources.filter((resource) => Number(resource.Type) === 0).length;
+  report.summary.copilots = aiResources.filter((resource) => Number(resource.Type) === 1).length;
+
+  aiResources.forEach((aiResource, index) => {
+    const resourceName = safeString(aiResource.Name);
+    const resourceId = safeString(aiResource.ID);
+    const resourceType = Number(aiResource.Type);
+    if (!resourceId) issue(report, generatorFinalSeverity(report), "AI_RESOURCE_ID_MISSING", "AI Agent/Copilot resource is missing ID.", { index, name: resourceName });
+    if (!resourceName) issue(report, "warning", "AI_RESOURCE_NAME_MISSING", "AI Agent/Copilot resource is missing Name.", { index, id: resourceId });
+    if (![0, 1].includes(resourceType)) {
+      issue(report, "warning", "AI_RESOURCE_TYPE_UNSTUDIED", "AI resources in the studied Agents module use Type 0 for AI Agent and Type 1 for Copilot.", { index, name: resourceName, type: aiResource.Type });
+    }
+    const settings = tryParseJson(aiResource.Settings);
+    const draft = tryParseJson(aiResource.Draft);
+    if (!isObject(settings)) issue(report, generatorFinalSeverity(report), "AI_RESOURCE_SETTINGS_INVALID", "AI Agent/Copilot Settings should be parseable JSON object.", { name: resourceName, id: resourceId });
+    if (aiResource.Draft !== undefined && !isObject(draft)) issue(report, "warning", "AI_RESOURCE_DRAFT_INVALID", "AI Agent/Copilot Draft should be parseable JSON object when present.", { name: resourceName, id: resourceId });
+    if (resourceType === 0 && isObject(settings) && settings.Prompt === undefined) {
+      issue(report, "warning", "AI_AGENT_PROMPT_MISSING", "Studied AI Agent resources store persona/prompt content in Settings.Prompt.", { name: resourceName, id: resourceId });
+    }
+    if (resourceType === 1 && isObject(settings) && settings.Instructions === undefined) {
+      issue(report, "warning", "COPILOT_INSTRUCTIONS_MISSING", "Studied Copilot resources store user-facing guidance in Settings.Instructions.", { name: resourceName, id: resourceId });
+    }
+    if (!Array.isArray(aiResource.Components)) {
+      issue(report, generatorFinalSeverity(report), "AI_RESOURCE_COMPONENTS_NOT_ARRAY", "AI Agent/Copilot Components should be an array of knowledge/tool bindings.", { name: resourceName, id: resourceId });
+      return;
+    }
+    aiResource.Components.forEach((component, componentIndex) => {
+      const componentName = safeString(component.Name);
+      const componentType = Number(component.Type);
+      if (![1, 2].includes(componentType)) {
+        issue(report, "warning", "AI_COMPONENT_TYPE_UNSTUDIED", "Studied AI resource Components use Type 1 for knowledge and Type 2 for tools.", { aiResource: resourceName, component: componentName, componentType });
+      }
+      if (componentType === 1 && componentName && !knowledgeNames.has(componentName)) {
+        issue(report, "warning", "AI_KNOWLEDGE_COMPONENT_NAME_UNRESOLVED", "Knowledge component name does not match an included Knowledges module entry. Confirm import remapping before generation.", { aiResource: resourceName, component: componentName });
+      }
+      if (componentType !== 2) return;
+      const componentSettings = tryParseJson(component.Settings);
+      if (!isObject(componentSettings)) {
+        issue(report, generatorFinalSeverity(report), "AI_TOOL_SETTINGS_INVALID", "AI tool component Settings should be parseable JSON object.", { aiResource: resourceName, component: componentName, componentIndex });
+        return;
+      }
+      const dataRef = isObject(componentSettings.Data) ? componentSettings.Data : null;
+      const value = safeString(dataRef && dataRef.Value);
+      if (!dataRef || !value) {
+        issue(report, "warning", "AI_TOOL_DATA_REFERENCE_MISSING", "AI tool component has no Settings.Data.Value reference. It may be configuration-only, but generation should not assume a target.", { aiResource: resourceName, component: componentName });
+        return;
+      }
+      if (connectionIds.has(value)) {
+        issue(report, "dependency", "AI_TOOL_EXTERNAL_CONNECTION_REFERENCE", "AI tool references an application connection. Runtime testing must not call the external system without safe test credentials.", { aiResource: resourceName, component: componentName, connectionId: value, credentialstype: componentSettings.credentialstype || null });
+      } else if (listsById.has(value)) {
+        const list = listsById.get(value);
+        if (!Array.isArray(componentSettings.Inputs)) issue(report, "warning", "AI_LIST_TOOL_INPUTS_NOT_ARRAY", "List-backed AI tool Settings.Inputs should be an array.", { aiResource: resourceName, component: componentName, list: list.title });
+        if (!Array.isArray(componentSettings.Outputs)) issue(report, "warning", "AI_LIST_TOOL_OUTPUTS_NOT_ARRAY", "List-backed AI tool Settings.Outputs should be an array.", { aiResource: resourceName, component: componentName, list: list.title });
+      } else if (aiResourceIds.has(value)) {
+        issue(report, "dependency", "AI_TOOL_CONNECTED_AGENT_REFERENCE", "AI tool references another AI Agent resource. Generated packages must include and remap the target Agent/Copilot together or defer the binding.", { aiResource: resourceName, component: componentName, targetResourceId: value });
+      } else if (value === rootListSetId) {
+        if (!isObject(componentSettings.resources)) {
+          issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_RESOURCES_MISSING", "Application-resource access tool should include Settings.resources when exporting selectable app resources; absence may mean all resources are implied.", { aiResource: resourceName, component: componentName });
+        } else {
+          const dataListItems = asArray(componentSettings.resources.dataLists && componentSettings.resources.dataLists.items);
+          if (componentSettings.resources.dataLists && !Array.isArray(componentSettings.resources.dataLists.items)) {
+            issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_DATALISTS_INVALID", "Application-resource access tool dataLists.items should be an array when present.", { aiResource: resourceName, component: componentName });
+          }
+          dataListItems.forEach((entry, entryIndex) => {
+            const resourceListId = safeString(entry && entry.id);
+            if (!resourceListId) {
+              issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_DATALIST_ID_MISSING", "Application-resource access tool data list entry should include an id.", { aiResource: resourceName, component: componentName, entryIndex });
+              return;
+            }
+            if (!listsById.has(resourceListId)) {
+              issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "dependency", "AI_APPLICATION_RESOURCE_TOOL_DATALIST_UNRESOLVED", "Application-resource access tool references a data list that is not included in the package.", {
+                aiResource: resourceName,
+                component: componentName,
+                listId: resourceListId,
+              });
+            }
+            if (entry.permissions !== undefined && Number.isNaN(Number(entry.permissions))) {
+              issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_INVALID", "Application-resource access tool data list permissions should be numeric when present.", {
+                aiResource: resourceName,
+                component: componentName,
+                listId: resourceListId,
+                permissions: entry.permissions,
+              });
+            }
+          });
+        }
+      } else {
+        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "dependency", "AI_TOOL_DATA_REFERENCE_UNRESOLVED", "AI tool Settings.Data.Value does not resolve to an included list, connection, or current app/listset.", { aiResource: resourceName, component: componentName, value });
+      }
+    });
   });
 }
 

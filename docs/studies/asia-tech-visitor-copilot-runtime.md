@@ -48,12 +48,30 @@ Runtime target: `https://codex.yeeflow.com/`
 
 Import path used for file picker compatibility: `/private/tmp/a.yap`, copied from the generated package.
 
-Runtime-proven in this pass:
+Initial runtime result:
 
 - The package import dialog accepted the generated package.
 - The import dialog populated the app name and description as `Asia Tech Visitor & Meeting Copilot`.
-- After import, the `Asia Tech Visitor & Meeting Copilot` app card appeared in the Yeeflow `AI Generation` workspace.
-- No import failure label was observed on the new app card.
+- After import, the `Asia Tech Visitor & Meeting Copilot` app card appeared in the Yeeflow `AI Generation` workspace with an `Import failed` label.
+
+Failure detail reported by Yeeflow:
+
+- Path: `Childs[0].Layouts[0].LayoutID`
+- Value: `73221000000000001001`
+- Error: value could not convert to `System.Int64`; value was too large or too small for an `Int64`.
+
+Root cause:
+
+- The generator's child-list `LayoutID` function emitted 20-digit IDs.
+- Yeeflow imports those layout IDs through a signed 64-bit integer path.
+- `73221000000000001001` is greater than `System.Int64.MaxValue` (`9223372036854775807`), so server-side import/materialization failed even though local JSON parsing and graph validation passed.
+
+Fix applied:
+
+- Child-list layout IDs now use a 19-digit `7322100000000001001`-style range.
+- The generator now fails fast if any numeric-looking generated ID exceeds signed 64-bit range.
+- `validate-yap-package.js` now reports `SYSTEM_INT64_ID_OVERFLOW` for generated final packages before runtime import.
+- The regenerated package has 0 signed 64-bit overflow IDs in the decoded app definition and wrapper resource.
 
 Not completed in this pass:
 
@@ -85,10 +103,15 @@ No real event visitors, attendee data, business-card images, credentials, tokens
 
 Runtime-proven:
 
-- Import acceptance.
-- App card presence after import.
+- Upload/import dialog acceptance.
+- Server-side import failure for oversized `LayoutID` values.
 
-Locally validated plus import-contained:
+Locally fixed and validated after failure:
+
+- Child-list layout IDs are now inside signed 64-bit range.
+- Package validation rerun after the fix reports 0 `SYSTEM_INT64_ID_OVERFLOW` errors.
+
+Locally validated:
 
 - App data model.
 - App-contained Copilot resource.
@@ -109,8 +132,10 @@ Validation-only / safety-deferred:
 
 ## Follow-Up Runtime Pass
 
-The next runtime pass should focus on opening the imported app and inspecting configuration without running AI execution:
+The next runtime pass should first retry import with the regenerated package, then inspect configuration without running AI execution:
 
+- delete or ignore the failed imported card
+- import the regenerated `asia-tech-visitor-meeting-copilot.v1.yap`
 - Refresh the Yeeflow workspace and open the app from its card or app context menu.
 - Confirm all 4 data lists open.
 - Confirm both dashboards render.
