@@ -132,6 +132,10 @@ function inspect(inputPath) {
   const rootLayouts = Array.isArray(app?.Item?.Layouts) ? app.Item.Layouts : [];
   const childLists = Array.isArray(app?.Childs) ? app.Childs : [];
   const forms = Array.isArray(app?.Forms) ? app.Forms : [];
+  const approvalForms = forms.filter((form) => ![1, 3].includes(Number(form?.WorkflowType)));
+  const listWorkflows = forms.filter((form) => Number(form?.WorkflowType) === 1);
+  const scheduledWorkflows = forms.filter((form) => Number(form?.WorkflowType) === 3);
+  const documentLibraryOnlyPackage = childLists.length > 0 && childLists.every((child) => Number(child?.ListModel?.Type) === 16);
   const layoutView = readLayoutView(rootModel, errors);
   const nav = Array.isArray(layoutView.sort) ? layoutView.sort : [];
   const navByListId = new Map(nav.map((item) => [asString(item.ListID), item]));
@@ -158,13 +162,22 @@ function inspect(inputPath) {
       });
     }
   }
-  if (!nav.length) errors.push({ code: "ROOT_NAV_EMPTY", message: "Root navigation LayoutView.sort is empty, which can import as an empty shell." });
-  if (!rootLayouts.length) errors.push({ code: "ROOT_LAYOUTS_EMPTY", message: "Root app has no Item.Layouts pages." });
+  if (!nav.length) {
+    const issue = { code: "ROOT_NAV_EMPTY", message: "Root navigation LayoutView.sort is empty. Document-library-only sample exports can use only {sortVer:1}; richer generated apps can import as an empty shell if navigation is missing." };
+    (documentLibraryOnlyPackage ? warnings : errors).push(issue);
+  }
+  if (!rootLayouts.length) {
+    const issue = { code: "ROOT_LAYOUTS_EMPTY", message: "Root app has no Item.Layouts pages. Document-library-only sample exports can omit root pages; richer generated apps should include an app shell page." };
+    (documentLibraryOnlyPackage ? warnings : errors).push(issue);
+  }
   if (!childLists.length) warnings.push({ code: "NO_CHILD_LISTS", message: "App has no child data lists." });
-  if (!forms.length) warnings.push({ code: "NO_FORMS", message: "App has no approval forms." });
+  if (!forms.length) warnings.push({ code: "NO_FORMS", message: "App has no workflow/form resources." });
 
   const dashboardNav = nav.filter((item) => Number(item.Type) === 103);
-  if (!dashboardNav.length) errors.push({ code: "NO_DASHBOARD_NAV", message: "Root navigation has no Type 103 dashboard/page entry." });
+  if (!dashboardNav.length) {
+    const issue = { code: "NO_DASHBOARD_NAV", message: "Root navigation has no Type 103 dashboard/page entry. This is sample-proven for document-library-only exports but risky for richer generated apps." };
+    (documentLibraryOnlyPackage ? warnings : errors).push(issue);
+  }
   for (const item of dashboardNav) {
     const navListId = asString(item.ListID);
     const layout = rootLayoutsById.get(navListId);
@@ -205,7 +218,8 @@ function inspect(inputPath) {
     }
     const navItem = navByListId.get(listId);
     if (!navItem) {
-      errors.push({ code: "CHILD_LIST_NOT_IN_NAV", message: "Child data list is not reachable from root navigation.", detail: { title: child?.ListModel?.Title, listId } });
+      const issue = { code: "CHILD_LIST_NOT_IN_NAV", message: "Child resource is not reachable from root navigation. This is sample-proven for document-library-only exports but risky for normal data-list packages.", detail: { title: child?.ListModel?.Title, listId } };
+      (documentLibraryOnlyPackage && Number(child?.ListModel?.Type) === 16 ? warnings : errors).push(issue);
     } else if (Number(navItem.Type) !== Number(child?.ListModel?.Type || 1)) {
       warnings.push({ code: "CHILD_LIST_NAV_TYPE_MISMATCH", message: "Child data-list navigation type differs from ListModel.Type.", detail: { title: child?.ListModel?.Title, listId, navType: navItem.Type, listType: child?.ListModel?.Type } });
     }
@@ -267,14 +281,30 @@ function inspect(inputPath) {
 
   const formKeys = new Set((resource?.FormKeys || []).map(asString));
   const formNav = nav.filter((item) => Number(item.Type) === 105);
-  for (const form of forms) {
+  for (const form of approvalForms) {
     const key = asString(form.FlowKey || form.FormKey || form.Key || form.ProcCode || "");
     const procModelId = asString(form.ProcModelID);
     if (form.ListID !== 0) errors.push({ code: "FORM_LIST_ID_NOT_ZERO", message: "Packaged approval forms should use Data.Forms[].ListID = 0.", detail: { name: form.Name, listId: form.ListID } });
     if (!procModelId) errors.push({ code: "FORM_PROC_MODEL_ID_MISSING", message: "Approval form is missing ProcModelID.", detail: { name: form.Name } });
     if (key && resource && !formKeys.has(key)) warnings.push({ code: "FORM_KEY_NOT_IN_RESOURCE_FORM_KEYS", message: "Approval form key is not listed in resource.FormKeys.", detail: { name: form.Name, key } });
   }
-  if (forms.length && !formNav.length) errors.push({ code: "FORM_NAV_MISSING", message: "Package includes approval forms but root navigation has no Type 105 form entry." });
+  for (const workflow of scheduledWorkflows) {
+    const key = asString(workflow.Key || workflow.FlowKey || workflow.FormKey || workflow.ProcCode || "");
+    const procModelId = asString(workflow.ProcModelID);
+    if (workflow.ListID !== 0) errors.push({ code: "SCHEDULED_WORKFLOW_LIST_ID_NOT_ZERO", message: "Packaged Scheduled Workflow resources should use Data.Forms[].ListID = 0.", detail: { name: workflow.Name, listId: workflow.ListID } });
+    if (!procModelId) errors.push({ code: "SCHEDULED_WORKFLOW_PROC_MODEL_ID_MISSING", message: "Scheduled Workflow is missing ProcModelID.", detail: { name: workflow.Name } });
+    if (key && resource && !formKeys.has(key)) warnings.push({ code: "SCHEDULED_WORKFLOW_KEY_NOT_IN_RESOURCE_FORM_KEYS", message: "Scheduled Workflow key is not listed in resource.FormKeys; verify import behavior before generated final packages rely on it.", detail: { name: workflow.Name, key } });
+  }
+  for (const workflow of listWorkflows) {
+    const key = asString(workflow.Key || workflow.FlowKey || workflow.FormKey || workflow.ProcCode || "");
+    const procModelId = asString(workflow.ProcModelID);
+    const hostListId = asString(workflow.ListID);
+    if (!hostListId || hostListId === "0") errors.push({ code: "LIST_WORKFLOW_LIST_ID_MISSING", message: "Data-list workflows should use the host data-list ID in Data.Forms[].ListID.", detail: { name: workflow.Name, listId: workflow.ListID } });
+    if (hostListId && hostListId !== "0" && !childById.has(hostListId)) errors.push({ code: "LIST_WORKFLOW_HOST_LIST_MISSING", message: "Data-list workflow ListID does not resolve to a packaged child list.", detail: { name: workflow.Name, listId: workflow.ListID } });
+    if (!procModelId) errors.push({ code: "LIST_WORKFLOW_PROC_MODEL_ID_MISSING", message: "Data-list workflow is missing ProcModelID.", detail: { name: workflow.Name } });
+    if (key && resource && !formKeys.has(key)) warnings.push({ code: "LIST_WORKFLOW_KEY_NOT_IN_RESOURCE_FORM_KEYS", message: "Data-list workflow key is not listed in resource.FormKeys; verify import behavior before generated final packages rely on it.", detail: { name: workflow.Name, key } });
+  }
+  if (approvalForms.length && !formNav.length) errors.push({ code: "FORM_NAV_MISSING", message: "Package includes approval forms but root navigation has no Type 105 form entry." });
 
   const report = {
     input: inputPath,
@@ -288,6 +318,9 @@ function inspect(inputPath) {
       rootLayouts: rootLayouts.length,
       childLists: childLists.length,
       forms: forms.length,
+      approvalForms: approvalForms.length,
+      listWorkflows: listWorkflows.length,
+      scheduledWorkflows: scheduledWorkflows.length,
       navItems: nav.length,
       dashboardNavItems: dashboardNav.length,
     },

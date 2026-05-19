@@ -49,6 +49,7 @@ Classification: generation guidance promoted from the `Spark & AI (1).yap` expor
 Hard errors are appropriate for:
 
 - missing `ListID` on a data-list workflow
+- classifying `WorkflowType = 1` data-list workflows as approval forms
 - missing or unresolved `FlowMappings.DefKey` registration for generated list workflows
 - missing or unresolved `AI.properties.data.AgentID`
 - unresolved app-resource tool list references in generator final mode
@@ -59,3 +60,14 @@ Warnings are appropriate for:
 - runtime-sensitive update tools
 - missing app-resource `resources` scoping on import-only studies
 - partially understood permission metadata
+
+## Materialization Inspection
+
+`WorkflowType = 1` data-list workflows are materialized as `Data.Forms[]` entries, but they are not approval forms. Materialization checks should report them separately as list workflows and validate that:
+
+- `Data.Forms[].ListID` is present
+- `Data.Forms[].ListID` resolves to an existing child list
+- `Data.Forms[].ProcModelID` is present
+- the workflow `Key` is registered from the host list through `FlowMappings[].DefKey`
+
+The Asia Tech visitor Copilot package used this rule for one Contacts new-item workflow and passed local materialization inspection with 0 errors and 0 warnings. This only proves package structure and local materialization, not workflow execution.
