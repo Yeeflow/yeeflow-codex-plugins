@@ -61,4 +61,6 @@ Do not hand-generate opaque .yaic PackageJson or app-bound Copilot resources fro
 ## Workflow-Aware App Export Note
 
 App-contained Agents may be referenced by Scheduled Workflow AI Assistant actions as well as by Copilot connected-Agent tools. When inspecting a Copilot-bearing app export, include `Data.Forms[].DefResource.childshapes[]` AI Agent references in the dependency map even if the Copilot itself does not call that Agent.
+
+The later `Spark & AI (1).yap` study confirms another workflow-host context for those same app-contained Agents: data-list workflows triggered by host-list `FlowMappings[].Setting.NewTrigger = true`. When a Copilot package coexists with list workflows, include current-row image-input and row-update Agent dependencies in the app-level dependency map even if the Copilot does not use them directly.
 <!-- scheduled-workflow-ai-assistant-learning:end -->

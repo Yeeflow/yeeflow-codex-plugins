@@ -1,0 +1,61 @@
+# Data-List Workflow AI Agent Generation Rules
+
+Classification: generation guidance promoted from the `Spark & AI (1).yap` export study unless otherwise marked.
+
+## Host List And Workflow Registration
+
+- Create data-list workflows as `Data.Forms[]` entries with `WorkflowType = 1`.
+- Keep `Data.Forms[].ListID` equal to the host data-list ID.
+- Register each host-list workflow in `Data.Childs[].FlowMappings[]`.
+- Keep `FlowMappings[].DefKey` equal to the workflow `Key`.
+- For new-item-triggered flows, use `FlowMappings[].Setting = {"NewTrigger": true}`.
+- When a flow-status field is used in `FlowMappings.FieldName`, ensure the field exists on the host list and is `Type = "flowstatus"`.
+
+## AI Assistant Workflow Action
+
+- Use workflow node `stencil.id = "AI"`.
+- For Agent mode, set `properties.type = "agent"`.
+- Include `properties.data.AppID`, `properties.data.ListSetID`, and `properties.data.AgentID`.
+- Store `properties.inputVariables` and `properties.outputVariables` as arrays even when outputs are empty.
+- For current-row image input, map an Agent `img` input from a list-field expression with `valueType = "icon-upload"` or `valueType = "file-upload"`.
+- For current-row identity/update binding, pass native `ListDataID` through a list-field expression.
+
+## Agent Requirements
+
+- App-contained Agents should live in `OtherModules Type = "Agents"` with resource `Type = 0`.
+- Workflow-facing Agents should define stable input IDs and types that the workflow node can bind directly.
+- For image extraction, declare the image input as `type = "img"`.
+- If the Agent must update the triggering row, give it a separate text input for the row ID rather than forcing the prompt to rediscover it.
+
+## Application Resource Access Tool
+
+- Treat the current app/listset tool shape as export-proven when:
+  - `Components[].Type = 2`
+  - `Components[].SubType = 10`
+  - `Settings.Data.Value = <current app/listset id>`
+  - `Settings.resources.dataLists.items[]` scopes allowed lists
+- Validate that every referenced scoped list exists in the package.
+- Do not guess permission integers; preserve known-good values only from export-backed shapes.
+
+## Safety Rules
+
+- Never include real uploaded images, private files, or real record values in generated baselines.
+- Do not auto-run AI/image-extraction workflows during import/open checks.
+- Do not runtime-test destructive or updating Agent tools against real business records.
+- If a safe baseline is generated, keep execution disabled or clearly non-triggered unless an explicitly safe sandbox run is approved.
+
+## Validator Guidance
+
+Hard errors are appropriate for:
+
+- missing `ListID` on a data-list workflow
+- missing or unresolved `FlowMappings.DefKey` registration for generated list workflows
+- missing or unresolved `AI.properties.data.AgentID`
+- unresolved app-resource tool list references in generator final mode
+
+Warnings are appropriate for:
+
+- image input mappings that use unproven upload control value types
+- runtime-sensitive update tools
+- missing app-resource `resources` scoping on import-only studies
+- partially understood permission metadata

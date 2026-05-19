@@ -47,4 +47,6 @@ When inspecting app-level exports, decode read-only, preserve large numeric IDs 
 ## Workflow Invocation Learning
 
 `AI Agent and Copilot Local Resource Baseline8.yap` proves app-contained AI Agents can be invoked from workflow `AI` nodes, not only from Copilots. The workflow stores the target Agent ID in `properties.data.AgentID` and maps inputs/outputs through `properties.inputVariables[]` and `properties.outputVariables[]`. When inspecting app-level exports, include workflow references to Agents in the dependency graph and do not execute live AI during validation.
+
+`Spark & AI (1).yap` adds a data-list workflow invocation case: the host list registers the workflow in `FlowMappings[]`, the workflow `AI` node maps an `icon-upload` list field into Agent input `label_image`, and native `ListDataID` into a row-ID input for same-item update behavior. When inspecting similar exports, redact uploaded-image details and record payloads, and separately map any application-resource access tool that can update app data.
 <!-- scheduled-workflow-ai-assistant-learning:end -->

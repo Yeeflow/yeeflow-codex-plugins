@@ -53,4 +53,6 @@ For runtime checks, prefer non-executing confirmation first: Agent appears, conf
 ## Workflow Invocation UI Safety
 
 When checking an Agent that is referenced by a workflow AI Assistant action, verify the Agent input/output variables match the workflow action mappings before publishing or runtime testing. Do not run the scheduled workflow or AI action from the UI unless the schedule, data, and downstream email behavior are explicitly safe.
+
+For data-list workflow cases such as `Spark & AI (1).yap`, also verify whether the workflow maps a current-row upload field into an Agent `img` input and whether the Agent has an application-resource access tool scoped to local data lists. Do not trigger the workflow from UI when the host list contains real rows or the tool can update live business data.
 <!-- scheduled-workflow-ai-assistant-learning:end -->

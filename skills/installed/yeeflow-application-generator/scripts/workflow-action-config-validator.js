@@ -227,6 +227,65 @@ function validateAiAction(issues, shape, pointer, options) {
       nodeId: shapeId(shape),
     });
   }
+  if (Array.isArray(props.inputVariables)) {
+    props.inputVariables.forEach((input, index) => {
+      if (!isObject(input)) {
+        issue(issues, severity, "AI_ACTION_INPUT_VARIABLE_INVALID", "AI Assistant workflow action inputVariables entries should be objects.", {
+          path: `${pointer}.properties.inputVariables[${index}]`,
+          nodeId: shapeId(shape),
+        });
+        return;
+      }
+      if (valueMissing(input.id)) {
+        issue(issues, severity, "AI_ACTION_INPUT_VARIABLE_ID_MISSING", "AI Assistant workflow action input variable should include an id.", {
+          path: `${pointer}.properties.inputVariables[${index}].id`,
+          nodeId: shapeId(shape),
+        });
+      }
+      if (valueMissing(input.type)) {
+        issue(issues, severity, "AI_ACTION_INPUT_VARIABLE_TYPE_MISSING", "AI Assistant workflow action input variable should include a type.", {
+          path: `${pointer}.properties.inputVariables[${index}].type`,
+          nodeId: shapeId(shape),
+        });
+      }
+      if (safeString(input.type) === "img") {
+        const value = input.value;
+        const expr = isObject(value) ? value.value : null;
+        if (!isObject(value) || value.type === undefined) {
+          issue(issues, severity, "AI_ACTION_IMAGE_INPUT_VALUE_MISSING", "AI Assistant workflow image input should include a structured value mapping.", {
+            path: `${pointer}.properties.inputVariables[${index}].value`,
+            nodeId: shapeId(shape),
+          });
+        } else if (isObject(expr) && safeString(expr.exprType) === "list_field") {
+          const valueType = safeString(expr.valueType);
+          if (valueType && !["icon-upload", "file-upload"].includes(valueType)) {
+            issue(issues, "warning", "AI_ACTION_IMAGE_INPUT_VALUE_TYPE_UNSTUDIED", "AI Assistant workflow image input mapped from a list field usually uses valueType icon-upload or file-upload in the studied exports.", {
+              path: `${pointer}.properties.inputVariables[${index}].value.value.valueType`,
+              nodeId: shapeId(shape),
+              valueType,
+            });
+          }
+        }
+      }
+    });
+  }
+  if (Array.isArray(props.outputVariables)) {
+    props.outputVariables.forEach((output, index) => {
+      if (!isObject(output)) {
+        issue(issues, severity, "AI_ACTION_OUTPUT_VARIABLE_INVALID", "AI Assistant workflow action outputVariables entries should be objects.", {
+          path: `${pointer}.properties.outputVariables[${index}]`,
+          nodeId: shapeId(shape),
+        });
+        return;
+      }
+      if (valueMissing(output.id)) {
+        issue(issues, severity, "AI_ACTION_OUTPUT_VARIABLE_ID_MISSING", "AI Assistant workflow action output variable should include an id.", {
+          path: `${pointer}.properties.outputVariables[${index}].id`,
+          nodeId: shapeId(shape),
+        });
+      }
+    });
+  }
   if (isObject(props.context) && props.context.enabled === true && !isObject(props.context.selected)) {
     issue(issues, "warning", "AI_ACTION_CONTEXT_SELECTION_MISSING", "AI Assistant context enrichment is enabled but no selected context object is present.", {
       path: `${pointer}.properties.context.selected`,

@@ -146,6 +146,8 @@ Keep these out of scope in v1 unless the user asks for research only:
 
 For generated Scheduled Workflow packages, validate schedule `Settings` (`TimeZone`, `Times[]`, `StartDate`, `Frequency`, `Interval`, optional `Values[]`, optional `IsWorkday`), workflow variables, `QueryData` list references, `AI` Agent references, and `MailTask` recipient safety. Do not generate a package that can send real email or call live AI automatically during import/open testing. Do not claim schedule trigger execution, manual run behavior, email delivery, AI Assistant execution, or workflow-triggered AI Agent execution from the safe runtime baseline unless the exact user-confirmed test scope is documented.
 
+Data-list workflow AI update: `Spark & AI (1).yap` proves list/process workflows (`WorkflowType = 1`) can register against a host data list through `FlowMappings[]` with `Setting.NewTrigger = true` and call an app-contained Agent from a workflow `AI` node. The proven current-row mapping pattern passes an `icon-upload` field into Agent input `type = "img"` and passes native `ListDataID` into a text input so the Agent can update the same row through an application-resource access tool. Generated app packages may model this only when the host list, workflow registration, Agent, and tool-scoped target lists all exist locally and runtime execution remains safely disabled until sandbox proof.
+
 ## Document Library Resource Rules
 
 Use these only after the document-library study docs and validators are present in the active workspace. `Projects Center.yap` proved that Yeeflow Document Library is a first-class app child resource, similar to a data list but not identical.

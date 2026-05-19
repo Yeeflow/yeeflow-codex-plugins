@@ -1,6 +1,6 @@
 # AI Agent Workflow Invocation
 
-Source export: `/Users/Renger/Downloads/AI Agent and Copilot Local Resource Baseline8.yap`
+Primary source export: `/Users/Renger/Downloads/AI Agent and Copilot Local Resource Baseline8.yap`
 
 Classification: export-proven invocation structure only.
 
@@ -47,7 +47,7 @@ This export reinforces that AI Agents can be invoked from more than Copilots. Th
 
 - Scheduled Workflow -> AI Assistant action -> AI Agent
 
-The user also notes AI Agents can be invoked from approval/list workflows and form actions. This export proves the workflow graph `AI` node pattern; form-action reuse remains unproven until a focused form-action export is studied.
+The later `Spark & AI (1).yap` study extends this proof to data-list workflows. In that export, `Data.Childs[].FlowMappings[].Setting.NewTrigger = true` starts a `WorkflowType = 1` list workflow, and the workflow `AI` node maps current-row `Image File` plus native `ListDataID` into Agent inputs. Form-action reuse remains unproven until a focused form-action export is studied.
 
 ## Generation Boundary
 

@@ -53,4 +53,6 @@ Reusable templates should keep operational tools as guidance unless target app r
 ## Workflow-Callable Agent Templates
 
 When an Agent is intended for workflow AI Assistant use, define input and output variables with stable IDs that workflow `AI.properties.inputVariables[]` and `AI.properties.outputVariables[]` can map. The export-proven pattern calls an app-contained Agent from Scheduled Workflow using `properties.data.AgentID`; generated app packages must include and remap the Agent with the workflow.
+
+`Spark & AI (1).yap` proves a second workflow-host pattern for the same mechanism: a data-list workflow can pass a current-row image field into Agent input `type = "img"` and pass native `ListDataID` into a text input for same-row update behavior. It also proves a current application-resource access tool shape with `Components[].Type = 2`, `SubType = 10`, `Settings.Data.Value = <current app/listset id>`, and scoped list access in `Settings.resources.dataLists.items[]`. Reusable templates should describe this as a binding requirement unless the target app/list/workflow graph is explicit.
 <!-- scheduled-workflow-ai-assistant-learning:end -->

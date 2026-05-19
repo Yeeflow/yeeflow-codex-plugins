@@ -1,6 +1,6 @@
 # Workflow AI Assistant Agent Action
 
-Source export: `/Users/Renger/Downloads/AI Agent and Copilot Local Resource Baseline8.yap`
+Primary source export: `/Users/Renger/Downloads/AI Agent and Copilot Local Resource Baseline8.yap`
 
 Classification: export-proven action shape only. AI execution was not runtime-tested in this branch.
 
@@ -63,3 +63,12 @@ The Agent output `Body` maps to workflow variable `EmailBody`.
 - Validate `inputVariables` and `outputVariables` are arrays.
 - Validate output mappings include `value.prefix` and `value.value`.
 - Treat AI execution as runtime-sensitive. Import/open/configuration checks may be safe, but running the node can call live AI services.
+
+## Data-List Workflow Extension
+
+`Spark & AI (1).yap` proves the same `AI` node family also works inside data-list workflows (`WorkflowType = 1`), not only scheduled workflows. The node still uses `properties.type = "agent"` and `properties.data.AgentID`, but input mappings can come from current-row list-field expressions:
+
+- image input: `exprType = "list_field"` with `valueType = "icon-upload"`
+- row identity input: `exprType = "list_field"` with `prop = "ListDataID"`
+
+That export did not use workflow-side `outputVariables[]`; instead, the called Agent used an app-resource access tool to update the originating row directly.

@@ -62,4 +62,6 @@ Do not imply Outlook, SharePoint, HTTP, OpenAPI, document generation, image gene
 ## Workflow-Called Agent Prompt Guidance
 
 Agents called by workflow AI Assistant actions should have explicit input and output variable instructions that match the workflow mapping. The `Email generation` Agent export uses input `QueryItems` and outputs `Subject` and `Body`; prompt text asks for an email subject and inline-style HTML body. Do not imply the Agent sends email itself unless a separate `MailTask` is configured.
+
+`Spark & AI (1).yap` extends this rule for image extraction Agents in data-list workflows: declare the image input explicitly as `type = "img"`, declare a separate text input for the originating row ID, and describe exactly how the Agent should use any application-resource access tool to update the correct row. Do not make the prompt guess which row to mutate when the workflow can pass `ListDataID` directly.
 <!-- scheduled-workflow-ai-assistant-learning:end -->
