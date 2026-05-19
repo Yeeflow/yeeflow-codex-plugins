@@ -154,6 +154,8 @@ Asia Tech visitor Copilot import learning: app-contained Agents/Copilot plus a d
 
 Asia Tech visitor Copilot post-import learning: list workflow designer opening requires export-like DefResource metadata. Generate `pageurls: []`, `variables.basic/listref/filter` arrays, `flowPage: []`, `graphposition`, `graphzoom`, `graphver`, childshape `id` plus `resourceid`, node `position`, and SequenceFlow source/target `id` plus `resourceid`. The simplified graph shape imported but the designer failed with `Cannot read properties of undefined (reading 'find')`.
 
+Asia Tech visitor Copilot trigger-condition learning: for data-list Add Item / new-item triggers, register the trigger through the host list `FlowMappings[]` row using `Setting = {"NewTrigger": true}` and `FieldName = null`. Keep `Data.Forms[].Settings = null` and `Data.Forms[].Deployed = true`. Do not bind `FlowMappings.FieldName` to a normal list field for a new-item trigger; doing so can make the frontend show an empty trigger condition and prevent the workflow designer from opening. Use flow-status `FieldName` only when a separate export-proven flow-status condition is intentionally generated.
+
 For app-contained AI Agent/Copilot Access application resources tools, generate compact resource permissions: `resources.dataLists.items[] = [{ id: <ListID>, permissions: <bitmask> }]`. Permission bits are create/add = `1`, update/edit = `2`, delete = `4`, read/view = `8`; combine with bitwise OR, for example read/create/update = `11`. Do not emit verbose `AppID/ListID/ListSetID/Title` resource entries or string permission arrays.
 
 ## Document Library Resource Rules

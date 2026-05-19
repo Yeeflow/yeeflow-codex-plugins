@@ -1712,7 +1712,16 @@ function validateListWorkflowRegistration(form, listsById, fieldsByList, report)
   if (!isObject(mappingSetting)) {
     issue(report, "warning", "LIST_WORKFLOW_FLOWMAPPING_SETTING_INVALID", "Data-list workflow FlowMappings Setting should be parseable JSON.", { form: formName, key, list: list.title });
   }
+  if (isObject(mappingSetting) && mappingSetting.NewTrigger !== true) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "LIST_WORKFLOW_NEW_TRIGGER_MISSING", "Generated data-list new-item workflows should register the trigger through FlowMappings.Setting.NewTrigger = true.", { form: formName, key, list: list.title });
+  }
+  if (form.Settings !== null && form.Settings !== undefined && safeString(form.Settings) !== "") {
+    issue(report, generatorFinalSeverity(report), "LIST_WORKFLOW_FORM_SETTINGS_NOT_NULL", "Export-proven data-list new-item workflows keep Data.Forms[].Settings null; trigger configuration belongs in FlowMappings.Setting.", { form: formName, key, list: list.title });
+  }
   const fieldName = safeString(mapping.FieldName);
+  if (isObject(mappingSetting) && mappingSetting.NewTrigger === true && fieldName) {
+    issue(report, generatorFinalSeverity(report), "LIST_WORKFLOW_NEW_TRIGGER_FIELDNAME_NOT_NULL", "Export-proven Add Item new-item triggers keep FlowMappings.FieldName null; non-null FieldName can render an empty trigger condition and break designer open.", { form: formName, key, list: list.title, fieldName });
+  }
   if (fieldName) {
     const fields = fieldsByList.get(listId) || new Map();
     const field = fields.get(fieldName);

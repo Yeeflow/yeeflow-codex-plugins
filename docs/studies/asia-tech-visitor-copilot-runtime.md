@@ -94,6 +94,14 @@ Post-import configuration issues found:
 - The generator now emits compact resource entries. Permission bits are: create/add = `1`, update/edit = `2`, delete = `4`, read/view = `8`. Combined permissions use bitwise OR, so read/create/update is `8 | 1 | 2 = 11`.
 - The validator now fails generated-final app-resource tools with missing `id`, missing permissions, or non-numeric permissions.
 
+Follow-up workflow trigger comparison:
+
+- The user manually created a second workflow, `ATX_CONTACT_AI_ANALYSIS_2`, with the same Start -> AI Assistant -> End shape. This workflow showed the trigger condition correctly as `Add Item - When creating a new item`.
+- Comparing the manual workflow with the generated one showed the generated `FlowMappings.FieldName` was incorrectly set to a normal Contacts text field. The working workflow keeps `FlowMappings.FieldName = null`.
+- The working workflow also keeps `Data.Forms[].Settings = null`, stores `{"NewTrigger": true}` only in `FlowMappings[].Setting`, and has `Data.Forms[].Deployed = true`.
+- The regenerated package now emits that trigger shape, preserves the export-like workflow designer graph metadata, and omits the unproven AI node `context` property.
+- The validator now fails generated-final data-list new-item workflows if `FlowMappings.FieldName` is non-null or if `Data.Forms[].Settings` carries trigger configuration.
+
 Not completed in this pass:
 
 - Opening the imported app from the card.

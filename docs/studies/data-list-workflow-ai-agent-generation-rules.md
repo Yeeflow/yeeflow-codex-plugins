@@ -9,6 +9,8 @@ Classification: generation guidance promoted from the `Spark & AI (1).yap` expor
 - Register each host-list workflow in `Data.Childs[].FlowMappings[]`.
 - Keep `FlowMappings[].DefKey` equal to the workflow `Key`.
 - For new-item-triggered flows, use `FlowMappings[].Setting = {"NewTrigger": true}`.
+- For Add Item / new-item triggers, keep `FlowMappings[].FieldName = null`; the trigger is not bound to a flow-status field.
+- Keep `Data.Forms[].Settings = null` for export-like data-list new-item workflows; the trigger configuration lives in `FlowMappings[].Setting`.
 - When a flow-status field is used in `FlowMappings.FieldName`, ensure the field exists on the host list and is `Type = "flowstatus"`.
 
 ## AI Assistant Workflow Action
@@ -51,6 +53,8 @@ Hard errors are appropriate for:
 - missing `ListID` on a data-list workflow
 - classifying `WorkflowType = 1` data-list workflows as approval forms
 - missing or unresolved `FlowMappings.DefKey` registration for generated list workflows
+- non-null `FlowMappings.FieldName` on generated Add Item / new-item triggers
+- non-null `Data.Forms[].Settings` on generated data-list new-item workflows
 - missing or unresolved `AI.properties.data.AgentID`
 - unresolved app-resource tool list references in generator final mode
 
@@ -85,6 +89,8 @@ Data-list workflow definitions need the same designer-facing graph metadata as e
 - `SequenceFlow.source` and `SequenceFlow.target` include both `id` and `resourceid`
 
 The first Asia Tech visitor Copilot workflow used a simplified graph shape and the imported designer failed with `Cannot read properties of undefined (reading 'find')`. Regenerate list workflows with the export-like shape before claiming designer-open readiness.
+
+The later user-created runtime comparison workflow `ATX_CONTACT_AI_ANALYSIS_2` showed one more required trigger-registration detail: the working Add Item trigger used `FlowMappings.FieldName = null`, `FlowMappings.Setting = {"NewTrigger": true}`, `Data.Forms[].Settings = null`, and `Data.Forms[].Deployed = true`. The generated workflow had `FieldName` bound to a normal text field, which made the frontend show an empty trigger condition and kept the workflow designer from opening reliably.
 
 ## Import-Safe ID Range
 

@@ -423,12 +423,21 @@ function makeList(template, spec, listIndex) {
   list.ListDatas = {};
   list.FlowMappings = listIndex === 0 ? [{
     ID: `${family}3100000000000001`,
+    TenantID: tenantId,
+    AppID: appId,
     ListID: contactsListId,
     Title: "Analyze new contact with AI",
     DefKey: "ATX_CONTACT_AI_ANALYSIS",
     Method: 0,
     Setting: JSON.stringify({ NewTrigger: true }),
-    FieldName: "Text23",
+    FieldName: null,
+    Created: now,
+    CreatedBy: userId,
+    Modified: now,
+    ModifiedBy: userId,
+    Ext1: null,
+    Ext2: null,
+    Ext3: null,
   }] : [];
   list.PublicForms = [];
   list.RemindRules = [];
@@ -802,6 +811,12 @@ function makeContactWorkflow() {
   const endId = `sid-${uuid()}`;
   const flow1 = `sid-${uuid()}`;
   const flow2 = `sid-${uuid()}`;
+  const requestTitleRule = "<input type=\"button\" data=\"${&quot;type&quot;:&quot;application&quot;,&quot;prop&quot;:&quot;FlowNo&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Tracking No.\">";
+  const startMailHtml = "Dear <input type=\"button\" data=\"${ &quot;type&quot;:&quot;user&quot;, &quot;param&quot;:{&quot;id&quot;:&quot;${\\&quot;type\\&quot;:\\&quot;application\\&quot;,\\&quot;prop\\&quot;:\\&quot;ApplicantUserID\\&quot;}&quot;},&quot;prop&quot;:&quot;Name&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Applicant:Name\">,<div><br></div><div>Your application form of&nbsp;<input type=\"button\" data=\"${&quot;type&quot;:&quot;instance&quot;,&quot;prop&quot;:&quot;Name&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Workflow Name\"> (tracking no. <input type=\"button\" data=\"${&quot;type&quot;:&quot;application&quot;,&quot;prop&quot;:&quot;FlowNo&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Form No.\">) has been submitted.<br></div><div><br></div><div><a href=\"<input type=&quot;button&quot; data=&quot;${&quot;type&quot;:&quot;application&quot;,&quot;prop&quot;:&quot;ApplicationURL&quot;}&quot; expr=&quot;__&quot; tabindex=&quot;-1&quot; value=&quot;Form Url&quot;>\">View more details</a><br></div>";
+  const endMailHtml = "Dear <input type=\"button\" data=\"${ &quot;type&quot;:&quot;user&quot;, &quot;param&quot;:{&quot;id&quot;:&quot;${\\&quot;type\\&quot;:\\&quot;application\\&quot;,\\&quot;prop\\&quot;:\\&quot;ApplicantUserID\\&quot;}&quot;},&quot;prop&quot;:&quot;Name&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Applicant:Name\">,<br><br>Your application form of&nbsp;<input type=\"button\" data=\"${&quot;type&quot;:&quot;instance&quot;,&quot;prop&quot;:&quot;Name&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Workflow Name\"> (tracking no. <input type=\"button\" data=\"${&quot;type&quot;:&quot;application&quot;,&quot;prop&quot;:&quot;FlowNo&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Form No.\">) has been completed.<br><br><a href=\"<input type=&quot;button&quot; data=&quot;${&quot;type&quot;:&quot;application&quot;,&quot;prop&quot;:&quot;ApplicationURL&quot;}&quot; expr=&quot;__&quot; tabindex=&quot;-1&quot; value=&quot;Form Url&quot;>\">View more details</a><br>";
+  const mailTo = "<input type=\"button\" data=\"${ &quot;type&quot;:&quot;user&quot;, &quot;param&quot;:{&quot;id&quot;:&quot;${\\&quot;type\\&quot;:\\&quot;application\\&quot;,\\&quot;prop\\&quot;:\\&quot;ApplicantUserID\\&quot;}&quot;},&quot;prop&quot;:&quot;Email&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Applicant:Email\">;<input type=\"button\" data=\"${ &quot;type&quot;:&quot;user&quot;, &quot;param&quot;:{&quot;id&quot;:&quot;${\\&quot;type\\&quot;:\\&quot;application\\&quot;,\\&quot;prop\\&quot;:\\&quot;CreatedBy\\&quot;}&quot;},&quot;prop&quot;:&quot;Email&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Submitter:Email\">";
+  const submitSubject = "Your application of&nbsp;<input type=\"button\" data=\"${&quot;type&quot;:&quot;instance&quot;,&quot;prop&quot;:&quot;Name&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Workflow Name\"> has been submitted";
+  const completeSubject = "Your application of&nbsp;<input type=\"button\" data=\"${&quot;type&quot;:&quot;instance&quot;,&quot;prop&quot;:&quot;Name&quot;}\" expr=\"__\" tabindex=\"-1\" value=\"Workflow Name\"> has been completed";
   const def = {
     defkey: "ATX_CONTACT_AI_ANALYSIS",
     name: "Analyze new contact with AI",
@@ -816,7 +831,7 @@ function makeContactWorkflow() {
     AppListSetID: rootId,
     iconURL: "",
     lineType: "rounded",
-    graphposition: { x: 80, y: 80, width: 520, height: 160 },
+    graphposition: { x: 200, y: 200, width: 805, height: 60 },
     graphzoom: 1,
     ext: {},
     graphver: 2,
@@ -824,11 +839,11 @@ function makeContactWorkflow() {
       {
         resourceid: startId,
         id: startId,
-        properties: { name: "Start", isenabledemail: false },
+        properties: { name: "Start", isenabledemail: false, html: startMailHtml, to: mailTo, subject: submitSubject, taskurl: "" },
         stencil: { id: "StartNoneEvent" },
         incoming: [],
         outgoing: [{ id: flow1, resourceid: flow1 }],
-        position: { x: 80, y: 120 },
+        position: { x: 200, y: 200 },
       },
       {
         resourceid: flow1,
@@ -837,6 +852,15 @@ function makeContactWorkflow() {
         stencil: { id: "SequenceFlow" },
         source: { id: startId, resourceid: startId },
         target: { id: aiId, resourceid: aiId },
+      },
+      {
+        resourceid: endId,
+        id: endId,
+        properties: { name: "End", isenabledemail: false, html: endMailHtml, to: mailTo, subject: completeSubject },
+        stencil: { id: "EndNoneEvent" },
+        incoming: [{ id: flow2, resourceid: flow2 }],
+        outgoing: [],
+        position: { x: 795, y: 200 },
       },
       {
         resourceid: aiId,
@@ -848,17 +872,16 @@ function makeContactWorkflow() {
           data: { AppID: appId, ListSetID: rootId, AgentID: advisorAgentId },
           inputVariables: [
             { id: "contact_item_id", type: "text", description: "Current Contact ListDataID.", value: listFieldValue("ListDataID", "ListDataID", "input") },
-            { id: "contact_payload", type: "text", description: "Current Contact name and company.", value: listFieldValue("Title", "FullName", "input") },
-            { id: "company_payload", type: "text", description: "Current Contact company field.", value: listFieldValue("Text1", "Company", "input") },
-            { id: "notes", type: "text", description: "Current Contact notes and extracted text.", value: listFieldValue("Text10", "UserNotesChatComments", "textarea") },
+            { id: "contact_payload", type: "text", description: "Serialized current Contact details.", value: listFieldValue("Title", "FullName", "input") },
+            { id: "company_payload", type: "text", description: "Serialized company details if available.", value: listFieldValue("Text1", "Company", "input") },
+            { id: "notes", type: "text", description: "User notes, chat comments, or extracted text.", value: listFieldValue("Text10", "UserNotesChatComments", "textarea") },
           ],
           outputVariables: [],
-          context: { enabled: true, selected: { application: true, workflowInstance: true, workflowVariables: true, workflowTasks: false } },
         },
         stencil: { id: "AI" },
         incoming: [{ id: flow1, resourceid: flow1 }],
         outgoing: [{ id: flow2, resourceid: flow2 }],
-        position: { x: 260, y: 120 },
+        position: { x: 505, y: 200 },
       },
       {
         resourceid: flow2,
@@ -867,15 +890,6 @@ function makeContactWorkflow() {
         stencil: { id: "SequenceFlow" },
         source: { id: aiId, resourceid: aiId },
         target: { id: endId, resourceid: endId },
-      },
-      {
-        resourceid: endId,
-        id: endId,
-        properties: { name: "End", isenabledemail: false },
-        stencil: { id: "EndNoneEvent" },
-        incoming: [{ id: flow2, resourceid: flow2 }],
-        outgoing: [],
-        position: { x: 480, y: 120 },
       },
     ],
   };
@@ -888,14 +902,14 @@ function makeContactWorkflow() {
     Description: "Contacts new-item workflow that calls the local Lead Fit & Follow-up Advisor Agent. Runtime execution is safety-deferred.",
     WorkflowType: 1,
     ListID: contactsListId,
-    Ext: null,
+    Ext: JSON.stringify({ RequestTitleRule: requestTitleRule }),
     FormType: 0,
     Status: 1,
-    Deployed: false,
-    NoRule: false,
+    Deployed: true,
+    NoRule: null,
     DefResource: JSON.stringify(def),
     ImgResource: null,
-    Settings: JSON.stringify({ NewTrigger: true }),
+    Settings: null,
     Created: now,
     Modified: now,
     CreatedBy: userId,

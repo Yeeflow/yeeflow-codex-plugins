@@ -49,6 +49,7 @@ Generated packages should validate:
 - AI Agent/Copilot `Publisher` is numeric, normally `0`.
 - Access application resources tool scopes reference generated lists.
 - Access application resources tool list entries use `id` plus numeric bitmask `permissions`.
+- Data-list workflow Add Item triggers use `FlowMappings.Setting.NewTrigger = true`, `FlowMappings.FieldName = null`, and `Data.Forms[].Settings = null`.
 - no external connections are required for baseline import.
 - no secrets or credential-looking values appear in generated resources.
 - no numeric-looking generated ID exceeds signed `System.Int64`.
