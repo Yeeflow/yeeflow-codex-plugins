@@ -43,6 +43,8 @@ Prefer Yeeflow native configuration in this order:
 
 AI action export learning: `AI Agent and Copilot Local Resource Baseline8.yap` proves the workflow graph `AI` node can call an app-contained AI Agent with `properties.type = "agent"`, `properties.data.AgentID`, input variable mappings, output variable mappings, and optional context enrichment. The export proof is from Scheduled Workflow (`WorkflowType = 3`), but approval/list workflows should validate the same node shape if reused. Do not execute AI actions in runtime tests unless the Agent, input data, and call scope are explicitly safe.
 
+`Spark & AI (1).yap` now proves the same `AI` workflow node family in a data-list workflow (`WorkflowType = 1`) triggered by host-list `FlowMappings[].Setting.NewTrigger = true`. That export adds two important list-workflow details: image input mapping from a current-row `icon-upload` field into Agent input `type = "img"`, and item-ID mapping from native `ListDataID` into a text input so the Agent can update the originating row through an application-resource access tool. Approval-form workflows may reuse the node family, but do not claim image-input or same-row update proof for approval forms until a focused approval export shows it.
+
 When an approval form depends on master/reference data, treat the dependency as part of the form design:
 
 - lookup controls must resolve to a real local generated list or an explicit external dependency map

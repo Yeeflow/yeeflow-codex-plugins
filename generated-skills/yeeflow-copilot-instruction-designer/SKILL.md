@@ -74,4 +74,6 @@ Connected-Agent tools should be described as delegated workflows only when the t
 ## Workflow Boundary Guidance
 
 If a Copilot discusses workflow-generated email or scheduled updates, distinguish that from Copilot tool execution. `AI Agent and Copilot Local Resource Baseline8.yap` proves workflow AI Assistant can call an Agent and a later `MailTask` can send the generated content; the Copilot should not claim it personally sends scheduled email unless a Copilot tool does so.
+
+Likewise, do not let a Copilot imply it personally performs list-triggered image extraction just because the app also contains a data-list workflow Agent. `Spark & AI (1).yap` proves a separate list workflow can pass image and row-ID inputs to an Agent and let the Agent update app data through a tool; that is workflow behavior, not Copilot chat behavior.
 <!-- scheduled-workflow-ai-assistant-learning:end -->

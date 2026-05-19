@@ -180,5 +180,7 @@ For Scheduled Workflow resources, Send email workflow actions, Query data workfl
 
 The same export proves workflow `QueryData` -> `AI` -> `MailTask` orchestration where `QueryData` writes local list JSON to a workflow variable, `AI` with `properties.type = "agent"` calls an app-contained AI Agent through `properties.data.AgentID`, maps Agent outputs back to workflow variables, and `MailTask` can use those workflow variables for subject/body.
 
+`Spark & AI (1).yap` extends the workflow AI proof to data-list workflows. The proven path is host-list `FlowMappings[].Setting.NewTrigger = true` -> `Data.Forms[]` workflow with `WorkflowType = 1` -> workflow graph `AI` node -> app-contained Agent with image input `type = "img"` bound from a list-field expression (`valueType = "icon-upload"`) plus native `ListDataID` bound into a text input. The called Agent can use an application-resource access tool (`Components[].Type = 2`, `SubType = 10`) scoped through `Settings.resources.dataLists.items[]` to update the triggering row. Study and document this path before generating any list workflow that can invoke live AI or mutate app data.
+
 Hard stop if scheduled-workflow recurrence cannot be mapped, fixed recipients cannot be made safe/redacted, AI Agent references do not resolve, Query data list references do not resolve, or runtime testing might send real email or call live AI unexpectedly.
 <!-- scheduled-workflow-ai-assistant-learning:end -->

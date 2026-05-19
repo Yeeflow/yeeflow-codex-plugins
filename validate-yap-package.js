@@ -286,6 +286,7 @@ function normalizeType(field) {
   if (controlType === "radio" || controlType === "dropdown" || controlType === "select") return "choice";
   if (controlType === "datepicker") return "date";
   if (controlType === "switch" || fieldType === "bit") return "boolean";
+  if (controlType === "flowstatus") return "flowstatus";
   if (controlType === "hyperlink") return "hyperlink";
   if (controlType === "list") return "list";
   if (combined.includes("file")) return "file";
@@ -1615,6 +1616,7 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     if (!def) return;
     if (def.defkey && key && String(def.defkey) !== key) issue(report, "warning", "FORM_DEFKEY_MISMATCH", "Form Key and decoded Def defkey differ.", { form: formName, key, defkey: def.defkey });
     if (scheduledLike) validateScheduledWorkflow(form, def, report);
+    else validateListWorkflowRegistration(form, listsById, fieldsByList, report);
     if (approvalLike) validateApprovalDef(def, form, report, listsById, fieldsByList);
     validateFormLookupControls(def, form, listsById, fieldsByList, report);
     validateWorkflowGraph(def, form, report);
@@ -1624,6 +1626,49 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "HttpRequest")) issue(report, "dependency", "HTTP_REQUEST_NODE_PRESENT", "HTTP request node present; external connection/credential dependency must be resolved.", { form: formName, key });
     if (Object.prototype.hasOwnProperty.call(nodeTypes, "GenerateDocument")) issue(report, "dependency", "GENERATE_DOCUMENT_NODE_PRESENT", "Document generation node present; template/library dependencies must be resolved.", { form: formName, key });
   });
+}
+
+function validateListWorkflowRegistration(form, listsById, fieldsByList, report) {
+  const workflowType = safeString(form.WorkflowType);
+  if (workflowType !== "1") return;
+  const formName = safeString(form.Name);
+  const key = safeString(form.Key);
+  const listId = safeString(form.ListID);
+  if (!listId) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "LIST_WORKFLOW_LISTID_MISSING", "Data-list workflow should include a ListID that links it to its host data list.", { form: formName, key });
+    return;
+  }
+  const list = listsById.get(listId);
+  if (!list) {
+    issue(report, report.mode === "generator" ? "error" : "dependency", "LIST_WORKFLOW_LISTID_UNRESOLVED", "Data-list workflow ListID does not resolve to a package data list.", { form: formName, key, listId });
+    return;
+  }
+  const mappings = asArray(list.item && list.item.FlowMappings);
+  const mapping = mappings.find((entry) => safeString(entry.DefKey) === key);
+  if (!mapping) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "LIST_WORKFLOW_FLOWMAPPING_MISSING", "Data-list workflow has no matching FlowMappings registration on the host list.", { form: formName, key, list: list.title, listId });
+    return;
+  }
+  const mappingSetting = tryParseJson(mapping.Setting) || {};
+  if (!isObject(mappingSetting)) {
+    issue(report, "warning", "LIST_WORKFLOW_FLOWMAPPING_SETTING_INVALID", "Data-list workflow FlowMappings Setting should be parseable JSON.", { form: formName, key, list: list.title });
+  }
+  const fieldName = safeString(mapping.FieldName);
+  if (fieldName) {
+    const fields = fieldsByList.get(listId) || new Map();
+    const field = fields.get(fieldName);
+    if (!field) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "LIST_WORKFLOW_FLOWSTATUS_FIELD_UNRESOLVED", "FlowMappings FieldName does not resolve on the host data list.", { form: formName, key, list: list.title, fieldName });
+    } else if (normalizeType(field) !== "flowstatus") {
+      issue(report, "warning", "LIST_WORKFLOW_FLOWSTATUS_FIELD_TYPE_UNEXPECTED", "The mapped FlowMappings field is present but is not export-proven as a flowstatus field.", {
+        form: formName,
+        key,
+        list: list.title,
+        fieldName,
+        fieldType: normalizeType(field),
+      });
+    }
+  }
 }
 
 function validateScheduledWorkflow(form, def, report) {
@@ -1932,6 +1977,38 @@ function validateWorkflowReferences(def, form, listsById, fieldsByList, report, 
           issue(report, report.mode === "generator" ? "error" : "dependency", "AI_ACTION_AGENT_REFERENCE_UNRESOLVED", "AI Assistant workflow action references an AI Agent not included in the package.", { form: form.Name, node: props.name || shapeId(shape), agentId });
         }
       }
+      if (!Array.isArray(props.inputVariables)) {
+        issue(report, report.mode === "generator" ? "error" : "warning", "AI_ACTION_INPUT_VARIABLES_INVALID", "AI Assistant workflow action should store inputVariables as an array.", { form: form.Name, node: props.name || shapeId(shape) });
+      } else {
+        for (const input of props.inputVariables) {
+          if (!isObject(input) || !safeString(input.id)) {
+            issue(report, report.mode === "generator" ? "error" : "warning", "AI_ACTION_INPUT_VARIABLE_ID_MISSING", "AI Assistant workflow action input variable should include an id.", { form: form.Name, node: props.name || shapeId(shape) });
+            continue;
+          }
+          if (!safeString(input.type)) {
+            issue(report, report.mode === "generator" ? "error" : "warning", "AI_ACTION_INPUT_VARIABLE_TYPE_MISSING", "AI Assistant workflow action input variable should include a type.", { form: form.Name, node: props.name || shapeId(shape), inputId: input.id });
+          }
+          const expr = isObject(input.value) ? input.value.value : null;
+          if (safeString(input.type) === "img") {
+            if (!isObject(input.value)) {
+              issue(report, report.mode === "generator" ? "error" : "warning", "AI_ACTION_IMAGE_INPUT_VALUE_MISSING", "AI Assistant workflow image input should include a structured value mapping.", { form: form.Name, node: props.name || shapeId(shape), inputId: input.id });
+            } else if (isObject(expr) && safeString(expr.exprType) === "list_field") {
+              const valueType = safeString(expr.valueType);
+              if (valueType && !["icon-upload", "file-upload"].includes(valueType)) {
+                issue(report, "warning", "AI_ACTION_IMAGE_INPUT_VALUE_TYPE_UNSTUDIED", "Studied workflow image inputs map from list fields using valueType icon-upload or file-upload.", {
+                  form: form.Name,
+                  node: props.name || shapeId(shape),
+                  inputId: input.id,
+                  valueType,
+                });
+              }
+            }
+          }
+        }
+      }
+      if (!Array.isArray(props.outputVariables)) {
+        issue(report, report.mode === "generator" ? "error" : "warning", "AI_ACTION_OUTPUT_VARIABLES_INVALID", "AI Assistant workflow action should store outputVariables as an array.", { form: form.Name, node: props.name || shapeId(shape) });
+      }
       for (const output of asArray(props.outputVariables)) {
         const target = output && output.value;
         if (!isObject(target) || !safeString(target.prefix) || !safeString(target.value)) {
@@ -2115,8 +2192,35 @@ function validateAgentCopilotModules(data, listsById, report) {
       } else if (aiResourceIds.has(value)) {
         issue(report, "dependency", "AI_TOOL_CONNECTED_AGENT_REFERENCE", "AI tool references another AI Agent resource. Generated packages must include and remap the target Agent/Copilot together or defer the binding.", { aiResource: resourceName, component: componentName, targetResourceId: value });
       } else if (value === rootListSetId) {
-        if (!Array.isArray(componentSettings.resources)) {
+        if (!isObject(componentSettings.resources)) {
           issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_RESOURCES_MISSING", "Application-resource access tool should include Settings.resources when exporting selectable app resources; absence may mean all resources are implied.", { aiResource: resourceName, component: componentName });
+        } else {
+          const dataListItems = asArray(componentSettings.resources.dataLists && componentSettings.resources.dataLists.items);
+          if (componentSettings.resources.dataLists && !Array.isArray(componentSettings.resources.dataLists.items)) {
+            issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_DATALISTS_INVALID", "Application-resource access tool dataLists.items should be an array when present.", { aiResource: resourceName, component: componentName });
+          }
+          dataListItems.forEach((entry, entryIndex) => {
+            const resourceListId = safeString(entry && entry.id);
+            if (!resourceListId) {
+              issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_DATALIST_ID_MISSING", "Application-resource access tool data list entry should include an id.", { aiResource: resourceName, component: componentName, entryIndex });
+              return;
+            }
+            if (!listsById.has(resourceListId)) {
+              issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "dependency", "AI_APPLICATION_RESOURCE_TOOL_DATALIST_UNRESOLVED", "Application-resource access tool references a data list that is not included in the package.", {
+                aiResource: resourceName,
+                component: componentName,
+                listId: resourceListId,
+              });
+            }
+            if (entry.permissions !== undefined && Number.isNaN(Number(entry.permissions))) {
+              issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_INVALID", "Application-resource access tool data list permissions should be numeric when present.", {
+                aiResource: resourceName,
+                component: componentName,
+                listId: resourceListId,
+                permissions: entry.permissions,
+              });
+            }
+          });
         }
       } else {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "dependency", "AI_TOOL_DATA_REFERENCE_UNRESOLVED", "AI tool Settings.Data.Value does not resolve to an included list, connection, or current app/listset.", { aiResource: resourceName, component: componentName, value });

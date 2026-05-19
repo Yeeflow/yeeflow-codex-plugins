@@ -65,6 +65,8 @@ This checks required manifest fields and icon/package mappings.
 In app-level .yap exports, Copilots are AI resources in OtherModules Type "Agents" with resource Type = 1. Settings.Instructions and Draft.Instructions are the primary instruction fields; Suggestions store quick prompts. Components can bind knowledge, other Agents, current app resources, or external connections.
 
 Reusable Copilot templates should not include app-bound Components unless the target lists, Agents, knowledge resources, and connections are explicit. Generated packages should defer or placeholder external connections and require post-import reconfiguration.
+
+When a target app also includes data-list workflow Agents, keep that dependency explicit rather than implicit. `Spark & AI (1).yap` proves list workflows can call app-contained Agents with image inputs and row-ID bindings outside Copilot chat. Reusable Copilot templates should not assume those workflow-only Agent bindings exist unless the target app graph includes them.
 <!-- agent-copilot-application-resource-learning:end -->
 
 <!-- scheduled-workflow-ai-assistant-learning:start -->
