@@ -236,7 +236,7 @@ function validateAiAction(issues, shape, pointer, options) {
 }
 
 function validateUnsafeAction(issues, shape, type, pointer, options) {
-  const level = strictLevel(options, "dependency");
+  const level = type === "AI" ? "dependency" : strictLevel(options, "dependency");
   issue(issues, level, "WORKFLOW_ACTION_EXTERNAL_OR_CREDENTIAL_DEPENDENCY", "Workflow action depends on external services, connections, AI, HTTP, signing, or credentials and must not bundle sensitive values.", {
     path: pointer,
     nodeType: type,
