@@ -42,3 +42,9 @@ The DEMO Innovation Ecosystem Platform .yap study proves that app-contained AI A
 
 When inspecting app-level exports, decode read-only, preserve large numeric IDs as strings, and redact tenant/user IDs, connection IDs, endpoints, OAuth/client metadata, token-like values, and credentials. Do not clone Components blindly into reusable templates. For generated packages, unresolved Settings.Data.Value references to lists, connections, current app/listset, or connected Agents are blockers in final mode.
 <!-- agent-copilot-application-resource-learning:end -->
+
+<!-- scheduled-workflow-ai-assistant-learning:start -->
+## Workflow Invocation Learning
+
+`AI Agent and Copilot Local Resource Baseline8.yap` proves app-contained AI Agents can be invoked from workflow `AI` nodes, not only from Copilots. The workflow stores the target Agent ID in `properties.data.AgentID` and maps inputs/outputs through `properties.inputVariables[]` and `properties.outputVariables[]`. When inspecting app-level exports, include workflow references to Agents in the dependency graph and do not execute live AI during validation.
+<!-- scheduled-workflow-ai-assistant-learning:end -->

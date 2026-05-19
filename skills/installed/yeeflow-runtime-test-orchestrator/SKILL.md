@@ -67,3 +67,11 @@ Runtime-test AI Agents and Copilots only after local package, graph, AI resource
 
 Do not trigger Outlook, SharePoint, OAuth, HTTP, OpenAPI, document generation, image generation, or destructive list mutation tools unless explicitly configured with safe test credentials and approved call scope. Classify untested AI/connection packages as validation-only or partial.
 <!-- agent-copilot-application-resource-learning:end -->
+
+<!-- scheduled-workflow-ai-assistant-learning:start -->
+## Scheduled Workflow Runtime Safety
+
+Runtime-test Scheduled Workflow packages only after local package, graph, workflow-action, AI Agent reference, email-recipient, ReplaceIds, and secret scans pass. Safe first checks are import, app open, Scheduled Workflow visibility, designer open, recurrence UI render, timezone/working-day setting render, Query data action open, AI Assistant action open, and Send email configuration display.
+
+Do not trigger schedules, run workflows, send email, or execute AI Assistant actions unless the recipient, schedule, AI call scope, and data are explicitly safe. Classify unexecuted scheduled-workflow packages as validation-only or partial.
+<!-- scheduled-workflow-ai-assistant-learning:end -->

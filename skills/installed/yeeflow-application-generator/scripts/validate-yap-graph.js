@@ -376,6 +376,7 @@ function buildContext(report, resource, data) {
     graph,
     listsById: new Map(),
     fieldsByList: new Map(),
+    aiResourcesById: buildAiResourcesById(data),
     localIds: new Set(),
     replaceIds: new Set(asArray(resource && resource.ReplaceIds).map(String)),
     unresolvedTargets: new Set(),
@@ -401,6 +402,7 @@ function validate(inputPath, mode, stage) {
       documentLibraries: 0,
       fields: 0,
       approvalForms: 0,
+      scheduledWorkflows: 0,
       listWorkflows: 0,
       reports: 0,
       dashboards: 0,
@@ -742,6 +744,7 @@ function addFormsAndWorkflowEdges(context) {
     const kind = classifyForm(form, def);
     addNode(context.graph, makeNode(formNodeId, kind, formName, { key: formKey, workflowType: form.WorkflowType || def && def.workflowType || null }));
     if (kind === "approvalForm") context.report.summary.approvalForms += 1;
+    else if (kind === "scheduledWorkflow") context.report.summary.scheduledWorkflows += 1;
     else context.report.summary.listWorkflows += 1;
     if (!def) {
       addIssue(context.report, strictLevel(context.report), "FORM_DEFRESOURCE_UNPARSED", "Form/workflow DefResource could not be parsed for graph validation.", { form: formName, key: formKey });
@@ -857,7 +860,7 @@ function addWorkflowShapeEdges(context, formNodeId, formName, formKey, def, vari
     if (type === "ContentList") addContentListEdges(context, formNodeId, formName, shape, variableKeys);
     if (type === "QueryData") addQueryDataEdges(context, formNodeId, formName, shape);
     if (type === "AIAgent" || type === "AIAgentAsk" || type === "AI" || /^AI/i.test(type)) {
-      context.report.summary.agents += 1;
+      addAiWorkflowEdges(context, formNodeId, formName, shape);
       addIssue(context.report, "dependency", "AI_WORKFLOW_NODE", "Workflow contains AI-related node; validate agent/tool dependencies separately.", { form: formName, nodeType: type, nodeId: id });
     }
     if (/http|api|webhook|connection/i.test(type)) {
@@ -1006,6 +1009,35 @@ function addQueryDataEdges(context, formNodeId, formName, shape) {
     addEdge(context.graph, { from: formNodeId, to: unresolved, type: "queryDataTargetUnresolved", label: "QueryData target", form: formName, nodeId: shapeId(shape), targetListId: listId });
     reportMissingReference(context, "QUERYDATA_TARGET_UNRESOLVED", "QueryData target list does not resolve inside package.", { form: formName, nodeId: shapeId(shape), targetListId: listId });
   }
+}
+
+function addAiWorkflowEdges(context, formNodeId, formName, shape) {
+  const props = shape.properties || {};
+  const agentId = safeString(props.data && props.data.AgentID);
+  if (!agentId) {
+    reportMissingReference(context, "AI_ACTION_AGENT_REFERENCE_MISSING", "AI Assistant workflow action is missing properties.data.AgentID.", { form: formName, nodeId: shapeId(shape) });
+    return;
+  }
+  const targetNode = `aiResource:${agentId}`;
+  if (context.aiResourcesById.has(agentId)) {
+    addEdge(context.graph, { from: formNodeId, to: targetNode, type: "aiAssistantAgent", label: "AI Assistant Agent", form: formName, nodeId: shapeId(shape), agentId });
+  } else {
+    const unresolved = addUnresolvedNode(context, "agent", agentId, `Unresolved AI Agent ${agentId}`);
+    addEdge(context.graph, { from: formNodeId, to: unresolved, type: "aiAssistantAgentUnresolved", label: "AI Assistant Agent", form: formName, nodeId: shapeId(shape), agentId });
+    reportMissingReference(context, "AI_ACTION_AGENT_REFERENCE_UNRESOLVED", "AI Assistant workflow action references an AI Agent not found in package OtherModules.", { form: formName, nodeId: shapeId(shape), agentId });
+  }
+}
+
+function buildAiResourcesById(data) {
+  const out = new Map();
+  for (const module of asArray(data && data.OtherModules)) {
+    if (safeString(module.Type) !== "Agents") continue;
+    for (const item of asArray(module.Data)) {
+      const id = safeString(item && item.ID);
+      if (id) out.set(id, item);
+    }
+  }
+  return out;
 }
 
 function addApprovalFormLookupControlEdges(context, formNodeId, formName, def, variableKeys) {
@@ -1193,6 +1225,30 @@ function addOtherModuleEdges(context) {
   asArray(context.data && context.data.OtherModules).forEach((module, index) => {
     const title = safeString(module.Title || module.Name || module.ModuleName || module.Type || `module-${index}`);
     const typeText = `${module.Type || ""} ${title}`.toLowerCase();
+    if (safeString(module.Type) === "Agents" && Array.isArray(module.Data)) {
+      module.Data.forEach((aiResource, resourceIndex) => {
+        const id = safeString(aiResource && aiResource.ID || `module-${index}-${resourceIndex}`);
+        const name = safeString(aiResource && aiResource.Name || `AI resource ${resourceIndex + 1}`);
+        const isCopilot = Number(aiResource && aiResource.Type) === 1;
+        const nodeType = isCopilot ? "copilot" : "agent";
+        const nodeId = `aiResource:${id}`;
+        addNode(context.graph, makeNode(nodeId, nodeType, name, { moduleIndex: index, resourceIndex, resourceId: id, aiType: aiResource && aiResource.Type !== undefined ? aiResource.Type : null }));
+        if (isCopilot) {
+          addIssue(context.report, "dependency", "COPILOT_RESOURCE", "Copilot resource present; validate resources, tools, and credential dependencies separately.", { module: title, resource: name, id });
+        } else {
+          context.report.summary.agents += 1;
+          addIssue(context.report, "dependency", "AI_AGENT_RESOURCE", "AI Agent resource present; validate tools, knowledge, and credential dependencies separately.", { module: title, resource: name, id });
+        }
+        for (const refId of extractLargeIds(aiResource)) {
+          if (context.listsById.has(refId)) {
+            addEdge(context.graph, { from: nodeId, to: `list:${refId}`, type: "moduleResourceReference", label: "module resource reference", sourceId: refId });
+          } else if (context.aiResourcesById.has(refId) && refId !== id) {
+            addEdge(context.graph, { from: nodeId, to: `aiResource:${refId}`, type: "connectedAgentReference", label: "connected Agent/Copilot reference", sourceId: refId });
+          }
+        }
+      });
+      return;
+    }
     let nodeType = "module";
     if (/agent/.test(typeText)) nodeType = "agent";
     else if (/copilot/.test(typeText)) nodeType = "copilot";

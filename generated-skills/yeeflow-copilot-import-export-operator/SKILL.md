@@ -56,3 +56,9 @@ The DEMO Innovation Ecosystem Platform .yap study proves app-contained Copilots 
 
 Do not hand-generate opaque .yaic PackageJson or app-bound Copilot resources from guessed structure. For app-bound learning, document export-proven shapes, redact connection metadata, and require runtime proof before claiming generated import support.
 <!-- agent-copilot-application-resource-learning:end -->
+
+<!-- scheduled-workflow-ai-assistant-learning:start -->
+## Workflow-Aware App Export Note
+
+App-contained Agents may be referenced by Scheduled Workflow AI Assistant actions as well as by Copilot connected-Agent tools. When inspecting a Copilot-bearing app export, include `Data.Forms[].DefResource.childshapes[]` AI Agent references in the dependency map even if the Copilot itself does not call that Agent.
+<!-- scheduled-workflow-ai-assistant-learning:end -->

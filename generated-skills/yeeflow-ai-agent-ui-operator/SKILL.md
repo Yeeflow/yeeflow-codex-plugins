@@ -48,3 +48,9 @@ When inspecting app-bound Agents in Yeeflow UI, expect tools that point to app l
 
 For runtime checks, prefer non-executing confirmation first: Agent appears, configuration page opens, components/tool names render, linked list/knowledge/connection references are visible, and no live external call is triggered.
 <!-- agent-copilot-application-resource-learning:end -->
+
+<!-- scheduled-workflow-ai-assistant-learning:start -->
+## Workflow Invocation UI Safety
+
+When checking an Agent that is referenced by a workflow AI Assistant action, verify the Agent input/output variables match the workflow action mappings before publishing or runtime testing. Do not run the scheduled workflow or AI action from the UI unless the schedule, data, and downstream email behavior are explicitly safe.
+<!-- scheduled-workflow-ai-assistant-learning:end -->

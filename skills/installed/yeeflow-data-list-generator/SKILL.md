@@ -68,6 +68,8 @@ node scripts/build-ydl-wrapper.js ./final.json ./output.ydl --title "List Name" 
 
 When a generated data list includes workflow actions, run workflow-aware validators and stop on missing required action properties, invalid enum/type values, invalid `QueryData` filters, invalid `SequenceFlow` conditions, invalid `Loop`/`Delay` condition shapes, or unsafe external/credential-related actions. Never bundle credentials, API keys, tokens, connection secrets, or tenant-specific sensitive values.
 
+Scheduled Workflow export learning: `AI Agent and Copilot Local Resource Baseline8.yap` proves `QueryData` can be used from an app-level Scheduled Workflow (`WorkflowType = 3`) to query a local data list and write multiple results into a text workflow variable with `result.listParent = "__variables_"`, `result.listName`, `result.vartype = "text"`, and `result.fields[]`. Validate that the queried list and selected fields resolve before generating or runtime-testing.
+
 ## References
 
 Load only the relevant reference:

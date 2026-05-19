@@ -100,3 +100,11 @@ Validate app-level OtherModules for Connections, Agents, and Knowledges. Count A
 
 Use hard errors only for generated-final invalid JSON, missing generated IDs, unresolved generated-final tool references, or embedded secret/token/password/API-key values. Use warnings/dependencies for connection-backed tools, credentialstype/run-as settings, OpenAPI operations, application-resource access, and runtime-sensitive external calls.
 <!-- agent-copilot-application-resource-learning:end -->
+
+<!-- scheduled-workflow-ai-assistant-learning:start -->
+## Scheduled Workflow Validation Addendum
+
+Validate app-level Scheduled Workflow resources as `Data.Forms[]` entries with `WorkflowType = 3`, `ListID = 0`, parseable JSON `Settings`, and parseable JSON `DefResource`. `Settings` should include `TimeZone`, `Times[]`, `StartDate`, `Frequency`, and `Interval`; weekly schedules use `Values[]`, and daily working-day schedules use `IsWorkday: true`.
+
+For workflow actions, validate `MailTask` recipient/subject/body presence, warn on fixed literal recipients, validate `QueryData` target list references and multi-result output variables, and validate `AI` agent-mode actions resolve `properties.data.AgentID` to an included app AI Agent. Treat AI execution and email delivery as runtime-sensitive unless explicitly configured with safe test credentials/recipients.
+<!-- scheduled-workflow-ai-assistant-learning:end -->

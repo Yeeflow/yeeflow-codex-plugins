@@ -170,3 +170,15 @@ For AI Agents, Copilots, application connections, OpenAPI/REST tools, and applic
 
 Hard stop if Agent/Copilot resources cannot be located, tool references cannot be mapped, connection values cannot be redacted, or runtime testing would call real external systems.
 <!-- agent-copilot-application-resource-learning:end -->
+
+<!-- scheduled-workflow-ai-assistant-learning:start -->
+## Scheduled Workflow / AI Assistant Action Learning Route
+
+For Scheduled Workflow resources, Send email workflow actions, Query data workflow actions, and AI Assistant workflow actions, use learning mode first. Decode `.yap` exports read-only, preserve large numeric IDs as strings, and document `Data.Forms[]` entries with `WorkflowType = 3` before generation.
+
+`AI Agent and Copilot Local Resource Baseline8.yap` proves app-level Scheduled Workflow resources are stored in `Data.Forms[]` with `ListID = 0`, `WorkflowType = 3`, a JSON-string `Settings` schedule, and a JSON-string `DefResource` workflow graph. It proves daily `Frequency = "0"`, weekly `Frequency = "1"`, weekly weekday `Values[]`, Windows-style `TimeZone`, `Times[]`, and `IsWorkday: true` for every-X-working-days recurrence.
+
+The same export proves workflow `QueryData` -> `AI` -> `MailTask` orchestration where `QueryData` writes local list JSON to a workflow variable, `AI` with `properties.type = "agent"` calls an app-contained AI Agent through `properties.data.AgentID`, maps Agent outputs back to workflow variables, and `MailTask` can use those workflow variables for subject/body.
+
+Hard stop if scheduled-workflow recurrence cannot be mapped, fixed recipients cannot be made safe/redacted, AI Agent references do not resolve, Query data list references do not resolve, or runtime testing might send real email or call live AI unexpectedly.
+<!-- scheduled-workflow-ai-assistant-learning:end -->

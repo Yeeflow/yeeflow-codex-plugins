@@ -48,3 +48,9 @@ The app-level .yap structure is export-proven but generated import behavior is n
 
 Reusable templates should keep operational tools as guidance unless target app resources are explicit. App-bound generation must include a resource graph for lists, knowledge, Agents, Copilots, and connections, with fresh IDs and no real credentials.
 <!-- agent-copilot-application-resource-learning:end -->
+
+<!-- scheduled-workflow-ai-assistant-learning:start -->
+## Workflow-Callable Agent Templates
+
+When an Agent is intended for workflow AI Assistant use, define input and output variables with stable IDs that workflow `AI.properties.inputVariables[]` and `AI.properties.outputVariables[]` can map. The export-proven pattern calls an app-contained Agent from Scheduled Workflow using `properties.data.AgentID`; generated app packages must include and remap the Agent with the workflow.
+<!-- scheduled-workflow-ai-assistant-learning:end -->

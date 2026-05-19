@@ -7,6 +7,14 @@ description: generate, inspect, validate, and document Yeeflow expression editor
 
 Use this skill when generating or validating Yeeflow expression editor output across approval forms, dashboards, data-list forms, lookup filters, workflow transitions, workflow action conditions, default values, request numbers, and calculated controls.
 
+<!-- scheduled-workflow-ai-assistant-learning:start -->
+## Scheduled Workflow Expression Context
+
+`AI Agent and Copilot Local Resource Baseline8.yap` proves Scheduled Workflow actions may use legacy rich-text expression-button HTML strings in `MailTask.properties.subject` and `MailTask.properties.html` to reference workflow variables. The AI Assistant workflow action uses expression-object input mapping such as `exprType = "variable"`, `valueType = "text"`, `id = "QueryItems"`, and `type = "expr"`.
+
+When generating new workflow conditions or filters, continue preferring expression-token arrays or proven operand wrappers. When reproducing MailTask rich text, preserve the Yeeflow expression-button HTML pattern exactly and validate referenced workflow variables.
+<!-- scheduled-workflow-ai-assistant-learning:end -->
+
 Package type note: expression fixes for a new app can be generated in `.yap`; expression fixes for an existing imported app should be delivered as `.yapk` only from a Yeeflow Version management baseline. Preserve existing IDs and do not assume `.yapk` app-resource mutation is safe while the studied `.yapk` payload remains opaque/signed.
 
 ## Source Of Truth

@@ -66,3 +66,9 @@ In app-level .yap exports, Copilots are AI resources in OtherModules Type "Agent
 
 Reusable Copilot templates should not include app-bound Components unless the target lists, Agents, knowledge resources, and connections are explicit. Generated packages should defer or placeholder external connections and require post-import reconfiguration.
 <!-- agent-copilot-application-resource-learning:end -->
+
+<!-- scheduled-workflow-ai-assistant-learning:start -->
+## Workflow-Adjacent Copilot Templates
+
+Do not model Scheduled Workflow execution as a Copilot template capability unless a real app resource is included. If a Copilot template references workflow-generated summaries or emails, document that the Scheduled Workflow and Agent invocation are app resources that require separate validation and runtime-safe testing.
+<!-- scheduled-workflow-ai-assistant-learning:end -->
