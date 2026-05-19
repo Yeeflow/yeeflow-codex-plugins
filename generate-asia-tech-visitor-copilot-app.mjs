@@ -653,7 +653,7 @@ Output style:
         Attr: null,
         Status: 1,
         IsPublished: true,
-        Publisher: null,
+        Publisher: 0,
         PublishDate: now,
         Components: [
           applicationResourceTool(1, "Access Asia Tech visitor records", "Create and update local Contacts, Companies, and Follow-up Tasks only inside this generated app.", [
@@ -698,7 +698,7 @@ Output style:
         Attr: null,
         Status: 1,
         IsPublished: true,
-        Publisher: null,
+        Publisher: 0,
         PublishDate: now,
         Components: [
           applicationResourceTool(2, "Update Asia Tech follow-up records", "Update Contacts and Companies and create Follow-up Tasks inside this generated app.", [
@@ -749,7 +749,7 @@ Output style:
         Attr: null,
         Status: 1,
         IsPublished: true,
-        Publisher: null,
+        Publisher: 0,
         PublishDate: now,
         Components: [
           {

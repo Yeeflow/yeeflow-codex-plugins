@@ -73,6 +73,12 @@ Fix applied:
 - `validate-yap-package.js` now reports `SYSTEM_INT64_ID_OVERFLOW` for generated final packages before runtime import.
 - The regenerated package has 0 signed 64-bit overflow IDs in the decoded app definition and wrapper resource.
 
+Second import hypothesis:
+
+- AI Agent and Copilot records were generated with `Publisher: null`.
+- Yeeflow AI resource import may expect publisher metadata as an integer value.
+- The package was regenerated with `Publisher: 0` for both AI Agents and the Copilot.
+
 Not completed in this pass:
 
 - Opening the imported app from the card.
