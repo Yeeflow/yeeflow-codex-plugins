@@ -116,6 +116,8 @@ Materialization hard rules for new `.yap` packages:
 - preserve parent `ListID` on every field
 - keep `FieldName`, `InternalName`, and `DisplayName` unique inside each data list
 - preserve real `TenantID`, `CreatedBy`, and `ModifiedBy`; do not remap them and do not include them in `ReplaceIds`
+- keep all generated numeric-looking IDs within signed `System.Int64` range; Yeeflow import can parse child `LayoutID` as `Int64`, so oversized 20-digit IDs block import
+- for generated app-contained AI Agent/Copilot resources, use numeric `Publisher: 0` instead of `Publisher: null`
 - verify root dashboard/page navigation and Type `103` ownership with materialization inspection
 - do not runtime-test custom code controls until the imported app opens with real dashboard/list/form content and generated fields are visible
 

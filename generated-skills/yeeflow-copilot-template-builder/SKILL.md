@@ -66,6 +66,8 @@ In app-level .yap exports, Copilots are AI resources in OtherModules Type "Agent
 
 Reusable Copilot templates should not include app-bound Components unless the target lists, Agents, knowledge resources, and connections are explicit. Generated packages should defer or placeholder external connections and require post-import reconfiguration.
 
+Runtime import update: generated app-contained Copilot resources imported successfully in the Asia Tech visitor Copilot app after setting top-level `Publisher: 0`. Do not generate app-level Copilot records with `Publisher: null`; treat missing/null/non-numeric Publisher as an import blocker for generated-final packages. This proves import acceptance and resource materialization only, not Copilot chat execution.
+
 When a target app also includes data-list workflow Agents, keep that dependency explicit rather than implicit. `Spark & AI (1).yap` proves list workflows can call app-contained Agents with image inputs and row-ID bindings outside Copilot chat. Reusable Copilot templates should not assume those workflow-only Agent bindings exist unless the target app graph includes them.
 <!-- agent-copilot-application-resource-learning:end -->
 

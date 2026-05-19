@@ -2163,6 +2163,11 @@ function validateAgentCopilotModules(data, listsById, report) {
     const resourceType = Number(aiResource.Type);
     if (!resourceId) issue(report, generatorFinalSeverity(report), "AI_RESOURCE_ID_MISSING", "AI Agent/Copilot resource is missing ID.", { index, name: resourceName });
     if (!resourceName) issue(report, "warning", "AI_RESOURCE_NAME_MISSING", "AI Agent/Copilot resource is missing Name.", { index, id: resourceId });
+    if (aiResource.Publisher === null || aiResource.Publisher === undefined || aiResource.Publisher === "") {
+      issue(report, generatorFinalSeverity(report), "AI_RESOURCE_PUBLISHER_MISSING", "Generated AI Agent/Copilot resources should set Publisher to 0 by default; null publisher metadata can fail Yeeflow import/materialization.", { index, name: resourceName, id: resourceId });
+    } else if (Number.isNaN(Number(aiResource.Publisher))) {
+      issue(report, generatorFinalSeverity(report), "AI_RESOURCE_PUBLISHER_INVALID", "Generated AI Agent/Copilot Publisher should be numeric, usually 0 for default generated resources.", { index, name: resourceName, id: resourceId, publisher: aiResource.Publisher });
+    }
     if (![0, 1].includes(resourceType)) {
       issue(report, "warning", "AI_RESOURCE_TYPE_UNSTUDIED", "AI resources in the studied Agents module use Type 0 for AI Agent and Type 1 for Copilot.", { index, name: resourceName, type: aiResource.Type });
     }

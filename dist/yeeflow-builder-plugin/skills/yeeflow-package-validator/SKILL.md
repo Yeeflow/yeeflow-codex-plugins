@@ -42,6 +42,8 @@ Load [yap-materialization-rules.md](references/yap-materialization-rules.md) whe
 - `field.ListID` equals parent data list `ListID`
 - unique `FieldName`, `InternalName`, and `DisplayName` inside each list
 - no remapping of `TenantID`, `CreatedBy`, or `ModifiedBy`
+- no numeric-looking generated ID exceeds signed `System.Int64` range (`9223372036854775807`), especially `LayoutID`
+- generated app-contained AI Agent/Copilot resources use numeric `Publisher`, normally `0`, rather than `null`
 
 For document libraries, also check:
 
@@ -92,3 +94,19 @@ Report validation as:
 - exact follow-up needed
 
 Do not claim runtime proof from local validation alone.
+
+<!-- agent-copilot-application-resource-learning:start -->
+## AI Agent/Copilot Validation Addendum
+
+Validate app-level OtherModules for Connections, Agents, and Knowledges. Count AI Agent resources as Agents module entries with Type = 0 and Copilots as Type = 1. Validate Settings/Draft JSON, Components arrays, tool Settings.Data.Value references, connected-Agent references, connection references, publisher metadata, and redaction-sensitive Config keys.
+
+Use hard errors only for generated-final invalid JSON, missing generated IDs, missing/null/non-numeric generated AI resource `Publisher`, unresolved generated-final tool references, signed `System.Int64` overflow IDs, or embedded secret/token/password/API-key values. Use warnings/dependencies for connection-backed tools, credentialstype/run-as settings, OpenAPI operations, application-resource access, and runtime-sensitive external calls.
+<!-- agent-copilot-application-resource-learning:end -->
+
+<!-- scheduled-workflow-ai-assistant-learning:start -->
+## Scheduled Workflow Validation Addendum
+
+Validate app-level Scheduled Workflow resources as `Data.Forms[]` entries with `WorkflowType = 3`, `ListID = 0`, parseable JSON `Settings`, and parseable JSON `DefResource`. `Settings` should include `TimeZone`, `Times[]`, `StartDate`, `Frequency`, and `Interval`; weekly schedules use `Values[]`, and daily working-day schedules use `IsWorkday: true`.
+
+For workflow actions, validate `MailTask` recipient/subject/body presence, warn on fixed literal recipients, validate `QueryData` target list references and multi-result output variables, and validate `AI` agent-mode actions resolve `properties.data.AgentID` to an included app AI Agent. `Spark & AI (1).yap` adds proven checks for data-list workflow AI usage: `inputVariables[]` and `outputVariables[]` should be arrays, image inputs can be `type = "img"` with list-field mappings using `valueType = "icon-upload"` or `file-upload`, and data-list workflows should be registered on the host list through `FlowMappings[]` with `Setting.NewTrigger = true` when they are new-item triggered. For import/open-safe generated baselines, a resolved local `AI` action with no credentials is a runtime-sensitive dependency rather than a package-blocking error; unresolved Agent references, unresolved `QueryData` targets, unresolved app-resource tool list references, unsafe real recipients, embedded secrets, and credential-bearing external actions remain blockers. Treat AI execution, image analysis, and row-update tools as runtime-sensitive unless explicitly configured for a safe sandbox.
+<!-- scheduled-workflow-ai-assistant-learning:end -->

@@ -1,6 +1,6 @@
 # AI Agent And Copilot Application Generation Rules
 
-Classification: generated-package validation guidance with limited runtime import proof from the Asia Tech visitor Copilot package.
+Classification: generated-package validation guidance with runtime import proof from the Asia Tech visitor Copilot package.
 
 ## Current Proof Boundary
 
@@ -10,7 +10,8 @@ The Asia Tech visitor Copilot package proved:
 
 - generated package import was accepted by Yeeflow
 - the imported app card appeared in the workspace
-- app-contained AI resources did not block package import at the card-creation level
+- app-contained AI resources can import when every Agent/Copilot record has numeric `Publisher: 0`
+- oversized numeric-looking IDs such as 20-digit child-list `LayoutID` values block import because Yeeflow parses those values through `System.Int64`
 
 It did not prove:
 
@@ -27,6 +28,8 @@ Do not upgrade generated Agent/Copilot execution claims until those surfaces are
 For generated application packages:
 
 - Keep Agents and Copilots inside `OtherModules` with generated IDs.
+- Set Agent/Copilot top-level `Publisher: 0`; do not use `null`.
+- Keep generated numeric-looking IDs inside signed `System.Int64` range (`<= 9223372036854775807`).
 - Keep all tool scopes inside the generated app/listset when possible.
 - Prefer Access application resources tools over external connectors.
 - Preserve connected-Agent references as explicit dependencies.
@@ -41,9 +44,11 @@ Generated packages should validate:
 - AI resource IDs are present and generated.
 - Agent/Copilot settings parse as JSON.
 - connected-Agent references resolve to generated Agents.
+- AI Agent/Copilot `Publisher` is numeric, normally `0`.
 - Access application resources tool scopes reference generated lists.
 - no external connections are required for baseline import.
 - no secrets or credential-looking values appear in generated resources.
+- no numeric-looking generated ID exceeds signed `System.Int64`.
 
 Warnings are still appropriate for:
 

@@ -79,6 +79,11 @@ Second import hypothesis:
 - Yeeflow AI resource import may expect publisher metadata as an integer value.
 - The package was regenerated with `Publisher: 0` for both AI Agents and the Copilot.
 
+Final manual import result:
+
+- The regenerated package with signed-64-bit-safe layout IDs and `Publisher: 0` on all AI Agent/Copilot records imported successfully.
+- This confirms both fixes as generated-package import requirements for this app shape.
+
 Not completed in this pass:
 
 - Opening the imported app from the card.
@@ -111,11 +116,13 @@ Runtime-proven:
 
 - Upload/import dialog acceptance.
 - Server-side import failure for oversized `LayoutID` values.
+- Successful import after replacing oversized layout IDs and setting AI resource `Publisher` to `0`.
 
-Locally fixed and validated after failure:
+Runtime-fixed and locally validated after failure:
 
 - Child-list layout IDs are now inside signed 64-bit range.
 - Package validation rerun after the fix reports 0 `SYSTEM_INT64_ID_OVERFLOW` errors.
+- App-contained AI Agent/Copilot resources use `Publisher: 0`.
 
 Locally validated:
 
@@ -138,10 +145,8 @@ Validation-only / safety-deferred:
 
 ## Follow-Up Runtime Pass
 
-The next runtime pass should first retry import with the regenerated package, then inspect configuration without running AI execution:
+The next runtime pass should inspect the successfully imported package configuration without running AI execution:
 
-- delete or ignore the failed imported card
-- import the regenerated `asia-tech-visitor-meeting-copilot.v1.yap`
 - Refresh the Yeeflow workspace and open the app from its card or app context menu.
 - Confirm all 4 data lists open.
 - Confirm both dashboards render.

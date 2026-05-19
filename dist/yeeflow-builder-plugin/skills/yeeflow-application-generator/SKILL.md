@@ -69,6 +69,8 @@ Generated `.yap` packages must pass materialization inspection before runtime im
 - Every `FieldName`, `InternalName`, and `DisplayName` must be unique inside its own data list.
 - Preserve real baseline `TenantID`, `CreatedBy`, and `ModifiedBy`; do not remap them into the generated ID family and do not include them in `Resource.ReplaceIds`.
 - Build `ReplaceIds` from generated app-resource IDs only.
+- Keep all numeric-looking generated IDs within signed `System.Int64` range (`<= 9223372036854775807`). Yeeflow import/materialization parses fields such as child-list `LayoutID` as `System.Int64`; 20-digit IDs such as `73221000000000001001` fail import.
+- When generating app-contained AI Agent or Copilot records in `OtherModules Type = "Agents"`, set top-level `Publisher: 0` by default. `Publisher: null` caused generated AI-resource app import failure; the regenerated Asia Tech visitor Copilot package imported after changing Publisher to `0`.
 - Root Type `103` dashboard/page layout ownership must connect to the root app/ListSet `ListID`, and root navigation must reference existing packaged resources.
 - Run `scripts/inspect-yap-materialization.mjs` before runtime import.
 - If app materialization fails, stop and fix the app shell/resource linkage before testing custom code controls or workflow behavior.
@@ -138,6 +140,18 @@ Keep these out of scope in v1 unless the user asks for research only:
 - external HTTP/API actions
 - complex list workflows or scheduled workflows
 
+## Scheduled Workflow Generation Boundary
+
+`AI Agent and Copilot Local Resource Baseline8.yap` proves Scheduled Workflow app resources are `Data.Forms[]` entries with `WorkflowType = 3`, `ListID = 0`, JSON-string `Settings`, and JSON-string `DefResource`.
+
+`Scheduled Workflow Safe Runtime Baseline` proves a generated import/open/designer baseline when the package uses one harmless local list, one local `Email generation` Agent, one Scheduled Workflow, a far-future non-deployed weekly schedule, `QueryData -> AI -> MailTask`, and the reserved safe recipient `workflow.safe.test@example.com`. The Codex-observed runtime pass proved import, app open, local list render, Scheduled Workflow listing/detail, recurrence render, variables render, designer open, and non-executing `QueryData`, `AI`, and `MailTask` configuration panels. User-confirmed function test passed; exact execution scope not yet documented.
+
+For generated Scheduled Workflow packages, validate schedule `Settings` (`TimeZone`, `Times[]`, `StartDate`, `Frequency`, `Interval`, optional `Values[]`, optional `IsWorkday`), workflow variables, `QueryData` list references, `AI` Agent references, and `MailTask` recipient safety. Do not generate a package that can send real email or call live AI automatically during import/open testing. Do not claim schedule trigger execution, manual run behavior, email delivery, AI Assistant execution, or workflow-triggered AI Agent execution from the safe runtime baseline unless the exact user-confirmed test scope is documented.
+
+Data-list workflow AI update: `Spark & AI (1).yap` proves list/process workflows (`WorkflowType = 1`) can register against a host data list through `FlowMappings[]` with `Setting.NewTrigger = true` and call an app-contained Agent from a workflow `AI` node. The proven current-row mapping pattern passes an `icon-upload` field into Agent input `type = "img"` and passes native `ListDataID` into a text input so the Agent can update the same row through an application-resource access tool. Generated app packages may model this only when the host list, workflow registration, Agent, and tool-scoped target lists all exist locally and runtime execution remains safely disabled until sandbox proof.
+
+Asia Tech visitor Copilot import learning: app-contained Agents/Copilot plus a data-list workflow imported successfully after two materialization fixes: generated child-list `LayoutID` values were kept inside `System.Int64`, and every AI Agent/Copilot resource used `Publisher: 0` instead of `null`. This proves import acceptance only; Copilot chat, Agent execution, image extraction, workflow execution, and row mutation still require controlled runtime tests.
+
 ## Document Library Resource Rules
 
 Use these only after the document-library study docs and validators are present in the active workspace. `Projects Center.yap` proved that Yeeflow Document Library is a first-class app child resource, similar to a data list but not identical.
@@ -169,6 +183,8 @@ Stop before final `.yap` build if any of these are true:
 - duplicate `FieldID` anywhere across the generated `.yap`
 - any field whose `ListID` does not match its parent data-list `ListID`
 - generated fake-ID remapping of `TenantID`, `CreatedBy`, or `ModifiedBy`
+- any generated numeric-looking ID exceeds `9223372036854775807`
+- generated app-contained AI Agent/Copilot resource has missing, null, empty, or non-numeric `Publisher`
 - generated main/child lists are missing required list type metadata
 - missing lookup target list or display/search field
 - lookup target list, display field, dependency map, or sample lookup target row is unresolved
@@ -429,3 +445,11 @@ When generating or debugging a `.yap`, report:
 - wrapper build result, if built
 - unresolved risks and stop conditions
 - sandbox import/export-back checklist
+
+<!-- agent-copilot-application-resource-learning:start -->
+## AI Agent, Copilot, And Connection Boundary
+
+The DEMO Innovation Ecosystem Platform study proves app-level AI resources in OtherModules: Connections, Agents, and Knowledges. Agents module entries use Type = 0 for AI Agents and Type = 1 for Copilots. Tools can target local data lists, current app resources, connected Agents, or application connections.
+
+Do not include AI Agents, Copilots, or Connections in generated final .yap packages until the target resource graph is fully resolved and local validation passes. External connection tools require placeholders and post-import reconfiguration; do not generate packages that require real Outlook, SharePoint, OAuth, or HTTP credentials.
+<!-- agent-copilot-application-resource-learning:end -->
