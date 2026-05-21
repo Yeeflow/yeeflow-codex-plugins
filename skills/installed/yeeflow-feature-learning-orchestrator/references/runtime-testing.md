@@ -4,6 +4,14 @@ Use the Codex Yeeflow environment only when the user explicitly asks Codex to im
 
 `https://codex.yeeflow.com/`
 
+## Runtime Gate
+
+For newly learned capabilities, runtime testing should be a focused proof step rather than a broad generated-app exercise. Before merging a learning branch, document whether runtime proof is required, deferred, or already passed.
+
+Use a focused baseline when the learned capability affects generated package import/rendering, workflow execution, AI/email/external execution, custom code execution, document upload/persistence, user/group membership, permissions, or row mutation. Keep the app minimal and test only the learned capability plus required host surfaces.
+
+If runtime proof is deferred, label the merge as export-proven, validator-backed, planning-guidance, import-proven, configuration-visible, render-only, partial, or not tested. Do not claim runtime-proven behavior until the focused test passes.
+
 ## Import Flow
 
 1. Open `https://codex.yeeflow.com/`.
@@ -58,4 +66,3 @@ After import, data lists must open without:
 `api/crafts/datas/{AppID}/{ListID}/query -> 400`
 
 If query fails but metadata endpoints succeed, inspect field metadata first, especially the native `Title` field.
-

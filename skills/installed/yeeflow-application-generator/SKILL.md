@@ -32,6 +32,23 @@ For package type selection, use `docs/yeeflow-application-package-generation-rul
 
 Never import into Yeeflow or operate the UI unless the user explicitly asks. Preserve large numeric IDs as strings. Redact secret/token/client values.
 
+## New Capability Runtime Gate
+
+When implementing a capability learned from exports but not yet focused-runtime-tested, keep the generated package and claims inside the proven boundary. Do not promote export-only schemas into broad generation rules or runtime-ready package behavior.
+
+Before generating with a newly learned feature, decide whether the work is:
+
+- export-proven only
+- validator-backed only
+- planning-guidance only
+- import-proven only
+- configuration-visible only
+- render-only proven
+- partial runtime proof
+- runtime-proven for a specific tested host/scope
+
+If generated package import/rendering, workflow execution, app setting rendering, AI/email/external execution, custom code execution, document upload/persistence, user/group membership, permissions, or row mutation is involved, recommend a focused runtime baseline before merge or broad reuse. The baseline should use the smallest possible app, fresh IDs, local validation before build, and runtime testing only after the user requests it. If runtime is deferred, report the feature as export-proven/validator-backed/planning-guidance/import-proven/partial and list the focused runtime follow-up.
+
 ## Application Capability Planning Checklist
 
 For full app generation, write a `Capability Coverage Plan` before implementation. Use `docs/studies/application-planning-capability-coverage.md` when present. The plan must select relevant capabilities, explicitly exclude irrelevant ones, defer partial or unproven features honestly, and assign each selected capability to the right generator, validator, and runtime-test path.

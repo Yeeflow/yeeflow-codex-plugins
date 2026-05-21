@@ -54,7 +54,47 @@ For any new Yeeflow feature:
 10. Document the successful baseline.
 11. Update or create the relevant feature-specific skill.
 
-A feature is not learned until real export study, validation, runtime proof, baseline documentation, and skill updates are complete.
+A feature is not runtime-learned until real export study, validation, focused runtime proof, baseline documentation, and skill updates are complete. Export-backed schema learning can still be useful, but it must be labeled as export-proven, validator-backed, planning-guidance, import-proven, or partial rather than runtime-proven.
+
+## Runtime Gate For New Capability Learning
+
+Use `docs/studies/new-capability-runtime-gate-process.md` when present. New function/schema/skill learning should follow an explicit two-step proof model:
+
+1. Export-backed learning branch.
+2. Focused runtime baseline branch or isolated runtime continuation.
+3. Merge only after the proof boundary is clear.
+
+Learning branch purpose:
+
+- decode and study exports read-only
+- document schemas, relationships, `ReplaceIds`, dependencies, and unknowns
+- create normalized redacted references
+- update validators carefully, using hard errors only for proven invalid generated shapes
+- update skills with export-proven knowledge only
+- avoid claiming import/runtime behavior
+
+Runtime decision before merge:
+
+- recommend a focused runtime test before merge when generated package behavior, imported rendering, workflow execution, app settings rendering, AI/email/external execution, custom code execution, document upload/persistence, user/group membership, permissions, or row mutation is involved
+- continue runtime work on the same branch only if generated artifacts stay isolated, ignored, and safe
+- otherwise create a separate focused runtime branch
+- defer runtime proof only when the user explicitly approves merging as export-proven, validator-backed, planning-guidance, import-proven, or partial
+
+Focused runtime baseline rules:
+
+- build the smallest app that tests only the learned capability
+- avoid unrelated app complexity
+- validate locally before building, and build before runtime testing
+- import only into `https://codex.yeeflow.com/` after local validation passes and runtime testing is requested
+- avoid live AI calls, real email, external APIs, destructive updates, private users, private images, private documents, and credentials unless the safe scope is explicit
+- document exact proof labels: passed, partial, blocked, or not tested
+
+Merge rule:
+
+- do not merge a new capability branch as runtime-proven unless focused runtime testing passed and the tested host/scope is documented
+- if merged before runtime, the final report must name the proof boundary and preserved gaps
+- do not promote broad generation rules from export study alone; either keep them export-proven/validator-warning/planning guidance or require focused runtime proof
+- never treat import/open, configuration visibility, render-only proof, and executed runtime behavior as the same evidence level
 
 For generated-app UI/UX standards, first study a focused export such as `UI and UX design (1).yap`, document dashboard/list/approval form shells, add validator warnings where exact checks are safe, and only then propose a minimal generated test package. Do not make UI/UX standard warnings into hard generator errors until a generated package has runtime import/open and export-back proof.
 
@@ -162,3 +202,37 @@ Never import into Yeeflow or operate Chrome for Yeeflow testing unless the user 
 `https://codex.yeeflow.com/`
 
 Use Chrome console/network evidence when import or runtime behavior fails. Do not expose secrets or tenant credentials in logs, summaries, docs, or skills.
+
+<!-- agent-copilot-application-resource-learning:start -->
+## AI Agent/Copilot Resource Learning Route
+
+For AI Agents, Copilots, application connections, OpenAPI/REST tools, and application-resource access, use learning mode first: decode exports read-only, map OtherModules, normalize redacted references, update validators, and only then decide whether a generated baseline is safe. Do not mix this with requirement-to-app delivery until the resource graph and validation rules are clear.
+
+Hard stop if Agent/Copilot resources cannot be located, tool references cannot be mapped, connection values cannot be redacted, or runtime testing would call real external systems.
+<!-- agent-copilot-application-resource-learning:end -->
+
+<!-- scheduled-workflow-ai-assistant-learning:start -->
+## Scheduled Workflow / AI Assistant Action Learning Route
+
+For Scheduled Workflow resources, Send email workflow actions, Query data workflow actions, and AI Assistant workflow actions, use learning mode first. Decode `.yap` exports read-only, preserve large numeric IDs as strings, and document `Data.Forms[]` entries with `WorkflowType = 3` before generation.
+
+`AI Agent and Copilot Local Resource Baseline8.yap` proves app-level Scheduled Workflow resources are stored in `Data.Forms[]` with `ListID = 0`, `WorkflowType = 3`, a JSON-string `Settings` schedule, and a JSON-string `DefResource` workflow graph. It proves daily `Frequency = "0"`, weekly `Frequency = "1"`, weekly weekday `Values[]`, Windows-style `TimeZone`, `Times[]`, and `IsWorkday: true` for every-X-working-days recurrence.
+
+The same export proves workflow `QueryData` -> `AI` -> `MailTask` orchestration where `QueryData` writes local list JSON to a workflow variable, `AI` with `properties.type = "agent"` calls an app-contained AI Agent through `properties.data.AgentID`, maps Agent outputs back to workflow variables, and `MailTask` can use those workflow variables for subject/body.
+
+`Spark & AI (1).yap` extends the workflow AI proof to data-list workflows. The proven path is host-list `FlowMappings[].Setting.NewTrigger = true` -> `Data.Forms[]` workflow with `WorkflowType = 1` -> workflow graph `AI` node -> app-contained Agent with image input `type = "img"` bound from a list-field expression (`valueType = "icon-upload"`) plus native `ListDataID` bound into a text input. The called Agent can use an application-resource access tool (`Components[].Type = 2`, `SubType = 10`) scoped through `Settings.resources.dataLists.items[]` to update the triggering row. Study and document this path before generating any list workflow that can invoke live AI or mutate app data.
+
+Hard stop if scheduled-workflow recurrence cannot be mapped, fixed recipients cannot be made safe/redacted, AI Agent references do not resolve, Query data list references do not resolve, or runtime testing might send real email or call live AI unexpectedly.
+<!-- scheduled-workflow-ai-assistant-learning:end -->
+
+<!-- application-settings-navigation-user-groups-learning:start -->
+## Application Settings, Navigation, Header, And User Groups
+
+For application settings learning, decode `.yap` exports read-only and inspect the root app shell first. The export-proven location is `Data.Item.ListModel.LayoutView` as a JSON string. Parsed `sort[]` stores navigation menu items, `attrs["navigator-menu"].position` stores menu layout, and `attrs.appearance` stores header appearance.
+
+Navigation menu exports prove resource items and custom groups. Groups use `Type = "classes"`, `ID`, `Title`, optional `Icon`, and child resources in `list[]`; groups require display text and cannot contain nested groups. Resource items may include `DisplayName` for custom menu text or omit it to fall back to `Title`. No-icon is export-proven as `Icon: ""`. Keep menu depth to two layers.
+
+Navigation layout values are `default` for horizontal/default, `left` for vertical, `onheader` for on-header, and `none` for no menu. Header title hidden is `attrs.appearance.hideTitle = true`; default visible title is omission. Default 56px height is represented by omission, and v6 proves small height as `attrs.appearance.height = 46`; larger heights remain product-known but not export-proven.
+
+Application user groups are export-proven in `Data.AppGroups[]` with `{ ID, Name, Description }`; v6 proves group IDs belong in `Resource.ReplaceIds[]`. Member storage was not present in the studied export, so do not generate group members or real users until a safe member-bearing export proves the schema.
+<!-- application-settings-navigation-user-groups-learning:end -->
