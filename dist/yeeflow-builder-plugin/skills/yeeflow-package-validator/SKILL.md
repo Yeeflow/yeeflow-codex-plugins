@@ -11,6 +11,8 @@ Validate before import. Do not runtime-test a package with blocking structural, 
 
 New application creation may output `.yap`. Existing app upgrade `.yapk` remains read-only and server-generated until Yeeflow signing and Resource mechanics are proven.
 
+Validation is not runtime proof. When validating a newly learned capability, report whether the package is export-proven, validator-backed, import-proven, configuration-visible, render-only, partial, or runtime-proven. Use validator hard errors only for proven invalid generated shapes; otherwise prefer warnings/dependencies and require a focused runtime baseline before broad runtime claims.
+
 ## Validation Workflow
 
 1. Identify the package type and source of truth. Preserve generated `.yap` files unless the task explicitly asks to regenerate them.

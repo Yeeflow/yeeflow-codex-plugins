@@ -8,6 +8,8 @@ Every full Yeeflow application build plan should include a `Capability Coverage 
 
 The planning phase should avoid both under-planning and feature stuffing. A capability is considered when it is relevant to the business process, not automatically included in every app.
 
+For newly learned capabilities, also apply `docs/studies/new-capability-runtime-gate-process.md`. Planning may select export-proven or validator-backed capabilities, but it must not describe them as runtime-proven unless a focused runtime baseline passed for the selected host/scope.
+
 ## Coverage Matrix
 
 | Capability | Learned status | Source docs or skill location | Consider during app planning | Planning questions or decision criteria | Implementation skill responsible | Validation/runtime test requirements | Safety boundary |

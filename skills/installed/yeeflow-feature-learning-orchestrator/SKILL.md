@@ -54,7 +54,47 @@ For any new Yeeflow feature:
 10. Document the successful baseline.
 11. Update or create the relevant feature-specific skill.
 
-A feature is not learned until real export study, validation, runtime proof, baseline documentation, and skill updates are complete.
+A feature is not runtime-learned until real export study, validation, focused runtime proof, baseline documentation, and skill updates are complete. Export-backed schema learning can still be useful, but it must be labeled as export-proven, validator-backed, planning-guidance, import-proven, or partial rather than runtime-proven.
+
+## Runtime Gate For New Capability Learning
+
+Use `docs/studies/new-capability-runtime-gate-process.md` when present. New function/schema/skill learning should follow an explicit two-step proof model:
+
+1. Export-backed learning branch.
+2. Focused runtime baseline branch or isolated runtime continuation.
+3. Merge only after the proof boundary is clear.
+
+Learning branch purpose:
+
+- decode and study exports read-only
+- document schemas, relationships, `ReplaceIds`, dependencies, and unknowns
+- create normalized redacted references
+- update validators carefully, using hard errors only for proven invalid generated shapes
+- update skills with export-proven knowledge only
+- avoid claiming import/runtime behavior
+
+Runtime decision before merge:
+
+- recommend a focused runtime test before merge when generated package behavior, imported rendering, workflow execution, app settings rendering, AI/email/external execution, custom code execution, document upload/persistence, user/group membership, permissions, or row mutation is involved
+- continue runtime work on the same branch only if generated artifacts stay isolated, ignored, and safe
+- otherwise create a separate focused runtime branch
+- defer runtime proof only when the user explicitly approves merging as export-proven, validator-backed, planning-guidance, import-proven, or partial
+
+Focused runtime baseline rules:
+
+- build the smallest app that tests only the learned capability
+- avoid unrelated app complexity
+- validate locally before building, and build before runtime testing
+- import only into `https://codex.yeeflow.com/` after local validation passes and runtime testing is requested
+- avoid live AI calls, real email, external APIs, destructive updates, private users, private images, private documents, and credentials unless the safe scope is explicit
+- document exact proof labels: passed, partial, blocked, or not tested
+
+Merge rule:
+
+- do not merge a new capability branch as runtime-proven unless focused runtime testing passed and the tested host/scope is documented
+- if merged before runtime, the final report must name the proof boundary and preserved gaps
+- do not promote broad generation rules from export study alone; either keep them export-proven/validator-warning/planning guidance or require focused runtime proof
+- never treat import/open, configuration visibility, render-only proof, and executed runtime behavior as the same evidence level
 
 For generated-app UI/UX standards, first study a focused export such as `UI and UX design (1).yap`, document dashboard/list/approval form shells, add validator warnings where exact checks are safe, and only then propose a minimal generated test package. Do not make UI/UX standard warnings into hard generator errors until a generated package has runtime import/open and export-back proof.
 

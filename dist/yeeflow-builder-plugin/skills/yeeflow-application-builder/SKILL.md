@@ -17,6 +17,23 @@ This skill is the top-level application-building controller. It coordinates prov
 
 Use `yeeflow-feature-learning-orchestrator` instead when the task is primarily to learn an unknown Yeeflow platform feature from exports, screenshots, runtime tests, or manual fixes.
 
+## New Capability Runtime Gate
+
+When a requirement depends on a newly learned or partially understood Yeeflow capability, do not silently fold it into a normal app build as if it were runtime-proven. Use `yeeflow-feature-learning-orchestrator` first for export-backed learning, then make an explicit runtime decision before broad app generation or merge.
+
+For new capabilities, require one of these labels in the plan and final report:
+
+- export-proven only
+- validator-backed only
+- planning-guidance only
+- import-proven only
+- configuration-visible only
+- render-only proven
+- partial runtime proof
+- runtime-proven for a specific tested host/scope
+
+Recommend a focused runtime baseline before depending on the capability when generated package behavior, imported rendering, workflow execution, app setting rendering, AI/email/external execution, custom code execution, document upload/persistence, user/group membership, permissions, or row mutation is involved. Keep runtime baselines small and focused; do not use a full business app to prove a new platform schema unless the user explicitly accepts that risk.
+
 ## Application Capability Planning Checklist
 
 Before implementation for any full application build, create a `Capability Coverage Plan`. Use `docs/studies/application-planning-capability-coverage.md` when present. The plan should consider the current learned capability set, select only capabilities that serve the business process, mark partial/unproven areas honestly, and assign each selected capability to the right specialized skill before package generation starts.

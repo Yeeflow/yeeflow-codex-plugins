@@ -166,6 +166,29 @@ Each doc should include:
 9. known gaps
 10. first safe generation test
 
+## Phase 6.5 - Runtime Gate Decision Before Merge
+
+Before merging a new capability learning branch, decide and document the runtime path. Do not let export-backed schema learning drift into runtime claims.
+
+Choose one:
+
+- run a focused runtime test in a separate branch
+- continue from the same branch only when generated artifacts remain isolated, ignored, and safe
+- defer runtime proof and merge only as export-proven, validator-backed, planning-guidance, import-proven, or partial, with explicit approval
+
+Runtime proof is required before broad generation guidance can claim imported rendering, workflow execution, app setting rendering, AI execution, email delivery, external API execution, document upload/persistence, user/group membership, permissions, custom code execution, row mutation, or destructive behavior.
+
+An export-backed merge is acceptable when the final report clearly states the proof boundary and the change is limited to schema documentation, normalized redacted references, conservative validator warnings/errors for proven invalid generated shapes, planning guidance, or import/configuration-visible evidence.
+
+Final report requirements for this decision:
+
+- runtime decision before merge
+- proof-boundary label
+- whether a focused runtime branch is needed
+- what is proven
+- what remains unproven
+- safety constraints and deferred execution paths
+
 ## Phase 7 - Generate Smallest Possible Test Package
 
 Only after study, docs, and validator updates, generate a minimal `.yap`.
@@ -378,4 +401,3 @@ Skill update should include:
 - remaining gaps
 
 Run `node --check` on bundled scripts.
-
