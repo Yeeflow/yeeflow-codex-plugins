@@ -21,6 +21,25 @@ Never accept fake dashboards, static KPI mockups, or unbound placeholder charts 
 
 For the full pass sequence, read [runtime-test-lifecycle.md](references/runtime-test-lifecycle.md).
 
+## App-Level Capability Runtime Planning
+
+When testing a full generated application, start from its `Capability Coverage Plan` when available. The runtime plan should cover every selected capability at the safest useful proof level and explicitly mark excluded, deferred, or unproven capabilities as not tested or validation-only.
+
+Include app-level checks when relevant:
+
+- app imports and opens
+- navigation renders, including custom labels, resource-title fallback, icons/no-icons, groups, child items, selected layout, header height, and title visibility
+- data lists open, fields/views/forms materialize, lookup/sample dependencies resolve, and follow-up/task lists serve a real workflow purpose
+- approval forms open, publish when required, submit, route, show task pages, and write `ContentList` records when scoped
+- dashboards render with data-bound KPIs, queues, charts, Doc library controls, or empty states from the expected source lists
+- document libraries open, generated folders render, custom fields/views/forms are inspectable, and upload behavior is tested only with disposable files
+- Copilot configuration opens, quick prompts/tools are visible, and chat/tool execution happens only in an approved safe sandbox
+- Agent configuration opens, input/output variables and tools are visible, and Agent execution or row mutation happens only in an approved safe sandbox
+- workflows open in the designer, including data-list workflows, approval workflows, scheduled workflows, `QueryData`, `AI`/AI Assistant, `MailTask`/Send email, and designer metadata
+- scheduled workflows show recurrence/timezone/working-day settings but do not trigger, publish, run, send email, or call live AI unless explicitly scoped
+- custom code controls render and perform query/writeback only after host page/form safety is established
+- integrations, HTTP/OpenAPI/OAuth, email, external calls, image/file analysis, and destructive list mutations remain execution-deferred unless the plan names safe credentials, data, and call scope
+
 ## What To Test
 
 Load [runtime-test-checklist.md](references/runtime-test-checklist.md) when creating or running a test plan. The checklist covers:
@@ -35,6 +54,8 @@ Load [runtime-test-checklist.md](references/runtime-test-checklist.md) when crea
 - ContentList persistence
 - Family Quota Usage and audit lifecycle style tests
 - custom code control runtime proof
+
+For application settings runtime tests, use `docs/studies/application-settings-runtime-test-plan.md` when present. After local validation passes, test import/open, navigation menu render, custom menu text, resource-title fallback when `DisplayName` is omitted, icon and `Icon: ""` no-icon behavior, group menu render, child item render, layout modes `default`/`left`/`onheader`/`none`, header height/title visibility, and app user group page visibility only when placeholder groups contain no real users or emails. Do not runtime-test member assignments until a safe member-bearing export proves the schema.
 
 For document-library runtime tests, use `docs/studies/document-library-runtime-test-plan.md` when present. Prove import/open separately from upload behavior: the app must not open as an empty shell, every generated Type `16` document library must be reachable from the imported app, the libraries must open, default/custom fields must be visible or inspectable, and upload/folder behavior may only be tested with disposable non-private files. `Document Library Sample.yap` proves document-library-only apps may omit root navigation and Type `103` pages, so judge reachability from the runtime UI rather than assuming a navigation item must exist. The user-runtime-tested `document-library-sample-new-library-only.v1.yap` imported and ran successfully; use its `New Document Library` shape as the minimal import/open baseline. The `Enterprise Document Center` v2 runtime pass accepted multiple generated libraries with custom fields and configured views. The v2 folder pass proved generated root-level folder rows appear and persist, plus manual `New Folder` creation works across all three generated libraries; do not claim nested generated folders or upload persistence proof from that result alone.
 
@@ -59,3 +80,23 @@ Be explicit about which lists, forms, dashboards, workflow branches, and custom 
 ## Reporting
 
 Return a short status summary plus a table of tested areas, result labels, evidence, and next action. Separate "accepted baseline" from "needs follow-up"; do not imply unsupported behavior is proven.
+
+<!-- agent-copilot-application-resource-learning:start -->
+## AI Resource Runtime Safety
+
+Runtime-test AI Agents and Copilots only after local package, graph, AI resource, connection, tool-reference, ReplaceIds, and secret scans pass. Safe first checks are import, app open, Agent/Copilot visibility, configuration page open, and non-executing component visibility.
+
+Do not trigger Outlook, SharePoint, OAuth, HTTP, OpenAPI, document generation, image generation, or destructive list mutation tools unless explicitly configured with safe test credentials and approved call scope. Classify untested AI/connection packages as validation-only or partial.
+
+For data-list workflow AI image-extraction cases, use `docs/studies/data-list-workflow-ai-agent-runtime-test-plan.md` when present. The current `Spark & AI (1).yap` study is export-proven only: the host list already contains rows, the Agent can update list data through an application-resource access tool, and live execution would call real AI on uploaded images. Safe runtime scope is import/open plus workflow-node and Agent-tool configuration visibility in a sandbox package; do not run the workflow, upload real images, or update real records unless the package is a freshly generated harmless baseline and the execution scope is explicitly approved.
+<!-- agent-copilot-application-resource-learning:end -->
+
+<!-- scheduled-workflow-ai-assistant-learning:start -->
+## Scheduled Workflow Runtime Safety
+
+Runtime-test Scheduled Workflow packages only after local package, graph, workflow-action, AI Agent reference, email-recipient, ReplaceIds, and secret scans pass. Safe first checks are import, app open, Scheduled Workflow visibility, designer open, recurrence UI render, timezone/working-day setting render, Query data action open, AI Assistant action open, and Send email configuration display.
+
+The `Scheduled Workflow Safe Runtime Baseline` pass proved import/open/designer rendering for a generated package with local `Runtime Ideas`, local `Email generation`, far-future non-deployed weekly recurrence, `QueryData`, `AI`, and `MailTask` configured to `workflow.safe.test@example.com`. Classify the Codex-observed proof as partial: import/open/configuration runtime-proven by Codex. User-confirmed function test passed; exact execution scope not yet documented.
+
+Do not trigger schedules, run workflows, send email, publish workflows, or execute AI Assistant actions unless the recipient, schedule, AI call scope, and data are explicitly safe. Do not separately claim schedule trigger execution, manual run behavior, email delivery, AI Assistant execution, or workflow-triggered AI Agent execution unless the exact tested path is documented. Classify unexecuted scheduled-workflow packages as partial only when import/open/designer rendering was actually tested; otherwise classify as validation-only.
+<!-- scheduled-workflow-ai-assistant-learning:end -->

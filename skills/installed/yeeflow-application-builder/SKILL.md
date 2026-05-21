@@ -17,6 +17,33 @@ This skill is the top-level application-building controller. It coordinates prov
 
 Use `yeeflow-feature-learning-orchestrator` instead when the task is primarily to learn an unknown Yeeflow platform feature from exports, screenshots, runtime tests, or manual fixes.
 
+## Application Capability Planning Checklist
+
+Before implementation for any full application build, create a `Capability Coverage Plan`. Use `docs/studies/application-planning-capability-coverage.md` when present. The plan should consider the current learned capability set, select only capabilities that serve the business process, mark partial/unproven areas honestly, and assign each selected capability to the right specialized skill before package generation starts.
+
+Cover these planning areas:
+
+- Core resource model: data lists, approval forms, document libraries, dashboards, reports, follow-up/task lists, master/reference lists, transaction lists, and custom forms.
+- AI experience: whether the app needs a Copilot, quick prompts, local resource tools, connected Agents, image upload, or attachments.
+- AI Agent design: reusable Agents, required input/output variables, image/file inputs, Access application resources tools, create/update/read behavior, email draft/summarization/scoring/recommendation tasks, and human-review boundaries.
+- Workflow and automation: data-list workflows, approval workflows, scheduled workflows, triggers, `QueryData`, `AI`/AI Assistant, `MailTask`/Send email, HTTP/API/resource actions, and which execution steps must remain disabled or deferred during runtime tests.
+- Document management: document libraries, generated folders, custom document fields/views/forms, and Doc library controls on dashboards or forms.
+- Navigation and application shell: default or custom navigation, navigation groups, top-level resources, grouped resources, layout `default`/`left`/`onheader`/`none`, header title visibility, export-proven header height settings, and app user groups.
+- Permissions and users: app user groups, role-based experiences, permission-sensitive screens, and the current boundary that user-group member assignment is not export-proven and must not be generated with real users.
+- Integrations and connections: HTTP API, OAuth, OpenAPI/REST tools, external calls, post-import connection setup, credential safety, and execution deferral.
+- Runtime and validation plan: import-proof target, runtime-proof target, render-only or validation-only areas, validators to run, and artifacts/private data that must never be committed.
+
+Every `Capability Coverage Plan` should include:
+
+- selected capabilities
+- intentionally excluded capabilities
+- deferred or unproven capabilities
+- runtime test boundary
+- safety boundary
+- skill and validator dependencies
+
+Before generation, self-check that the plan considered all available learned capabilities without overusing irrelevant ones, assigned each selected capability to the correct skill, marked proof gaps honestly, and named validation/runtime-test boundaries.
+
 ## Application Settings Planning
 
 When requirements mention application navigation, header appearance, menu layout, or app user groups, use the export-proven application settings model from the active workspace docs. Generate these settings in the root app `Data.Item.ListModel.LayoutView` JSON string: `sort[]` for menu structure, `attrs["navigator-menu"].position` for layout, and `attrs.appearance` for header fields.

@@ -22,6 +22,12 @@ New application creation may output `.yap`. Existing app upgrade `.yapk` remains
 
 Use [package-validation-lifecycle.md](references/package-validation-lifecycle.md) for the detailed sequence.
 
+## Planning Coverage Inputs
+
+When a generated package comes from a full application build, compare validation scope against its `Capability Coverage Plan` when available. The validator guidance should make sure selected capabilities are actually checked and partial/deferred capabilities are not accidentally promoted to runtime-ready claims.
+
+Planning-sensitive checks include signed `System.Int64` ID boundaries, AI Agent/Copilot numeric `Publisher`, document-library Type `16` and folder rules, Doc library control references, data-list and scheduled workflow designer metadata, `QueryData`/`AI`/`MailTask` references, application settings navigation/header/user-group structures, app-resource access tool permissions, and secret/private-data scans. This is a validation-scope check, not a reason to add new hard errors unless the invalid shape is already proven.
+
 ## Required Validation Areas
 
 Load [yap-materialization-rules.md](references/yap-materialization-rules.md) when package materialization or import safety is in scope. Check:
