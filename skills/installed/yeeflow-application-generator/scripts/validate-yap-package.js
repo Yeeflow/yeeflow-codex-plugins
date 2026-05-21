@@ -509,6 +509,7 @@ function validate(inputPath, mode, stage) {
       copilots: 0,
       connections: 0,
       knowledges: 0,
+      appUserGroups: 0,
       replaceIds: 0,
       lookupRelationships: 0,
       contentListReferences: 0,
@@ -551,6 +552,7 @@ function validate(inputPath, mode, stage) {
   });
 
   validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList, report, resource);
+  validateApplicationUserGroups(data, replaceIds, report);
   validateReplaceIds(replaceIds, localIds, report);
   validateCustomFormDocLibraryControls(data, listsById, fieldsByList, report);
   const aiResourcesById = buildAiResourcesById(data);
@@ -691,6 +693,7 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
     return;
   }
   validateRootNavigationStyle(layoutView, report);
+  validateRootNavigationMenuStructure(layoutView.sort || [], report);
   const navItems = flattenNavigationItems(layoutView.sort || []);
   if (!navItems.length) {
     issue(
@@ -741,6 +744,8 @@ function validateRootNavigationStyle(layoutView, report) {
   if (!isObject(attrs)) return;
   const appearance = attrs.appearance;
   const navigatorMenu = attrs["navigator-menu"];
+  if (isObject(appearance)) validateApplicationHeaderSettings(appearance, report);
+  if (isObject(navigatorMenu)) validateNavigationMenuSettings(navigatorMenu, report);
   if (!isObject(appearance) || !isObject(navigatorMenu)) return;
   const headerBackground = safeString(appearance.bgc);
   const headerText = safeString(appearance.color);
@@ -762,6 +767,84 @@ function validateRootNavigationStyle(layoutView, report) {
       navText
     });
   }
+}
+
+function validateApplicationHeaderSettings(appearance, report) {
+  if (appearance.height !== undefined) {
+    const height = Number(appearance.height);
+    if (!Number.isFinite(height) || height <= 0) {
+      issue(report, generatorFinalSeverity(report), "APP_HEADER_HEIGHT_INVALID", "Application header appearance.height should be a positive number when present.", { height: appearance.height });
+    } else if (![46, 56].includes(height)) {
+      issue(report, "warning", "APP_HEADER_HEIGHT_UNPROVEN", "Application header appearance.height uses a value not yet export-proven by the application settings study. The studied default is omitted/56px and v6 proves 46px.", { height });
+    }
+  }
+  if (appearance.hideTitle !== undefined && typeof appearance.hideTitle !== "boolean") {
+    issue(report, generatorFinalSeverity(report), "APP_HEADER_HIDETITLE_NOT_BOOLEAN", "Application header appearance.hideTitle should be boolean when present.", { hideTitle: appearance.hideTitle });
+  }
+}
+
+function validateNavigationMenuSettings(navigatorMenu, report) {
+  const position = navigatorMenu.position;
+  if (position === undefined || position === null || position === "") return;
+  const allowed = new Set(["default", "left", "onheader", "none"]);
+  if (!allowed.has(safeString(position))) {
+    issue(report, generatorFinalSeverity(report), "APP_NAVIGATION_POSITION_INVALID", "Application navigation menu attrs[\"navigator-menu\"].position should be one of the export-proven layout values: default, left, onheader, none.", { position });
+  }
+}
+
+function validateRootNavigationMenuStructure(items, report, depth = 1, path = "$.Item.ListModel.LayoutView.sort") {
+  const allowedResourceTypes = new Set(["1", "16", "32", "64", "103", "105"]);
+  const observedNonResourceTypes = new Set(["process", "link"]);
+  asArray(items).forEach((item, index) => {
+    if (!isObject(item)) {
+      issue(report, generatorFinalSeverity(report), "APP_NAVIGATION_ITEM_NOT_OBJECT", "Application navigation menu entries should be objects.", { path: `${path}[${index}]` });
+      return;
+    }
+    const itemPath = `${path}[${index}]`;
+    const type = safeString(item.Type);
+    const hasChildren = Array.isArray(item.list);
+    if (depth > 2) {
+      issue(report, generatorFinalSeverity(report), "APP_NAVIGATION_DEPTH_EXCEEDED", "Application navigation menu supports only two levels: top-level item and child resource inside a group.", { path: itemPath, title: item.Title || item.DisplayName || null });
+    }
+    if (type === "classes") {
+      if (depth !== 1) {
+        issue(report, generatorFinalSeverity(report), "APP_NAVIGATION_NESTED_GROUP", "Navigation groups cannot be nested inside other groups.", { path: itemPath, title: item.Title || null });
+      }
+      if (!safeString(item.Title) && !safeString(item.DisplayName)) {
+        issue(report, generatorFinalSeverity(report), "APP_NAVIGATION_GROUP_TEXT_MISSING", "Navigation group items should always have display text. Exports store it in Title.", { path: itemPath, id: item.ID || null });
+      }
+      if (!hasChildren) {
+        issue(report, "warning", "APP_NAVIGATION_GROUP_CHILDREN_MISSING", "Navigation group item has no list[] children. Empty groups are runtime-sensitive and not proven useful.", { path: itemPath, title: item.Title || null });
+      }
+      if (item.ListID !== undefined) {
+        issue(report, "warning", "APP_NAVIGATION_GROUP_LISTID_PRESENT", "Export-proven navigation groups use ID, Type classes, Title, Icon, and list[]; ListID on a group is not proven.", { path: itemPath, title: item.Title || null });
+      }
+      validateRootNavigationMenuStructure(item.list || [], report, depth + 1, `${itemPath}.list`);
+      return;
+    }
+    if (hasChildren) {
+      issue(report, generatorFinalSeverity(report), "APP_NAVIGATION_RESOURCE_HAS_CHILDREN", "Only Type classes navigation groups should contain list[] children.", { path: itemPath, title: item.Title || item.DisplayName || null, type: item.Type });
+      validateRootNavigationMenuStructure(item.list || [], report, depth + 1, `${itemPath}.list`);
+    }
+    if (!allowedResourceTypes.has(type) && !observedNonResourceTypes.has(type)) {
+      issue(report, "warning", "APP_NAVIGATION_TYPE_UNPROVEN", "Navigation item Type is not one of the export-proven application resource types. Use warnings until the runtime behavior is studied.", { path: itemPath, title: item.Title || item.DisplayName || null, type: item.Type });
+    }
+    if (allowedResourceTypes.has(type) && !safeString(item.ListID)) {
+      issue(report, generatorFinalSeverity(report), "APP_NAVIGATION_RESOURCE_LISTID_MISSING", "Application resource navigation items should include ListID/Key reference metadata.", { path: itemPath, title: item.Title || item.DisplayName || null, type: item.Type });
+    }
+    if (item.DisplayName !== undefined && item.DisplayName !== null && typeof item.DisplayName !== "string") {
+      issue(report, generatorFinalSeverity(report), "APP_NAVIGATION_DISPLAYNAME_NOT_STRING", "Navigation DisplayName/custom text should be a string when present. Omit it to allow the resource-name fallback.", { path: itemPath, displayName: item.DisplayName });
+    }
+    if (item.Icon !== undefined && item.Icon !== null && typeof item.Icon !== "string") {
+      issue(report, generatorFinalSeverity(report), "APP_NAVIGATION_ICON_NOT_STRING", "Navigation Icon should be a string. Export-proven no-icon uses an empty string.", { path: itemPath, icon: item.Icon });
+    }
+    if (item.Icon === null) {
+      issue(report, "warning", "APP_NAVIGATION_ICON_NULL_UNPROVEN", "Export-proven no-icon navigation items use Icon as an empty string rather than null.", { path: itemPath, title: item.Title || item.DisplayName || null });
+    }
+    if (item.IsHidden !== undefined && typeof item.IsHidden !== "boolean") {
+      issue(report, generatorFinalSeverity(report), "APP_NAVIGATION_ISHIDDEN_NOT_BOOLEAN", "Navigation IsHidden should be boolean when present.", { path: itemPath, isHidden: item.IsHidden });
+    }
+  });
 }
 
 function validateDashboardPageResource(page, layout, resource, listsById, fieldsByList, rootPageLayouts, report, outerResource) {
@@ -1202,6 +1285,39 @@ function validateBasicStructure(data, resource, report) {
       issue(report, "warning", "DOCUMENT_LIBRARY_SIMPLEPORTAL_NOT_NULL", "Known-good document-library exports use Resource.SimplePortal = null. Generated [] wrappers failed Yeeflow create in v1/v2.", { simplePortalType: Array.isArray(resource.SimplePortal) ? "array" : typeof resource.SimplePortal });
     }
   }
+}
+
+function validateApplicationUserGroups(data, replaceIds, report) {
+  const groups = asArray(data && data.AppGroups);
+  report.summary.appUserGroups = groups.length;
+  const seen = new Set();
+  groups.forEach((group, index) => {
+    if (!isObject(group)) {
+      issue(report, generatorFinalSeverity(report), "APP_USER_GROUP_NOT_OBJECT", "Application user group entries should be objects.", { index });
+      return;
+    }
+    const id = safeString(group.ID);
+    const name = safeString(group.Name);
+    if (!id) issue(report, generatorFinalSeverity(report), "APP_USER_GROUP_ID_MISSING", "Application user groups should include an ID.", { index, name });
+    if (!name) issue(report, generatorFinalSeverity(report), "APP_USER_GROUP_NAME_MISSING", "Application user groups should include a Name.", { index, id });
+    if (id && seen.has(id)) issue(report, generatorFinalSeverity(report), "APP_USER_GROUP_ID_DUPLICATE", "Application user group IDs should be unique inside Data.AppGroups.", { index, id, name });
+    seen.add(id);
+    if (id && replaceIds.size && !replaceIds.has(id)) {
+      issue(report, "warning", "APP_USER_GROUP_ID_NOT_IN_REPLACEIDS", "The v6 application user group export includes group IDs in ReplaceIds. Confirm import behavior if generated group IDs are not remapped.", { index, id, name });
+    }
+    if (group.Description !== undefined && group.Description !== null && typeof group.Description !== "string") {
+      issue(report, "warning", "APP_USER_GROUP_DESCRIPTION_NOT_STRING", "Application user group Description should be null or string based on the export-proven schema.", { index, id, name });
+    }
+    const raw = JSON.stringify(group);
+    if (/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(raw)) {
+      issue(report, generatorFinalSeverity(report), "APP_USER_GROUP_PRIVATE_EMAIL_PRESENT", "Generated application packages must not embed real user email addresses in AppGroups or related group metadata.", { index, id, name });
+    }
+    for (const key of Object.keys(group)) {
+      if (/users?|members?/i.test(key)) {
+        issue(report, "warning", "APP_USER_GROUP_MEMBER_SCHEMA_UNPROVEN", "This export study proves Data.AppGroups group records, but does not yet prove a safe member list schema. Treat member data as private and runtime-sensitive.", { index, id, name, key });
+      }
+    }
+  });
 }
 
 function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, localIds, listsById, fieldsByList, fieldIdsByApp, report) {
