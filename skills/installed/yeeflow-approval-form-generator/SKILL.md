@@ -5,6 +5,12 @@ description: generate, inspect, validate, package, and improve yeeflow approval 
 
 # Yeeflow Approval Form Generator
 
+## Application Navigation References
+
+When an approval form is included in application navigation, reference it from the root app `Data.Item.ListModel.LayoutView.sort[]` using `Type = 105` and `ListID = Data.Forms[].Key`. App-level approval forms in generated packages keep `ListID = 0` on the form record; the navigation item points to the form key, not a child data-list ID.
+
+Approval form menu items can be top-level resources or children inside a top-level `Type = "classes"` navigation group. Use optional `DisplayName` for custom menu text, omit it for title fallback, use `Icon: ""` for no-icon, and keep `IsHidden` boolean when present. Validate references before wrapper build.
+
 Use this skill when the user asks to generate, inspect, validate, package, troubleshoot, or improve Yeeflow approval form definitions, decoded `.ywf` Def JSON, `.ywf` wrappers, or `.yap` application exports.
 
 When approval-form changes target an existing imported app, confirm whether the user wants a new cloned `.yap` or an upgrade `.yapk`. For `.yapk`, start from a Version management baseline and preserve existing form/workflow IDs; do not regenerate fresh IDs for existing objects. The first studied `.yapk` resource is opaque and signature-like, so offline app-content form mutation inside `.yapk` is not generation-safe until Yeeflow encoding/signing is proven.

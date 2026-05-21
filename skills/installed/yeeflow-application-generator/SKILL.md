@@ -415,6 +415,16 @@ Load only the relevant reference:
 
 The app validator stack should validate workflow nodes against the normalized action reference when present. Stop before wrapper build on missing required node properties, invalid enum values, invalid value types, invalid `ContentList` mappings, invalid `QueryData` filters, invalid `SequenceFlow` conditions, invalid `Loop`/`Delay` condition shapes, and unsafe external or credential-related actions.
 
+## Application Settings Generation
+
+Root application settings are generated in `Data.Item.ListModel.LayoutView` as a JSON string. Preserve `add/edit/view`, write `sort[]` for navigation, write `attrs.appearance` for header appearance, write `attrs["navigator-menu"]` for menu styling/layout, and keep `sortVer = 1`.
+
+For navigation, generate top-level resources directly in `sort[]` and custom groups as `Type: "classes"` with `ID`, `Title`, `Icon`, and `list[]`. Groups cannot be nested, and the maximum supported menu depth is top-level item plus child resource. Use `DisplayName` only when custom display text is required; omit it to use the resource `Title` fallback. Use `Icon: ""` for no-icon. Use `IsHidden` only as a boolean.
+
+Navigation layout values are `default` for horizontal/default, `left` for vertical, `onheader` for on-header, and `none` for no menu. Header settings live in `attrs.appearance`; omit `height` for default 56px, use export-proven `height: 46` for the small header, and use `hideTitle: true` to hide the application title.
+
+Application user groups are generated as `Data.AppGroups[]` records with fresh `ID`, `Name`, and nullable `Description`; include group IDs in `Resource.ReplaceIds[]`. Do not include group members, real users, emails, or tenant-local identities until a member-bearing export proves the schema.
+
 Treat `GenerateDocument`, `ConvertToPdf`, `AddWatermark`, and `DocumentRecognition` as partially supported until template/document-library dependencies are proven. Treat `AI`, `AzureOpenAI`, `Connector`, `HttpRequest`, `AcrobatSign`, `DocuSign`, and `PandaDoc` as external/credential-sensitive; do not bundle secrets, tokens, passwords, API keys, connection IDs, or tenant-specific credential values.
 
 Workflow assignment rule: generated app packages must not hardcode tenant-specific direct users in approval task `usertaskassignment`. A direct `method: "users"` assignment with a local user ID/title can import but fail publish if the user is not valid in the target tenant. Prefer requester/current-user expression assignment or require an explicit export-backed user mapping.

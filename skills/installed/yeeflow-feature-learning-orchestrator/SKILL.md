@@ -184,3 +184,15 @@ The same export proves workflow `QueryData` -> `AI` -> `MailTask` orchestration 
 
 Hard stop if scheduled-workflow recurrence cannot be mapped, fixed recipients cannot be made safe/redacted, AI Agent references do not resolve, Query data list references do not resolve, or runtime testing might send real email or call live AI unexpectedly.
 <!-- scheduled-workflow-ai-assistant-learning:end -->
+
+<!-- application-settings-navigation-user-groups-learning:start -->
+## Application Settings, Navigation, Header, And User Groups
+
+For application settings learning, decode `.yap` exports read-only and inspect the root app shell first. The export-proven location is `Data.Item.ListModel.LayoutView` as a JSON string. Parsed `sort[]` stores navigation menu items, `attrs["navigator-menu"].position` stores menu layout, and `attrs.appearance` stores header appearance.
+
+Navigation menu exports prove resource items and custom groups. Groups use `Type = "classes"`, `ID`, `Title`, optional `Icon`, and child resources in `list[]`; groups require display text and cannot contain nested groups. Resource items may include `DisplayName` for custom menu text or omit it to fall back to `Title`. No-icon is export-proven as `Icon: ""`. Keep menu depth to two layers.
+
+Navigation layout values are `default` for horizontal/default, `left` for vertical, `onheader` for on-header, and `none` for no menu. Header title hidden is `attrs.appearance.hideTitle = true`; default visible title is omission. Default 56px height is represented by omission, and v6 proves small height as `attrs.appearance.height = 46`; larger heights remain product-known but not export-proven.
+
+Application user groups are export-proven in `Data.AppGroups[]` with `{ ID, Name, Description }`; v6 proves group IDs belong in `Resource.ReplaceIds[]`. Member storage was not present in the studied export, so do not generate group members or real users until a safe member-bearing export proves the schema.
+<!-- application-settings-navigation-user-groups-learning:end -->

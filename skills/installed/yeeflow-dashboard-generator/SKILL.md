@@ -5,6 +5,12 @@ description: generate, inspect, validate, package, debug, and improve Yeeflow da
 
 # Yeeflow Dashboard Generator
 
+## Application Navigation References
+
+When a dashboard/application page is included in app navigation, reference the root app page layout from `Data.Item.ListModel.LayoutView.sort[]` using `Type = 103` and `ListID = Data.Item.Layouts[].LayoutID`. Use optional `DisplayName` for a custom menu label and omit it for title fallback. Use a string `Icon`, or `Icon: ""` for no-icon.
+
+Dashboard menu items can be top-level resources or children inside a top-level `Type = "classes"` navigation group. Do not create nested groups. Validate the menu reference resolves to an included Type 103 layout before wrapper build.
+
 Use this skill when the user asks to generate, debug, validate, or learn Yeeflow dashboard packages, including minimal dashboard-only apps, dashboard widgets, dashboard page JSON, Type `103` navigation, dashboard `exts`, and dashboard import failures.
 
 When dashboard changes target an existing imported application, route package-type decisions through `yeeflow-application-builder` / `yeeflow-application-generator`. Generate `.yap` for new/cloned apps. For `.yapk` upgrades, start from a Yeeflow Version management baseline and preserve app identity/stable IDs; do not attempt to patch dashboard internals in `.yapk` while its `Resource` payload remains opaque.
