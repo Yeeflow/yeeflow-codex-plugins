@@ -21,6 +21,25 @@ Never accept fake dashboards, static KPI mockups, or unbound placeholder charts 
 
 For the full pass sequence, read [runtime-test-lifecycle.md](references/runtime-test-lifecycle.md).
 
+## App-Level Capability Runtime Planning
+
+When testing a full generated application, start from its `Capability Coverage Plan` when available. The runtime plan should cover every selected capability at the safest useful proof level and explicitly mark excluded, deferred, or unproven capabilities as not tested or validation-only.
+
+Include app-level checks when relevant:
+
+- app imports and opens
+- navigation renders, including custom labels, resource-title fallback, icons/no-icons, groups, child items, selected layout, header height, and title visibility
+- data lists open, fields/views/forms materialize, lookup/sample dependencies resolve, and follow-up/task lists serve a real workflow purpose
+- approval forms open, publish when required, submit, route, show task pages, and write `ContentList` records when scoped
+- dashboards render with data-bound KPIs, queues, charts, Doc library controls, or empty states from the expected source lists
+- document libraries open, generated folders render, custom fields/views/forms are inspectable, and upload behavior is tested only with disposable files
+- Copilot configuration opens, quick prompts/tools are visible, and chat/tool execution happens only in an approved safe sandbox
+- Agent configuration opens, input/output variables and tools are visible, and Agent execution or row mutation happens only in an approved safe sandbox
+- workflows open in the designer, including data-list workflows, approval workflows, scheduled workflows, `QueryData`, `AI`/AI Assistant, `MailTask`/Send email, and designer metadata
+- scheduled workflows show recurrence/timezone/working-day settings but do not trigger, publish, run, send email, or call live AI unless explicitly scoped
+- custom code controls render and perform query/writeback only after host page/form safety is established
+- integrations, HTTP/OpenAPI/OAuth, email, external calls, image/file analysis, and destructive list mutations remain execution-deferred unless the plan names safe credentials, data, and call scope
+
 ## What To Test
 
 Load [runtime-test-checklist.md](references/runtime-test-checklist.md) when creating or running a test plan. The checklist covers:

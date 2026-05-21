@@ -18,18 +18,52 @@ For component details, also use the installed skills:
 ## Standard Workflow
 
 1. Decompose the app requirement into resources, relationships, and stop conditions.
-2. Create a normalized app spec before generating package JSON.
-3. Generate or patch decoded `.yap` Resource/Data JSON only after the graph is clear.
-4. Validate every generated child data list with `scripts/validate-ydl-list.js --mode generator --stage final`, using an app/dependency map when lookup relationships require it. App-level validation is not enough.
-5. Validate child approval forms where practical.
-6. Validate the assembled app with `scripts/validate-yap-package.js`.
-7. Validate app relationships with `scripts/validate-yap-graph.js`.
-8. Build the wrapper with `scripts/build-yap-wrapper.js` only after validation passes.
-9. Report sandbox import checklist and require export-back learning before production-like use.
+2. Create a `Capability Coverage Plan` before choosing the final resource graph.
+3. Create a normalized app spec before generating package JSON.
+4. Generate or patch decoded `.yap` Resource/Data JSON only after the graph is clear.
+5. Validate every generated child data list with `scripts/validate-ydl-list.js --mode generator --stage final`, using an app/dependency map when lookup relationships require it. App-level validation is not enough.
+6. Validate child approval forms where practical.
+7. Validate the assembled app with `scripts/validate-yap-package.js`.
+8. Validate app relationships with `scripts/validate-yap-graph.js`.
+9. Build the wrapper with `scripts/build-yap-wrapper.js` only after validation passes.
+10. Report sandbox import checklist and require export-back learning before production-like use.
 
 For package type selection, use `docs/yeeflow-application-package-generation-rules.md` when present.
 
 Never import into Yeeflow or operate the UI unless the user explicitly asks. Preserve large numeric IDs as strings. Redact secret/token/client values.
+
+## Application Capability Planning Checklist
+
+For full app generation, write a `Capability Coverage Plan` before implementation. Use `docs/studies/application-planning-capability-coverage.md` when present. The plan must select relevant capabilities, explicitly exclude irrelevant ones, defer partial or unproven features honestly, and assign each selected capability to the right generator, validator, and runtime-test path.
+
+Consider these areas before package generation:
+
+- Core resources: data lists, approval forms, dashboards, document libraries, reports, follow-up/task lists, master/reference lists, transaction lists, custom forms, and root app pages.
+- AI experience: Copilot, quick prompts, local resource tools, connected Agents, image uploads, attachments, and whether Copilot behavior is import-only, config-visible, or runtime-executed.
+- AI Agents: reusable Agents, input/output variables, image/file inputs, application-resource access, same-row updates through native `ListDataID`, record create/update/read behavior, draft generation, summaries, scoring, recommendations, and human review.
+- Workflow and automation: approval workflows, data-list workflows with `FlowMappings[]`, scheduled workflows with `WorkflowType = 3`, triggers, `QueryData`, `AI`/AI Assistant, `MailTask`/Send email, HTTP/API/resource actions, and execution deferral.
+- Document management: Type `16` libraries, canonical `New Document Library` base, default document fields, multiple libraries, generated root folders, custom fields/views/forms, and Doc library controls on dashboards/forms.
+- Navigation and shell: custom `LayoutView.sort[]`, `Type: "classes"` groups with `list[]`, resource item labels/icons/no-icon, layout values `default`/`left`/`onheader`/`none`, header `attrs.appearance`, export-proven `height: 46`, `hideTitle: true`, and `Data.AppGroups[]`.
+- Permissions and users: app user groups, role-based experiences, permission-sensitive resource exposure, and the current rule that member assignment is not export-proven and must not be generated with real users.
+- Integrations: Connections, HTTP API, OAuth, OpenAPI/REST tools, external calls, post-import configuration, credential safety, and whether execution is deferred.
+- Runtime and validation: expected import proof, runtime proof, render-only proof, validation-only areas, validators to run, and artifacts/private data that must never be committed.
+
+The plan should include these subsections:
+
+- selected capabilities
+- intentionally excluded capabilities
+- deferred or unproven capabilities
+- runtime test boundary
+- safety boundary
+- skill and validator dependencies
+
+Before generating a package, self-check:
+
+- Did the plan consider the learned capability set without overusing irrelevant capabilities?
+- Did it mark partial or unproven capabilities honestly?
+- Did it assign each selected capability to the right specialized skill?
+- Did it include validation and runtime-test boundaries?
+- Did it avoid real users, emails, tenant IDs, raw exports, decoded payloads, credentials, tokens, private files, and generated package artifacts in commit scope?
 
 ## Supported v1 Package Shape
 
