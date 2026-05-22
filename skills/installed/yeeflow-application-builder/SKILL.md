@@ -63,9 +63,9 @@ Before generation, self-check that the plan considered all available learned cap
 
 ## Application Settings Planning
 
-When requirements mention application navigation, header appearance, menu layout, or app user groups, use the export-proven application settings model from the active workspace docs. Generate these settings in the root app `Data.Item.ListModel.LayoutView` JSON string: `sort[]` for menu structure, `attrs["navigator-menu"].position` for layout, and `attrs.appearance` for header fields.
+When requirements mention application navigation, header appearance, menu layout, or app user groups, use the runtime-proven application settings model from the active workspace docs. Generate these settings in the root app `Data.Item.ListModel.LayoutView` JSON string: `sort[]` for menu structure, `attrs["navigator-menu"].position` for layout, and `attrs.appearance` for header fields.
 
-Use `Type = "classes"` for custom navigation groups, keep groups top-level only, keep depth to two layers, require group `Title`, use optional resource `DisplayName` for custom text, omit `DisplayName` for resource-name fallback, and use `Icon: ""` for no-icon. Supported layout values are `default`, `left`, `onheader`, and `none`. User groups may be generated as empty `Data.AppGroups[]` records with fresh IDs in `ReplaceIds`; do not generate real users, emails, or members until member schema is proven.
+Use `Type = "classes"` for custom navigation groups, keep groups top-level only, keep depth to two layers, require group `Title`, use optional resource `DisplayName` for custom text, omit `DisplayName` for resource-name fallback, and use `Icon: ""` for no-icon. Supported layout values `default`, `left`, `onheader`, and `none` are runtime-proven for generated packages. `attrs.appearance.height = 46` and `hideTitle: true` are runtime-proven together; additional header heights remain unproven. User groups may be generated as empty `Data.AppGroups[]` records with fresh IDs in `ReplaceIds`; do not generate real users, emails, or members until member schema is proven.
 
 ## Custom Code Planning
 
