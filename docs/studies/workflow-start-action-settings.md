@@ -166,3 +166,24 @@ Validators should warn, not hard-error in compatibility mode, for:
 - No explicit recall boolean separate from `revoke-conditions` was found.
 - Start condition runtime gating was not tested.
 - Start email delivery was not tested.
+
+## Data-List Workflow Start Action
+
+`Purchase Requests.ydl` adds a data-list workflow Start action comparison point.
+
+| Concept | Approval form workflow from `Test ABC (3).yap` | Data-list workflow from `Purchase Requests.ydl` | Proof |
+|---|---|---|---|
+| Start stencil | `StartNoneEvent` | `StartNoneEvent` | export-proven |
+| Incoming flow | none | none | export-proven |
+| Outgoing flow | one or more outgoing sequence flows | one outgoing sequence flow | export-proven |
+| Allow terminate | `terminate` and `terminate-conditions` fields found | fields absent | export-proven difference |
+| Allow recall | `revoke-conditions` field found | field absent | export-proven difference |
+| Email notification | `isenabledemail`, `to`, `subject`, `html` | same field family present | product-documented + export-proven |
+| Trigger context | approval request/form submission | data-list `FlowMappings[]` new-item trigger | export-proven difference |
+
+Generation rule: keep data-list workflow Start action settings separate from approval form workflow Start settings. Do not add terminate or recall fields to a data-list workflow Start action unless a focused data-list export proves those fields. Start notification delivery remains untested.
+
+Normalized references:
+
+- `docs/studies/normalized/workflow-start-action/start-action-data-list-workflow.normalized.json`
+- `docs/studies/normalized/workflow-start-action/start-action-data-list-email-notification.normalized.json`

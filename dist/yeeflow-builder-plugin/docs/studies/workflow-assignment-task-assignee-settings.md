@@ -613,6 +613,9 @@ Do not add hard errors in compatibility mode from this study. Existing packages 
 - Preserve Complete task marker `tasktype="complete"` only when generating Complete task nodes; preserve absent `tasktype` for approval/default nodes unless a future export proves an explicit approval marker.
 - Preserve due-date fields together: `duedatedefinition`, `duedatetype`, optional `duedateexpress`, optional `isfromworkcalendar`, and `notifyrules[]`.
 - Do not invent Automatic Treatment due-date action rules; only reminder `actiontype="1"` is export-proven here.
+- Data-list workflow Assignment Tasks can use list-item field context in assignee expressions. `Purchase Requests.ydl` export-proves a Created By list-field expression that resolves the Created By user's line manager.
+- Preserve data-list assignee expressions as expression-button strings; do not replace them with static users or invented IDs.
+- When generating data-list workflow task forms, preserve list-bound controls with `isListControl`, `identifier`, `InternalName`, `fieldID`, and `____customListFields_` binding. Use read-only settings for custom list fields when the task should not update source list data.
 - Do not claim selected department manager, workflow variable, position by department plus location, or quick-completion behavior as generation-safe from these exports alone.
 
 ## Runtime-Test Plan
@@ -657,3 +660,29 @@ Do not execute workflow, send notifications, or expose user identities unless th
 - Parent-department manager fallback is product-documented but not export-proven.
 - Email notification fields and due-date reminder settings are export-proven, but delivery, quick completion, due-date scheduling, and task-form open behavior are not runtime-proven here.
 - Minute due-date units and Automatic Treatment reminder actions are product-documented but not export-proven in these files.
+- Data-list workflow Created By/list-field assignee routing is export-proven but not runtime-proven.
+- Data-list workflow task form list-field edit/save behavior is not runtime-proven.
+
+## Data-List Workflow Extension
+
+`Purchase Requests.ydl` adds export-proven data-list workflow behavior to the Assignment Task study:
+
+| Area | Export-proven finding | Proof level |
+|---|---|---|
+| Workflow type | One `WorkflowType: 1` data-list workflow with a `FlowMappings[]` new-item trigger | export-proven |
+| Assignment task | One `MultiAssignmentTask` with `usertaskassignment[]` | export-proven + validator-backed |
+| Direct user | Static direct user shape reused from approval workflows | export-proven; tenant-sensitive |
+| Applicant manager | Applicant line manager expression shape reused | export-proven |
+| User group | User group `All users` expression shape reused | export-proven; runtime-unproven |
+| List-item assignee | Created By list-field expression resolving `LineManager` | export-proven |
+| Due date | `duedatedefinition: 120`, `duedatetype: hour` | export-proven |
+| Notification | Assignment Task email fields and one due-date reminder rule present | export-proven; delivery untested |
+| Task form | Task form includes normal controls, list-bound controls, workflow action panel, and history | export-proven |
+
+The data-list workflow export proves that Assignment Task expressions can reference list-item context. The concrete committed normalized example uses `<CREATED_BY_FIELD_ASSIGNEE_REF>` and `<LIST_FIELD_ASSIGNEE_REF>` placeholders and does not expose raw list, field, user, or tenant identifiers.
+
+See also:
+
+- `docs/studies/workflow-approval-vs-data-list-actions.md`
+- `docs/studies/normalized/workflow-assignment-task-assignees/assignment-assignee-data-list-field-value.normalized.json`
+- `docs/studies/normalized/workflow-assignment-task-assignees/assignment-assignee-created-by-list-field.normalized.json`

@@ -32,6 +32,10 @@ Test scenarios:
 | Start allow terminate | Confirm Start `terminate` and `terminate-conditions` render | disposable request only if later scoped | designer/open proof first |
 | Start allow recall | Confirm `revoke-conditions` render | disposable request only if later scoped | designer/open proof first |
 | Start email notification | Confirm Start `isenabledemail/to/subject/html` render | no delivery unless scoped | configuration proof only |
+| Data-list Start email notification | Confirm data-list Start notification config persists without terminate/recall fields | disposable list workflow package; no delivery unless scoped | designer/open proof first |
+| Data-list Created By assignee | Confirm list-item Created By expression can be used as task assignee source | safe created-by record and safe manager mapping | routing proof only when safe |
+| Data-list task form list fields | Confirm task form renders custom and native/default list-bound fields | disposable list item | designer/open proof first |
+| Data-list readonly custom field | Confirm custom list-bound read-only config persists | disposable list item | designer/open proof first |
 
 ## Safety Rules
 
@@ -81,3 +85,15 @@ Before any request-submit runtime baseline, select safe test-only assignees or e
 - Start action runtime proof for terminate/recall/condition gating should be separate from assignee routing unless the package remains small and safe.
 
 `minute` due dates and Automatic Treatment due-date actions should not be included in a schema-proof baseline until a focused export proves their serialized shape.
+
+## Data-List Workflow Additions
+
+`Purchase Requests.ydl` extends the next combined baseline with data-list workflow action coverage:
+
+- Start action should be tested as a data-list workflow Start action, not copied from approval-form workflow Start settings. The studied data-list Start has email notification fields and no terminate/recall fields.
+- Assignment Task should include a list-item assignee expression, especially Created By or Created By line manager, only when safe disposable list records and safe user/manager mappings are available.
+- Task form designer/open proof should confirm normal task-form controls and list-bound controls render together.
+- Custom list fields marked read-only should remain read-only in the designer/opened task form.
+- Default/native list fields should remain treated as read-only from export study only until designer/runtime proof confirms broader behavior.
+
+Do not submit data-list workflow records or send notification email until safe test recipients and safe assignee routing are explicitly scoped.

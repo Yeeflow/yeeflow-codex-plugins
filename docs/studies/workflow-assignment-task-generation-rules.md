@@ -90,6 +90,10 @@ Use these rules for generated packages:
 - Treat `notifyrules[].actiontype="1"` as the export-proven reminder action shape. Do not generate Automatic Treatment due-date actions until an export proves the serialized schema.
 - Reminder recipient settings are export-proven only for task-level current task assignee email via `properties.to`; applicant, manager, department-manager, and arbitrary recipient reminder shapes were not found.
 - Start action settings from `Test ABC (3).yap` use `StartNoneEvent.properties.terminate`, `terminate-conditions`, `revoke-conditions`, `isenabledemail`, `to`, `subject`, and `html`. Preserve condition rows as operand-wrapper arrays and do not claim terminate/recall/email runtime behavior without focused proof.
+- Data-list workflow Start action from `Purchase Requests.ydl` uses `StartNoneEvent.properties.isenabledemail`, `to`, `subject`, `html`, and `taskurl`, but does not include `terminate`, `terminate-conditions`, or `revoke-conditions`. Do not add approval-form terminate/recall fields to data-list workflow Start actions until a data-list export proves them.
+- Data-list workflow Assignment Task can reference list item context in assignee expressions. The studied export proves a Created By list-field expression that resolves `LineManager`; preserve this as an expression-button value and never replace it with invented static users.
+- Data-list workflow task forms can mix normal task-form controls and list-bound controls. Preserve `isListControl`, list field `identifier`, `InternalName`, `fieldID`, and `____customListFields_` binding.
+- Custom list fields can be marked `readonly=true` when the task should not update source list data. Default/native fields such as Created By appear read-only in the studied export; keep broader native-field behavior runtime-pending.
 - Lay out generated workflow nodes with non-overlapping coordinates and keep `SequenceFlow` source/target plus node incoming/outgoing references consistent.
 
 ## Runtime-Proof Requirements
@@ -134,6 +138,8 @@ These were not found in the current exports or remain insufficiently proven:
 - enabled Start terminate condition behavior
 - Start recall runtime behavior
 - Start email delivery
+- data-list workflow Created By/list-field assignee routing
+- data-list workflow task form save/edit behavior for list-bound controls
 
 Do not generate these as schema-safe until an export proves their package shape. Do not claim routing-safe until runtime proof exists.
 

@@ -199,6 +199,7 @@ const ASSIGNMENT_TASK_TASKTYPES = new Set(["complete"]);
 const ASSIGNMENT_TASK_DUE_DATE_TYPES = new Set(["hour", "day", "minute", "express"]);
 const ASSIGNMENT_TASK_NOTIFY_RELATIVES = new Set(["-1", "0", "1"]);
 const ASSIGNMENT_TASK_NOTIFY_UNITS = new Set(["day", "hour", "minute"]);
+const ASSIGNMENT_TASK_LIST_FIELD_RE = /listitem|List field|____customListFields/i;
 
 function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
   const props = shape.properties || {};
@@ -323,6 +324,14 @@ function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
           method,
         });
       }
+    }
+    if (typeof assignment.value === "string" && ASSIGNMENT_TASK_LIST_FIELD_RE.test(assignment.value)) {
+      issue(issues, "warning", "ASSIGNMENT_TASK_LIST_FIELD_ASSIGNEE_RUNTIME_UNPROVEN", "Data-list workflow assignee expression references a list-item field value; preserve the expression-button shape and runtime-test with safe list records before claiming routing.", {
+        path: itemPath,
+        nodeId: shapeId(shape),
+        method,
+        fieldContext: assignment.value.includes("CreatedBy") ? "CreatedBy" : "listitem",
+      });
     }
     if (type === "user" && method === "expression" && typeof assignment.value === "string" && assignment.value.includes("type&quot;:&quot;usergroup")) {
       issue(issues, "warning", "ASSIGNMENT_TASK_USER_GROUP_RUNTIME_UNPROVEN", "User group assignee shape is export-proven and can be API-category-assisted, but group expansion/routing still requires focused runtime proof.", {
