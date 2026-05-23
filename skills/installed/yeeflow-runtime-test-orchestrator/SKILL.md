@@ -42,6 +42,8 @@ Include app-level checks when relevant:
 - custom code controls render and perform query/writeback only after host page/form safety is established
 - integrations, HTTP/OpenAPI/OAuth, email, external calls, image/file analysis, and destructive list mutations remain execution-deferred unless the plan names safe credentials, data, and call scope
 
+When runtime planning needs to confirm that users, departments, locations, or positions exist, use `yeeflow-api-operator` for safe read-only lookup only when local credentials are present and the call scope is approved. Use it to support approval-routing tests or select safe test identities only when explicitly allowed. Do not dump private user data, run write APIs, or make API access mandatory for import/open validation.
+
 ## What To Test
 
 Load [runtime-test-checklist.md](references/runtime-test-checklist.md) when creating or running a test plan. The checklist covers:
@@ -98,7 +100,7 @@ For data-list workflow AI image-extraction cases, use `docs/studies/data-list-wo
 
 Runtime-test Scheduled Workflow packages only after local package, graph, workflow-action, AI Agent reference, email-recipient, ReplaceIds, and secret scans pass. Safe first checks are import, app open, Scheduled Workflow visibility, designer open, recurrence UI render, timezone/working-day setting render, Query data action open, AI Assistant action open, and Send email configuration display.
 
-The `Scheduled Workflow Safe Runtime Baseline` pass proved import/open/designer rendering for a generated package with local `Runtime Ideas`, local `Email generation`, far-future non-deployed weekly recurrence, `QueryData`, `AI`, and `MailTask` configured to `workflow.safe.test@example.com`. Classify the Codex-observed proof as partial: import/open/configuration runtime-proven by Codex. User-confirmed function test passed; exact execution scope not yet documented.
+The `Scheduled Workflow Safe Runtime Baseline` pass proved import/open/designer rendering for a generated package with local `Runtime Ideas`, local `Email generation`, far-future non-deployed weekly recurrence, `QueryData`, `AI`, and `MailTask` configured to a reserved safe test recipient placeholder. Classify the Codex-observed proof as partial: import/open/configuration runtime-proven by Codex. User-confirmed function test passed; exact execution scope not yet documented.
 
 Do not trigger schedules, run workflows, send email, publish workflows, or execute AI Assistant actions unless the recipient, schedule, AI call scope, and data are explicitly safe. Do not separately claim schedule trigger execution, manual run behavior, email delivery, AI Assistant execution, or workflow-triggered AI Agent execution unless the exact tested path is documented. Classify unexecuted scheduled-workflow packages as partial only when import/open/designer rendering was actually tested; otherwise classify as validation-only.
 <!-- scheduled-workflow-ai-assistant-learning:end -->

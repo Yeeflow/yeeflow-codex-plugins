@@ -20,6 +20,7 @@ The plugin lives at `dist/yeeflow-builder-plugin/` and includes:
 - `skills/yeeflow-runtime-test-orchestrator/`
 - `skills/yeeflow-package-validator/`
 - `skills/yeeflow-plugin-release-manager/`
+- `skills/yeeflow-api-operator/`
 - `scripts/` helper checks referenced by bundled skills.
 - `yeeflow-expression-utils.js` support utility for expression smoke validation.
 
@@ -46,6 +47,8 @@ The plugin lives at `dist/yeeflow-builder-plugin/` and includes:
 `yeeflow-package-validator` standardizes package validation before import or runtime testing, including materialization rules, field/list integrity, workflow checks, and `.yap` versus `.yapk` safety policy.
 
 `yeeflow-plugin-release-manager` standardizes Yeeflow Builder Plugin rebuilds, version decisions, release candidates, install smoke testing, and final tag creation.
+
+`yeeflow-api-operator` provides safe read-only Yeeflow REST API connectivity checks and organization/reference-data lookup when local credentials are available. Its v1 scope is users, departments, locations, and positions; it must not run write APIs or expose secrets/private records.
 
 ## Builder vs. Learning Orchestrator
 
@@ -110,7 +113,8 @@ Local validation is not the same as Yeeflow runtime proof. Accepted baselines mu
 
 - This package is skills-only.
 - No OAuth is included.
-- No Yeeflow API integration is included.
+- No embedded Yeeflow API credentials, OAuth flow, or MCP server is included.
+- Yeeflow API usage is limited to the `yeeflow-api-operator` read-only helper unless future API operations are separately studied, safety-reviewed, and runtime-proven.
 - No MCP servers are included.
 - `.yapk` mutation is not supported.
 - Public form custom code is not claimed unless explicitly runtime-tested.

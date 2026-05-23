@@ -65,6 +65,8 @@ Consider these areas before package generation:
 - Integrations: Connections, HTTP API, OAuth, OpenAPI/REST tools, external calls, post-import configuration, credential safety, and whether execution is deferred.
 - Runtime and validation: expected import proof, runtime proof, render-only proof, validation-only areas, validators to run, and artifacts/private data that must never be committed.
 
+If a package plan needs real users, departments, locations, or positions, route that lookup through `yeeflow-api-operator` only when local credentials exist and API lookup is authorized. Do not invent org/reference data when the API can safely confirm it, but do not make API access a prerequisite for normal package generation. Avoid embedding private user data in generated packages; use placeholders, empty groups, requester/current-user assignment, or post-import configuration unless the user explicitly approves a narrow safe use.
+
 The plan should include these subsections:
 
 - selected capabilities
@@ -195,7 +197,7 @@ Keep these out of scope in v1 unless the user asks for research only:
 
 `AI Agent and Copilot Local Resource Baseline8.yap` proves Scheduled Workflow app resources are `Data.Forms[]` entries with `WorkflowType = 3`, `ListID = 0`, JSON-string `Settings`, and JSON-string `DefResource`.
 
-`Scheduled Workflow Safe Runtime Baseline` proves a generated import/open/designer baseline when the package uses one harmless local list, one local `Email generation` Agent, one Scheduled Workflow, a far-future non-deployed weekly schedule, `QueryData -> AI -> MailTask`, and the reserved safe recipient `workflow.safe.test@example.com`. The Codex-observed runtime pass proved import, app open, local list render, Scheduled Workflow listing/detail, recurrence render, variables render, designer open, and non-executing `QueryData`, `AI`, and `MailTask` configuration panels. User-confirmed function test passed; exact execution scope not yet documented.
+`Scheduled Workflow Safe Runtime Baseline` proves a generated import/open/designer baseline when the package uses one harmless local list, one local `Email generation` Agent, one Scheduled Workflow, a far-future non-deployed weekly schedule, `QueryData -> AI -> MailTask`, and a reserved safe test recipient placeholder. The Codex-observed runtime pass proved import, app open, local list render, Scheduled Workflow listing/detail, recurrence render, variables render, designer open, and non-executing `QueryData`, `AI`, and `MailTask` configuration panels. User-confirmed function test passed; exact execution scope not yet documented.
 
 For generated Scheduled Workflow packages, validate schedule `Settings` (`TimeZone`, `Times[]`, `StartDate`, `Frequency`, `Interval`, optional `Values[]`, optional `IsWorkday`), workflow variables, `QueryData` list references, `AI` Agent references, and `MailTask` recipient safety. Do not generate a package that can send real email or call live AI automatically during import/open testing. Do not claim schedule trigger execution, manual run behavior, email delivery, AI Assistant execution, or workflow-triggered AI Agent execution from the safe runtime baseline unless the exact user-confirmed test scope is documented.
 
