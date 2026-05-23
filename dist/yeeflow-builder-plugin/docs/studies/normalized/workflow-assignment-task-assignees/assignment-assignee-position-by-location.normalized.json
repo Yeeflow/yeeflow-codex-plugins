@@ -1,14 +1,16 @@
 {
   "proofLevel": "export-proven",
-  "sourceExport": "Test ABC.yap",
+  "sourceExport": "Test ABC (1).yap",
   "nodeType": "MultiAssignmentTask",
   "assigneePattern": "position-by-location",
   "rawAssigneeFieldNames": [
-    "type",
-    "method",
-    "position",
-    "value",
-    "title"
+    [
+      "type",
+      "method",
+      "position",
+      "value",
+      "title"
+    ]
   ],
   "normalizedConfig": {
     "type": "position",
@@ -20,20 +22,23 @@
   "approvalSettingsShape": {
     "approveway": "allapprove",
     "approvepercentage": 100,
+    "appointedOrder": "parallel-or-default",
+    "issequential": null,
     "isenabledemail": false,
-    "isallowreassign": false,
-    "isallowsign": false,
+    "isallowreassign": true,
+    "isallowrecalled": null,
+    "automaticapproveddefinition": null,
+    "isallowsign": true,
     "allowskip": true,
+    "duedatedefinition": 120,
     "taskurl": "<REDACTED_TASK_FORM_PAGE_ID>"
+  },
+  "notificationSettingsShape": {
+    "isenabledemail": false
   },
   "runtimeDependencies": [
     "valid-location-assignments",
     "valid-position-assignments"
   ],
-  "generationSafety": "requires target-tenant org/reference data and focused runtime proof before broad generation claims",
-  "apiAssistedInterpretation": {
-    "apiLookupRun": true,
-    "categoryConfirmedByApi": true,
-    "note": "Static reference category was checked against read-only API lookup and redacted in this normalized example."
-  }
+  "generationSafety": "requires target-tenant org/reference data and focused runtime proof before broad generation claims"
 }

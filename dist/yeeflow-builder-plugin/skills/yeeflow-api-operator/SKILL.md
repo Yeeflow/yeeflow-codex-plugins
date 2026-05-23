@@ -127,4 +127,6 @@ For approval workflow assignment task assignee generation, use read-only lookup 
 
 For export-learning work, you may build memory-only or ignored-temp reference sets to classify redacted assignment task references as user, department, location, or position categories. Do not commit raw ID maps, names, emails, tenant IDs, or raw records. API category confirmation supports schema interpretation only; it does not prove workflow runtime routing.
 
+The v1 API Operator does not include a user-group lookup endpoint. If an Assignment Task export contains a user-group assignee, classify it from the export shape only, redact the group reference, and document that a future safe read-only user-group lookup would be needed before API category confirmation.
+
 Keep generated packages free of private user data unless the user explicitly requires it, the data is safe to include, and the scope is narrow. Prefer placeholders, empty groups, requester/current-user expressions, or post-import configuration when that is safer.

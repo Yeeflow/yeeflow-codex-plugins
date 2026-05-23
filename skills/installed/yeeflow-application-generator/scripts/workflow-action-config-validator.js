@@ -186,10 +186,50 @@ const ASSIGNMENT_TASK_ASSIGNEE_METHODS = new Set([
   "positionlocexpr",
 ]);
 
+const ASSIGNMENT_TASK_APPROVEWAYS = new Set([
+  "allapprove",
+  "anyprocess",
+  "anyapprove",
+  "anyreject",
+  "custompercentage",
+]);
+
 function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
   const props = shape.properties || {};
   const assignments = props.usertaskassignment;
   const severity = strictLevel(options, "warning");
+  if (props.approveway !== undefined && !ASSIGNMENT_TASK_APPROVEWAYS.has(safeString(props.approveway))) {
+    issue(issues, severity, "ASSIGNMENT_TASK_APPROVEWAY_UNKNOWN", "Assignment task approveway is not in the export-proven completion-mode list.", {
+      path: `${pointer}.properties.approveway`,
+      nodeId: shapeId(shape),
+      approveway: safeString(props.approveway),
+      allowed: [...ASSIGNMENT_TASK_APPROVEWAYS],
+    });
+  }
+  if (safeString(props.approveway) === "custompercentage" && typeof props.approvepercentage !== "number") {
+    issue(issues, severity, "ASSIGNMENT_TASK_APPROVE_PERCENTAGE_INVALID", "Assignment task custom percentage completion should include numeric approvepercentage.", {
+      path: `${pointer}.properties.approvepercentage`,
+      nodeId: shapeId(shape),
+      approveway: safeString(props.approveway),
+    });
+  }
+  if (props.issequential !== undefined && typeof props.issequential !== "boolean") {
+    issue(issues, severity, "ASSIGNMENT_TASK_APPOINTED_ORDER_INVALID", "Assignment task issequential should be boolean when present.", {
+      path: `${pointer}.properties.issequential`,
+      nodeId: shapeId(shape),
+    });
+  }
+  if (props.isenabledemail === true) {
+    for (const field of ["to", "subject", "html"]) {
+      if (valueMissing(props[field])) {
+        issue(issues, severity, "ASSIGNMENT_TASK_EMAIL_NOTIFICATION_FIELD_MISSING", "Email-enabled assignment task should preserve notification recipient, subject, and body/html fields.", {
+          path: `${pointer}.properties.${field}`,
+          nodeId: shapeId(shape),
+          field,
+        });
+      }
+    }
+  }
   if (!Array.isArray(assignments)) {
     issue(issues, severity, "ASSIGNMENT_TASK_ASSIGNEE_CONFIG_MISSING", "Assignment task should store assignee configuration as properties.usertaskassignment array.", {
       path: `${pointer}.properties.usertaskassignment`,
@@ -267,6 +307,12 @@ function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
           method,
         });
       }
+    }
+    if (type === "user" && method === "expression" && typeof assignment.value === "string" && assignment.value.includes("type&quot;:&quot;usergroup")) {
+      issue(issues, "warning", "ASSIGNMENT_TASK_USER_GROUP_API_UNCONFIRMED", "User group assignee shape is export-proven, but Yeeflow API Operator v1 does not yet confirm user groups; use explicit safe group mapping and runtime proof.", {
+        path: itemPath,
+        nodeId: shapeId(shape),
+      });
     }
     if (type === "user" && ["direct", "users"].includes(method)) {
       issue(issues, "warning", "ASSIGNMENT_TASK_DIRECT_USER_TENANT_SENSITIVE", "Direct user assignment is tenant-sensitive; use only with explicit authorized user mapping or safe read-only directory lookup, and do not commit private user data.", {

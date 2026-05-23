@@ -220,6 +220,7 @@ function isPrivateKey(key) {
 
 function placeholderForKey(key) {
   if (/tenant/i.test(key)) return "<REDACTED_TENANT_ID>";
+  if (/usergroup|user_group|group/i.test(key)) return "<REDACTED_USER_GROUP_ID>";
   if (/department|org/i.test(key)) return "<REDACTED_DEPARTMENT_ID>";
   if (/location/i.test(key)) return "<REDACTED_LOCATION_ID>";
   if (/position/i.test(key)) return "<REDACTED_POSITION_ID>";
@@ -259,9 +260,14 @@ function classifyAssignment(assignment) {
   const type = assignment?.type || "unknown";
   const method = assignment?.method || "unknown";
   const expression = extractExpressionButton(assignment?.value);
+  const expressionType = expression?.dataShape?.type || "";
+  const expressionProp = expression?.dataShape?.prop || "";
+  if (type === "user" && method === "expression" && expressionType === "usergroup") return "user-group";
+  if (type === "user" && method === "expression" && expressionType === "position") return "position-all-users-expression";
   if (type === "user" && method === "direct") return "specific-user";
   if (type === "user" && method === "expression" && expression?.label?.includes("Line Manager")) return "applicant-line-manager";
   if (type === "user" && method === "expression" && expression?.label?.includes("Department:Manager")) return "applicant-department-manager";
+  if (type === "user" && method === "expression" && expressionProp === "Users_ID") return `${expressionType || "expression"}-all-users`;
   if (type === "user" && method === "expression") return "expression";
   if (type === "position" && method === "position") return "job-position";
   if (type === "position" && method === "positionorg") return "position-by-department";
@@ -277,6 +283,8 @@ function fileNameForPattern(pattern) {
     expression: "assignment-assignee-expression.normalized.json",
     "applicant-line-manager": "assignment-assignee-applicant-line-manager.normalized.json",
     "applicant-department-manager": "assignment-assignee-department-manager.normalized.json",
+    "user-group": "assignment-assignee-user-group.normalized.json",
+    "position-all-users-expression": "assignment-assignee-position-all-users-expression.normalized.json",
     "job-position": "assignment-assignee-job-position.normalized.json",
     "position-by-department": "assignment-assignee-position-by-department.normalized.json",
     "position-by-applicant-department": "assignment-assignee-position-by-applicant-department.normalized.json",
@@ -284,6 +292,38 @@ function fileNameForPattern(pattern) {
     "position-by-applicant-location": "assignment-assignee-position-by-applicant-location.normalized.json",
   };
   return map[pattern] || `assignment-assignee-${pattern}.normalized.json`;
+}
+
+function classifyMultiAssignee(patterns, entries) {
+  if (patterns.length <= 1) return patterns[0] || "empty";
+  const directUserCount = entries.filter((entry) => entry?.type === "user" && entry?.method === "direct").length;
+  const positionCount = entries.filter((entry) => entry?.type === "position").length;
+  const expressionCount = entries.filter((entry) => entry?.method === "expression").length;
+  if (directUserCount === patterns.length) return "multiple-specific-users";
+  if (positionCount === patterns.length) return "multiple-job-positions";
+  if (directUserCount > 0 && positionCount > 0) return "mixed-static-and-position";
+  if (expressionCount === patterns.length) return "multi-source-expression";
+  return "mixed";
+}
+
+function appointedOrderFor(props) {
+  if (props.issequential === true) return "sequential";
+  return "parallel-or-default";
+}
+
+function notificationShapeFor(props) {
+  const enabled = props.isenabledemail ?? null;
+  const shape = {
+    isenabledemail: enabled,
+  };
+  if (enabled === true) {
+    shape.to = props.to ? (extractExpressionButton(props.to) || "<REDACTED_NOTIFICATION_TO>") : null;
+    shape.subject = props.subject ? (extractExpressionButton(props.subject) || "<REDACTED_NOTIFICATION_SUBJECT>") : null;
+    shape.html = props.html ? "<REDACTED_NOTIFICATION_BODY_SHAPE>" : null;
+    shape.notifyrules = Array.isArray(props.notifyrules) ? `array(${props.notifyrules.length})` : null;
+    shape.duedatetype = props.duedatetype ?? null;
+  }
+  return shape;
 }
 
 function inspect(data, inputPath, largeNumbers) {
@@ -300,6 +340,7 @@ function inspect(data, inputPath, largeNumbers) {
       if (stencilId(shape) !== "MultiAssignmentTask") continue;
       const assignments = asArray(shape.properties?.usertaskassignment);
       const patterns = assignments.map(classifyAssignment);
+      const multiClassification = classifyMultiAssignee(patterns, assignments);
       inventory.push({
         taskNumber: inventory.length + 1,
         sourceForm: {
@@ -318,14 +359,21 @@ function inspect(data, inputPath, largeNumbers) {
         approvalSettings: {
           approveway: shape.properties?.approveway ?? null,
           approvepercentage: shape.properties?.approvepercentage ?? null,
+          appointedOrder: appointedOrderFor(shape.properties || {}),
+          issequential: shape.properties?.issequential ?? null,
           isenabledemail: shape.properties?.isenabledemail ?? null,
           isallowreassign: shape.properties?.isallowreassign ?? null,
+          isallowrecalled: shape.properties?.isallowrecalled ?? null,
+          automaticapproveddefinition: shape.properties?.automaticapproveddefinition ?? null,
           isallowsign: shape.properties?.isallowsign ?? null,
           allowskip: shape.properties?.allowskip ?? null,
+          duedatedefinition: shape.properties?.duedatedefinition ?? null,
           taskurl: shape.properties?.taskurl ? "<REDACTED_TASK_FORM_PAGE_ID>" : null,
         },
+        notificationSettings: notificationShapeFor(shape.properties || {}),
         assignee: {
-          classification: patterns.length === 1 ? patterns[0] : "mixed",
+          classification: patterns.length === 1 ? patterns[0] : multiClassification,
+          entryClassifications: patterns,
           assignmentCount: assignments.length,
           rawFieldNames: assignments.map((entry) => Object.keys(entry || {})),
           normalizedEntries: assignments.map(redactAssignment),
@@ -337,7 +385,8 @@ function inspect(data, inputPath, largeNumbers) {
   }
   return {
     source: {
-      path: path.resolve(inputPath),
+        path: path.resolve(inputPath),
+      fileName: path.basename(inputPath),
       title: data.Item?.ListModel?.Title || "Test ABC",
       largeNumericIdsPreservedAsStrings: largeNumbers.length,
     },
@@ -381,12 +430,13 @@ function main() {
     if (!examples.has(pattern)) {
       examples.set(pattern, {
         proofLevel: "export-proven",
-        sourceExport: "Test ABC.yap",
+        sourceExport: path.basename(args.input),
         nodeType: task.node.type,
         assigneePattern: pattern,
-        rawAssigneeFieldNames: task.assignee.rawFieldNames[0] || [],
-        normalizedConfig: task.assignee.normalizedEntries[0] || null,
+        rawAssigneeFieldNames: task.assignee.rawFieldNames,
+        normalizedConfig: task.assignee.assignmentCount > 1 ? task.assignee.normalizedEntries : (task.assignee.normalizedEntries[0] || null),
         approvalSettingsShape: task.approvalSettings,
+        notificationSettingsShape: task.notificationSettings,
         runtimeDependencies: task.runtimeDependencies,
         generationSafety: generationSafetyFor(pattern),
       });

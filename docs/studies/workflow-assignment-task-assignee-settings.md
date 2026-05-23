@@ -2,12 +2,13 @@
 
 ## Purpose
 
-This focused export-learning study documents how Yeeflow approval workflow assignment tasks store assignee settings in `Test ABC.yap`.
+This focused export-learning study documents how Yeeflow approval workflow assignment tasks store assignee settings in `Test ABC.yap` and the updated `Test ABC (1).yap`.
 
 Proof boundary:
 
 - `product-documented`: described in Yeeflow Help Center behavior references.
-- `export-proven`: found in `Test ABC.yap`.
+- `export-proven`: found in `Test ABC.yap` or `Test ABC (1).yap`.
+- `API-category-assisted`: static references were classified with safe read-only Yeeflow API Operator lookup.
 - `validator-backed`: checked by local validation after this study.
 - `runtime-proven`: not claimed in this study.
 - `unproven`: not found or not tested.
@@ -20,6 +21,7 @@ Source export:
 
 ```text
 /Users/Renger/Downloads/Test ABC.yap
+/Users/Renger/Downloads/Test ABC (1).yap
 ```
 
 Reference:
@@ -31,10 +33,11 @@ Reference:
 
 Source priority:
 
-1. `Test ABC.yap` is the source of truth for actual export/package structure.
-2. Help Center articles are product-behavior and terminology references.
-3. Existing validators and skills are implementation references.
-4. Yeeflow API lookup is only for safe read-only org/reference support if needed.
+1. `Test ABC (1).yap` is the latest source of truth for the newly learned Assignment Task settings.
+2. `Test ABC.yap` is the previous baseline export for comparison.
+3. Help Center articles are product-behavior and terminology references.
+4. Yeeflow API Operator lookup is only for safe read-only org/reference category support.
+5. Existing validators and skills are implementation references.
 
 ## Redaction Policy
 
@@ -44,6 +47,7 @@ Normalized references redact private org data with placeholders:
 
 - `<REDACTED_USER_ID>`
 - `<REDACTED_USER_EMAIL>`
+- `<REDACTED_USER_GROUP_ID>`
 - `<REDACTED_DEPARTMENT_ID>`
 - `<REDACTED_LOCATION_ID>`
 - `<REDACTED_POSITION_ID>`
@@ -77,7 +81,7 @@ Each assignment task stores assignees under:
 properties.usertaskassignment
 ```
 
-The value is an array. Every assignment task in this export has one assignee entry; mixed multi-source assignment is product-documented but not export-proven in this sample.
+The value is an array. `Test ABC.yap` used one assignee entry per task. `Test ABC (1).yap` proves multiple assignee entries in the same array, including mixed static/direct users, position sources, expression sources, and a user-group expression source.
 
 Common task fields seen on each `MultiAssignmentTask`:
 
@@ -175,6 +179,130 @@ Redaction handling:
 - no user names, emails, phone numbers, tenant IDs, raw API responses, or private org values are committed
 
 API lookup confirms org object categories, not runtime workflow routing. A reference matching a readable API category means the exported static value corresponds to a known object category in the queried tenant; it does not prove that a submitted workflow will route to the intended assignee at runtime.
+
+## Updated Export Extension: Test ABC (1).yap
+
+`Test ABC (1).yap` decoded successfully as a read-only export and contains the same approval form/workflow shell:
+
+- source path: `/Users/Renger/Downloads/Test ABC (1).yap`
+- approval workflow forms found: `1`
+- assignment task nodes found: `9`
+- assignment task node type: `MultiAssignmentTask`
+- assignee storage: `properties.usertaskassignment`
+
+New export-proven fields and settings:
+
+- `properties.usertaskassignment` can contain multiple assignee entries.
+- `properties.issequential=true` is the observed Sequential Appointed Order marker.
+- Absence of `issequential` on multiple-assignee tasks is interpreted as `parallel-or-default` from export structure plus Help Center terminology, not runtime proof.
+- `properties.approveway` varies across `allapprove`, `anyprocess`, `anyapprove`, `anyreject`, and `custompercentage`.
+- `properties.approvepercentage=60` is observed with `approveway=custompercentage`.
+- `properties.isenabledemail=true` adds notification fields: `to`, `subject`, `html`, `notifyrules`, and `duedatetype`.
+- `properties.automaticapproveddefinition=true` and `properties.isallowrecalled=true` are observed on one task as additional assignment-task settings.
+
+### Export Comparison
+
+| Task | Previous pattern from `Test ABC.yap` | Updated pattern from `Test ABC (1).yap` | What changed | Newly observed fields | Appointed Order | Completion / approval setting | Email | Proof level |
+|---|---|---|---|---|---|---|---|---|
+| 1 | applicant department manager | applicant line manager + user group expression | multiple expression assignee sources; user group source added | `issequential` | Sequential (`issequential=true`) | `allapprove`, `100` | disabled | export-proven + product-documented |
+| 2 | direct job position | applicant department manager + position all-users expression | mixed expression sources; position expression can resolve users | none beyond prior common settings | Parallel/default | `anyprocess`, `100` | disabled | export-proven + API-category-assisted |
+| 3 | direct job position | direct position + two direct users | multiple static users plus position source | multiple `direct` entries in array | Parallel/default | `anyapprove`, `100` | disabled | export-proven + API-category-assisted |
+| 4 | position by selected department | direct position + direct user | mixed static position/user source | mixed entries in array | Parallel/default | `anyreject`, `100` | disabled | export-proven + API-category-assisted |
+| 5 | position by applicant department | position by selected department + direct user | selected department position plus direct user | `approveway=custompercentage`, `approvepercentage=60` | Parallel/default | `custompercentage`, `60` | disabled | export-proven + API-category-assisted |
+| 6 | position by selected location | position by applicant department + direct user | context-derived department position plus direct user | `automaticapproveddefinition`, `isallowrecalled`, `allowskip=false` | Parallel/default | `allapprove`, `100` | disabled | export-proven |
+| 7 | position by applicant location | position by selected location | same source category as previous selected-location task; reassign/sign enabled | `isallowreassign=true`, `isallowsign=true` | Parallel/default | `allapprove`, `100` | disabled | export-proven + API-category-assisted |
+| 8 | applicant line manager | position by applicant location | email notification enabled on assignment task | `isenabledemail`, `to`, `subject`, `html`, `notifyrules`, `duedatetype` | Parallel/default | `allapprove`, `100` | enabled | export-proven |
+| 9 | direct user | direct user + applicant line manager | mixed static and expression user sources | multiple entries in array | Parallel/default | `allapprove`, `100` | disabled | export-proven + API-category-assisted |
+
+### Multiple-Assignee Structures
+
+`Test ABC (1).yap` proves that `properties.usertaskassignment` is the only observed list container for multiple Assignment Task assignee sources. The list stores assignee entries as objects. Export-proven entry field names remain:
+
+- direct user: `type`, `method`, `value`, `title`
+- expression user/user group/position-all-users: `type`, `method`, `value`, `title`
+- direct position: `type`, `method`, `position`, `title`
+- position by selected department/location: `type`, `method`, `position`, `value`, `title`
+- position by applicant department/location: `type`, `method`, `position`, `value`, `title`
+
+Mixed source types can coexist in one task:
+
+- expression + user group expression
+- applicant department manager expression + position all-users expression
+- direct position + multiple direct users
+- position by selected department + direct user
+- position by applicant department + direct user
+- direct user + applicant line manager expression
+
+User group assignment is represented as an expression-button value with data shape `type=usergroup`, `prop=Users_ID`. Yeeflow API Operator v1 does not provide a user-group endpoint, so this is export-proven and product-documented but not API-confirmed.
+
+Job positions can represent multi-user assignee sources in two export-proven ways:
+
+- `type=position`, `method=position` or variants, where the referenced job position may resolve to users in the organization model.
+- expression-button value with data shape `type=position`, `prop=Users_ID`, interpreted as all users for a position.
+
+### Appointed Order and Completion Settings
+
+Help Center describes Appointed Order as Sequential or Parallel. `Test ABC (1).yap` proves the following serialized shape:
+
+| Concept | Export-proven field/shape | Notes | Proof level |
+|---|---|---|---|
+| Sequential Appointed Order | `properties.issequential=true` | Found on Task 1 with two assignee entries. List order is the only visible ordering signal. | product-documented + export-proven |
+| Parallel Appointed Order | `properties.issequential` absent | Found on the other multiple-assignee tasks. Interpreted as parallel/default from product docs and contrast with sequential marker. | product-documented + export-proven partial |
+| All approve | `approveway=allapprove`, `approvepercentage=100` | Found on several tasks. | export-proven |
+| Anyone/process completion | `approveway=anyprocess`, `approvepercentage=100` | Found on Task 2. Exact runtime semantics need runtime proof. | export-proven |
+| Anyone approve | `approveway=anyapprove`, `approvepercentage=100` | Found on Task 3. | export-proven |
+| Anyone reject | `approveway=anyreject`, `approvepercentage=100` | Found on Task 4. | export-proven |
+| Custom percentage | `approveway=custompercentage`, `approvepercentage=60` | Found on Task 5. | export-proven |
+| Auto approve | `automaticapproveddefinition=true` | Found on Task 6. Product docs describe auto-approve behavior; runtime not tested here. | product-documented + export-proven |
+| Allow recall | `isallowrecalled=true` | Found on Task 6. | product-documented + export-proven |
+
+### Email Notification Settings
+
+Task 8 in `Test ABC (1).yap` proves Assignment Task email notification configuration without sending email:
+
+- enable flag: `properties.isenabledemail=true`
+- recipient expression: `properties.to` expression-button label `Current Task Context:Assignee:Email`
+- subject expression: `properties.subject` expression-button label `Workflow Name`
+- body field: `properties.html`
+- notification rules list: `properties.notifyrules=[]`
+- due date unit: `properties.duedatetype=hour`
+
+No delivery was tested. No real email addresses are committed. The notification shape is export-proven only; delivery and quick-completion behavior remain runtime-unproven.
+
+### Updated Help Center Comparison
+
+| Help Center concept | Export-proven field/shape from `Test ABC (1).yap` | Match status | Notes | Proof level |
+|---|---|---|---|---|
+| Assignment Task can assign to one or multiple owners | `usertaskassignment` array with one, two, or three entries | matched | Multiple entries are now export-proven. | product-documented + export-proven |
+| Mix users, user groups, and job positions | Mixed arrays containing direct users, user group expression, and position sources | matched | User group is expression-shaped, not direct static object. | product-documented + export-proven |
+| User group assignee | expression-button `type=usergroup`, `prop=Users_ID` | matched | API category not confirmed because API Operator v1 has no group endpoint. | product-documented + export-proven |
+| Job position assignees can resolve to users | position entries and position `Users_ID` expression | matched | API confirms position category for static position refs, not runtime expansion. | product-documented + export-proven + API-category-assisted |
+| Sequential appointed order | `issequential=true` | matched | Runtime ordering not tested. | product-documented + export-proven |
+| Parallel appointed order | absent `issequential` on other multi-assignee tasks | partially matched | Export does not show an explicit `false`; treat as default/parallel until runtime baseline confirms. | product-documented + export-proven partial |
+| Completion condition all/any/custom percentage | `approveway` plus `approvepercentage` | matched | Values observed: `allapprove`, `anyprocess`, `anyapprove`, `anyreject`, `custompercentage`. | product-documented + export-proven |
+| Email notification to task assignees | `isenabledemail=true`, `to` current task assignee email expression | matched | No email sent; no delivery proof. | product-documented + export-proven |
+| Custom email subject/body | `subject`, `html` fields | matched | Body content redacted as shape only. | product-documented + export-proven |
+
+### Updated API-Assisted Interpretation
+
+The read-only Yeeflow API Operator lookup was run again with local `.env.local` credentials. Only key/base presence, statuses, and counts were reported. No API key value or raw API responses were saved or committed.
+
+| Category endpoint | HTTP/API status | Count observed | Use in this study |
+|---|---:|---:|---|
+| users | `200` / `0` | `3` | Confirmed static direct-user references as user category. |
+| departments | `200` / `0` | `6` | Confirmed selected department reference in position-by-department task. |
+| locations | `200` / `0` | `2` | Confirmed selected location reference in position-by-location task. |
+| positions | `200` / `0` | `6` | Confirmed direct/static position references and position all-users expression reference. |
+
+API-assisted confirmations:
+
+- static direct users: confirmed where static values were present
+- static direct positions: confirmed
+- selected department for position-by-department: confirmed
+- selected location for position-by-location: confirmed
+- position all-users expression: position category confirmed
+- user group expression: not API-confirmed; API Operator v1 has no user-group endpoint
+- applicant/context-derived expressions: not static API lookups; runtime-context dependent
 
 | Task | Export assignee classification | API-assisted interpretation | Confirmation | Notes |
 |---:|---|---|---|---|
@@ -417,6 +545,11 @@ Warning-first validator support is appropriate:
 - warn when static direct/department/location assignment lacks `value`
 - warn when expression assignment lacks an expression-button-shaped `value`
 - warn that direct user assignment is tenant-sensitive
+- warn for unknown `approveway` values; export-proven values are `allapprove`, `anyprocess`, `anyapprove`, `anyreject`, and `custompercentage`
+- warn when `approveway=custompercentage` lacks a numeric `approvepercentage`
+- warn when `issequential` is present but not boolean
+- warn when `isenabledemail=true` lacks `to`, `subject`, or `html` notification shape
+- warn that user-group assignment is export-proven but not API-confirmed by v1 Yeeflow API Operator
 
 Do not add hard errors in compatibility mode from this study. Existing packages may omit optional fields or use unstudied tenant-specific shapes.
 
@@ -428,7 +561,11 @@ Do not add hard errors in compatibility mode from this study. Existing packages 
 - Position, department, and location assignment requires valid target-tenant org/reference data.
 - If org/reference lookup is authorized, use `yeeflow-api-operator` read-only lookup and never commit raw API responses or private org data.
 - For generic generated packages, prefer applicant/current-user expression routing or user-selection field patterns over hardcoded direct users.
-- Do not claim selected department manager, user group, workflow variable, multiple users, or mixed assignee lists as generation-safe from this export alone.
+- Multiple assignee arrays, user-group expression, position all-users expression, Sequential marker, Parallel/default absence of `issequential`, `approveway` variants, custom percentage, and email notification fields are export-proven from `Test ABC (1).yap`.
+- Preserve assignee array order when `issequential=true`; do not claim runtime order until a focused runtime baseline proves it.
+- Treat absent `issequential` as parallel/default only with the current proof boundary; runtime proof is still required.
+- Email notification config can be generated from export-proven fields only when explicitly requested and safe, but notification delivery must not be tested or claimed without scoped runtime approval.
+- Do not claim selected department manager, workflow variable, position by department plus location, or quick-completion behavior as generation-safe from these exports alone.
 
 ## Runtime-Test Plan
 
@@ -443,6 +580,13 @@ Suggested minimal runtime baseline:
    - direct job position
    - job position by applicant department
    - job position by applicant location
+   - multiple static users
+   - mixed direct user plus position
+   - user group expression if a safe disposable group is available
+   - Sequential appointed order
+   - Parallel/default appointed order
+   - custom percentage completion
+   - email notification configuration designer/open proof, with delivery disabled or explicitly scoped
 3. Use safe target-tenant org data selected through authorized read-only lookup or user-provided non-private setup.
 4. Locally validate package, graph, workflow action configuration, and secret scans before import.
 5. Import/open only after local validation passes.
@@ -454,11 +598,11 @@ Do not execute workflow, send notifications, or expose user identities unless th
 ## Known Gaps
 
 - Runtime routing is not proven.
-- Multiple direct users are not found in this export.
-- Mixed assignee sources in one task are not found in this export.
-- User group assignee is not found in this export.
+- Multiple direct users are export-proven only as part of a mixed position/user task, not as a task containing only direct users.
+- Mixed assignee sources in one task are export-proven but not runtime-proven.
+- User group assignee is export-proven and product-documented, but not API-confirmed by the v1 API Operator and not runtime-proven.
 - Workflow variable assignee is not found in this export.
 - Position by department plus location is not found in this export.
 - Selected department manager as a direct static manager shape is not found in this export.
 - Parent-department manager fallback is product-documented but not export-proven.
-- Notification, due-date, quick-completion, and task-form settings are secondary in this study and not fully normalized here.
+- Email notification fields are export-proven, but delivery, quick completion, due-date reminders, and task-form open behavior are not runtime-proven here.

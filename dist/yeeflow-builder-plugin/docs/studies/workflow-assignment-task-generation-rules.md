@@ -53,6 +53,8 @@ Common task approval settings found alongside assignees:
 | `positionorgexpr` | `position` | job position by applicant/current department | `position`, `value`, `title` | applicant context, department hierarchy, position assignment | requires runtime proof |
 | `positionloc` | `position` | job position by selected location | `position`, `value`, `title` | valid location and position assignment | requires target org/reference data |
 | `positionlocexpr` | `position` | job position by applicant/current location | `position`, `value`, `title` | applicant context, location data, position assignment | requires runtime proof |
+| `expression` | `user` with expression data `type=usergroup`, `prop=Users_ID` | all users in a user group | `value`, `title` | valid user group membership | export-proven in `Test ABC (1).yap`; API Operator v1 cannot confirm groups |
+| `expression` | `user` with expression data `type=position`, `prop=Users_ID` | all users in a job position | `value`, `title` | valid position assignment and position membership | requires target org/reference data and runtime proof |
 
 ## Safe Generation Rules
 
@@ -68,6 +70,10 @@ Use these rules for generated packages:
 - Use placeholders such as `<USER_REF_CONFIRMED_BY_API>`, `<DEPARTMENT_REF_CONFIRMED_BY_API>`, `<LOCATION_REF_CONFIRMED_BY_API>`, and `<POSITION_REF_CONFIRMED_BY_API>` in committed normalized examples.
 - Do not paste API keys into chat and do not save raw API responses.
 - Keep generated packages free of private user, department, location, position, tenant, and email data unless explicitly required and safe.
+- Preserve multiple assignee entries under `properties.usertaskassignment[]`; mixed source arrays are export-proven in `Test ABC (1).yap`.
+- Preserve `properties.issequential=true` for Sequential Appointed Order. Treat absent `issequential` as parallel/default only within the current export-proven boundary.
+- Preserve `approveway` and `approvepercentage` together. Export-proven values include `allapprove`, `anyprocess`, `anyapprove`, `anyreject`, and `custompercentage`.
+- Generate email notification fields only from export-proven shapes and only when explicitly requested. Do not claim notification delivery without runtime testing.
 
 ## Runtime-Proof Requirements
 
@@ -83,16 +89,15 @@ Do not claim runtime behavior from export study alone.
 
 ## Product-Documented But Not Export-Proven Here
 
-These are described by Help Center behavior references but were not found in `Test ABC.yap`:
+These were not found in the current exports or remain insufficiently proven:
 
-- multiple direct users in one task
-- mixed users, user groups, and job positions in one assignee list
-- user group assignee
+- direct users only in one multi-user task, without another source type
 - workflow variable assignee
 - selected department manager as a distinct direct manager shape
 - position by department plus location in one entry
-- appointed order serialization for sequential vs parallel assignee processing
-- completion modes beyond `allapprove` with `approvepercentage=100`
+- explicit `issequential=false` parallel marker
+- quick-completion notification behavior
+- notification delivery behavior
 
 Do not generate these as schema-safe until an export proves their package shape. Do not claim routing-safe until runtime proof exists.
 

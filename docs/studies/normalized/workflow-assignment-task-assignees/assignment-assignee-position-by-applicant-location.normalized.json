@@ -1,14 +1,16 @@
 {
   "proofLevel": "export-proven",
-  "sourceExport": "Test ABC.yap",
+  "sourceExport": "Test ABC (1).yap",
   "nodeType": "MultiAssignmentTask",
   "assigneePattern": "position-by-applicant-location",
   "rawAssigneeFieldNames": [
-    "type",
-    "method",
-    "position",
-    "value",
-    "title"
+    [
+      "type",
+      "method",
+      "position",
+      "value",
+      "title"
+    ]
   ],
   "normalizedConfig": {
     "type": "position",
@@ -41,21 +43,57 @@
   "approvalSettingsShape": {
     "approveway": "allapprove",
     "approvepercentage": 100,
-    "isenabledemail": false,
+    "appointedOrder": "parallel-or-default",
+    "issequential": null,
+    "isenabledemail": true,
     "isallowreassign": false,
+    "isallowrecalled": null,
+    "automaticapproveddefinition": null,
     "isallowsign": false,
     "allowskip": true,
+    "duedatedefinition": 120,
     "taskurl": "<REDACTED_TASK_FORM_PAGE_ID>"
+  },
+  "notificationSettingsShape": {
+    "isenabledemail": true,
+    "to": {
+      "kind": "expressionButton",
+      "label": "Current Task Context:Assignee:Email",
+      "dataShape": {
+        "type": "user",
+        "param": {
+          "id": {
+            "parseStatus": "opaque",
+            "expressionSourceHints": {
+              "types": [
+                "task"
+              ],
+              "props": [
+                "AssigneeID"
+              ],
+              "usesApplicantUserId": false
+            }
+          }
+        },
+        "prop": "Email"
+      }
+    },
+    "subject": {
+      "kind": "expressionButton",
+      "label": "Workflow Name",
+      "dataShape": {
+        "type": "instance",
+        "prop": "Name"
+      }
+    },
+    "html": "<REDACTED_NOTIFICATION_BODY_SHAPE>",
+    "notifyrules": "array(0)",
+    "duedatetype": "hour"
   },
   "runtimeDependencies": [
     "runtime-applicant-user-context",
     "valid-location-assignments",
     "valid-position-assignments"
   ],
-  "generationSafety": "requires target-tenant org/reference data and focused runtime proof before broad generation claims",
-  "apiAssistedInterpretation": {
-    "apiLookupRun": true,
-    "categoryConfirmedByApi": true,
-    "note": "Static reference category was checked against read-only API lookup and redacted in this normalized example."
-  }
+  "generationSafety": "requires target-tenant org/reference data and focused runtime proof before broad generation claims"
 }
