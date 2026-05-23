@@ -12,7 +12,7 @@
   "normalizedConfig": {
     "type": "user",
     "method": "direct",
-    "value": "<REDACTED_USER_ID>",
+    "value": "<USER_REF_CONFIRMED_BY_API>",
     "title": "<REDACTED_ASSIGNEE_LABEL>"
   },
   "approvalSettingsShape": {
@@ -27,5 +27,10 @@
   "runtimeDependencies": [
     "valid-user-directory-data"
   ],
-  "generationSafety": "tenant-sensitive; use only with explicit authorized user mapping or safe read-only directory lookup"
+  "generationSafety": "tenant-sensitive; use only with explicit authorized user mapping or safe read-only directory lookup",
+  "apiAssistedInterpretation": {
+    "apiLookupRun": true,
+    "categoryConfirmedByApi": true,
+    "note": "Static reference category was checked against read-only API lookup and redacted in this normalized example."
+  }
 }

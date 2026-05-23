@@ -64,6 +64,8 @@ Use these rules for generated packages:
 - Prefer applicant/current-user expression routing or an explicit user-selection field when a package must be portable across tenants.
 - Use job-position, department, and location assignment only when target-tenant org/reference data is available and authorized.
 - Use `yeeflow-api-operator` for read-only org/reference lookup when real users/departments/locations/positions are needed and local credentials are available.
+- API lookup may confirm that static exported values correspond to user, department, location, or position categories, but it does not prove runtime workflow routing.
+- Use placeholders such as `<USER_REF_CONFIRMED_BY_API>`, `<DEPARTMENT_REF_CONFIRMED_BY_API>`, `<LOCATION_REF_CONFIRMED_BY_API>`, and `<POSITION_REF_CONFIRMED_BY_API>` in committed normalized examples.
 - Do not paste API keys into chat and do not save raw API responses.
 - Keep generated packages free of private user, department, location, position, tenant, and email data unless explicitly required and safe.
 

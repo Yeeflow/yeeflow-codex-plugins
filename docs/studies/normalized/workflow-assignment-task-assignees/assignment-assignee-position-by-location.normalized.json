@@ -13,8 +13,8 @@
   "normalizedConfig": {
     "type": "position",
     "method": "positionloc",
-    "position": "<REDACTED_POSITION_ID>",
-    "value": "<REDACTED_LOCATION_ID>",
+    "position": "<POSITION_REF_CONFIRMED_BY_API>",
+    "value": "<LOCATION_REF_CONFIRMED_BY_API>",
     "title": "<REDACTED_ASSIGNEE_LABEL>"
   },
   "approvalSettingsShape": {
@@ -30,5 +30,10 @@
     "valid-location-assignments",
     "valid-position-assignments"
   ],
-  "generationSafety": "requires target-tenant org/reference data and focused runtime proof before broad generation claims"
+  "generationSafety": "requires target-tenant org/reference data and focused runtime proof before broad generation claims",
+  "apiAssistedInterpretation": {
+    "apiLookupRun": true,
+    "categoryConfirmedByApi": true,
+    "note": "Static reference category was checked against read-only API lookup and redacted in this normalized example."
+  }
 }

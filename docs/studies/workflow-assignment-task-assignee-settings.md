@@ -147,6 +147,52 @@ Not created because not found in this export:
 
 ## Export-Proven Assignee Patterns
 
+## API-Assisted Org/Reference Interpretation
+
+Proof level: `api-assisted-category-check`
+
+The `yeeflow-api-operator` read-only connectivity helper was run with local `.env.local` credentials. The API key value was not printed. Raw API responses were not committed.
+
+API availability:
+
+| Endpoint category | Endpoint | HTTP/API status | Count reported |
+|---|---|---:|---:|
+| users | `POST /users/search` | `200` / `0` | `3` total, `3` returned in the category check |
+| departments | `GET /departments?parentId=0` | `200` / `0` | `6` returned |
+| locations | `GET /locations` | `200` / `0` | `2` returned |
+| positions | `GET /positions` | `200` / `0` | `6` returned |
+
+Base URL behavior:
+
+- configured env base: `404` for directory probe
+- configured env base plus `/v1`: `404` for directory probe
+- documented developer API base: `200` and used for read-only lookup
+
+Redaction handling:
+
+- raw user, department, location, and position IDs stayed in memory or ignored `tmp/`
+- committed normalized references use only placeholders such as `<USER_REF_CONFIRMED_BY_API>`, `<DEPARTMENT_REF_CONFIRMED_BY_API>`, `<LOCATION_REF_CONFIRMED_BY_API>`, and `<POSITION_REF_CONFIRMED_BY_API>`
+- no user names, emails, phone numbers, tenant IDs, raw API responses, or private org values are committed
+
+API lookup confirms org object categories, not runtime workflow routing. A reference matching a readable API category means the exported static value corresponds to a known object category in the queried tenant; it does not prove that a submitted workflow will route to the intended assignee at runtime.
+
+| Task | Export assignee classification | API-assisted interpretation | Confirmation | Notes |
+|---:|---|---|---|---|
+| 1 | applicant department manager | expression-only user/org manager lookup | not applicable to static ID | Expression references applicant department manager; no static department/user ID is embedded for API matching. |
+| 2 | direct job position | job position reference | confirmed | Static position reference matched the positions category. |
+| 3 | direct job position | job position reference | confirmed | Static position reference matched the positions category. |
+| 4 | position by selected department | job position plus department references | confirmed | Static position and department references matched their API categories. |
+| 5 | position by applicant department | job position plus applicant department expression | confirmed for static position | Position matched the positions category; applicant department is resolved by runtime expression. |
+| 6 | position by selected location | job position plus location references | confirmed | Static position and location references matched their API categories. |
+| 7 | position by applicant location | job position plus applicant location expression | confirmed for static position | Position matched the positions category; applicant location is resolved by runtime expression. |
+| 8 | applicant line manager | expression-only user manager lookup | not applicable to static ID | Expression references applicant line manager; no static user ID is embedded for API matching. |
+| 9 | specific user | user reference | confirmed | Static user reference matched the users category. |
+
+Unresolved references:
+
+- No static export reference remained unresolved by category in the read-only API comparison.
+- Expression-derived applicant manager, department, and location references remain runtime-dependent because their final values are resolved from applicant context during workflow execution.
+
 ### Specific User
 
 Proof level: `export-proven`
@@ -157,7 +203,7 @@ Shape:
 {
   "type": "user",
   "method": "direct",
-  "value": "<REDACTED_USER_ID>",
+  "value": "<USER_REF_CONFIRMED_BY_API>",
   "title": "<REDACTED_ASSIGNEE_LABEL>"
 }
 ```
@@ -240,7 +286,7 @@ Shape:
 {
   "type": "position",
   "method": "position",
-  "position": "<REDACTED_POSITION_ID>",
+  "position": "<POSITION_REF_CONFIRMED_BY_API>",
   "title": "<REDACTED_ASSIGNEE_LABEL>"
 }
 ```
@@ -257,8 +303,8 @@ Shape:
 {
   "type": "position",
   "method": "positionorg",
-  "position": "<REDACTED_POSITION_ID>",
-  "value": "<REDACTED_DEPARTMENT_ID>",
+  "position": "<POSITION_REF_CONFIRMED_BY_API>",
+  "value": "<DEPARTMENT_REF_CONFIRMED_BY_API>",
   "title": "<REDACTED_ASSIGNEE_LABEL>"
 }
 ```
@@ -275,7 +321,7 @@ Shape:
 {
   "type": "position",
   "method": "positionorgexpr",
-  "position": "<REDACTED_POSITION_ID>",
+  "position": "<POSITION_REF_CONFIRMED_BY_API>",
   "value": {
     "kind": "expressionButton",
     "label": "Applicant:Department",
@@ -300,8 +346,8 @@ Shape:
 {
   "type": "position",
   "method": "positionloc",
-  "position": "<REDACTED_POSITION_ID>",
-  "value": "<REDACTED_LOCATION_ID>",
+  "position": "<POSITION_REF_CONFIRMED_BY_API>",
+  "value": "<LOCATION_REF_CONFIRMED_BY_API>",
   "title": "<REDACTED_ASSIGNEE_LABEL>"
 }
 ```
@@ -318,7 +364,7 @@ Shape:
 {
   "type": "position",
   "method": "positionlocexpr",
-  "position": "<REDACTED_POSITION_ID>",
+  "position": "<POSITION_REF_CONFIRMED_BY_API>",
   "value": {
     "kind": "expressionButton",
     "label": "Applicant:Location",

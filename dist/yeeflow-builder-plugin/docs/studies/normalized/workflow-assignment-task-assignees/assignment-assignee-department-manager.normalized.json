@@ -52,5 +52,10 @@
     "valid-department-hierarchy-and-manager-data",
     "valid-user-directory-data"
   ],
-  "generationSafety": "requires target-tenant org/reference data and focused runtime proof before broad generation claims"
+  "generationSafety": "requires target-tenant org/reference data and focused runtime proof before broad generation claims",
+  "apiAssistedInterpretation": {
+    "apiLookupRun": true,
+    "categoryConfirmedByApi": false,
+    "note": "Expression-only assignee; API confirmed directory categories are readable but no static user/org ID is embedded in this export entry."
+  }
 }

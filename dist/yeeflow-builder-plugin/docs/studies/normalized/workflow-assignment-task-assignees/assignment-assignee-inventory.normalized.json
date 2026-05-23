@@ -75,7 +75,12 @@
             },
             "title": "<REDACTED_ASSIGNEE_LABEL>"
           }
-        ]
+        ],
+        "apiCategoryInterpretation": {
+          "category": "expression-only-user",
+          "confirmedByApi": null,
+          "unresolved": false
+        }
       },
       "runtimeDependencies": [
         "runtime-applicant-user-context",
@@ -123,10 +128,15 @@
           {
             "type": "position",
             "method": "position",
-            "position": "<REDACTED_POSITION_ID>",
+            "position": "<POSITION_REF_CONFIRMED_BY_API>",
             "title": "<REDACTED_ASSIGNEE_LABEL>"
           }
-        ]
+        ],
+        "apiCategoryInterpretation": {
+          "category": "position",
+          "confirmedByApi": true,
+          "unresolved": false
+        }
       },
       "runtimeDependencies": [
         "valid-position-assignments"
@@ -172,10 +182,15 @@
           {
             "type": "position",
             "method": "position",
-            "position": "<REDACTED_POSITION_ID>",
+            "position": "<POSITION_REF_CONFIRMED_BY_API>",
             "title": "<REDACTED_ASSIGNEE_LABEL>"
           }
-        ]
+        ],
+        "apiCategoryInterpretation": {
+          "category": "position",
+          "confirmedByApi": true,
+          "unresolved": false
+        }
       },
       "runtimeDependencies": [
         "valid-position-assignments"
@@ -222,11 +237,18 @@
           {
             "type": "position",
             "method": "positionorg",
-            "position": "<REDACTED_POSITION_ID>",
-            "value": "<REDACTED_DEPARTMENT_ID>",
+            "position": "<POSITION_REF_CONFIRMED_BY_API>",
+            "value": "<DEPARTMENT_REF_CONFIRMED_BY_API>",
             "title": "<REDACTED_ASSIGNEE_LABEL>"
           }
-        ]
+        ],
+        "apiCategoryInterpretation": {
+          "category": "position+department",
+          "confirmedByApi": true,
+          "unresolved": false,
+          "positionConfirmed": true,
+          "departmentConfirmed": true
+        }
       },
       "runtimeDependencies": [
         "valid-department-hierarchy-and-manager-data",
@@ -274,7 +296,7 @@
           {
             "type": "position",
             "method": "positionorgexpr",
-            "position": "<REDACTED_POSITION_ID>",
+            "position": "<POSITION_REF_CONFIRMED_BY_API>",
             "value": {
               "kind": "expressionButton",
               "label": "Applicant:Department",
@@ -299,7 +321,12 @@
             },
             "title": "<REDACTED_ASSIGNEE_LABEL>"
           }
-        ]
+        ],
+        "apiCategoryInterpretation": {
+          "category": "position+applicant-department-expression",
+          "confirmedByApi": true,
+          "unresolved": false
+        }
       },
       "runtimeDependencies": [
         "runtime-applicant-user-context",
@@ -348,11 +375,18 @@
           {
             "type": "position",
             "method": "positionloc",
-            "position": "<REDACTED_POSITION_ID>",
-            "value": "<REDACTED_LOCATION_ID>",
+            "position": "<POSITION_REF_CONFIRMED_BY_API>",
+            "value": "<LOCATION_REF_CONFIRMED_BY_API>",
             "title": "<REDACTED_ASSIGNEE_LABEL>"
           }
-        ]
+        ],
+        "apiCategoryInterpretation": {
+          "category": "position+location",
+          "confirmedByApi": true,
+          "unresolved": false,
+          "positionConfirmed": true,
+          "locationConfirmed": true
+        }
       },
       "runtimeDependencies": [
         "valid-location-assignments",
@@ -400,7 +434,7 @@
           {
             "type": "position",
             "method": "positionlocexpr",
-            "position": "<REDACTED_POSITION_ID>",
+            "position": "<POSITION_REF_CONFIRMED_BY_API>",
             "value": {
               "kind": "expressionButton",
               "label": "Applicant:Location",
@@ -425,7 +459,12 @@
             },
             "title": "<REDACTED_ASSIGNEE_LABEL>"
           }
-        ]
+        ],
+        "apiCategoryInterpretation": {
+          "category": "position+applicant-location-expression",
+          "confirmedByApi": true,
+          "unresolved": false
+        }
       },
       "runtimeDependencies": [
         "runtime-applicant-user-context",
@@ -497,7 +536,12 @@
             },
             "title": "<REDACTED_ASSIGNEE_LABEL>"
           }
-        ]
+        ],
+        "apiCategoryInterpretation": {
+          "category": "expression-only-user",
+          "confirmedByApi": null,
+          "unresolved": false
+        }
       },
       "runtimeDependencies": [
         "runtime-applicant-user-context",
@@ -544,15 +588,61 @@
           {
             "type": "user",
             "method": "direct",
-            "value": "<REDACTED_USER_ID>",
+            "value": "<USER_REF_CONFIRMED_BY_API>",
             "title": "<REDACTED_ASSIGNEE_LABEL>"
           }
-        ]
+        ],
+        "apiCategoryInterpretation": {
+          "category": "user",
+          "confirmedByApi": true,
+          "unresolved": false
+        }
       },
       "runtimeDependencies": [
         "valid-user-directory-data"
       ],
       "confidence": "export-proven"
     }
-  ]
+  ],
+  "apiAssistedInterpretation": {
+    "proofLevel": "api-assisted-category-check",
+    "apiLookupRun": true,
+    "endpointCategories": [
+      "users",
+      "departments",
+      "locations",
+      "positions"
+    ],
+    "endpointCounts": {
+      "users": {
+        "httpStatus": 200,
+        "ok": true,
+        "apiStatus": 0,
+        "returnedCount": 3,
+        "totalCount": 3
+      },
+      "departments": {
+        "httpStatus": 200,
+        "ok": true,
+        "apiStatus": 0,
+        "returnedCount": 6,
+        "totalCount": 0
+      },
+      "locations": {
+        "httpStatus": 200,
+        "ok": true,
+        "apiStatus": 0,
+        "returnedCount": 2,
+        "totalCount": 0
+      },
+      "positions": {
+        "httpStatus": 200,
+        "ok": true,
+        "apiStatus": 0,
+        "returnedCount": 6,
+        "totalCount": 0
+      }
+    },
+    "note": "API lookup was used only to confirm redacted object categories for static export references. It does not prove runtime workflow routing."
+  }
 }

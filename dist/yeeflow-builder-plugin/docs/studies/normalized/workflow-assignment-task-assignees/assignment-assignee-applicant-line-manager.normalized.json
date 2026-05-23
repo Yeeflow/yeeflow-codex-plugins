@@ -49,5 +49,10 @@
     "runtime-applicant-user-context",
     "valid-user-directory-data"
   ],
-  "generationSafety": "depends on runtime applicant context and target-tenant user/org attributes"
+  "generationSafety": "depends on runtime applicant context and target-tenant user/org attributes",
+  "apiAssistedInterpretation": {
+    "apiLookupRun": true,
+    "categoryConfirmedByApi": false,
+    "note": "Expression-only assignee; API confirmed directory categories are readable but no static user/org ID is embedded in this export entry."
+  }
 }
