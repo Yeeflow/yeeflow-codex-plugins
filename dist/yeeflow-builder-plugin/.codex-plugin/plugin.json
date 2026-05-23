@@ -16,13 +16,15 @@
     "plugin-release",
     "document-library",
     "materialization",
-    "form-hosts"
+    "form-hosts",
+    "directory-api",
+    "read-only"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Yeeflow Builder",
     "shortDescription": "Private Yeeflow application-building skills for Codex.",
-    "longDescription": "Private Codex plugin for planning Yeeflow applications from requirements, generating and validating new .yap packages, learning from exported Yeeflow packages, generating forms, lists, dashboards, expressions, workflows, document-library patterns, and custom code controls, orchestrating runtime tests, validating package materialization, and managing private plugin releases without unsafe .yapk mutation.",
+    "longDescription": "Private Codex plugin for planning Yeeflow applications from requirements, generating and validating new .yap packages, learning from exported Yeeflow packages, generating forms, lists, dashboards, expressions, workflows, document-library patterns, and custom code controls, orchestrating runtime tests, validating package materialization, safely checking read-only Yeeflow directory API connectivity from local environment variables, and managing private plugin releases without unsafe .yapk mutation.",
     "developerName": "Yeeflow",
     "category": "Developer Tools",
     "capabilities": [
@@ -32,6 +34,7 @@
       "Plan a Yeeflow app from these requirements.",
       "Validate this Yeeflow package before runtime testing.",
       "Plan a Yeeflow runtime test pass.",
+      "Run the safe Yeeflow directory API connectivity smoke test.",
       "Update the Yeeflow Builder Plugin release."
     ],
     "brandColor": "#2563EB",

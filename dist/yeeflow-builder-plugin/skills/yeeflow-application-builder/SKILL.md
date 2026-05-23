@@ -50,6 +50,8 @@ Cover these planning areas:
 - Integrations and connections: HTTP API, OAuth, OpenAPI/REST tools, external calls, post-import connection setup, credential safety, and execution deferral.
 - Runtime and validation plan: import-proof target, runtime-proof target, render-only or validation-only areas, validators to run, and artifacts/private data that must never be committed.
 
+If planning depends on real users, departments, locations, or positions, use `yeeflow-api-operator` only when local credentials are present and the user wants authorized lookup. Do not invent org/reference data when safe API lookup is available, but do not require API access for ordinary package generation. Keep generated packages free of private user data unless explicitly required, narrow in scope, and safe; prefer placeholders, empty app groups, requester/current-user expressions, or post-import configuration.
+
 Every `Capability Coverage Plan` should include:
 
 - selected capabilities
