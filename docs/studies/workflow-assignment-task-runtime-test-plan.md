@@ -47,3 +47,13 @@ Before import or live workflow execution:
 ## Proof Boundary
 
 Runtime proof requires import/open plus actual disposable request execution for routing scenarios. Designer visibility, package validation, and API category lookup are not enough to claim routing behavior.
+
+## Baseline Attempt Result
+
+The focused generator `generate-assignment-task-assignee-runtime-baseline.mjs` produced `assignment-task-assignee-runtime-baseline.v1.yap` with 11 Assignment Task nodes and fresh package IDs. Local validation passed with warnings, and the generated package remains ignored/uncommitted.
+
+The first runtime attempt imported and opened the generated app, opened the workflow designer, and showed Assignment Task panels. Sequential appointed order rendered as selected for the sequential task. Parallel/default tasks rendered with Parallel selected when `issequential` was absent. The email notification task opened in the designer, but email delivery was not tested.
+
+Publish was blocked by the designer error `The input line of Sequential Multiple Assignees is missing.` A rebuilt package used native-looking shape IDs plus incoming/outgoing sequence-flow references and passed local validation, but duplicate package/app identity interference prevented a clean second open/publish proof in the same pass.
+
+Before any request-submit runtime baseline, run a clean follow-up with a unique package identity and preferably a smaller workflow. Prove publish first, then submit only a safe path with explicitly authorized assignee targets. Keep email delivery out of scope unless safe recipients and delivery scope are explicitly approved.

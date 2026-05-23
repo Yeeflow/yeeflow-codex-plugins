@@ -89,6 +89,16 @@ Runtime routing claims require a focused baseline that proves:
 
 Do not claim runtime behavior from export study alone.
 
+## Focused Baseline Result
+
+`generate-assignment-task-assignee-runtime-baseline.mjs` creates `assignment-task-assignee-runtime-baseline.v1.yap` from the export-proven shapes in `Test ABC (1).yap`. The package is intentionally ignored because it can contain tenant-local copied assignment references.
+
+Local validation of the generated package is validator-backed for 11 Assignment Task nodes covering static user, multiple users, direct position, position by department, position by location, user group, Sequential appointed order, Parallel/default appointed order, `approveway` variants, custom percentage, and email notification configuration.
+
+The first runtime pass imported and opened the generated app and showed Assignment Task designer panels, including Sequential selected for `issequential=true` and an Email Notification Config task panel. Publishing that first package was blocked by a missing-input-line designer error on `Sequential Multiple Assignees`, and no request was submitted. A rebuilt package with native-looking shape IDs and incoming/outgoing flow references passed local validation but hit duplicate import/open interference before clean publish proof.
+
+Treat this result as import/open/designer proof plus local validation only. Do not promote Assignment Task routing, group expansion, position expansion, appointed-order behavior, custom-percentage completion, or email delivery to runtime-proven until a clean follow-up pass publishes and safely submits a request.
+
 ## Product-Documented But Not Export-Proven Here
 
 These were not found in the current exports or remain insufficiently proven:
