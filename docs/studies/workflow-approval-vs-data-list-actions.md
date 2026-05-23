@@ -126,14 +126,15 @@ Runtime submit/routing proof should use disposable list records and safe assigne
 
 The combined package is for import/open/designer/publish proof first. It should not be used to claim routing, email delivery, due-date reminder delivery, or data-list task form save behavior until those paths are explicitly submitted and observed with safe test data.
 
-The combined package was imported and tested in Chrome. The approval workflow designer opened with a non-overlapping graph, the approval Start panel rendered terminate/recall/condition/email settings, representative Assignment Task panels rendered assignee/task-type/appointed-order controls, and the approval workflow published successfully. The data-list workflow designer opened with a Start -> Assignment Task -> End graph, rendered data-list Start email settings without terminate/recall controls, rendered the data-list Assignment Task mixed assignee/list-field expression configuration, and published successfully.
+The combined package was imported and tested in Chrome. The approval workflow designer opened with a non-overlapping graph, the approval Start panel rendered terminate/recall/condition/email settings, representative Assignment Task panels rendered assignee/task-type/appointed-order controls, and the approval workflow published successfully. After read-only API-assisted safety checks confirmed the first approval Assignment Task was a single direct-user target, one fake approval request was submitted and a new Pending task appeared for `Workflow Action Approval Test` with task label `Static User Assignment`. This submit proof is limited to the first approval direct-user task.
 
-This is designer/publish proof only. Request submission, data-list item submission, assignment routing, group/position/list-field expansion, task-form save/edit behavior, due-date reminders, and email delivery were not tested.
+The data-list workflow designer opened with a Start -> Assignment Task -> End graph, rendered data-list Start email settings without terminate/recall controls, rendered the data-list Assignment Task mixed assignee/list-field expression configuration, and published successfully. Data-list item submission was skipped because the first data-list Assignment Task has mixed direct, expression, user-group, and list-item/Created By sources. Data-list routing, group/position/list-field expansion, task-form save/edit behavior, due-date reminders, and email delivery were not tested.
 
 ## Known Gaps
 
 - Data-list Start terminate/recall fields were not found in this export.
 - Data-list Start email delivery was not tested.
 - Created By/list-field assignee routing was not runtime-tested.
+- Approval direct static-user routing is runtime-proven only for the first submitted task in the combined baseline.
 - Data-list task form save/edit behavior for list-bound controls was not runtime-tested.
 - Default/native list field read-only behavior is based only on the studied export shape.
