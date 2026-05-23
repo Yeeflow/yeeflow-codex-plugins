@@ -95,6 +95,7 @@ Use these rules for generated packages:
 - Data-list workflow task forms can mix normal task-form controls and list-bound controls. Preserve `isListControl`, list field `identifier`, `InternalName`, `fieldID`, and `____customListFields_` binding.
 - Custom list fields can be marked `readonly=true` when the task should not update source list data. Default/native fields such as Created By appear read-only in the studied export; keep broader native-field behavior runtime-pending.
 - Lay out generated workflow nodes with non-overlapping coordinates and keep `SequenceFlow` source/target plus node incoming/outgoing references consistent.
+- For combined workflow-action baselines, include approval-form and data-list workflows in one package only when each workflow keeps its own Start-action rules, process/list IDs, `FlowMappings[]`, task forms, and sequence-flow references. Remap `Data.Forms[].ProcModelID` and data-list workflow `ListID`/`ProcModelID` completely.
 
 ## Runtime-Proof Requirements
 
@@ -119,6 +120,19 @@ The first runtime pass imported and opened the generated app and showed Assignme
 The V2 runtime package fixed the duplicate-import/process-ID problem by using fresh app/process IDs, fresh form key `ATAR2`, semantic `rt_*` workflow shape IDs, complete `Data.Forms[0].ProcModelID` remapping, and a non-overlapping left-to-right workflow layout. V2 imported, opened, rendered the workflow designer, published successfully, and opened the published form.
 
 Treat V2 as import/open/designer/publish proof only. Do not promote Assignment Task routing, group expansion, position expansion, appointed-order behavior, custom-percentage completion, or email delivery to runtime-proven until a safe request is submitted and observed.
+
+`generate-workflow-actions-combined-runtime-baseline.mjs` extends the publish-proven V2 approach with one data-list workflow and additional Complete task, due-date, reminder, and Start settings. Use it for designer/open/publish proof first. Its `minute` due-date task is exploratory/product-documented because the studied exports proved `hour`, `day`, and `express` but did not prove the minute serialization.
+
+The combined workflow-actions package imported, opened, rendered approval and data-list workflow designers, and published both workflows successfully. This upgrades the covered shapes to import/open/designer/publish-proven for the generated host package:
+
+- approval Start terminate/recall/condition/email configuration
+- representative Assignment Task assignee editor, appointed-order, task-type, and completion-condition panels
+- generated Complete task, due-date, reminder, `approveway`, and notification configuration family at package/publish level
+- data-list Start email configuration without terminate/recall controls
+- data-list Assignment Task mixed direct/expression/list-item assignee configuration including the Created By/list-field expression family
+- data-list form/list-field rendering in the imported app
+
+Do not treat this as routing proof. No approval request or data-list item was submitted, no task was completed, no group/position/list-field expansion was observed, no due-date scheduler behavior was observed, and no notification email was sent.
 
 ## Product-Documented But Not Export-Proven Here
 

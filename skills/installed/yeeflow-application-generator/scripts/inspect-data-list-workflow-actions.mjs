@@ -164,7 +164,11 @@ function parseDefResource(form) {
 }
 
 function inspect(data, inputPath, largeNumbers) {
-  const fields = asArray(data.Item?.Defs).map((field) => ({
+  const resourceItems = [data.Item, ...asArray(data.Childs)].filter(Boolean);
+  const listItemsById = new Map(resourceItems.map((item) => [String(item.ListModel?.ListID || ""), item]));
+  const fields = resourceItems.flatMap((item) => asArray(item.Defs).map((field) => ({
+    listTitle: item.ListModel?.Title || null,
+    listId: "<REDACTED_LIST_ID>",
     field: field.FieldName || null,
     internalName: field.InternalName || null,
     display: field.DisplayName || field.Title || null,
@@ -172,11 +176,13 @@ function inspect(data, inputPath, largeNumbers) {
     controlType: field.Type || null,
     kind: fieldKind(field),
     fieldId: "<REDACTED_FIELD_ID>",
-  }));
+  })));
   const workflows = [];
   for (const [formIndex, form] of asArray(data.Forms).entries()) {
     const def = parseDefResource(form);
     if (!def) continue;
+    if (form.WorkflowType !== 1) continue;
+    const hostList = listItemsById.get(String(form.ListID || ""));
     const starts = [];
     const assignmentTasks = [];
     for (const [nodeIndex, shape] of asArray(def.childshapes).entries()) {
@@ -257,6 +263,7 @@ function inspect(data, inputPath, largeNumbers) {
       key: form.Key || null,
       workflowType: form.WorkflowType,
       listId: "<REDACTED_LIST_ID>",
+      hostListTitle: hostList?.ListModel?.Title || null,
       settings: form.Settings ?? null,
       defkey: def.defkey || null,
       shapeCount: asArray(def.childshapes).length,
@@ -274,14 +281,15 @@ function inspect(data, inputPath, largeNumbers) {
       largeNumericIdsPreservedAsStrings: largeNumbers.length,
     },
     fields,
-    flowMappings: asArray(data.Item?.FlowMappings).map((mapping) => ({
+    flowMappings: resourceItems.flatMap((item) => asArray(item.FlowMappings).map((mapping) => ({
+      listTitle: item.ListModel?.Title || null,
       title: mapping.Title || null,
       defKey: mapping.DefKey || null,
       method: mapping.Method ?? null,
       fieldName: mapping.FieldName ?? null,
       setting: typeof mapping.Setting === "string" ? JSON.parse(mapping.Setting) : mapping.Setting,
       listId: "<REDACTED_LIST_ID>",
-    })),
+    }))),
     workflows,
   };
 }

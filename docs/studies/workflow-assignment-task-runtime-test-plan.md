@@ -97,3 +97,17 @@ Before any request-submit runtime baseline, select safe test-only assignees or e
 - Default/native list fields should remain treated as read-only from export study only until designer/runtime proof confirms broader behavior.
 
 Do not submit data-list workflow records or send notification email until safe test recipients and safe assignee routing are explicitly scoped.
+
+## Combined Workflow Actions Baseline
+
+The combined generator `generate-workflow-actions-combined-runtime-baseline.mjs` creates `workflow-actions-combined-runtime-baseline.v1.yap` for one approval form plus one child data list. It is intended to prove import/open/designer/publish behavior for the learned approval-form and data-list workflow action settings together.
+
+The generated approval workflow uses a non-overlapping left-to-right graph and appends representative Complete task, due-date, reminder, and Start settings to the previously publish-proven Assignment Task assignee baseline. The generated data-list workflow embeds the studied `Purchase Requests.ydl` Start, Assignment Task, and task-form shapes into the same app package.
+
+Keep this package ignored and uncommitted. Treat copied assignee references as tenant-local and do not submit requests or data-list items until safe assignees are selected.
+
+The combined baseline was manually imported and then tested in Chrome. The app opened, the approval form rendered, the approval workflow designer opened with a non-overlapping graph, the approval Start panel showed terminate/recall/condition/email settings, representative Assignment Task panels showed the assignee editor and task-type/appointed-order controls, and the approval workflow published successfully.
+
+The same imported app exposed the data list, list fields/views, and data-list workflow designer. The data-list Start panel showed email-notification configuration without terminate/recall controls, the data-list Assignment Task panel showed mixed direct/expression/list-item assignee sources including the Created By/list-field expression family, and the data-list workflow published successfully.
+
+No approval request or data-list item was submitted. Keep assignee routing, group/position/list-field expansion, Complete task execution, due-date reminder execution, Start terminate/recall execution, data-list task-form save/edit behavior, and all email delivery classified as not tested.
