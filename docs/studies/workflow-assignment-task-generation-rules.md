@@ -1,0 +1,190 @@
+# Workflow Assignment Task Generation Rules
+
+## Scope
+
+These rules cover Yeeflow approval workflow `MultiAssignmentTask` assignee, task type, due-date, reminder, and Start-action-adjacent generation guidance learned from `Test ABC.yap`, `Test ABC (1).yap`, `Test ABC (2).yap`, and `Test ABC (3).yap`.
+
+Proof boundary:
+
+- Shapes in this document are `export-proven` unless explicitly marked otherwise.
+- Validator checks are warning-first and `validator-backed` only after local validation.
+- Assignment task runtime routing is not `runtime-proven` until a focused runtime baseline passes.
+- Help Center behavior can guide terminology and expected behavior, but generated assignee configurations should use export-proven shapes unless a shape is explicitly marked product-documented but not export-proven.
+
+## Export-Proven Storage
+
+Assignment task assignees are stored on `MultiAssignmentTask` nodes under:
+
+```text
+properties.usertaskassignment
+```
+
+The value is an array of assignee entries.
+
+Every entry found in `Test ABC.yap` includes:
+
+- `type`
+- `method`
+- `title`
+
+Some methods also include:
+
+- `value`
+- `position`
+
+Common task approval settings found alongside assignees:
+
+- `properties.tasktype`
+- `properties.approveway`
+- `properties.approvepercentage`
+- `properties.duedatedefinition`
+- `properties.duedatetype`
+- `properties.duedateexpress`
+- `properties.isfromworkcalendar`
+- `properties.notifyrules`
+- `properties.taskurl`
+- `properties.isenabledemail`
+- `properties.isallowreassign`
+- `properties.isallowsign`
+- `properties.allowskip`
+
+## Export-Proven Methods
+
+| Method | Type | Meaning | Required fields found | Runtime dependencies | Generation safety |
+|---|---|---|---|---|---|
+| `direct` | `user` | specific direct user | `value`, `title` | valid target-tenant user | tenant-sensitive; avoid broad generation |
+| `expression` | `user` | expression editor user assignee | `value`, `title` | applicant/user context or expression result | export-proven shape, runtime routing unproven |
+| `position` | `position` | direct job position | `position`, `title` | valid position assignment | requires target org/reference data |
+| `positionorg` | `position` | job position by selected department | `position`, `value`, `title` | valid department and position assignment | requires target org/reference data |
+| `positionorgexpr` | `position` | job position by applicant/current department | `position`, `value`, `title` | applicant context, department hierarchy, position assignment | requires runtime proof |
+| `positionloc` | `position` | job position by selected location | `position`, `value`, `title` | valid location and position assignment | requires target org/reference data |
+| `positionlocexpr` | `position` | job position by applicant/current location | `position`, `value`, `title` | applicant context, location data, position assignment | requires runtime proof |
+| `expression` | `user` with expression data `type=usergroup`, `prop=Users_ID` | all users in a user group | `value`, `title` | valid user group membership | export-proven in `Test ABC (1).yap`; API Operator can confirm group/member category through documented read-only endpoints |
+| `expression` | `user` with expression data `type=position`, `prop=Users_ID` | all users in a job position | `value`, `title` | valid position assignment and position membership | requires target org/reference data and runtime proof |
+
+## Safe Generation Rules
+
+Use these rules for generated packages:
+
+- Do not hardcode tenant-specific direct users by default.
+- Use `type=user`, `method=direct` only when the user explicitly supplies or authorizes a valid target-tenant user mapping.
+- Redact private IDs in docs and never commit user/org lookup output.
+- Prefer applicant/current-user expression routing or an explicit user-selection field when a package must be portable across tenants.
+- Use job-position, department, and location assignment only when target-tenant org/reference data is available and authorized.
+- Use `yeeflow-api-operator` for read-only org/reference lookup when real users/departments/locations/positions are needed and local credentials are available.
+- API lookup may confirm that static exported values correspond to user, department, location, or position categories, but it does not prove runtime workflow routing.
+- Use placeholders such as `<USER_REF_CONFIRMED_BY_API>`, `<DEPARTMENT_REF_CONFIRMED_BY_API>`, `<LOCATION_REF_CONFIRMED_BY_API>`, and `<POSITION_REF_CONFIRMED_BY_API>` in committed normalized examples.
+- Do not paste API keys into chat and do not save raw API responses.
+- Keep generated packages free of private user, department, location, position, tenant, and email data unless explicitly required and safe.
+- Preserve multiple assignee entries under `properties.usertaskassignment[]`; mixed source arrays are export-proven in `Test ABC (1).yap`.
+- Preserve `properties.issequential=true` for Sequential Appointed Order. Treat absent `issequential` as parallel/default only within the current export-proven boundary.
+- Preserve `approveway` and `approvepercentage` together. Export-proven values include `allapprove`, `anyprocess`, `anyapprove`, `anyreject`, and `custompercentage`.
+- Generate email notification fields only from export-proven shapes and only when explicitly requested. Do not claim notification delivery without runtime testing.
+- Use `yeeflow-api-operator` assignment-routing coverage checks for authorized read-only confirmation of users, groups, group members, locations, positions, and position assignments. Do not invent org object IDs or embed private org data.
+- User group assignment can now be API-category-assisted through documented `GET /groups` and `GET /groups/{id}/users`, but group expansion and routing still require runtime proof.
+- Preserve absent `tasktype` for approval/default tasks and `tasktype="complete"` for Complete tasks. Do not invent another approval marker until a focused export proves it.
+- Preserve due-date settings together. Export-proven due-date types are `hour`, `day`, and `express`; `minute` is product-documented but not export-proven in the studied files.
+- Preserve `duedateexpress` when `duedatetype="express"` and keep it as an expression-button shape.
+- Preserve `isfromworkcalendar` for day-based working-calendar due dates when found.
+- Preserve due-date reminder rules under `notifyrules[]`; export-proven reminder timing values are `relative="0"` for on due date, `relative="-1"` for before due date, and `relative="1"` for after due date.
+- Treat `notifyrules[].actiontype="1"` as the export-proven reminder action shape. Do not generate Automatic Treatment due-date actions until an export proves the serialized schema.
+- Reminder recipient settings are export-proven only for task-level current task assignee email via `properties.to`; applicant, manager, department-manager, and arbitrary recipient reminder shapes were not found.
+- Start action settings from `Test ABC (3).yap` use `StartNoneEvent.properties.terminate`, `terminate-conditions`, `revoke-conditions`, `isenabledemail`, `to`, `subject`, and `html`. Preserve condition rows as operand-wrapper arrays and do not claim terminate/recall/email runtime behavior without focused proof.
+- Data-list workflow Start action from `Purchase Requests.ydl` uses `StartNoneEvent.properties.isenabledemail`, `to`, `subject`, `html`, and `taskurl`, but does not include `terminate`, `terminate-conditions`, or `revoke-conditions`. Do not add approval-form terminate/recall fields to data-list workflow Start actions until a data-list export proves them.
+- Data-list workflow Assignment Task can reference list item context in assignee expressions. The studied export proves a Created By list-field expression that resolves `LineManager`; preserve this as an expression-button value and never replace it with invented static users.
+- Data-list workflow task forms can mix normal task-form controls and list-bound controls. Preserve `isListControl`, list field `identifier`, `InternalName`, `fieldID`, and `____customListFields_` binding.
+- Custom list fields can be marked `readonly=true` when the task should not update source list data. Default/native fields such as Created By appear read-only in the studied export; keep broader native-field behavior runtime-pending.
+- Lay out generated workflow nodes with non-overlapping coordinates and keep `SequenceFlow` source/target plus node incoming/outgoing references consistent.
+- For combined workflow-action baselines, include approval-form and data-list workflows in one package only when each workflow keeps its own Start-action rules, process/list IDs, `FlowMappings[]`, task forms, and sequence-flow references. Remap `Data.Forms[].ProcModelID` and data-list workflow `ListID`/`ProcModelID` completely.
+
+## Runtime-Proof Requirements
+
+Runtime routing claims require a focused baseline that proves:
+
+- imported workflow designer accepts the generated assignment task assignee configuration
+- request submission creates a pending task
+- the pending task routes to the intended safe assignee class
+- approval/complete outcomes route through expected sequence flows
+- no private identities are exposed in reusable docs
+
+Do not claim runtime behavior from export study alone.
+
+## Focused Baseline Result
+
+`generate-assignment-task-assignee-runtime-baseline.mjs` creates `assignment-task-assignee-runtime-baseline.v1.yap` from the export-proven shapes in `Test ABC (1).yap`. The package is intentionally ignored because it can contain tenant-local copied assignment references.
+
+Local validation of the generated package is validator-backed for 11 Assignment Task nodes covering static user, multiple users, direct position, position by department, position by location, user group, Sequential appointed order, Parallel/default appointed order, `approveway` variants, custom percentage, and email notification configuration.
+
+The first runtime pass imported and opened the generated app and showed Assignment Task designer panels, including Sequential selected for `issequential=true` and an Email Notification Config task panel. Publishing that first package was blocked by a missing-input-line designer error on `Sequential Multiple Assignees`, and no request was submitted. A rebuilt package with native-looking shape IDs and incoming/outgoing flow references passed local validation but hit duplicate import/open interference before clean publish proof.
+
+The V2 runtime package fixed the duplicate-import/process-ID problem by using fresh app/process IDs, fresh form key `ATAR2`, semantic `rt_*` workflow shape IDs, complete `Data.Forms[0].ProcModelID` remapping, and a non-overlapping left-to-right workflow layout. V2 imported, opened, rendered the workflow designer, published successfully, and opened the published form.
+
+Treat V2 as import/open/designer/publish proof only. Do not promote Assignment Task routing, group expansion, position expansion, appointed-order behavior, custom-percentage completion, or email delivery to runtime-proven until a safe request is submitted and observed.
+
+`generate-workflow-actions-combined-runtime-baseline.mjs` extends the publish-proven V2 approach with one data-list workflow and additional Complete task, due-date, reminder, and Start settings. Use it for designer/open/publish proof first. Its `minute` due-date task is exploratory/product-documented because the studied exports proved `hour`, `day`, and `express` but did not prove the minute serialization.
+
+The combined workflow-actions package imported, opened, rendered approval and data-list workflow designers, and published both workflows successfully. This upgrades the covered shapes to import/open/designer/publish-proven for the generated host package:
+
+- approval Start terminate/recall/condition/email configuration
+- representative Assignment Task assignee editor, appointed-order, task-type, and completion-condition panels
+- generated Complete task, due-date, reminder, `approveway`, and notification configuration family at package/publish level
+- data-list Start email configuration without terminate/recall controls
+- data-list Assignment Task mixed direct/expression/list-item assignee configuration including the Created By/list-field expression family
+- data-list form/list-field rendering in the imported app
+
+Do not treat this as routing proof. No approval request or data-list item was submitted, no task was completed, no group/position/list-field expansion was observed, no due-date scheduler behavior was observed, and no notification email was sent.
+
+## Product-Documented But Not Export-Proven Here
+
+These were not found in the current exports or remain insufficiently proven:
+
+- direct users only in one multi-user task, without another source type
+- workflow variable assignee
+- selected department manager as a distinct direct manager shape
+- position by department plus location in one entry
+- explicit `issequential=false` parallel marker
+- quick-completion notification behavior
+- notification delivery behavior
+- standalone department detail endpoint and standalone position detail endpoint in the public API
+- minute due-date unit serialization
+- due-date Automatic Treatment action schema
+- reminder recipients other than task owner/current assignee
+- enabled Start terminate condition behavior
+- Start recall runtime behavior
+- Start email delivery
+- data-list workflow Created By/list-field assignee routing
+- data-list workflow task form save/edit behavior for list-bound controls
+
+Do not generate these as schema-safe until an export proves their package shape. Do not claim routing-safe until runtime proof exists.
+
+## Validator Rules
+
+Validators should remain warning-first for this feature in compatibility mode:
+
+- warn when `MultiAssignmentTask.properties.usertaskassignment` is missing, not an array, or empty
+- warn when an assignee entry is not an object
+- warn when `type` or `method` is missing
+- warn when method is outside the export-proven method list
+- warn when position-based assignments lack `position`
+- warn when static direct/department/location assignments lack `value`
+- warn when expression-based assignments lack an expression-button-shaped `value`
+- warn that direct user assignment is tenant-sensitive
+- warn when `tasktype` uses an unknown explicit value
+- warn when due-date type, expression, working-calendar, or reminder rule shapes are malformed
+- warn when Start action terminate/recall condition or email-notification fields are malformed
+
+Hard errors should wait until generated-final invalid shapes are proven to fail import/publish/runtime safely and consistently.
+
+## References
+
+Normalized export references:
+
+```text
+docs/studies/normalized/workflow-assignment-task-assignees/
+```
+
+Study doc:
+
+```text
+docs/studies/workflow-assignment-task-assignee-settings.md
+```

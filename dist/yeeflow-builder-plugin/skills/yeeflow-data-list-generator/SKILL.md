@@ -5,6 +5,12 @@ description: generate, inspect, validate, package, debug, and improve yeeflow da
 
 # Yeeflow Data List Generator
 
+## Application Navigation References
+
+When a generated application exposes data lists through the app navigation menu, reference each list from the root app `Data.Item.ListModel.LayoutView.sort[]` using `Type = 1`, the list `ListID`, root `ListSetID`, `Title`, optional `DisplayName`, optional `Icon`, and boolean `IsHidden` when needed. Omit `DisplayName` to allow Yeeflow to use the data list title as the menu label. Use `Icon: ""` for no-icon.
+
+Data-list menu items can be top-level resources or children of a top-level custom group. Groups are app-level navigation items with `Type = "classes"` and cannot be nested; maximum menu depth is two layers. Validate navigation references with the package validator before building a wrapper.
+
 Use this skill when the user asks to inspect, validate, generate, package, debug, or improve Yeeflow data-list `.ydl` exports or decoded data-list JSON.
 
 For existing-app upgrades, data-list changes should be packaged as `.yapk` only from a Yeeflow Version management baseline and only when the upgrade package structure is safe. Preserve existing list IDs and app identity. Do not apply new-app `.yap` fresh-ID rules to existing list objects, and do not claim offline `.yapk` list mutation is safe while the studied `.yapk` `Resource` remains opaque/signed.
@@ -71,6 +77,8 @@ When a generated data list includes workflow actions, run workflow-aware validat
 Scheduled Workflow export learning: `AI Agent and Copilot Local Resource Baseline8.yap` proves `QueryData` can be used from an app-level Scheduled Workflow (`WorkflowType = 3`) to query a local data list and write multiple results into a text workflow variable with `result.listParent = "__variables_"`, `result.listName`, `result.vartype = "text"`, and `result.fields[]`. Validate that the queried list and selected fields resolve before generating or runtime-testing.
 
 Data-list workflow export learning: `Spark & AI (1).yap` proves list workflows are registered on the host list through `FlowMappings[]`, with new-item trigger shape `Setting.NewTrigger = true`, and the workflow definition itself remains a `Data.Forms[]` entry with `WorkflowType = 1` and nonzero `ListID`. The Asia Tech manual workflow comparison proves Add Item / new-item triggers should keep `FlowMappings.FieldName = null` and `Data.Forms[].Settings = null`; do not bind a normal field as the trigger condition. The same export proves a workflow `AI` node can call an app-contained Agent, map an `icon-upload` list field into an Agent input `type = "img"`, and pass native `ListDataID` into a text input for same-row update behavior. Treat any generated list workflow that can call live AI or update rows through an Agent tool as runtime-sensitive until proven safe in an isolated sandbox package.
+
+Data-list workflow Assignment Task learning: `Purchase Requests.ydl` proves a data-list workflow can use the same `MultiAssignmentTask` action family as approval workflows, while adding list-item context to assignee expressions. The studied export uses `FlowMappings[].Setting.NewTrigger = true`, `WorkflowType = 1`, a Start action with email notification fields but no terminate/recall fields, and an Assignment Task with a Created By list-field expression resolving `LineManager`. Its task form mixes normal task-form controls with list-bound controls using `isListControl = true`, `identifier`, `InternalName`, `fieldID`, and `____customListFields_` binding. Preserve custom list fields as read-only when the task should not update source list data; default/native fields such as Created By appear read-only in the studied export, but broader native-field behavior remains runtime-pending. Use `docs/studies/workflow-approval-vs-data-list-actions.md` and normalized refs under `docs/studies/normalized/workflow-task-forms/` before generating data-list workflow Assignment Tasks.
 
 ## References
 

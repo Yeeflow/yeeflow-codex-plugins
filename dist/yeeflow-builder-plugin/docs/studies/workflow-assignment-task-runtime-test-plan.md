@@ -1,0 +1,99 @@
+# Workflow Assignment Task Runtime Test Plan
+
+## Purpose
+
+Plan a future focused runtime baseline for Assignment Task assignee routing. This plan is not runtime proof. The current evidence is export-proven, API-category-assisted, product-documented, and validator-backed only.
+
+## Scope
+
+Use the smallest approval app that can safely test Assignment Task routing classes without exposing private identities. Runtime work must not happen on the export-learning branch unless explicitly requested.
+
+Test scenarios:
+
+| Scenario | Purpose | Data requirement | Proof target |
+|---|---|---|---|
+| Static single user | Confirm `type=user`, `method=direct` creates a task for a safe user | explicitly authorized safe user | task routes to intended safe assignee |
+| Multiple static users | Confirm multiple direct users in `usertaskassignment[]` | two or more safe users | task creation and completion behavior |
+| Direct job position | Confirm direct position assignee expansion | safe position with known test member(s) | task routes to position holder(s) |
+| Position by department | Confirm selected department + position routing | safe department and position mapping | task routes to matching role |
+| Position by location | Confirm selected location + position routing | safe location and position mapping | task routes to matching role |
+| Applicant line manager | Confirm applicant context lookup | safe applicant with safe manager | task routes to manager |
+| Applicant department manager | Confirm applicant department manager lookup | safe applicant department with manager | task routes to department manager |
+| User group expression | Confirm group expansion if safe group exists | disposable or explicitly safe user group | task routes to group members |
+| Sequential appointed order | Confirm `issequential=true` order | two safe assignee sources | first assignee receives task before next |
+| Parallel/default appointed order | Confirm absent `issequential` fan-out | two safe assignee sources | all applicable assignees receive tasks together |
+| Custom percentage completion | Confirm `approveway=custompercentage` + `approvepercentage` | safe multi-assignee task | completion threshold behavior |
+| Email notification enabled | Designer/open proof first; delivery only if explicitly scoped | safe notification recipient/sandbox | configuration persists; delivery not assumed |
+| Complete task type | Confirm `tasktype=complete` renders and can complete when safe | safe assignee and disposable request | Complete button and outgoing-flow behavior |
+| Due date custom hours | Confirm `duedatedefinition` + `duedatetype=hour` persists | no email delivery | designer/open proof first |
+| Due date custom days / working days | Confirm `duedatetype=day` and `isfromworkcalendar` persist | working calendar not executed | designer/open proof first |
+| Due date expression | Confirm `duedatetype=express` and `duedateexpress` persist | safe date variable | designer/open proof first |
+| Due-date reminders | Confirm `notifyrules[]` before/on/after shapes persist | email delivery disabled unless scoped | configuration proof only |
+| Start allow terminate | Confirm Start `terminate` and `terminate-conditions` render | disposable request only if later scoped | designer/open proof first |
+| Start allow recall | Confirm `revoke-conditions` render | disposable request only if later scoped | designer/open proof first |
+| Start email notification | Confirm Start `isenabledemail/to/subject/html` render | no delivery unless scoped | configuration proof only |
+| Data-list Start email notification | Confirm data-list Start notification config persists without terminate/recall fields | disposable list workflow package; no delivery unless scoped | designer/open proof first |
+| Data-list Created By assignee | Confirm list-item Created By expression can be used as task assignee source | safe created-by record and safe manager mapping | routing proof only when safe |
+| Data-list task form list fields | Confirm task form renders custom and native/default list-bound fields | disposable list item | designer/open proof first |
+| Data-list readonly custom field | Confirm custom list-bound read-only config persists | disposable list item | designer/open proof first |
+
+## Safety Rules
+
+- Do not use real private users unless explicitly authorized and safe.
+- Do not send email unless notification delivery is explicitly scoped and recipients are safe.
+- Do not test due-date reminder or Start notification delivery unless safe recipients and delivery scope are explicitly approved.
+- Do not commit request records, raw API responses, raw exports, screenshots with private identities, or `.env.local`.
+- Use `yeeflow-api-operator` only for authorized read-only lookup of users, departments, locations, positions, groups, group members, and position assignments.
+- Use the assignment-routing API coverage helper before runtime setup to confirm that safe target users/groups/positions are readable. This still does not prove workflow routing.
+
+## Validation Before Runtime
+
+Before import or live workflow execution:
+
+- run package validation in compatibility/generator mode as appropriate
+- run graph validation
+- run workflow action config validation
+- run assignment assignee inspection
+- run secret/private-data safety scans
+- verify generated package contains no private user/org data unless explicitly required and safe
+
+## Proof Boundary
+
+Runtime proof requires import/open plus actual disposable request execution for routing scenarios. Designer visibility, package validation, and API category lookup are not enough to claim routing behavior.
+
+## Baseline Attempt Result
+
+The focused generator `generate-assignment-task-assignee-runtime-baseline.mjs` produced `assignment-task-assignee-runtime-baseline.v1.yap` with 11 Assignment Task nodes and fresh package IDs. Local validation passed with warnings, and the generated package remains ignored/uncommitted.
+
+The first runtime attempt imported and opened the generated app, opened the workflow designer, and showed Assignment Task panels. Sequential appointed order rendered as selected for the sequential task. Parallel/default tasks rendered with Parallel selected when `issequential` was absent. The email notification task opened in the designer, but email delivery was not tested.
+
+Publish was blocked by the designer error `The input line of Sequential Multiple Assignees is missing.` A rebuilt package used native-looking shape IDs plus incoming/outgoing sequence-flow references and passed local validation, but duplicate package/app identity interference prevented a clean second open/publish proof in the same pass.
+
+The V2 follow-up used a unique package identity and full process-model ID remapping. It imported, opened, rendered a non-overlapping left-to-right workflow, published successfully, and opened the published form. Request submission was not run because the copied assignee references can route live tenant users/groups/positions.
+
+Before any request-submit runtime baseline, select safe test-only assignees or explicitly authorized target users/groups/positions. Keep email delivery out of scope unless safe recipients and delivery scope are explicitly approved.
+
+## Complete Task, Due Date, And Start Action Additions
+
+`Test ABC (2).yap` and `Test ABC (3).yap` add export-proven configuration that should be folded into the next focused baseline:
+
+- Complete task designer/open proof for `tasktype="complete"`.
+- Complete task submit/complete proof only after safe assignee references are selected.
+- Due-date designer/open proof for `hour`, `day`, `express`, and working-calendar flag.
+- Due-date reminder configuration proof for before/on/after due date; email delivery remains out of scope by default.
+- Start action designer/open proof for allow terminate, allow recall condition rows, and Start email notification configuration.
+- Start action runtime proof for terminate/recall/condition gating should be separate from assignee routing unless the package remains small and safe.
+
+`minute` due dates and Automatic Treatment due-date actions should not be included in a schema-proof baseline until a focused export proves their serialized shape.
+
+## Data-List Workflow Additions
+
+`Purchase Requests.ydl` extends the next combined baseline with data-list workflow action coverage:
+
+- Start action should be tested as a data-list workflow Start action, not copied from approval-form workflow Start settings. The studied data-list Start has email notification fields and no terminate/recall fields.
+- Assignment Task should include a list-item assignee expression, especially Created By or Created By line manager, only when safe disposable list records and safe user/manager mappings are available.
+- Task form designer/open proof should confirm normal task-form controls and list-bound controls render together.
+- Custom list fields marked read-only should remain read-only in the designer/opened task form.
+- Default/native list fields should remain treated as read-only from export study only until designer/runtime proof confirms broader behavior.
+
+Do not submit data-list workflow records or send notification email until safe test recipients and safe assignee routing are explicitly scoped.

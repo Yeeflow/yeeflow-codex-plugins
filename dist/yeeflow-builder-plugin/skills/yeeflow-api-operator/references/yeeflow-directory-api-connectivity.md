@@ -39,6 +39,14 @@ The helper tests only these read-only directory endpoints:
 
 Do not add create, update, delete, enable, disable, assignment, remove, or other write-operation endpoints to this helper.
 
+For Assignment Task routing coverage, use the separate read-only helper:
+
+```bash
+node scripts/yeeflow-assignment-routing-api-coverage-test.mjs "/path/to/export.yap"
+```
+
+That helper adds documented read-only checks for user detail, location detail, groups, group members, and position assignments without expanding this basic connectivity smoke test.
+
 ## Safety Rules
 
 - Do not print the full API key.

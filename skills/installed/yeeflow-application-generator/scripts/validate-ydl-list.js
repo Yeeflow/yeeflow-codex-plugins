@@ -3,6 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
+const { validateWorkflowActionShapes } = require("./workflow-action-config-validator");
 const {
   loadControlFieldSchemas,
   validateFieldAgainstSchema,
@@ -977,6 +978,18 @@ function validateWorkflows(data, item, fieldByName, knownListIds, report) {
     const key = form.FlowKey || form.Key || def.defkey;
     if (!key && !def.defkey) issue(report, "error", "WORKFLOW_KEY_MISSING", "Workflow key/defkey is required.", { location: `Data.Forms[${index}]` });
     if (def.variables === undefined) issue(report, "warning", "WORKFLOW_VARIABLES_MISSING", "Workflow variables are missing; confirm this is valid for this workflow.", { key });
+    const workflowActionReport = validateWorkflowActionShapes(asArray(def.childshapes), {
+      mode: report.mode,
+      stage: report.stage,
+      pointerForIndex: (shapeIndex) => `Data.Forms[${index}].DefResource.childshapes[${shapeIndex}]`,
+    });
+    for (const actionIssue of workflowActionReport.issues) {
+      issue(report, actionIssue.level === "error" ? "error" : "warning", actionIssue.code, actionIssue.message, {
+        workflowKey: key,
+        ...actionIssue,
+      });
+    }
+    validateDataListWorkflowTaskForms(def, fieldByName, key, report);
     for (const node of asArray(def.childshapes)) {
       const type = stencilId(node);
       const props = node.properties || {};
@@ -1020,6 +1033,55 @@ function validateWorkflows(data, item, fieldByName, knownListIds, report) {
       }
     }
   });
+}
+
+function validateDataListWorkflowTaskForms(def, fieldByName, key, report) {
+  for (const [pageIndex, page] of asArray(def.pageurls).entries()) {
+    const formdef = page && page.formdef;
+    if (!isObject(formdef)) continue;
+    walkControls(formdef, (control, pointer) => {
+      if (!control || control.isListControl !== true) return;
+      const identifier = safeString(control.identifier || control.FieldName || control.fieldName);
+      const internalName = safeString(control.InternalName || control.internalName);
+      const location = `Data.Forms[${key}].DefResource.pageurls[${pageIndex}].formdef${pointer.replace("$", "")}`;
+      if (!identifier) {
+        issue(report, "warning", "DATALIST_WORKFLOW_TASK_FORM_FIELD_IDENTIFIER_MISSING", "Data-list workflow task form list-field control is missing identifier.", {
+          key,
+          location,
+        });
+      } else if (!fieldByName.has(identifier) && !KNOWN_SYSTEM_FIELDS.has(identifier)) {
+        issue(report, report.mode === "generator" ? "error" : "warning", "DATALIST_WORKFLOW_TASK_FORM_FIELD_UNRESOLVED", "Data-list workflow task form list-field control references an unknown field.", {
+          key,
+          location,
+          identifier,
+          internalName,
+        });
+      }
+      if (!safeString(control.binding).startsWith("____customListFields_")) {
+        issue(report, "warning", "DATALIST_WORKFLOW_TASK_FORM_BINDING_UNSTUDIED", "Data-list workflow task form list-field binding does not use the studied custom-list-field binding prefix.", {
+          key,
+          location,
+          identifier,
+          binding: control.binding || null,
+        });
+      }
+      const readonly = control.readonly === true || (control.attrs && control.attrs.readonly === true);
+      if (KNOWN_SYSTEM_FIELDS.has(identifier) && control.readonly === false) {
+        issue(report, "warning", "DATALIST_WORKFLOW_TASK_FORM_SYSTEM_FIELD_EDITABLE", "Default/native list fields appear read-only in the studied data-list workflow task form; editable native fields need focused proof.", {
+          key,
+          location,
+          identifier,
+        });
+      }
+      if (!KNOWN_SYSTEM_FIELDS.has(identifier) && !readonly) {
+        issue(report, "warning", "DATALIST_WORKFLOW_TASK_FORM_CUSTOM_FIELD_EDITABLE", "Custom list fields can be editable on task forms; set readonly=true when the task should not update the source list field.", {
+          key,
+          location,
+          identifier,
+        });
+      }
+    });
+  }
 }
 
 function dependencySampleRecordIdsForField(field, dependencyMap) {
