@@ -123,4 +123,6 @@ For detailed behavior and latest proven results, read `references/yeeflow-direct
 
 When app planning or generation needs real users, departments, locations, or positions, use this skill only if credentials are locally available and API lookup is authorized. Do not invent org data when lookup is available and authorized. Do not require API access for normal package generation.
 
+For approval workflow assignment task assignee generation, use read-only lookup only when real users, departments, locations, or positions are explicitly needed and authorized. Report only counts, status, and redacted shapes; never save or commit raw API responses.
+
 Keep generated packages free of private user data unless the user explicitly requires it, the data is safe to include, and the scope is narrow. Prefer placeholders, empty groups, requester/current-user expressions, or post-import configuration when that is safer.

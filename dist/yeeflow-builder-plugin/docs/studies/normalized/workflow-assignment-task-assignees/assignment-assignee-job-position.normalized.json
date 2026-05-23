@@ -1,0 +1,31 @@
+{
+  "proofLevel": "export-proven",
+  "sourceExport": "Test ABC.yap",
+  "nodeType": "MultiAssignmentTask",
+  "assigneePattern": "job-position",
+  "rawAssigneeFieldNames": [
+    "type",
+    "method",
+    "position",
+    "title"
+  ],
+  "normalizedConfig": {
+    "type": "position",
+    "method": "position",
+    "position": "<REDACTED_POSITION_ID>",
+    "title": "<REDACTED_ASSIGNEE_LABEL>"
+  },
+  "approvalSettingsShape": {
+    "approveway": "allapprove",
+    "approvepercentage": 100,
+    "isenabledemail": false,
+    "isallowreassign": false,
+    "isallowsign": false,
+    "allowskip": true,
+    "taskurl": "<REDACTED_TASK_FORM_PAGE_ID>"
+  },
+  "runtimeDependencies": [
+    "valid-position-assignments"
+  ],
+  "generationSafety": "requires target-tenant org/reference data and focused runtime proof before broad generation claims"
+}

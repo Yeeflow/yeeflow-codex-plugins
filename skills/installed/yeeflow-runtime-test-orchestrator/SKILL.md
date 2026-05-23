@@ -104,3 +104,9 @@ The `Scheduled Workflow Safe Runtime Baseline` pass proved import/open/designer 
 
 Do not trigger schedules, run workflows, send email, publish workflows, or execute AI Assistant actions unless the recipient, schedule, AI call scope, and data are explicitly safe. Do not separately claim schedule trigger execution, manual run behavior, email delivery, AI Assistant execution, or workflow-triggered AI Agent execution unless the exact tested path is documented. Classify unexecuted scheduled-workflow packages as partial only when import/open/designer rendering was actually tested; otherwise classify as validation-only.
 <!-- scheduled-workflow-ai-assistant-learning:end -->
+
+<!-- workflow-assignment-task-assignee-learning:start -->
+## Assignment Task Assignee Runtime Planning
+
+For newly generated or newly learned `MultiAssignmentTask.properties.usertaskassignment[]` patterns, use a focused runtime baseline before broad generation claims. Prove only the intended assignee routing classes with safe disposable requests and explicitly authorized target-tenant org data. Safe first coverage should include applicant line manager, applicant department manager, direct job position, position by applicant department, and position by applicant location. Do not expose real user names/emails/IDs in reusable evidence, do not send notifications unless explicitly safe, and classify export-only assignee shapes as export-proven/validator-backed rather than runtime-proven.
+<!-- workflow-assignment-task-assignee-learning:end -->

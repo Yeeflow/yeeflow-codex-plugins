@@ -165,6 +165,7 @@ function validateKnownConditionalShapes(issues, action, shape, type, pointer, op
   if (UNSAFE_ACTION_RE.test(type) || action.risk === "external_or_credential_sensitive") {
     validateUnsafeAction(issues, shape, type, pointer, options);
   }
+  if (type === "MultiAssignmentTask") validateMultiAssignmentTaskAssignees(issues, shape, pointer, options);
   if (type === "MailTask") validateMailTask(issues, shape, pointer, options);
   if (type === "AI") validateAiAction(issues, shape, pointer, options);
   if (type === "ContentList") validateContentList(issues, shape, pointer, options);
@@ -172,6 +173,109 @@ function validateKnownConditionalShapes(issues, action, shape, type, pointer, op
   if (type === "SequenceFlow") validateSequenceFlow(issues, shape, pointer, options);
   if (type === "Delay") validateDelay(issues, shape, pointer, options);
   if (type === "Loop") validateLoop(issues, shape, pointer, options);
+}
+
+const ASSIGNMENT_TASK_ASSIGNEE_METHODS = new Set([
+  "direct",
+  "users",
+  "expression",
+  "position",
+  "positionorg",
+  "positionorgexpr",
+  "positionloc",
+  "positionlocexpr",
+]);
+
+function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
+  const props = shape.properties || {};
+  const assignments = props.usertaskassignment;
+  const severity = strictLevel(options, "warning");
+  if (!Array.isArray(assignments)) {
+    issue(issues, severity, "ASSIGNMENT_TASK_ASSIGNEE_CONFIG_MISSING", "Assignment task should store assignee configuration as properties.usertaskassignment array.", {
+      path: `${pointer}.properties.usertaskassignment`,
+      nodeId: shapeId(shape),
+    });
+    return;
+  }
+  if (!assignments.length) {
+    issue(issues, severity, "ASSIGNMENT_TASK_ASSIGNEE_CONFIG_EMPTY", "Assignment task usertaskassignment array is empty.", {
+      path: `${pointer}.properties.usertaskassignment`,
+      nodeId: shapeId(shape),
+    });
+    return;
+  }
+  assignments.forEach((assignment, index) => {
+    const itemPath = `${pointer}.properties.usertaskassignment[${index}]`;
+    if (!isObject(assignment)) {
+      issue(issues, severity, "ASSIGNMENT_TASK_ASSIGNEE_ENTRY_INVALID", "Assignment task assignee entries should be objects.", {
+        path: itemPath,
+        nodeId: shapeId(shape),
+      });
+      return;
+    }
+    const type = safeString(assignment.type);
+    const method = safeString(assignment.method);
+    if (!type) {
+      issue(issues, severity, "ASSIGNMENT_TASK_ASSIGNEE_TYPE_MISSING", "Assignment task assignee entry should include type.", {
+        path: `${itemPath}.type`,
+        nodeId: shapeId(shape),
+      });
+    }
+    if (!method) {
+      issue(issues, severity, "ASSIGNMENT_TASK_ASSIGNEE_METHOD_MISSING", "Assignment task assignee entry should include method.", {
+        path: `${itemPath}.method`,
+        nodeId: shapeId(shape),
+      });
+      return;
+    }
+    if (!ASSIGNMENT_TASK_ASSIGNEE_METHODS.has(method)) {
+      issue(issues, severity, "ASSIGNMENT_TASK_ASSIGNEE_METHOD_UNKNOWN", "Assignment task assignee method is not in the export-proven method list.", {
+        path: `${itemPath}.method`,
+        nodeId: shapeId(shape),
+        assigneeType: type,
+        method,
+      });
+    }
+    if (type === "position" && valueMissing(assignment.position)) {
+      issue(issues, severity, "ASSIGNMENT_TASK_POSITION_ID_MISSING", "Position-based assignment task assignee should include a position reference.", {
+        path: `${itemPath}.position`,
+        nodeId: shapeId(shape),
+        method,
+      });
+    }
+    if (["direct", "positionorg", "positionloc"].includes(method) && valueMissing(assignment.value)) {
+      issue(issues, severity, "ASSIGNMENT_TASK_STATIC_REFERENCE_MISSING", "Static user, department, or location assignment should include a value reference.", {
+        path: `${itemPath}.value`,
+        nodeId: shapeId(shape),
+        assigneeType: type,
+        method,
+      });
+    }
+    if (["expression", "positionorgexpr", "positionlocexpr"].includes(method)) {
+      if (valueMissing(assignment.value)) {
+        issue(issues, severity, "ASSIGNMENT_TASK_EXPRESSION_MISSING", "Expression-based assignment task assignee should include a rich expression value.", {
+          path: `${itemPath}.value`,
+          nodeId: shapeId(shape),
+          assigneeType: type,
+          method,
+        });
+      } else if (typeof assignment.value !== "string" || !assignment.value.includes("<input") || !assignment.value.includes("data=")) {
+        issue(issues, severity, "ASSIGNMENT_TASK_EXPRESSION_OPAQUE", "Expression-based assignment task assignee value is not the export-proven expression-button shape.", {
+          path: `${itemPath}.value`,
+          nodeId: shapeId(shape),
+          assigneeType: type,
+          method,
+        });
+      }
+    }
+    if (type === "user" && ["direct", "users"].includes(method)) {
+      issue(issues, "warning", "ASSIGNMENT_TASK_DIRECT_USER_TENANT_SENSITIVE", "Direct user assignment is tenant-sensitive; use only with explicit authorized user mapping or safe read-only directory lookup, and do not commit private user data.", {
+        path: itemPath,
+        nodeId: shapeId(shape),
+        method,
+      });
+    }
+  });
 }
 
 function validateMailTask(issues, shape, pointer, options) {

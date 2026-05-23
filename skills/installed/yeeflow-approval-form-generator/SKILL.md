@@ -265,7 +265,9 @@ Runtime baseline status: button styles, button-click triggers, page-load trigger
 
 Workflow transition condition update: approval-form workflows can use latest SequenceFlow condition operand wrappers from `Implant Application Request (4).ywf`. Direct variable/field selectors use operand `type: 1`, direct/static/option/date values use `type: 0`, and expression-editor operands use `type: 2` on either left or right. Use this when approval-form routing depends on calculated dates, thresholds, quota values, or dynamic comparisons; keep simple approve/reject task outcome conditions export-backed.
 
-Do not hardcode tenant-specific direct-user assignees in generated approval tasks. Avoid `method: "users"` with local user IDs/titles such as `User:Renger` unless the user explicitly supplies a target-tenant-valid mapping. Prefer requester/current-user expression assignment from an export-backed workflow variable.
+Do not hardcode tenant-specific direct-user assignees in generated approval tasks. Avoid `method: "users"` or `method: "direct"` with local user IDs/titles unless the user explicitly supplies a target-tenant-valid mapping. Prefer requester/current-user expression assignment from an export-backed workflow variable.
+
+Assignment task assignee update: `Test ABC.yap` proves `MultiAssignmentTask.properties.usertaskassignment[]` shapes for direct user, applicant line manager, applicant department manager, direct job position, job position by selected department, job position by applicant department, job position by selected location, and job position by applicant location. Use `docs/studies/workflow-assignment-task-assignee-settings.md`, `docs/studies/workflow-assignment-task-generation-rules.md`, and `docs/studies/normalized/workflow-assignment-task-assignees/` before generating approval workflow task assignees. These shapes are export-proven only; runtime routing is not proven until a focused baseline passes. If real users/departments/locations/positions are needed, use `yeeflow-api-operator` only for authorized read-only lookup and never commit private org data.
 
 ## Field Type Rules
 

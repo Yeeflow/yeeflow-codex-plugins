@@ -225,6 +225,14 @@ The same export proves workflow `QueryData` -> `AI` -> `MailTask` orchestration 
 Hard stop if scheduled-workflow recurrence cannot be mapped, fixed recipients cannot be made safe/redacted, AI Agent references do not resolve, Query data list references do not resolve, or runtime testing might send real email or call live AI unexpectedly.
 <!-- scheduled-workflow-ai-assistant-learning:end -->
 
+<!-- workflow-assignment-task-assignee-learning:start -->
+## Workflow Assignment Task Assignee Learning Route
+
+For approval workflow assignment task assignee learning, decode `.yap` exports read-only, preserve large numeric IDs as strings, and inspect `MultiAssignmentTask.properties.usertaskassignment[]`. `Test ABC.yap` export-proves direct user, applicant line manager, applicant department manager, direct job position, job position by selected department, job position by applicant department, job position by selected location, and job position by applicant location shapes. Use `docs/studies/workflow-assignment-task-assignee-settings.md`, `docs/studies/workflow-assignment-task-generation-rules.md`, and `docs/studies/normalized/workflow-assignment-task-assignees/`.
+
+Keep this capability export-proven/validator-backed until a focused runtime baseline proves routing. Do not promote multiple users, mixed assignee lists, user groups, workflow-variable assignees, selected department-manager static entries, or department+location position entries unless a focused export proves their exact package shape.
+<!-- workflow-assignment-task-assignee-learning:end -->
+
 <!-- application-settings-navigation-user-groups-learning:start -->
 ## Application Settings, Navigation, Header, And User Groups
 

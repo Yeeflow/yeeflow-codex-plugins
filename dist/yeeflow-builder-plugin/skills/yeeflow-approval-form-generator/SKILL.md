@@ -5,6 +5,12 @@ description: generate, inspect, validate, package, and improve yeeflow approval 
 
 # Yeeflow Approval Form Generator
 
+## Application Navigation References
+
+When an approval form is included in application navigation, reference it from the root app `Data.Item.ListModel.LayoutView.sort[]` using `Type = 105` and `ListID = Data.Forms[].Key`. App-level approval forms in generated packages keep `ListID = 0` on the form record; the navigation item points to the form key, not a child data-list ID.
+
+Approval form menu items can be top-level resources or children inside a top-level `Type = "classes"` navigation group. Use optional `DisplayName` for custom menu text, omit it for title fallback, use `Icon: ""` for no-icon, and keep `IsHidden` boolean when present. Validate references before wrapper build.
+
 Use this skill when the user asks to generate, inspect, validate, package, troubleshoot, or improve Yeeflow approval form definitions, decoded `.ywf` Def JSON, `.ywf` wrappers, or `.yap` application exports.
 
 When approval-form changes target an existing imported app, confirm whether the user wants a new cloned `.yap` or an upgrade `.yapk`. For `.yapk`, start from a Version management baseline and preserve existing form/workflow IDs; do not regenerate fresh IDs for existing objects. The first studied `.yapk` resource is opaque and signature-like, so offline app-content form mutation inside `.yapk` is not generation-safe until Yeeflow encoding/signing is proven.
@@ -40,6 +46,10 @@ Prefer Yeeflow native configuration in this order:
 6. workflow actions
 7. AI actions
 8. custom code control
+
+AI action export learning: `AI Agent and Copilot Local Resource Baseline8.yap` proves the workflow graph `AI` node can call an app-contained AI Agent with `properties.type = "agent"`, `properties.data.AgentID`, input variable mappings, output variable mappings, and optional context enrichment. The export proof is from Scheduled Workflow (`WorkflowType = 3`), but approval/list workflows should validate the same node shape if reused. Do not execute AI actions in runtime tests unless the Agent, input data, and call scope are explicitly safe.
+
+`Spark & AI (1).yap` now proves the same `AI` workflow node family in a data-list workflow (`WorkflowType = 1`) triggered by host-list `FlowMappings[].Setting.NewTrigger = true`. That export adds two important list-workflow details: image input mapping from a current-row `icon-upload` field into Agent input `type = "img"`, and item-ID mapping from native `ListDataID` into a text input so the Agent can update the originating row through an application-resource access tool. Approval-form workflows may reuse the node family, but do not claim image-input or same-row update proof for approval forms until a focused approval export shows it.
 
 When an approval form depends on master/reference data, treat the dependency as part of the form design:
 
@@ -255,7 +265,9 @@ Runtime baseline status: button styles, button-click triggers, page-load trigger
 
 Workflow transition condition update: approval-form workflows can use latest SequenceFlow condition operand wrappers from `Implant Application Request (4).ywf`. Direct variable/field selectors use operand `type: 1`, direct/static/option/date values use `type: 0`, and expression-editor operands use `type: 2` on either left or right. Use this when approval-form routing depends on calculated dates, thresholds, quota values, or dynamic comparisons; keep simple approve/reject task outcome conditions export-backed.
 
-Do not hardcode tenant-specific direct-user assignees in generated approval tasks. Avoid `method: "users"` with local user IDs/titles such as `User:Renger` unless the user explicitly supplies a target-tenant-valid mapping. Prefer requester/current-user expression assignment from an export-backed workflow variable.
+Do not hardcode tenant-specific direct-user assignees in generated approval tasks. Avoid `method: "users"` or `method: "direct"` with local user IDs/titles unless the user explicitly supplies a target-tenant-valid mapping. Prefer requester/current-user expression assignment from an export-backed workflow variable.
+
+Assignment task assignee update: `Test ABC.yap` proves `MultiAssignmentTask.properties.usertaskassignment[]` shapes for direct user, applicant line manager, applicant department manager, direct job position, job position by selected department, job position by applicant department, job position by selected location, and job position by applicant location. Use `docs/studies/workflow-assignment-task-assignee-settings.md`, `docs/studies/workflow-assignment-task-generation-rules.md`, and `docs/studies/normalized/workflow-assignment-task-assignees/` before generating approval workflow task assignees. These shapes are export-proven only; runtime routing is not proven until a focused baseline passes. If real users/departments/locations/positions are needed, use `yeeflow-api-operator` only for authorized read-only lookup and never commit private org data.
 
 ## Field Type Rules
 
