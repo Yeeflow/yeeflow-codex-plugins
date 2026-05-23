@@ -97,7 +97,9 @@ Local validation of the generated package is validator-backed for 11 Assignment 
 
 The first runtime pass imported and opened the generated app and showed Assignment Task designer panels, including Sequential selected for `issequential=true` and an Email Notification Config task panel. Publishing that first package was blocked by a missing-input-line designer error on `Sequential Multiple Assignees`, and no request was submitted. A rebuilt package with native-looking shape IDs and incoming/outgoing flow references passed local validation but hit duplicate import/open interference before clean publish proof.
 
-Treat this result as import/open/designer proof plus local validation only. Do not promote Assignment Task routing, group expansion, position expansion, appointed-order behavior, custom-percentage completion, or email delivery to runtime-proven until a clean follow-up pass publishes and safely submits a request.
+The V2 runtime package fixed the duplicate-import/process-ID problem by using fresh app/process IDs, fresh form key `ATAR2`, semantic `rt_*` workflow shape IDs, complete `Data.Forms[0].ProcModelID` remapping, and a non-overlapping left-to-right workflow layout. V2 imported, opened, rendered the workflow designer, published successfully, and opened the published form.
+
+Treat V2 as import/open/designer/publish proof only. Do not promote Assignment Task routing, group expansion, position expansion, appointed-order behavior, custom-percentage completion, or email delivery to runtime-proven until a safe request is submitted and observed.
 
 ## Product-Documented But Not Export-Proven Here
 

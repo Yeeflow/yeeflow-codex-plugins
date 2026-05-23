@@ -4,7 +4,7 @@ import zlib from "node:zlib";
 
 const GZIP_PREFIX = "[______gizp______]";
 const DEFAULT_SOURCE = "/Users/Renger/Downloads/Test ABC (1).yap";
-const DEFAULT_OUTPUT = "assignment-task-assignee-runtime-baseline.v1.yap";
+const DEFAULT_OUTPUT = "assignment-task-assignee-runtime-baseline.v2.yap";
 
 function usage(exitCode = 1) {
   const message = [
@@ -20,11 +20,13 @@ function usage(exitCode = 1) {
 
 function parseArgs(argv) {
   if (argv.includes("--help") || argv.includes("-h")) usage(0);
-  const args = { source: DEFAULT_SOURCE, out: DEFAULT_OUTPUT };
+  const args = { source: DEFAULT_SOURCE, out: DEFAULT_OUTPUT, family: "734", formKey: "ATAR2" };
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--source") args.source = argv[++i];
     else if (arg === "--out") args.out = argv[++i];
+    else if (arg === "--family") args.family = argv[++i];
+    else if (arg === "--form-key") args.formKey = argv[++i];
     else usage();
   }
   return args;
@@ -74,10 +76,6 @@ function replaceDeep(value, replacements) {
 
 function shapeType(shape) {
   return shape?.stencil?.id || shape?.stencil || shape?.type || "unknown";
-}
-
-function makeNodeId(prefix, index) {
-  return `${prefix}_${String(index).padStart(2, "0")}`;
 }
 
 function renameShape(shape, id, name, x, y) {
@@ -152,7 +150,8 @@ function buildBaseline(def) {
   const taskSpecs = [
     {
       label: "Static User Assignment",
-      task: taskWithAssignments(task3, "s_7321001", "Static User Assignment", [directUsers[0]], {
+      id: "rt_assignment_static_user",
+      task: taskWithAssignments(task3, "rt_assignment_static_user", "Static User Assignment", [directUsers[0]], {
         approveway: "allapprove",
         approvepercentage: 100,
         isenabledemail: false,
@@ -161,7 +160,8 @@ function buildBaseline(def) {
     },
     {
       label: "Multiple Static Users Assignment",
-      task: taskWithAssignments(task3, "s_7321002", "Multiple Static Users Assignment", directUsers.slice(0, 2), {
+      id: "rt_assignment_multiple_users",
+      task: taskWithAssignments(task3, "rt_assignment_multiple_users", "Multiple Static Users Assignment", directUsers.slice(0, 2), {
         approveway: "allapprove",
         approvepercentage: 100,
         isenabledemail: false,
@@ -170,9 +170,10 @@ function buildBaseline(def) {
     },
     {
       label: "Direct Position Assignment",
+      id: "rt_assignment_direct_position",
       task: taskWithAssignments(
         task3,
-        "s_7321003",
+        "rt_assignment_direct_position",
         "Direct Position Assignment",
         [firstAssignmentBy(task3, (item) => item.type === "position" && item.method === "position")],
         { approveway: "anyapprove", approvepercentage: 100, isenabledemail: false },
@@ -181,9 +182,10 @@ function buildBaseline(def) {
     },
     {
       label: "Position By Department Assignment",
+      id: "rt_assignment_position_department",
       task: taskWithAssignments(
         task5,
-        "s_7321004",
+        "rt_assignment_position_department",
         "Position By Department Assignment",
         [firstAssignmentBy(task5, (item) => item.type === "position" && item.method === "positionorg")],
         { approveway: "custompercentage", approvepercentage: 60, isenabledemail: false },
@@ -192,9 +194,10 @@ function buildBaseline(def) {
     },
     {
       label: "Position By Location Assignment",
+      id: "rt_assignment_position_location",
       task: taskWithAssignments(
         task7,
-        "s_7321005",
+        "rt_assignment_position_location",
         "Position By Location Assignment",
         [firstAssignmentBy(task7, (item) => item.type === "position" && item.method === "positionloc")],
         { approveway: "allapprove", approvepercentage: 100, isenabledemail: false },
@@ -203,9 +206,10 @@ function buildBaseline(def) {
     },
     {
       label: "User Group Assignment",
+      id: "rt_assignment_user_group",
       task: taskWithAssignments(
         task1,
-        "s_7321006",
+        "rt_assignment_user_group",
         "User Group Assignment",
         [firstAssignmentBy(task1, (item) => item.type === "user" && item.method === "expression" && String(item.value).includes("usergroup"))],
         { approveway: "allapprove", approvepercentage: 100, isenabledemail: false },
@@ -214,7 +218,8 @@ function buildBaseline(def) {
     },
     {
       label: "Sequential Multiple Assignees",
-      task: taskWithAssignments(task1, "s_7321007", "Sequential Multiple Assignees", task1.properties.usertaskassignment || [], {
+      id: "rt_assignment_sequential",
+      task: taskWithAssignments(task1, "rt_assignment_sequential", "Sequential Multiple Assignees", task1.properties.usertaskassignment || [], {
         approveway: "allapprove",
         approvepercentage: 100,
         issequential: true,
@@ -224,7 +229,8 @@ function buildBaseline(def) {
     },
     {
       label: "Parallel Multiple Assignees",
-      task: taskWithAssignments(task3, "s_7321008", "Parallel Multiple Assignees", task3.properties.usertaskassignment || [], {
+      id: "rt_assignment_parallel",
+      task: taskWithAssignments(task3, "rt_assignment_parallel", "Parallel Multiple Assignees", task3.properties.usertaskassignment || [], {
         approveway: "anyapprove",
         approvepercentage: 100,
         isenabledemail: false,
@@ -233,7 +239,8 @@ function buildBaseline(def) {
     },
     {
       label: "Any Process Approval Mode",
-      task: taskWithAssignments(task2, "s_7321009", "Any Process Approval Mode", task2.properties.usertaskassignment || [], {
+      id: "rt_assignment_anyprocess",
+      task: taskWithAssignments(task2, "rt_assignment_anyprocess", "Any Process Approval Mode", task2.properties.usertaskassignment || [], {
         approveway: "anyprocess",
         approvepercentage: 100,
         isenabledemail: false,
@@ -242,7 +249,8 @@ function buildBaseline(def) {
     },
     {
       label: "Any Reject Approval Mode",
-      task: taskWithAssignments(task4, "s_7321010", "Any Reject Approval Mode", task4.properties.usertaskassignment || [], {
+      id: "rt_assignment_anyreject",
+      task: taskWithAssignments(task4, "rt_assignment_anyreject", "Any Reject Approval Mode", task4.properties.usertaskassignment || [], {
         approveway: "anyreject",
         approvepercentage: 100,
         isenabledemail: false,
@@ -251,7 +259,8 @@ function buildBaseline(def) {
     },
     {
       label: "Email Notification Config",
-      task: taskWithAssignments(task8, "s_7321011", "Email Notification Config", task8.properties.usertaskassignment || [], {
+      id: "rt_assignment_email_config",
+      task: taskWithAssignments(task8, "rt_assignment_email_config", "Email Notification Config", task8.properties.usertaskassignment || [], {
         approveway: "allapprove",
         approvepercentage: 100,
         isenabledemail: true,
@@ -260,27 +269,27 @@ function buildBaseline(def) {
     },
   ];
 
-  start.id = "s_7321000";
-  start.resourceid = "s_7321000";
+  start.id = "rt_start";
+  start.resourceid = "rt_start";
   start.properties = { ...(start.properties || {}), name: "Start" };
-  start.position = { x: 150, y: 120 };
+  start.position = { x: 80, y: 260 };
   start.incoming = [];
   start.outgoing = [];
 
-  end.id = "s_7321012";
-  end.resourceid = "s_7321012";
+  end.id = "rt_end";
+  end.resourceid = "rt_end";
   end.properties = { ...(end.properties || {}), name: "End" };
-  end.position = { x: 340 + (taskSpecs.length + 1) * 220, y: 120 };
+  end.position = { x: 80 + (taskSpecs.length + 1) * 320, y: 260 };
   end.incoming = [];
   end.outgoing = [];
 
-  const tasks = taskSpecs.map((spec, index) => renameShape(spec.task, spec.task.id, spec.label, 340 + index * 220, 120));
+  const tasks = taskSpecs.map((spec, index) => renameShape(spec.task, spec.id, spec.label, 400 + index * 320, 260));
   const nodes = [start, ...tasks, end];
   const flows = [];
   for (let i = 0; i < nodes.length - 1; i += 1) {
     const source = nodes[i];
     const target = nodes[i + 1];
-    const flowId = `s_73220${String(i + 1).padStart(2, "0")}`;
+    const flowId = `rt_flow_${String(i + 1).padStart(2, "0")}`;
     flows.push(sequenceFlow(flowId, source.id, target.id, `Sequence flow ${i + 1}`, 0, 0, 0, 0));
     source.outgoing = [...(source.outgoing || []), { id: flowId, resourceid: flowId }];
     target.incoming = [...(target.incoming || []), { id: flowId, resourceid: flowId }];
@@ -292,8 +301,8 @@ function buildBaseline(def) {
     graphposition: {
       x: 0,
       y: 0,
-      width: 340 + taskSpecs.length * 220 + 360,
-      height: 460,
+      width: 80 + (taskSpecs.length + 2) * 320,
+      height: 700,
     },
     graphzoom: 0.75,
     ext: {
@@ -314,17 +323,21 @@ function main() {
   const oldProcModelId = data.Forms?.[0]?.ProcModelID;
   if (!oldRootId || !oldProcModelId) throw new Error("Source export is missing expected app/form IDs.");
 
-  const family = "732";
-  const formKey = "ATAR1";
+  const family = args.family;
+  const formKey = args.formKey;
   const newRootId = `${family}0010000000000000`;
   const newProcModelId = `${family}0040000000000001`;
-  const title = "Assignment Task Assignee Runtime Baseline";
+  const title = "Assignment Task Assignee Runtime Baseline V2";
   const generatedAt = "2026-05-23 00:00:00";
-  const replacements = [
-    [oldRootId, newRootId],
-    [oldProcModelId, newProcModelId],
-    ["ABC", formKey],
-  ];
+  const sourceReplaceIds = (resource.ReplaceIds || []).map(String);
+  const replacements = [[String(oldRootId), newRootId]];
+  for (const oldId of sourceReplaceIds) {
+    if (oldId !== String(oldRootId)) replacements.push([oldId, newProcModelId]);
+  }
+  if (!replacements.some(([oldId]) => oldId === String(oldProcModelId))) {
+    replacements.push([String(oldProcModelId), newProcModelId]);
+  }
+  replacements.push(["ABC", formKey]);
 
   const nextWrapper = {
     ...wrapper,
@@ -342,6 +355,7 @@ function main() {
   nextData.Item.ListModel.Modified = generatedAt;
   nextData.Forms[0].Name = "Assignee Runtime Baseline";
   nextData.Forms[0].Key = formKey;
+  nextData.Forms[0].ProcModelID = newProcModelId;
   nextData.Forms[0].Description = "Focused Assignment Task assignee runtime baseline.";
 
   const def = JSON.parse(nextData.Forms[0].DefResource);

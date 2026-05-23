@@ -56,4 +56,6 @@ The first runtime attempt imported and opened the generated app, opened the work
 
 Publish was blocked by the designer error `The input line of Sequential Multiple Assignees is missing.` A rebuilt package used native-looking shape IDs plus incoming/outgoing sequence-flow references and passed local validation, but duplicate package/app identity interference prevented a clean second open/publish proof in the same pass.
 
-Before any request-submit runtime baseline, run a clean follow-up with a unique package identity and preferably a smaller workflow. Prove publish first, then submit only a safe path with explicitly authorized assignee targets. Keep email delivery out of scope unless safe recipients and delivery scope are explicitly approved.
+The V2 follow-up used a unique package identity and full process-model ID remapping. It imported, opened, rendered a non-overlapping left-to-right workflow, published successfully, and opened the published form. Request submission was not run because the copied assignee references can route live tenant users/groups/positions.
+
+Before any request-submit runtime baseline, select safe test-only assignees or explicitly authorized target users/groups/positions. Keep email delivery out of scope unless safe recipients and delivery scope are explicitly approved.

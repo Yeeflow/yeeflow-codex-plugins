@@ -19,8 +19,9 @@ Current proof level:
 | Previous source export | `/Users/Renger/Downloads/Test ABC.yap` | not committed |
 | Latest source export | `/Users/Renger/Downloads/Test ABC (1).yap` | not committed |
 | Generator script | `generate-assignment-task-assignee-runtime-baseline.mjs` | committed |
-| Generated package | `assignment-task-assignee-runtime-baseline.v1.yap` | ignored and not committed |
+| Generated package | `assignment-task-assignee-runtime-baseline.v2.yap` | ignored and not committed |
 | Upload convenience copy | `/private/tmp/a.yap` | outside repo, not committed |
+| User-exported manual repair | `/Users/Renger/Downloads/Assignment Task Assignee Runtime Baseline.yap` | not committed |
 
 The generator decodes the source export read-only, clones export-proven `MultiAssignmentTask.properties.usertaskassignment[]` shapes, assigns a fresh package ID family, and writes a focused `.yap` package. The generated package can contain tenant-local references copied from the source export, so it must remain ignored.
 
@@ -51,13 +52,13 @@ API lookup confirms object categories and availability only. It does not prove w
 Generated app name:
 
 ```text
-Assignment Task Assignee Runtime Baseline
+Assignment Task Assignee Runtime Baseline V2
 ```
 
 Generated approval form key:
 
 ```text
-ATAR1
+ATAR2
 ```
 
 The generated workflow is a linear focused chain:
@@ -83,8 +84,8 @@ The regenerated package passed local validation with warnings:
 | Check | Result | Notes |
 |---|---|---|
 | Generator syntax check | passed | `node --check generate-assignment-task-assignee-runtime-baseline.mjs` |
-| Package validation | `pass_with_warnings` | 0 errors, compatibility warnings retained from source shape |
-| Graph validation | `pass_with_warnings` | 0 errors, workflow reject-path warnings remain |
+| Package validation | `pass_with_warnings` | 0 errors, 14 warnings retained from source shape |
+| Graph validation | `pass_with_warnings` | 0 errors, 10 workflow warnings remain |
 | Assignment inspector | passed | 11 Assignment Task nodes found |
 | Generated package commit check | passed | `.yap` package is ignored and uncommitted |
 
@@ -133,15 +134,67 @@ An import of the rebuilt package created a duplicate-renamed app card, but the c
 
 Because of this runtime environment collision, the rebuilt package remains local-validator-backed only. It still needs a clean runtime pass with a unique package identity and fresh app name before publish or routing claims can be made.
 
+### Manual Export Comparison
+
+The user manually adjusted the first imported app and exported it as:
+
+```text
+/Users/Renger/Downloads/Assignment Task Assignee Runtime Baseline.yap
+```
+
+The exported-back workflow had 12 Assignment Task nodes and 15 SequenceFlow nodes. It showed two important facts:
+
+- Yeeflow publishes only when `SequenceFlow.source/target` and the source/target nodes' `outgoing[]`/`incoming[]` references agree.
+- The manually repaired export included a connected Sequential Multiple Assignees node and an extra Position By Location Assignment -> End outcome line.
+
+The failed repeated-import attempts were traced to package identity and ID-remapping issues in the generator, not to the assignee settings themselves:
+
+- the generated package still carried the source form `ProcModelID` in `Data.Forms[0].ProcModelID`
+- that stale process-model ID was not fully remapped to the fresh generated process ID
+- repeated imports also reused the same title/form key during a failed-import state, which made Yeeflow treat the later imports as duplicate/colliding app attempts
+
+The V2 generator now uses:
+
+- fresh default ID family `734`
+- fresh form key `ATAR2`
+- title `Assignment Task Assignee Runtime Baseline V2`
+- semantic runtime-importable `rt_*` node and `rt_flow_*` IDs
+- complete root/process replacement, including `Data.Forms[0].ProcModelID`
+- a non-overlapping left-to-right workflow layout
+
+V2 local structure check:
+
+| Item | Result |
+|---|---:|
+| Assignment Task nodes | 11 |
+| SequenceFlow nodes | 12 |
+| Link consistency issues | 0 |
+| Incoming/outgoing per Assignment Task | 1 incoming, 1 outgoing |
+| Workflow layout | left-to-right, no overlapping nodes |
+
+V2 runtime result:
+
+| Runtime step | Result |
+|---|---|
+| Import | passed |
+| App open | passed |
+| Form designer open | passed |
+| Workflow designer open | passed |
+| Node layout visibility | passed; nodes rendered left-to-right without overlap |
+| Publish | passed; Yeeflow showed "The form has been published successfully!" |
+| Published form open | passed |
+| Request submission | not run |
+| Email delivery | not run |
+
 ## Runtime Submit Result
 
 No request was submitted.
 
 Reasons:
 
-- The first package did not publish.
-- The rebuilt package hit duplicate-import/opening interference before a clean designer/publish pass.
-- Submitting could have routed tasks to real tenant users or groups, and the safe routing path was not confirmed.
+- Assignment targets are copied tenant-local users, groups, positions, departments, and locations from the learning export.
+- Submitting could route live tasks to real tenant users or groups.
+- The email notification task is late in the workflow, but this pass did not scope safe email delivery recipients.
 
 Email delivery was not tested and remains out of scope.
 
@@ -149,15 +202,15 @@ Email delivery was not tested and remains out of scope.
 
 | Capability | Current proof level | Notes |
 |---|---|---|
-| Static direct user assignment | export-proven, API-category-assisted, validator-backed, designer-proven in first package | routing not tested |
-| Multiple static users | export-proven, API-category-assisted, validator-backed, designer-proven in first package | routing not tested |
-| Direct job position | export-proven, API-category-assisted, validator-backed, designer-proven in first package | expansion/routing not tested |
-| Position by selected department | export-proven, API-category-assisted, validator-backed, designer-proven in first package | routing not tested |
-| Position by selected location | export-proven, API-category-assisted, validator-backed, designer-proven in first package | routing not tested |
-| User group assignee source | export-proven, API-category-assisted, validator-backed, designer-proven in first package | group expansion/routing not tested |
-| Sequential appointed order | export-proven, validator-backed, designer-proven in first package | publish blocked before runtime behavior |
-| Parallel/default appointed order | export-proven, validator-backed, designer-proven in first package | runtime behavior not tested |
-| `approveway` values | export-proven, validator-backed, designer-visible where inspected | completion behavior not tested |
+| Static direct user assignment | export-proven, API-category-assisted, validator-backed, import/open/publish-proven in V2 | routing not tested |
+| Multiple static users | export-proven, API-category-assisted, validator-backed, import/open/publish-proven in V2 | routing not tested |
+| Direct job position | export-proven, API-category-assisted, validator-backed, import/open/publish-proven in V2 | expansion/routing not tested |
+| Position by selected department | export-proven, API-category-assisted, validator-backed, import/open/publish-proven in V2 | routing not tested |
+| Position by selected location | export-proven, API-category-assisted, validator-backed, import/open/publish-proven in V2 | routing not tested |
+| User group assignee source | export-proven, API-category-assisted, validator-backed, import/open/publish-proven in V2 | group expansion/routing not tested |
+| Sequential appointed order | export-proven, validator-backed, import/open/publish-proven in V2 | routing order not tested |
+| Parallel/default appointed order | export-proven, validator-backed, import/open/publish-proven in V2 | runtime behavior not tested |
+| `approveway` values | export-proven, validator-backed, import/open/publish-proven in V2 | completion behavior not tested |
 | `approvepercentage=60` | export-proven, validator-backed | threshold behavior not tested |
 | Email notification configuration | export-proven, validator-backed, partially designer-visible | no email delivery test |
 | Applicant line manager | export-proven, runtime-context dependent | not runtime-tested |
@@ -171,9 +224,6 @@ A follow-up runtime pass is needed before merge if the branch is intended to pro
 
 Recommended next pass:
 
-- regenerate with a new ID family and unique title to avoid duplicate import interference
-- keep the workflow smaller for the first publish test, ideally Start -> one or two Assignment Tasks -> End
-- verify native connector serialization against an exported linear workflow before import
-- publish before attempting request submission
 - submit only the first task path with explicitly safe assignees
+- if assignment routing is tested, create or select safe test-only users/groups/positions before submission
 - keep email notification configuration designer/open only unless safe recipients and delivery scope are explicitly approved
