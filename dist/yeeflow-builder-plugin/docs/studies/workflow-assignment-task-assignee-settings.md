@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This focused export-learning study documents how Yeeflow approval workflow assignment tasks store assignee settings in `Test ABC.yap` and the updated `Test ABC (1).yap`.
+This focused export-learning study documents how Yeeflow approval workflow assignment tasks store assignee settings in `Test ABC.yap`, `Test ABC (1).yap`, and later focused exports for task type/due-date settings.
 
 Proof boundary:
 
@@ -22,6 +22,7 @@ Source export:
 ```text
 /Users/Renger/Downloads/Test ABC.yap
 /Users/Renger/Downloads/Test ABC (1).yap
+/Users/Renger/Downloads/Test ABC (2).yap
 ```
 
 Reference:
@@ -33,11 +34,12 @@ Reference:
 
 Source priority:
 
-1. `Test ABC (1).yap` is the latest source of truth for the newly learned Assignment Task settings.
-2. `Test ABC.yap` is the previous baseline export for comparison.
-3. Help Center articles are product-behavior and terminology references.
-4. Yeeflow API Operator lookup is only for safe read-only org/reference category support.
-5. Existing validators and skills are implementation references.
+1. `Test ABC (2).yap` is the latest Assignment Task source of truth for task type, Complete task, due-date, and reminder settings.
+2. `Test ABC (1).yap` is the source of truth for multiple-assignee, Appointed Order, approveway, and email notification settings.
+3. `Test ABC.yap` is the previous baseline export for comparison.
+4. Help Center articles are product-behavior and terminology references.
+5. Yeeflow API Operator lookup is only for safe read-only org/reference category support.
+6. Existing validators and skills are implementation references.
 
 ## Redaction Policy
 
@@ -534,6 +536,43 @@ Generation note: depends on applicant context, location setup, and position assi
 | Reassign/add-assignee buttons | `isallowreassign=false`; no add-assignee field observed | partially matched | Sign/additional assignee behavior not proven by this export. | product-documented + export-proven partial |
 | Email/notification settings | `isenabledemail=false`; notification fields absent | partially matched | Notification settings are secondary in this study. | product-documented + export-proven partial |
 
+## Complete Task And Due Date Extension
+
+`Test ABC (2).yap` extends the Assignment Task learning from assignee-only settings into task type and due-date configuration.
+
+| Finding | Export-proven field/shape | Count / values | Proof level |
+|---|---|---|---|
+| Assignment Task count | `MultiAssignmentTask` | 12 | export-proven |
+| Approval/default task type | absent `properties.tasktype` | 5 nodes | export-proven |
+| Complete task type | `properties.tasktype="complete"` | 7 nodes | export-proven |
+| Due date amount | `properties.duedatedefinition` | `120`, `3` | export-proven |
+| Due date units | `properties.duedatetype` | `hour`, `day`, `express` | export-proven |
+| Working-day calculation | `properties.isfromworkcalendar=true` | observed on one day-based node | export-proven |
+| Due-date expression | `properties.duedateexpress` | expression-button date variable | export-proven |
+| Reminder rules | `properties.notifyrules[]` | 20 rules across email-enabled tasks | export-proven |
+| Reminder timing | `notifyrules[].actiondate.relative` | `"0"`, `"-1"`, `"1"` | export-proven |
+| Reminder offset units | `notifyrules[].actiondate.type` | `day`, `hour` | export-proven |
+
+`minute` due-date units are product-documented by the Help Center but were not found in `Test ABC (2).yap` or `Test ABC (3).yap`.
+
+Reminder recipient interpretation:
+
+- Task-level `properties.to` uses the current task assignee email expression; this matches the task-owner/default-recipient behavior described by the Help Center.
+- `notifyrules[]` stores action timing, subject, and content. No separate rule-level recipient field was found.
+- Applicant, task-owner line manager, task-owner department manager, and specified-recipient reminder shapes were not found in the export.
+
+Detailed task-type and due-date findings are documented in:
+
+```text
+docs/studies/workflow-assignment-task-complete-task-and-due-date.md
+```
+
+Normalized references are under:
+
+```text
+docs/studies/normalized/workflow-assignment-task/
+```
+
 ## Validator Recommendations
 
 Warning-first validator support is appropriate:
@@ -551,7 +590,11 @@ Warning-first validator support is appropriate:
 - warn when `approveway=custompercentage` lacks a numeric `approvepercentage`
 - warn when `issequential` is present but not boolean
 - warn when `isenabledemail=true` lacks `to`, `subject`, or `html` notification shape
-- warn that user-group assignment is export-proven but not API-confirmed by v1 Yeeflow API Operator
+- warn for unknown `tasktype` values; absence of `tasktype` is the studied approval/default shape and `complete` is the studied Complete task shape
+- warn for unknown `duedatetype` values; `hour`, `day`, and `express` are export-proven while `minute` is product-documented
+- warn when `duedatetype=express` lacks `duedateexpress`
+- warn when `notifyrules[]` has malformed action-date timing or missing subject/content
+- warn that user-group assignment is export-proven and API-category-assisted, but group expansion/routing remains runtime-unproven
 
 Do not add hard errors in compatibility mode from this study. Existing packages may omit optional fields or use unstudied tenant-specific shapes.
 
@@ -567,6 +610,9 @@ Do not add hard errors in compatibility mode from this study. Existing packages 
 - Preserve assignee array order when `issequential=true`; do not claim runtime order until a focused runtime baseline proves it.
 - Treat absent `issequential` as parallel/default only with the current proof boundary; runtime proof is still required.
 - Email notification config can be generated from export-proven fields only when explicitly requested and safe, but notification delivery must not be tested or claimed without scoped runtime approval.
+- Preserve Complete task marker `tasktype="complete"` only when generating Complete task nodes; preserve absent `tasktype` for approval/default nodes unless a future export proves an explicit approval marker.
+- Preserve due-date fields together: `duedatedefinition`, `duedatetype`, optional `duedateexpress`, optional `isfromworkcalendar`, and `notifyrules[]`.
+- Do not invent Automatic Treatment due-date action rules; only reminder `actiontype="1"` is export-proven here.
 - Do not claim selected department manager, workflow variable, position by department plus location, or quick-completion behavior as generation-safe from these exports alone.
 
 ## Runtime-Test Plan
@@ -588,6 +634,8 @@ Suggested minimal runtime baseline:
    - Sequential appointed order
    - Parallel/default appointed order
    - custom percentage completion
+   - Complete task designer/open proof
+   - due-date and reminder configuration designer/open proof
    - email notification configuration designer/open proof, with delivery disabled or explicitly scoped
 3. Use safe target-tenant org data selected through authorized read-only lookup or user-provided non-private setup.
 4. Locally validate package, graph, workflow action configuration, and secret scans before import.
@@ -602,9 +650,10 @@ Do not execute workflow, send notifications, or expose user identities unless th
 - Runtime routing is not proven.
 - Multiple direct users are export-proven only as part of a mixed position/user task, not as a task containing only direct users.
 - Mixed assignee sources in one task are export-proven but not runtime-proven.
-- User group assignee is export-proven and product-documented, but not API-confirmed by the v1 API Operator and not runtime-proven.
+- User group assignee is export-proven, product-documented, and API-category-assisted, but group expansion/routing is not runtime-proven.
 - Workflow variable assignee is not found in this export.
 - Position by department plus location is not found in this export.
 - Selected department manager as a direct static manager shape is not found in this export.
 - Parent-department manager fallback is product-documented but not export-proven.
-- Email notification fields are export-proven, but delivery, quick completion, due-date reminders, and task-form open behavior are not runtime-proven here.
+- Email notification fields and due-date reminder settings are export-proven, but delivery, quick completion, due-date scheduling, and task-form open behavior are not runtime-proven here.
+- Minute due-date units and Automatic Treatment reminder actions are product-documented but not export-proven in these files.

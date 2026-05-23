@@ -311,6 +311,31 @@ function appointedOrderFor(props) {
   return "parallel-or-default";
 }
 
+function dueDateShapeFor(props) {
+  return {
+    duedatedefinition: props.duedatedefinition ?? null,
+    duedatetype: props.duedatetype ?? null,
+    hasDueDateExpression: props.duedateexpress !== undefined,
+    dueDateExpression: props.duedateexpress ? (extractExpressionButton(props.duedateexpress) || "<REDACTED_DUE_DATE_EXPRESSION>") : null,
+    isfromworkcalendar: props.isfromworkcalendar ?? null,
+  };
+}
+
+function notifyRulesShapeFor(props) {
+  if (!Array.isArray(props.notifyrules)) return null;
+  return props.notifyrules.map((rule) => ({
+    id: rule?.id ? "<REDACTED_NOTIFY_RULE_ID>" : null,
+    actiontype: rule?.actiontype ?? null,
+    actiondate: rule?.actiondate ? {
+      relative: rule.actiondate.relative ?? null,
+      value: rule.actiondate.value ?? null,
+      type: rule.actiondate.type ?? null,
+    } : null,
+    subject: rule?.subject ? "<REDACTED_REMINDER_SUBJECT_SHAPE>" : null,
+    content: rule?.content ? "<REDACTED_REMINDER_BODY_SHAPE>" : null,
+  }));
+}
+
 function notificationShapeFor(props) {
   const enabled = props.isenabledemail ?? null;
   const shape = {
@@ -320,10 +345,57 @@ function notificationShapeFor(props) {
     shape.to = props.to ? (extractExpressionButton(props.to) || "<REDACTED_NOTIFICATION_TO>") : null;
     shape.subject = props.subject ? (extractExpressionButton(props.subject) || "<REDACTED_NOTIFICATION_SUBJECT>") : null;
     shape.html = props.html ? "<REDACTED_NOTIFICATION_BODY_SHAPE>" : null;
-    shape.notifyrules = Array.isArray(props.notifyrules) ? `array(${props.notifyrules.length})` : null;
+    shape.notifyrules = notifyRulesShapeFor(props);
     shape.duedatetype = props.duedatetype ?? null;
   }
   return shape;
+}
+
+function inspectStartActions(forms, largeNumbers) {
+  const starts = [];
+  for (const [formIndex, form] of forms.entries()) {
+    let def = null;
+    try {
+      def = typeof form.DefResource === "string" ? parseJsonPreservingLargeInts(form.DefResource, new Set(largeNumbers)) : form.DefResource;
+    } catch {
+      continue;
+    }
+    for (const [nodeIndex, shape] of asArray(def?.childshapes).entries()) {
+      if (stencilId(shape) !== "StartNoneEvent") continue;
+      const props = shape.properties || {};
+      starts.push({
+        sourceForm: {
+          index: formIndex,
+          name: form.Name || "<unnamed>",
+          key: "<REDACTED_FORM_KEY>",
+          workflowType: form.WorkflowType,
+        },
+        node: {
+          index: nodeIndex,
+          type: "StartNoneEvent",
+          id: "<REDACTED_WORKFLOW_NODE_ID>",
+          resourceid: "<REDACTED_WORKFLOW_NODE_ID>",
+          label: props.name || "Start",
+        },
+        settings: {
+          isenabledemail: props.isenabledemail ?? null,
+          terminate: props.terminate ?? null,
+          terminateConditions: Array.isArray(props["terminate-conditions"]) ? `array(${props["terminate-conditions"].length})` : props["terminate-conditions"] ?? null,
+          revokeConditions: Array.isArray(props["revoke-conditions"]) ? `array(${props["revoke-conditions"].length})` : props["revoke-conditions"] ?? null,
+          to: props.to ? "<REDACTED_START_NOTIFICATION_RECIPIENT_EXPRESSION>" : null,
+          subject: props.subject ? "<REDACTED_START_NOTIFICATION_SUBJECT_SHAPE>" : null,
+          html: props.html ? "<REDACTED_START_NOTIFICATION_BODY_SHAPE>" : null,
+          taskurl: props.taskurl ? "<REDACTED_TASK_FORM_PAGE_ID>" : null,
+        },
+        graph: {
+          incoming: asArray(shape.incoming).length,
+          outgoing: asArray(shape.outgoing).length,
+        },
+        confidence: "export-proven",
+      });
+    }
+  }
+  return starts;
 }
 
 function inspect(data, inputPath, largeNumbers) {
@@ -332,7 +404,7 @@ function inspect(data, inputPath, largeNumbers) {
   for (const [formIndex, form] of forms.entries()) {
     let def = null;
     try {
-      def = typeof form.DefResource === "string" ? JSON.parse(form.DefResource) : form.DefResource;
+      def = typeof form.DefResource === "string" ? parseJsonPreservingLargeInts(form.DefResource, new Set(largeNumbers)) : form.DefResource;
     } catch {
       continue;
     }
@@ -357,6 +429,7 @@ function inspect(data, inputPath, largeNumbers) {
           label: shape.properties?.name || "Assignment Task",
         },
         approvalSettings: {
+          tasktype: shape.properties?.tasktype ?? null,
           approveway: shape.properties?.approveway ?? null,
           approvepercentage: shape.properties?.approvepercentage ?? null,
           appointedOrder: appointedOrderFor(shape.properties || {}),
@@ -367,7 +440,7 @@ function inspect(data, inputPath, largeNumbers) {
           automaticapproveddefinition: shape.properties?.automaticapproveddefinition ?? null,
           isallowsign: shape.properties?.isallowsign ?? null,
           allowskip: shape.properties?.allowskip ?? null,
-          duedatedefinition: shape.properties?.duedatedefinition ?? null,
+          dueDateSettings: dueDateShapeFor(shape.properties || {}),
           taskurl: shape.properties?.taskurl ? "<REDACTED_TASK_FORM_PAGE_ID>" : null,
         },
         notificationSettings: notificationShapeFor(shape.properties || {}),
@@ -394,6 +467,7 @@ function inspect(data, inputPath, largeNumbers) {
       total: forms.length,
       approvalWorkflowForms: forms.filter((form) => form.WorkflowType === 2).length,
     },
+    startActions: inspectStartActions(forms, largeNumbers),
     assignmentTaskCount: inventory.length,
     inventory,
   };

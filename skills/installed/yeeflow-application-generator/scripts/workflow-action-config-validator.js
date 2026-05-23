@@ -166,6 +166,7 @@ function validateKnownConditionalShapes(issues, action, shape, type, pointer, op
     validateUnsafeAction(issues, shape, type, pointer, options);
   }
   if (type === "MultiAssignmentTask") validateMultiAssignmentTaskAssignees(issues, shape, pointer, options);
+  if (type === "StartNoneEvent") validateStartActionSettings(issues, shape, pointer, options);
   if (type === "MailTask") validateMailTask(issues, shape, pointer, options);
   if (type === "AI") validateAiAction(issues, shape, pointer, options);
   if (type === "ContentList") validateContentList(issues, shape, pointer, options);
@@ -194,10 +195,23 @@ const ASSIGNMENT_TASK_APPROVEWAYS = new Set([
   "custompercentage",
 ]);
 
+const ASSIGNMENT_TASK_TASKTYPES = new Set(["complete"]);
+const ASSIGNMENT_TASK_DUE_DATE_TYPES = new Set(["hour", "day", "minute", "express"]);
+const ASSIGNMENT_TASK_NOTIFY_RELATIVES = new Set(["-1", "0", "1"]);
+const ASSIGNMENT_TASK_NOTIFY_UNITS = new Set(["day", "hour", "minute"]);
+
 function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
   const props = shape.properties || {};
   const assignments = props.usertaskassignment;
   const severity = strictLevel(options, "warning");
+  if (props.tasktype !== undefined && !ASSIGNMENT_TASK_TASKTYPES.has(safeString(props.tasktype))) {
+    issue(issues, severity, "ASSIGNMENT_TASK_TASKTYPE_UNKNOWN", "Assignment task tasktype is not in the export-proven task-type list. Absence of tasktype is treated as approval/default in studied exports.", {
+      path: `${pointer}.properties.tasktype`,
+      nodeId: shapeId(shape),
+      tasktype: safeString(props.tasktype),
+      allowedWhenPresent: [...ASSIGNMENT_TASK_TASKTYPES],
+    });
+  }
   if (props.approveway !== undefined && !ASSIGNMENT_TASK_APPROVEWAYS.has(safeString(props.approveway))) {
     issue(issues, severity, "ASSIGNMENT_TASK_APPROVEWAY_UNKNOWN", "Assignment task approveway is not in the export-proven completion-mode list.", {
       path: `${pointer}.properties.approveway`,
@@ -219,6 +233,7 @@ function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
       nodeId: shapeId(shape),
     });
   }
+  validateAssignmentTaskDueDate(issues, props, pointer, severity);
   if (props.isenabledemail === true) {
     for (const field of ["to", "subject", "html"]) {
       if (valueMissing(props[field])) {
@@ -230,6 +245,7 @@ function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
       }
     }
   }
+  validateAssignmentTaskNotifyRules(issues, props, pointer, severity);
   if (!Array.isArray(assignments)) {
     issue(issues, severity, "ASSIGNMENT_TASK_ASSIGNEE_CONFIG_MISSING", "Assignment task should store assignee configuration as properties.usertaskassignment array.", {
       path: `${pointer}.properties.usertaskassignment`,
@@ -309,7 +325,7 @@ function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
       }
     }
     if (type === "user" && method === "expression" && typeof assignment.value === "string" && assignment.value.includes("type&quot;:&quot;usergroup")) {
-      issue(issues, "warning", "ASSIGNMENT_TASK_USER_GROUP_API_UNCONFIRMED", "User group assignee shape is export-proven, but Yeeflow API Operator v1 does not yet confirm user groups; use explicit safe group mapping and runtime proof.", {
+      issue(issues, "warning", "ASSIGNMENT_TASK_USER_GROUP_RUNTIME_UNPROVEN", "User group assignee shape is export-proven and can be API-category-assisted, but group expansion/routing still requires focused runtime proof.", {
         path: itemPath,
         nodeId: shapeId(shape),
       });
@@ -322,6 +338,141 @@ function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
       });
     }
   });
+}
+
+function validateAssignmentTaskDueDate(issues, props, pointer, severity) {
+  if (props.duedatedefinition !== undefined && !valueMatchesType(props.duedatedefinition, "number")) {
+    issue(issues, severity, "ASSIGNMENT_TASK_DUE_DATE_VALUE_INVALID", "Assignment task due date definition should be numeric when present.", {
+      path: `${pointer}.properties.duedatedefinition`,
+    });
+  }
+  if (props.duedatetype !== undefined && !ASSIGNMENT_TASK_DUE_DATE_TYPES.has(safeString(props.duedatetype))) {
+    issue(issues, severity, "ASSIGNMENT_TASK_DUE_DATE_TYPE_UNKNOWN", "Assignment task due date type is not in the product-documented/export-studied due date unit list.", {
+      path: `${pointer}.properties.duedatetype`,
+      duedatetype: safeString(props.duedatetype),
+      allowed: [...ASSIGNMENT_TASK_DUE_DATE_TYPES],
+    });
+  }
+  if (safeString(props.duedatetype) === "express" && valueMissing(props.duedateexpress)) {
+    issue(issues, severity, "ASSIGNMENT_TASK_DUE_DATE_EXPRESSION_MISSING", "Expression-based due date should preserve properties.duedateexpress.", {
+      path: `${pointer}.properties.duedateexpress`,
+    });
+  }
+  if (props.duedateexpress !== undefined && (typeof props.duedateexpress !== "string" || !props.duedateexpress.includes("<input"))) {
+    issue(issues, severity, "ASSIGNMENT_TASK_DUE_DATE_EXPRESSION_OPAQUE", "Assignment task due date expression is not the export-proven expression-button shape.", {
+      path: `${pointer}.properties.duedateexpress`,
+    });
+  }
+  if (props.isfromworkcalendar !== undefined && typeof props.isfromworkcalendar !== "boolean") {
+    issue(issues, severity, "ASSIGNMENT_TASK_WORK_CALENDAR_FLAG_INVALID", "Assignment task working-calendar due-date flag should be boolean when present.", {
+      path: `${pointer}.properties.isfromworkcalendar`,
+    });
+  }
+}
+
+function validateAssignmentTaskNotifyRules(issues, props, pointer, severity) {
+  if (props.notifyrules === undefined) return;
+  if (!Array.isArray(props.notifyrules)) {
+    issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_RULES_INVALID", "Assignment task due-date notification rules should be stored as an array when present.", {
+      path: `${pointer}.properties.notifyrules`,
+    });
+    return;
+  }
+  props.notifyrules.forEach((rule, index) => {
+    const rulePath = `${pointer}.properties.notifyrules[${index}]`;
+    if (!isObject(rule)) {
+      issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_RULE_INVALID", "Assignment task due-date notification rule should be an object.", {
+        path: rulePath,
+      });
+      return;
+    }
+    if (safeString(rule.actiontype) && safeString(rule.actiontype) !== "1") {
+      issue(issues, "warning", "ASSIGNMENT_TASK_NOTIFY_ACTIONTYPE_UNSTUDIED", "Assignment task due-date action type is not the reminder actiontype export-studied here.", {
+        path: `${rulePath}.actiontype`,
+        actiontype: safeString(rule.actiontype),
+      });
+    }
+    const actiondate = rule.actiondate;
+    if (!isObject(actiondate)) {
+      issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_ACTIONDATE_MISSING", "Assignment task due-date notification rule should include actiondate.", {
+        path: `${rulePath}.actiondate`,
+      });
+      return;
+    }
+    const relative = safeString(actiondate.relative);
+    if (!ASSIGNMENT_TASK_NOTIFY_RELATIVES.has(relative)) {
+      issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_RELATIVE_UNKNOWN", "Assignment task due-date notification relative timing is not export-proven.", {
+        path: `${rulePath}.actiondate.relative`,
+        relative,
+      });
+    }
+    if (relative !== "0") {
+      if (valueMissing(actiondate.value) || !valueMatchesType(actiondate.value, "number")) {
+        issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_OFFSET_VALUE_INVALID", "Before/after due-date notification rules should include a numeric offset value.", {
+          path: `${rulePath}.actiondate.value`,
+        });
+      }
+      if (!ASSIGNMENT_TASK_NOTIFY_UNITS.has(safeString(actiondate.type))) {
+        issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_OFFSET_UNIT_UNKNOWN", "Before/after due-date notification rules should use a studied time unit.", {
+          path: `${rulePath}.actiondate.type`,
+          type: safeString(actiondate.type),
+          allowed: [...ASSIGNMENT_TASK_NOTIFY_UNITS],
+        });
+      }
+    }
+    for (const field of ["subject", "content"]) {
+      if (valueMissing(rule[field])) {
+        issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_CONTENT_FIELD_MISSING", "Reminder notification rules should preserve subject and content fields.", {
+          path: `${rulePath}.${field}`,
+          field,
+        });
+      }
+    }
+  });
+}
+
+function validateStartActionSettings(issues, shape, pointer, options) {
+  const props = shape.properties || {};
+  const severity = strictLevel(options, "warning");
+  if (asArray(shape.incoming).length > 0) {
+    issue(issues, severity, "START_ACTION_INCOMING_FLOW_PRESENT", "Start action should not have incoming sequence flows.", {
+      path: `${pointer}.incoming`,
+      nodeId: shapeId(shape),
+    });
+  }
+  if (asArray(shape.outgoing).length === 0) {
+    issue(issues, severity, "START_ACTION_OUTGOING_FLOW_MISSING", "Start action should have at least one outgoing sequence flow.", {
+      path: `${pointer}.outgoing`,
+      nodeId: shapeId(shape),
+    });
+  }
+  if (props.terminate !== undefined && typeof props.terminate !== "boolean") {
+    issue(issues, severity, "START_ACTION_ALLOW_TERMINATE_INVALID", "Start action terminate setting should be boolean when present.", {
+      path: `${pointer}.properties.terminate`,
+      nodeId: shapeId(shape),
+    });
+  }
+  for (const field of ["terminate-conditions", "revoke-conditions"]) {
+    if (props[field] !== undefined && props[field] !== null && !Array.isArray(props[field])) {
+      issue(issues, severity, "START_ACTION_CONDITIONS_INVALID", "Start action condition settings should be null or an array when present.", {
+        path: `${pointer}.properties.${field}`,
+        nodeId: shapeId(shape),
+        field,
+      });
+    }
+    validateConditionArray(issues, props[field], `${pointer}.properties.${field}`, "START_ACTION_CONDITION_ROW_INVALID", severity);
+  }
+  if (props.isenabledemail === true) {
+    for (const field of ["to", "subject", "html"]) {
+      if (valueMissing(props[field])) {
+        issue(issues, severity, "START_ACTION_EMAIL_FIELD_MISSING", "Email-enabled Start action should preserve recipient, subject, and body/html fields.", {
+          path: `${pointer}.properties.${field}`,
+          nodeId: shapeId(shape),
+          field,
+        });
+      }
+    }
+  }
 }
 
 function validateMailTask(issues, shape, pointer, options) {

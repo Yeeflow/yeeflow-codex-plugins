@@ -2,7 +2,7 @@
 
 ## Scope
 
-These rules cover Yeeflow approval workflow `MultiAssignmentTask` assignee configuration learned from `Test ABC.yap`.
+These rules cover Yeeflow approval workflow `MultiAssignmentTask` assignee, task type, due-date, reminder, and Start-action-adjacent generation guidance learned from `Test ABC.yap`, `Test ABC (1).yap`, `Test ABC (2).yap`, and `Test ABC (3).yap`.
 
 Proof boundary:
 
@@ -34,8 +34,14 @@ Some methods also include:
 
 Common task approval settings found alongside assignees:
 
+- `properties.tasktype`
 - `properties.approveway`
 - `properties.approvepercentage`
+- `properties.duedatedefinition`
+- `properties.duedatetype`
+- `properties.duedateexpress`
+- `properties.isfromworkcalendar`
+- `properties.notifyrules`
 - `properties.taskurl`
 - `properties.isenabledemail`
 - `properties.isallowreassign`
@@ -76,6 +82,15 @@ Use these rules for generated packages:
 - Generate email notification fields only from export-proven shapes and only when explicitly requested. Do not claim notification delivery without runtime testing.
 - Use `yeeflow-api-operator` assignment-routing coverage checks for authorized read-only confirmation of users, groups, group members, locations, positions, and position assignments. Do not invent org object IDs or embed private org data.
 - User group assignment can now be API-category-assisted through documented `GET /groups` and `GET /groups/{id}/users`, but group expansion and routing still require runtime proof.
+- Preserve absent `tasktype` for approval/default tasks and `tasktype="complete"` for Complete tasks. Do not invent another approval marker until a focused export proves it.
+- Preserve due-date settings together. Export-proven due-date types are `hour`, `day`, and `express`; `minute` is product-documented but not export-proven in the studied files.
+- Preserve `duedateexpress` when `duedatetype="express"` and keep it as an expression-button shape.
+- Preserve `isfromworkcalendar` for day-based working-calendar due dates when found.
+- Preserve due-date reminder rules under `notifyrules[]`; export-proven reminder timing values are `relative="0"` for on due date, `relative="-1"` for before due date, and `relative="1"` for after due date.
+- Treat `notifyrules[].actiontype="1"` as the export-proven reminder action shape. Do not generate Automatic Treatment due-date actions until an export proves the serialized schema.
+- Reminder recipient settings are export-proven only for task-level current task assignee email via `properties.to`; applicant, manager, department-manager, and arbitrary recipient reminder shapes were not found.
+- Start action settings from `Test ABC (3).yap` use `StartNoneEvent.properties.terminate`, `terminate-conditions`, `revoke-conditions`, `isenabledemail`, `to`, `subject`, and `html`. Preserve condition rows as operand-wrapper arrays and do not claim terminate/recall/email runtime behavior without focused proof.
+- Lay out generated workflow nodes with non-overlapping coordinates and keep `SequenceFlow` source/target plus node incoming/outgoing references consistent.
 
 ## Runtime-Proof Requirements
 
@@ -113,6 +128,12 @@ These were not found in the current exports or remain insufficiently proven:
 - quick-completion notification behavior
 - notification delivery behavior
 - standalone department detail endpoint and standalone position detail endpoint in the public API
+- minute due-date unit serialization
+- due-date Automatic Treatment action schema
+- reminder recipients other than task owner/current assignee
+- enabled Start terminate condition behavior
+- Start recall runtime behavior
+- Start email delivery
 
 Do not generate these as schema-safe until an export proves their package shape. Do not claim routing-safe until runtime proof exists.
 
@@ -128,6 +149,9 @@ Validators should remain warning-first for this feature in compatibility mode:
 - warn when static direct/department/location assignments lack `value`
 - warn when expression-based assignments lack an expression-button-shaped `value`
 - warn that direct user assignment is tenant-sensitive
+- warn when `tasktype` uses an unknown explicit value
+- warn when due-date type, expression, working-calendar, or reminder rule shapes are malformed
+- warn when Start action terminate/recall condition or email-notification fields are malformed
 
 Hard errors should wait until generated-final invalid shapes are proven to fail import/publish/runtime safely and consistently.
 
