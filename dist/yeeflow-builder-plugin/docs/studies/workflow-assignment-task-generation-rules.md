@@ -53,7 +53,7 @@ Common task approval settings found alongside assignees:
 | `positionorgexpr` | `position` | job position by applicant/current department | `position`, `value`, `title` | applicant context, department hierarchy, position assignment | requires runtime proof |
 | `positionloc` | `position` | job position by selected location | `position`, `value`, `title` | valid location and position assignment | requires target org/reference data |
 | `positionlocexpr` | `position` | job position by applicant/current location | `position`, `value`, `title` | applicant context, location data, position assignment | requires runtime proof |
-| `expression` | `user` with expression data `type=usergroup`, `prop=Users_ID` | all users in a user group | `value`, `title` | valid user group membership | export-proven in `Test ABC (1).yap`; API Operator v1 cannot confirm groups |
+| `expression` | `user` with expression data `type=usergroup`, `prop=Users_ID` | all users in a user group | `value`, `title` | valid user group membership | export-proven in `Test ABC (1).yap`; API Operator can confirm group/member category through documented read-only endpoints |
 | `expression` | `user` with expression data `type=position`, `prop=Users_ID` | all users in a job position | `value`, `title` | valid position assignment and position membership | requires target org/reference data and runtime proof |
 
 ## Safe Generation Rules
@@ -74,6 +74,8 @@ Use these rules for generated packages:
 - Preserve `properties.issequential=true` for Sequential Appointed Order. Treat absent `issequential` as parallel/default only within the current export-proven boundary.
 - Preserve `approveway` and `approvepercentage` together. Export-proven values include `allapprove`, `anyprocess`, `anyapprove`, `anyreject`, and `custompercentage`.
 - Generate email notification fields only from export-proven shapes and only when explicitly requested. Do not claim notification delivery without runtime testing.
+- Use `yeeflow-api-operator` assignment-routing coverage checks for authorized read-only confirmation of users, groups, group members, locations, positions, and position assignments. Do not invent org object IDs or embed private org data.
+- User group assignment can now be API-category-assisted through documented `GET /groups` and `GET /groups/{id}/users`, but group expansion and routing still require runtime proof.
 
 ## Runtime-Proof Requirements
 
@@ -98,6 +100,7 @@ These were not found in the current exports or remain insufficiently proven:
 - explicit `issequential=false` parallel marker
 - quick-completion notification behavior
 - notification delivery behavior
+- standalone department detail endpoint and standalone position detail endpoint in the public API
 
 Do not generate these as schema-safe until an export proves their package shape. Do not claim routing-safe until runtime proof exists.
 

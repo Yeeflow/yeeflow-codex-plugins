@@ -30,8 +30,8 @@ Test scenarios:
 - Do not use real private users unless explicitly authorized and safe.
 - Do not send email unless notification delivery is explicitly scoped and recipients are safe.
 - Do not commit request records, raw API responses, raw exports, screenshots with private identities, or `.env.local`.
-- Use `yeeflow-api-operator` only for authorized read-only lookup of users, departments, locations, and positions.
-- Treat user-group lookup as unresolved unless a future safe API/operator expansion supports it.
+- Use `yeeflow-api-operator` only for authorized read-only lookup of users, departments, locations, positions, groups, group members, and position assignments.
+- Use the assignment-routing API coverage helper before runtime setup to confirm that safe target users/groups/positions are readable. This still does not prove workflow routing.
 
 ## Validation Before Runtime
 

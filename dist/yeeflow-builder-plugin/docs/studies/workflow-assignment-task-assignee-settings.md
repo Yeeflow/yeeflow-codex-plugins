@@ -301,8 +301,10 @@ API-assisted confirmations:
 - selected department for position-by-department: confirmed
 - selected location for position-by-location: confirmed
 - position all-users expression: position category confirmed
-- user group expression: not API-confirmed; API Operator v1 has no user-group endpoint
+- user group expression: now confirmed as a readable group/member category through documented read-only `GET /groups` and `GET /groups/{id}/users`
 - applicant/context-derived expressions: not static API lookups; runtime-context dependent
+
+See also `docs/studies/yeeflow-api-operator-assignment-routing-coverage.md` for the API coverage audit. The audit adds read-only support for user detail, location detail, groups, group members, and position assignments. It does not add or test write APIs, and it does not prove runtime routing.
 
 | Task | Export assignee classification | API-assisted interpretation | Confirmation | Notes |
 |---:|---|---|---|---|

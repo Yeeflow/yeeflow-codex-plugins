@@ -1,13 +1,13 @@
 ---
 name: yeeflow-api-operator
-description: Safely use Yeeflow REST APIs from Codex when local credentials are available. Use for read-only Yeeflow organization and reference-data lookups, API connectivity checks, directory/master-data discovery, users, departments, locations, positions, or when app planning/runtime tests need authorized org data without exposing secrets.
+description: Safely use Yeeflow REST APIs from Codex when local credentials are available. Use for read-only Yeeflow organization and reference-data lookups, API connectivity checks, directory/master-data discovery, users, departments, locations, positions, groups, assignment-routing API coverage, or when app planning/runtime tests need authorized org data without exposing secrets.
 ---
 
 # Yeeflow API Operator
 
 ## Purpose
 
-Use this skill when Codex needs safe, credential-aware Yeeflow REST API access. The v1 boundary is read-only directory and master-data access for users, departments, locations, and positions.
+Use this skill when Codex needs safe, credential-aware Yeeflow REST API access. The v1 boundary is read-only directory and master-data access for users, departments, locations, positions, user groups, group members, and position assignments.
 
 This skill is separate from package generation. It can support planning, validation, and runtime-test setup, but it must not create, update, delete, enable, disable, assign, remove, or mutate Yeeflow data.
 
@@ -20,6 +20,7 @@ Use this skill for prompts such as:
 - "List available Yeeflow departments safely."
 - "Use Yeeflow API to find department IDs for app generation."
 - "Read locations and positions for approval routing setup."
+- "Check whether an Assignment Task user group or job position reference resolves to users."
 
 Use the API only when local credentials are available and the user has asked for API-backed lookup or when a Yeeflow workflow would otherwise require real org/reference data.
 
@@ -56,9 +57,16 @@ Initial supported endpoints:
 - Test API key and base URL presence.
 - Test Yeeflow API connectivity.
 - `POST /users/search`
+- `GET /users/{id}`
 - `GET /departments?parentId=0`
 - `GET /locations`
+- `GET /locations/{id}`
 - `GET /positions`
+- `GET /positions/{id}/users`
+- `GET /positions/{id}/users?bindingType=2&targetID={departmentId}`
+- `GET /positions/{id}/users?bindingType=3&targetID={locationId}`
+- `GET /groups`
+- `GET /groups/{id}/users`
 
 Report only:
 
@@ -109,7 +117,16 @@ node scripts/yeeflow-directory-connectivity-test.mjs
 
 The helper parses `.env.local` into `process.env` only when values are not already set. It prints only presence, statuses, counts, response keys, and redacted sample shapes.
 
+For Assignment Task routing API coverage, use:
+
+```bash
+node scripts/yeeflow-assignment-routing-api-coverage-test.mjs "/path/to/export.yap"
+```
+
+This helper decodes the export in memory, extracts assignment references, and tests only documented read-only coverage endpoints. It reports counts, status, redacted schema shapes, and reference-category counts only.
+
 For detailed behavior and latest proven results, read `references/yeeflow-directory-api-connectivity.md`.
+For assignment-routing coverage, read `docs/studies/yeeflow-api-operator-assignment-routing-coverage.md` in the source repository when available.
 
 ## Failure Handling
 
@@ -127,6 +144,8 @@ For approval workflow assignment task assignee generation, use read-only lookup 
 
 For export-learning work, you may build memory-only or ignored-temp reference sets to classify redacted assignment task references as user, department, location, or position categories. Do not commit raw ID maps, names, emails, tenant IDs, or raw records. API category confirmation supports schema interpretation only; it does not prove workflow runtime routing.
 
-The v1 API Operator does not include a user-group lookup endpoint. If an Assignment Task export contains a user-group assignee, classify it from the export shape only, redact the group reference, and document that a future safe read-only user-group lookup would be needed before API category confirmation.
+User-group lookup is now supported through documented read-only `GET /groups` and `GET /groups/{id}/users`. Use it only to confirm category/member-count/readability for authorized runtime setup; do not dump group members or commit user/group data.
+
+The public OpenAPI docs do not currently expose a `GET /departments/{id}`, `GET /positions/{id}`, or combined department+location position-assignment endpoint. Do not invent those calls; use the documented list/tree and position-assignment endpoints instead.
 
 Keep generated packages free of private user data unless the user explicitly requires it, the data is safe to include, and the scope is narrow. Prefer placeholders, empty groups, requester/current-user expressions, or post-import configuration when that is safer.
