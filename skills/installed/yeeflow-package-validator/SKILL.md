@@ -89,6 +89,21 @@ For Doc library controls on dashboards and form-hosted JSON surfaces, also check
 - dynamic `attrs.data.customPath` is an expression-token array when present; warn rather than claim runtime proof
 - document-library custom-form controls are runtime-proven for root-bound display and disabled search/add; approval-form controls remain partial until live published request-page proof; data-list custom-form controls remain validation-only
 
+For Form Reports, also check:
+
+- `Data.FormNewReports[]` entries parse `Settings` JSON with `Fields`, `Filters`, and `SubListID`
+- `Data.FormNewReports[].DefKey` resolves to an included approval form key
+- matching `Data.Childs[]` resource exists with `ListModel.Type = 32` and `ListModel.ListID = FormNewReports[].ID`
+- Form Report child resources do not define workflows, public edit/create forms, or sample data mutation surfaces
+- field keys/internal names are unique inside the report
+- fields reference source approval variables or selected sub-list fields
+- variable-to-report-field mappings are compatible when known
+- additional settings are present for number, percent, currency, switch, date/time, picker, metadata, and lookup report fields
+- no more than one sub-list is selected; warn if multiple-sub-list generation is attempted
+- if a sub-list is selected, selected sub-list field mappings exist
+- inherited permissions and view detail-page access flags are recognized
+- unknown custom permission audiences, export audience details, row multiplication, row-click behavior, Excel export execution, and data-source use are warnings/runtime-sensitive, not runtime proof
+
 ## Severity
 
 Use [validation-error-severity.md](references/validation-error-severity.md) to decide what blocks import. When uncertain, mark the finding as blocking until a proven Yeeflow import/runtime counterexample exists.

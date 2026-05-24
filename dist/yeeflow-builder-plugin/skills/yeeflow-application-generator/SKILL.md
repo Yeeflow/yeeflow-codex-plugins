@@ -93,12 +93,28 @@ Use v1 for apps like `Department Access Management`:
 - data-list fields, views, sample records, and custom forms
 - internal lookup relationships between lists
 - one or more simple approval forms in `Data.Forms[]`
+- export-proven Form Report resources in `Data.FormNewReports[]` plus Type `32` child resources when using `yeeflow-form-report-generator`
 - approval form lookup controls
 - lookup additional field mappings
 - approval workflow `ContentList` create/update actions targeting included lists
 - workflow action validation against the normalized node/action configuration reference
 - generated multi-type approval/list fields, including text, number, radio/dropdown, switch, and conditional display
 - simple root navigation and one Type `103` app page
+
+## Form Report Resources
+
+Use `yeeflow-form-report-generator` when an app needs Form Reports. `AI Training-2 (1).yap` export-proves Form Report as an app-level resource with `Data.FormNewReports[]`, a matching `Data.Childs[]` child resource where `ListModel.Type = 32`, and a required approval-form source via `DefKey` -> `Data.Forms[].Key`.
+
+Generation guidance:
+
+- Generate Form Reports only after the source approval form exists.
+- One approval form may have multiple Form Reports.
+- Do not generate a standalone Form Report without an approval source.
+- Do not attach workflows, public edit/create forms, or direct item mutation behavior to Form Reports.
+- Fields must come from approval variables, system fields, or the selected one sub-list fields.
+- Keep report field keys unique and warn on duplicate display names.
+- Use `Settings.SubListID = ""`/empty for no selected sub-list; use one `vlist_<variableId>` value for one selected sub-list.
+- Treat selected-sub-list row multiplication, row-click detail behavior, Excel export execution, and Form Report as a dashboard/lookup/data-table data source as runtime-sensitive until a focused baseline proves them.
 
 Generated child data lists must also be valid as standalone extracted list definitions:
 
@@ -484,6 +500,10 @@ Workflow assignment rule: generated app packages must not hardcode tenant-specif
 
 Assignment task assignee generation update: use `docs/studies/workflow-assignment-task-assignee-settings.md`, `docs/studies/workflow-assignment-task-generation-rules.md`, and `docs/studies/normalized/workflow-assignment-task-assignees/` for export-proven `MultiAssignmentTask.properties.usertaskassignment[]` shapes. `Test ABC.yap` proves direct user, applicant line manager, applicant department manager, direct job position, job position by selected department, job position by applicant department, job position by selected location, and job position by applicant location shapes. These are export-proven and validator-backed only; do not claim runtime routing until a focused runtime baseline passes. Job-position, department, and location assignment may require real org data; use `yeeflow-api-operator` read-only lookup only when local credentials are present and authorized.
 
+Scheduled workflow assignment update: `Workflow Actions Runtime Baseline (1).yap` proves a Scheduled Workflow (`WorkflowType = 3`, `ListID = 0`) can include a `StartNoneEvent` with email fields and no terminate/recall fields, followed by a `MultiAssignmentTask.properties.usertaskassignment[]` Applicant Line Manager expression. This does not prove scheduled assignment routing, scheduled email delivery, or data-list field expression context; do not trigger scheduled workflows during generation checks unless a separate safe runtime test is explicitly scoped.
+
+Approval workflow task-form update: `Workflow Actions Runtime Baseline (2)_Task forms.yap` proves an approval form can include one submission page and multiple task-form pages in `Data.Forms[].DefResource.pageurls[]`. Generate task pages separately from the submission page, associate Assignment Task nodes through `MultiAssignmentTask.properties.taskurl`, and keep task forms compatible with the task type. Standard Action Panel task forms are export-proven; custom `action_button` + `formdef.actions[]` task forms are export-proven for approve, reject, reassign, add-assignee, and complete Submit form configurations. Do not claim custom task-operation runtime behavior until focused runtime proof executes the operations safely.
+
 Form Actions baseline: use `docs/yeeflow-form-action-generation-rules.md` for generated front-end form logic. Button styles, button click triggers, page-load triggers, temp variables, `setvar`, `confirm`, Query data multiple/single mapping, query count, Query data filters via `querydata_filters`, temp query collection aggregation, default Submit form, Save changes, approval completion, and ContentList persistence are runtime-proven in focused generated packages.
 
 ## Custom Code Control Rules
@@ -524,3 +544,23 @@ The DEMO Innovation Ecosystem Platform study proves app-level AI resources in Ot
 
 Do not include AI Agents, Copilots, or Connections in generated final .yap packages until the target resource graph is fully resolved and local validation passes. External connection tools require placeholders and post-import reconfiguration; do not generate packages that require real Outlook, SharePoint, OAuth, or HTTP credentials.
 <!-- agent-copilot-application-resource-learning:end -->
+
+<!-- workflow-claim-task-learning:start -->
+## Workflow Claim Task Generation Boundary
+
+Use `docs/studies/workflow-claim-task-action.md` before generating Claim Task nodes. Claim Task is export-proven as `CandidateTask` in approval-form and data-list workflows. It shares task form association (`properties.taskurl`) and receiver editor storage (`properties.usertaskassignment[]`) with Assignment Task, but the semantics are receiver/candidate pool ownership rather than direct assignee ownership. Generate Claim Task only when the business process expects a pool/team to claim work; use Assignment Task for direct user assignment.
+
+Preserve `tasktype="approve"` or `tasktype="complete"` when present, preserve due-date and email fields, and preserve receiver expression-button strings. Do not generate the config-reference typo `properties.tasktype ` with a trailing space. Do not claim claim execution, claim locking, pending-task ownership, quick completion, or email delivery without a focused runtime baseline.
+<!-- workflow-claim-task-learning:end -->
+
+<!-- workflow-set-variable-learning:start -->
+## Workflow Set Variable Generation Boundary
+
+Use `docs/studies/workflow-set-variable-action.md` before generating workflow Set variable nodes. Set variable is export-proven as `SetVariableTask` in approval-form and data-list workflows. Generate `properties.variablesetting[]` rows for workflow-variable assignments: the row `id` is the target workflow variable and `value` is the expression-token array.
+
+Use `formtype="current"` for the current workflow. Use `formtype="custom"` only for another approval form workflow instance and preserve `properties.data.AppID`, `properties.data.ListSetID`, `properties.data.ProcKey`, and `properties.formids`. In data-list workflows, list fields may be used as right-side `exprType="list_field"` values, but Set variable must not be used to write list fields; use Set data list / `ContentList` for data-list mutation. Do not claim runtime variable mutation or another-workflow updates without focused runtime proof.
+
+Use `docs/studies/workflow-set-data-list-action.md` before generating workflow Set data list nodes. Set data list is export-proven as `ContentList` in approval-form and data-list workflows. Use it for data-source item/field mutation, not workflow-variable mutation. Preserve `properties.listtype` (`select` or data-list-context `current`), `properties.type` (`add`, `edit`, `remove`), `properties.listdatas[]` mappings, and `properties.wheres[]` filters. Selected-list mode must preserve target metadata in `appid`, `listsetid`, and `listid`. Edit/remove are high-impact; generate explicit safe filters and avoid remove unless the user explicitly requests destructive behavior. Preserve numeric operation codes `Per="0".."4"` only where target field metadata supports number operations. Do not claim add/update/delete, current-list mutation, document-library mutation, or sub-list row iteration without focused runtime proof.
+
+Use `docs/studies/workflow-signal-event-action.md` before generating approval workflow Signal event branches. Signal event is export-proven as `SignalEvent` in an approval-form workflow. It has no incoming flow, should have at least one outgoing flow, and uses `properties.eventdefinitions[]` with `CancelEventDefinition` and/or `RevokeEventDefinition`. Treat it as a special event source for recall/terminate compensation, not a normal action in the Start branch. Validate downstream Set data list filters carefully and do not claim recall/terminate or cleanup execution without focused runtime proof.
+<!-- workflow-set-variable-learning:end -->
