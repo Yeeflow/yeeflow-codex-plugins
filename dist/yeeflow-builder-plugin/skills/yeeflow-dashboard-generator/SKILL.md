@@ -5,6 +5,12 @@ description: generate, inspect, validate, package, debug, and improve Yeeflow da
 
 # Yeeflow Dashboard Generator
 
+## Application Navigation References
+
+When a dashboard/application page is included in app navigation, reference the root app page layout from `Data.Item.ListModel.LayoutView.sort[]` using `Type = 103` and `ListID = Data.Item.Layouts[].LayoutID`. Use optional `DisplayName` for a custom menu label and omit it for title fallback. Use a string `Icon`, or `Icon: ""` for no-icon.
+
+Dashboard menu items can be top-level resources or children inside a top-level `Type = "classes"` navigation group. Do not create nested groups. Validate the menu reference resolves to an included Type 103 layout before wrapper build.
+
 Use this skill when the user asks to generate, debug, validate, or learn Yeeflow dashboard packages, including minimal dashboard-only apps, dashboard widgets, dashboard page JSON, Type `103` navigation, dashboard `exts`, and dashboard import failures.
 
 When dashboard changes target an existing imported application, route package-type decisions through `yeeflow-application-builder` / `yeeflow-application-generator`. Generate `.yap` for new/cloned apps. For `.yapk` upgrades, start from a Yeeflow Version management baseline and preserve app identity/stable IDs; do not attempt to patch dashboard internals in `.yapk` while its `Resource` payload remains opaque.
@@ -65,6 +71,8 @@ Default generated dashboards should:
 For real application-builder packages, do not stop at an empty dashboard unless the app scope explicitly says dashboard is deferred. A runtime-safe v1 dashboard should include meaningful, locally proven sections such as request queues, status counts, simple source-list Collections, or KPI cards backed by included data lists. Keep advanced widgets, filters, reservations, and charts within proven dashboard patterns and mark anything unproven as focused runtime proof.
 
 Functional dashboard rule: when a plan/spec says KPI, summary, count, total, queue, report, analytics, trend, or chart, generate a functional dashboard control rather than a static Text mockup. Use `summary` controls for counts/totals, `data-list` or proven `collection` controls for operational queues and report tables, and `pie-chart`/`bar-chart`/`line-chart` controls when the chart model and binding shape are known. If a planned chart has a known model, generate the real chart and seed or confirm representative source rows for runtime validation. Treat an empty chart as a no-data / insufficient-source-data condition, not as a broken chart. Use a data-bound list/table fallback only when the chart control fails structurally after valid source data exists, and keep fallback tables as complementary drill-down/reporting views when charts work. Static Text controls are allowed for headings, descriptions, labels, instructions, and explanatory notes only; a hardcoded Text value such as `0`, `0.00`, `N/A`, or placeholder copy must not be used as a KPI/report/queue substitute unless explicitly labeled demo/placeholder content.
+
+Form Report data-source note: product understanding says Form Reports can feed Lookup fields, Data table controls, Collections, and analytics controls such as Summary, Pie chart, Column chart, Line chart, and Pivot table. `AI Training-2 (1).yap` did not include dashboard/control references to Form Reports, so dashboard generators must not claim or invent the binding schema. Use Form Reports as dashboard data sources only after a real export or focused runtime baseline proves the control reference shape.
 
 The studied dashboard does not prove a dashboard `attrs.container.cw` setting. Do not invent one until another real export proves it.
 

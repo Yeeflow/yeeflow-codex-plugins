@@ -80,6 +80,8 @@ Data-list workflow export learning: `Spark & AI (1).yap` proves list workflows a
 
 Data-list workflow Assignment Task learning: `Purchase Requests.ydl` proves a data-list workflow can use the same `MultiAssignmentTask` action family as approval workflows, while adding list-item context to assignee expressions. The studied export uses `FlowMappings[].Setting.NewTrigger = true`, `WorkflowType = 1`, a Start action with email notification fields but no terminate/recall fields, and an Assignment Task with a Created By list-field expression resolving `LineManager`. Its task form mixes normal task-form controls with list-bound controls using `isListControl = true`, `identifier`, `InternalName`, `fieldID`, and `____customListFields_` binding. Preserve custom list fields as read-only when the task should not update source list data; default/native fields such as Created By appear read-only in the studied export, but broader native-field behavior remains runtime-pending. Use `docs/studies/workflow-approval-vs-data-list-actions.md` and normalized refs under `docs/studies/normalized/workflow-task-forms/` before generating data-list workflow Assignment Tasks.
 
+Scheduled workflow comparison: `Workflow Actions Runtime Baseline (1).yap` proves scheduled workflow Start and Assignment Task shapes without data-list list-field expression sources. Do not transfer `Created By` or custom list-field assignee context from data-list workflows into scheduled workflows unless a scheduled export or focused runtime baseline proves that host context.
+
 ## References
 
 Load only the relevant reference:
@@ -140,6 +142,8 @@ Load only the relevant reference:
 ## Document Library Carry-Forward
 
 Document libraries reuse many data-list mechanics but are not normal data lists. When an app package includes a document library, route app-level generation through `yeeflow-application-generator` and validate the resource as Type `16`.
+
+Form Reports reuse list-like child resources and Type `0` views but are not normal data lists. `AI Training-2 (1).yap` export-proves Form Reports as Type `32` app child resources generated from submitted approval form variables and optional one sub-list. Do not add arbitrary custom data-list fields, data-list workflows, sample `ListDatas`, or editable forms to a Form Report. If a business requirement needs editable operational records, generate a normal data list; if it needs submitted approval reporting, route through `yeeflow-form-report-generator`.
 
 - `ListModel.Type = 16` identifies document libraries.
 - Document libraries use the same `Defs[]`, Type `0` views, and Type `1` custom form storage model where export-proven.
@@ -327,3 +331,23 @@ When generating, report:
 - validation results
 - wrapper build result if created
 - stop conditions and sandbox limitations
+
+<!-- workflow-claim-task-learning:start -->
+## Data-List Workflow Claim Task Guidance
+
+Use `docs/studies/workflow-claim-task-action.md` before generating data-list workflow Claim Tasks. In the studied data-list workflow, Claim Task is `CandidateTask`, uses `properties.usertaskassignment[]`, references a task form through `properties.taskurl`, and supports `tasktype="approve"` and `tasktype="complete"`. The export proves mixed receiver sources: direct user, applicant line manager expression, and list-item Created By line manager expression.
+
+Preserve list-item/Created By expression-button strings; do not convert them into static user IDs. Treat data-list Claim Task receiver expansion, claim ownership, task routing, and email delivery as unproven until a focused runtime baseline uses safe list records and safe receivers.
+<!-- workflow-claim-task-learning:end -->
+
+<!-- workflow-set-variable-learning:start -->
+## Data-List Workflow Set Variable Guidance
+
+Use `docs/studies/workflow-set-variable-action.md` before generating data-list workflow Set variable actions. In the studied data-list workflow, Set variable is `SetVariableTask` and targets workflow variables through `properties.variablesetting[]`; it does not target data-list fields.
+
+Data-list field values can appear on the right side as expression-token values such as `exprType="list_field"`. Preserve those tokens when they are export-backed. If the business requirement is to add, update, or delete list records/fields, generate Set data list / `ContentList` instead of Set variable. Do not claim data-list field value resolution or workflow variable mutation without focused runtime proof.
+
+Use `docs/studies/workflow-set-data-list-action.md` before generating data-list workflow Set data list actions. In the studied data-list workflows, Set data list is `ContentList`. `listtype="current"` targets the current list context; `listtype="select"` targets another selected data list and includes `appid`, `listsetid`, and `listid`. Add/edit mappings use `listdatas[]` entries with `Columns`, `Per`, and expression-token-array `Data`; filters use `wheres[]`. Data-list field values can appear as `exprType="list_field"` in `Data`, including sub-list/detail fields with `valueType="list"`. Use explicit filters for edit/remove and treat remove/delete as destructive. Document-library targets are product-documented but not export-proven in this sample.
+
+Signal event is currently not data-list-workflow-proven. `Workflow Actions Runtime Baseline (6)_Signal event.yap` found `SignalEvent` only in an approval-form workflow and found no data-list or scheduled Signal event. Do not generate data-list Signal event branches unless a future export or focused runtime proof demonstrates that host.
+<!-- workflow-set-variable-learning:end -->

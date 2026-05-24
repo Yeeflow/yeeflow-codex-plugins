@@ -93,12 +93,28 @@ Use v1 for apps like `Department Access Management`:
 - data-list fields, views, sample records, and custom forms
 - internal lookup relationships between lists
 - one or more simple approval forms in `Data.Forms[]`
+- export-proven Form Report resources in `Data.FormNewReports[]` plus Type `32` child resources when using `yeeflow-form-report-generator`
 - approval form lookup controls
 - lookup additional field mappings
 - approval workflow `ContentList` create/update actions targeting included lists
 - workflow action validation against the normalized node/action configuration reference
 - generated multi-type approval/list fields, including text, number, radio/dropdown, switch, and conditional display
 - simple root navigation and one Type `103` app page
+
+## Form Report Resources
+
+Use `yeeflow-form-report-generator` when an app needs Form Reports. `AI Training-2 (1).yap` export-proves Form Report as an app-level resource with `Data.FormNewReports[]`, a matching `Data.Childs[]` child resource where `ListModel.Type = 32`, and a required approval-form source via `DefKey` -> `Data.Forms[].Key`.
+
+Generation guidance:
+
+- Generate Form Reports only after the source approval form exists.
+- One approval form may have multiple Form Reports.
+- Do not generate a standalone Form Report without an approval source.
+- Do not attach workflows, public edit/create forms, or direct item mutation behavior to Form Reports.
+- Fields must come from approval variables, system fields, or the selected one sub-list fields.
+- Keep report field keys unique and warn on duplicate display names.
+- Use `Settings.SubListID = ""`/empty for no selected sub-list; use one `vlist_<variableId>` value for one selected sub-list.
+- Treat selected-sub-list row multiplication, row-click detail behavior, Excel export execution, and Form Report as a dashboard/lookup/data-table data source as runtime-sensitive until a focused baseline proves them.
 
 Generated child data lists must also be valid as standalone extracted list definitions:
 

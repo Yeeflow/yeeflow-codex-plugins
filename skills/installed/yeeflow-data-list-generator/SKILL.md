@@ -143,6 +143,8 @@ Load only the relevant reference:
 
 Document libraries reuse many data-list mechanics but are not normal data lists. When an app package includes a document library, route app-level generation through `yeeflow-application-generator` and validate the resource as Type `16`.
 
+Form Reports reuse list-like child resources and Type `0` views but are not normal data lists. `AI Training-2 (1).yap` export-proves Form Reports as Type `32` app child resources generated from submitted approval form variables and optional one sub-list. Do not add arbitrary custom data-list fields, data-list workflows, sample `ListDatas`, or editable forms to a Form Report. If a business requirement needs editable operational records, generate a normal data list; if it needs submitted approval reporting, route through `yeeflow-form-report-generator`.
+
 - `ListModel.Type = 16` identifies document libraries.
 - Document libraries use the same `Defs[]`, Type `0` views, and Type `1` custom form storage model where export-proven.
 - Preserve document default fields exactly from `Projects Center.yap`: `Title`, `Bigint1`, `Text1`, `Bigint2`, `Text2`, `Text3`, and `Text4`.

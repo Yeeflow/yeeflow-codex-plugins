@@ -62,6 +62,8 @@ Use custom code only when the requirement is justified client-side behavior that
 
 Doc library control note: the product exposes the `Doc library` control on approval forms, data-list forms, document-library forms, and dashboards. Dashboard controls are runtime-proven. The form-host study showed approval-form Doc library controls render in Form Builder preview, but live request-page proof remained partial because the generated `Document Review` workflow assignment task did not set the task assignee and task form setting correctly. Treat that as a workflow/task-node generation follow-up, not a Doc library control schema failure. If adding a Doc library control to an approval form, reuse the studied `type = "document-library"` / `attrs.data.list` / optional `attrs.data.folder` pattern, validate locally, configure assignment task assignee and task form settings from a proven workflow pattern, and do not claim published approval-form runtime proof until import, publish, and live request-page open all pass.
 
+Form Report note: Form Reports are app-level resources based on approval forms, not part of the approval workflow graph. `AI Training-2 (1).yap` export-proves `Data.FormNewReports[].DefKey` references `Data.Forms[].Key`, and report fields map to approval variables and optional selected sub-list fields. When generating an approval form intended for reports, keep variable IDs stable for report generation, model sub-list/listref fields deliberately, and use `yeeflow-form-report-generator` for the Type `32` report resource. Do not claim submitted-row reporting, row-click detail behavior, or export permission runtime behavior without a focused Form Report runtime baseline.
+
 ## Generated Approval Form UI/UX Standard
 
 When the active workspace contains `docs/yeeflow-application-design-system.md` and `docs/yeeflow-approval-form-design-standards.md`, use them as the default approval-form design standard. Use `docs/yeeflow-approval-form-ui-ux-patterns.md` for export-level evidence. The first official UI/UX reference export is `UI and UX design (1).yap`.
@@ -361,3 +363,35 @@ H. Wrapper build result only if final validation passes
 I. Risks, assumptions, and sandbox test checklist
 
 If metadata is missing, stop at draft mode and produce a dependency map.
+
+<!-- workflow-claim-task-learning:start -->
+## Approval Workflow Claim Task Guidance
+
+Use `docs/studies/workflow-claim-task-action.md` for Claim Task generation/validation. In approval-form workflows, Claim Task is export-proven as `CandidateTask`. The studied approval export found user-group receiver expressions, `properties.taskurl` references to task pages, and explicit `tasktype` values `approve` and `complete`. The approval Claim Task approve example used two outgoing flows; the complete example used one outgoing flow.
+
+Claim Task receiver/candidate config lives in `properties.usertaskassignment[]`, but it should be described as receivers/candidates until a user claims the task. Do not treat it as direct assignee ownership. Do not generate `properties.tasktype ` with a trailing space. Do not claim claim-pool behavior, claim locking, approve/reject/complete execution after claim, quick completion, or email delivery without focused runtime proof.
+<!-- workflow-claim-task-learning:end -->
+
+<!-- workflow-set-variable-learning:start -->
+## Approval Workflow Set Variable Guidance
+
+Use `docs/studies/workflow-set-variable-action.md` for workflow Set variable generation/validation. In approval-form workflows, Set variable is export-proven as `SetVariableTask`. Current-workflow settings use `properties.formtype = "current"` and one or more `properties.variablesetting[]` rows. Another approval workflow settings use `properties.formtype = "custom"`, target metadata in `properties.data.AppID`, `properties.data.ListSetID`, `properties.data.ProcKey`, and a submitted target request/form instance in `properties.formids`.
+
+Each `variablesetting[]` row targets a workflow variable on the left side and stores an expression-token array in `value` on the right side. Static strings/numbers, workflow-variable expressions, operators, and functions such as `iif`/`isNullOrEmpty` are export-proven. Do not claim runtime mutation or another approval workflow updates until a focused runtime baseline executes safely.
+<!-- workflow-set-variable-learning:end -->
+
+<!-- workflow-set-data-list-learning:start -->
+## Approval Workflow Set Data List Guidance
+
+Use `docs/studies/workflow-set-data-list-action.md` for workflow Set data list generation/validation. In approval-form workflows, Set data list is export-proven as `ContentList` with `properties.listtype="select"`, target metadata (`appid`, `listsetid`, `listid`), operation type (`add`, `edit`, or `remove`), `listdatas[]` field mappings, and `wheres[]` filters for update/delete.
+
+Use Set data list for data-list record/field mutation and Set variable for workflow-variable mutation. Add/edit mappings use `Columns`, `Per`, and expression-token-array `Data`. Preserve numeric operation codes `Per="0".."4"` when field metadata supports number operations. Approval-form sub-list/detail-row mappings can be represented through workflow variable references, but row iteration and record creation remain not runtime-proven in this learning pass. Do not execute add/update/delete or claim mutation behavior without a focused runtime baseline on disposable data.
+<!-- workflow-set-data-list-learning:end -->
+
+<!-- workflow-signal-event-learning:start -->
+## Approval Workflow Signal Event Guidance
+
+Use `docs/studies/workflow-signal-event-action.md` for approval workflow Signal event generation/validation. Signal event is export-proven as `SignalEvent` in approval-form workflows. It is a special event source with no incoming flow, one or more outgoing flows, and `properties.eventdefinitions[]` selecting `CancelEventDefinition` and/or `RevokeEventDefinition`.
+
+Use Signal event for recall/terminate compensation branches, for example to connect to Set data list / `ContentList` cleanup actions. Start action controls submitter-facing terminate/recall availability; Signal event listens for those events. Warn if a Signal event listens for cancel/revoke while the approval Start settings appear to make that event unavailable. Do not use Signal event in data-list or scheduled workflows until export-proven, and do not claim recall/terminate execution or downstream cleanup mutation without focused runtime proof.
+<!-- workflow-signal-event-learning:end -->

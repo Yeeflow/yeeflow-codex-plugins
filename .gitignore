@@ -104,6 +104,7 @@ yeeflow-data-list-generator/
 !yeeflow-expression-operators.normalized.json
 !yeeflow-expression-first-generation-test-spec.json
 !docs/studies/normalized/*.normalized.json
+!docs/studies/normalized/**/*.normalized.json
 !skills/installed/yeeflow-application-generator/scripts/workflow-action-configurations.normalized.json
 !skills/installed/**/*.json
 *-app-def*.json
@@ -115,6 +116,7 @@ yeeflow-data-list-generator/
 *inspection*.json
 *source*.json
 *exportback*.json
+!docs/studies/normalized/**/*.normalized.json
 
 # Generated package internals and reports are kept out by default.
 # Promote sanitized summaries into docs/ instead.

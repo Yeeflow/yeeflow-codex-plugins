@@ -2217,6 +2217,7 @@ function buildAiResourcesById(data) {
 
 function validateReportsDashboardsModules(data, listsById, fieldsByList, replaceIds, localIds, report) {
   report.summary.reports += asArray(data && data.DataReports).length + asArray(data && data.FormReports).length + asArray(data && data.FormNewReports).length;
+  validateFormNewReports(data, report);
   for (const reportItem of [...asArray(data && data.DataReports), ...asArray(data && data.FormReports), ...asArray(data && data.FormNewReports)]) {
     const raw = JSON.stringify(reportItem);
     const ids = [...raw.matchAll(/"ListID"\s*:\s*"?(\d{12,})"?/g)].map((m) => m[1]);
@@ -2250,6 +2251,196 @@ function validateReportsDashboardsModules(data, listsById, fieldsByList, replace
     report.inventories.modules.push({ type, count });
     if (!/^(Agents|Knowledges|Connections)$/i.test(type)) issue(report, report.mode === "generator" ? "warning" : "warning", "UNKNOWN_OTHER_MODULE", "OtherModules entry has an unknown module type.", { type, index });
   });
+}
+
+function validateFormNewReports(data, report) {
+  const formsByKey = new Map();
+  for (const form of asArray(data && data.Forms)) {
+    const def = tryParseJson(form && form.DefResource) || {};
+    const key = safeString(form && (form.Key || def.defkey));
+    if (!key) continue;
+    formsByKey.set(key, { form, def, variables: formReportVariableIndex(def) });
+  }
+
+  const reportChildrenById = new Map();
+  for (const child of asArray(data && data.Childs)) {
+    if (Number(child && child.ListModel && child.ListModel.Type) === 32) {
+      reportChildrenById.set(safeString(child.ListModel.ListID), child);
+    }
+  }
+
+  for (const [index, formReport] of asArray(data && data.FormNewReports).entries()) {
+    const label = formReport && (formReport.Name || formReport.Title || formReport.ID || `FormNewReports[${index}]`);
+    const settings = tryParseJson(formReport && formReport.Settings);
+    if (!isObject(settings)) {
+      issue(report, generatorFinalSeverity(report), "FORM_REPORT_SETTINGS_INVALID", "Form Report Settings must be parseable JSON object.", { report: label, index });
+      continue;
+    }
+
+    const attr = tryParseJson(formReport && formReport.Attr) || {};
+    for (const key of ["isViewDetail", "isExport"]) {
+      if (attr[key] !== undefined && typeof attr[key] !== "boolean") {
+        issue(report, "warning", "FORM_REPORT_ATTR_UNKNOWN_VALUE", "Form Report Attr uses an unrecognized value type.", { report: label, attr: key, valueType: typeof attr[key] });
+      }
+    }
+
+    const source = formsByKey.get(safeString(formReport && formReport.DefKey));
+    if (!source) {
+      issue(report, generatorFinalSeverity(report, "dependency"), "FORM_REPORT_SOURCE_APPROVAL_FORM_UNRESOLVED", "Form Report DefKey should resolve to an included approval form.", { report: label, defKey: formReport && formReport.DefKey });
+      continue;
+    }
+
+    const child = reportChildrenById.get(safeString(formReport && formReport.ID));
+    if (!child) {
+      issue(report, generatorFinalSeverity(report, "dependency"), "FORM_REPORT_CHILD_RESOURCE_MISSING", "Form Report should have a matching child resource with ListModel.Type = 32 and ListID equal to the report ID.", { report: label });
+    } else {
+      if (asArray(child.FlowMappings).length || asArray(child.PublicForms).length) {
+        issue(report, generatorFinalSeverity(report), "FORM_REPORT_SHOULD_NOT_DEFINE_WORKFLOW_OR_FORMS", "Form Report resources should not define workflow mappings or edit/create forms.", { report: label, flowMappings: asArray(child.FlowMappings).length, publicForms: asArray(child.PublicForms).length });
+      }
+      if (child.ListModel && child.ListModel.IsBreakInherit === true && child.ListModel.Perm === undefined) {
+        issue(report, "warning", "FORM_REPORT_CUSTOM_PERMISSION_INCOMPLETE", "Custom Form Report permissions should include explicit permission metadata when inheritance is disabled.", { report: label });
+      }
+      for (const [viewIndex, layout] of asArray(child.Layouts).entries()) {
+        const layoutView = tryParseJson(layout && layout.LayoutView) || {};
+        if (layoutView.Attr_IsViewDetail !== undefined && typeof layoutView.Attr_IsViewDetail !== "boolean") {
+          issue(report, "warning", "FORM_REPORT_VIEW_DETAIL_ACCESS_UNRECOGNIZED", "Form Report view detail-page access flag should be boolean when present.", { report: label, viewIndex });
+        }
+      }
+      if (asArray(child.Defs).length && asArray(settings.Fields).length && asArray(child.Defs).length !== asArray(settings.Fields).length) {
+        issue(report, "warning", "FORM_REPORT_FIELD_RESOURCE_COUNT_MISMATCH", "Form Report child resource fields should align with Settings.Fields.", { report: label, settingsFields: asArray(settings.Fields).length, childFields: asArray(child.Defs).length });
+      }
+    }
+
+    const subListId = safeString(settings.SubListID);
+    if (Array.isArray(settings.SubListID) || isObject(settings.SubListID) || subListId.includes(",")) {
+      issue(report, "warning", "FORM_REPORT_MULTIPLE_SUBLISTS_UNPROVEN", "Only one selected Form Report sub-list is export-proven; multiple sub-list generation should warn.", { report: label, subListID: settings.SubListID });
+    }
+    if (subListId && !source.variables.listVariables.has(subListId)) {
+      issue(report, generatorFinalSeverity(report, "warning"), "FORM_REPORT_SUBLIST_UNRESOLVED", "Form Report SubListID should resolve to an approval form list variable key.", { report: label, subListID: subListId });
+    }
+
+    const keys = new Set();
+    const names = new Set();
+    let selectedSubListFieldCount = 0;
+    for (const [fieldIndex, field] of asArray(settings.Fields).entries()) {
+      const key = safeString(field && field.Key);
+      const displayName = safeString(field && (field.Name || field.Label || field.PropName));
+      if (!key) {
+        issue(report, generatorFinalSeverity(report), "FORM_REPORT_FIELD_KEY_MISSING", "Form Report fields should include a stable Key.", { report: label, fieldIndex });
+      } else if (keys.has(key)) {
+        issue(report, generatorFinalSeverity(report), "FORM_REPORT_FIELD_KEY_DUPLICATE", "Form Report field Keys should be unique inside one report.", { report: label, key });
+      }
+      keys.add(key);
+      if (displayName) {
+        if (names.has(displayName)) issue(report, "warning", "FORM_REPORT_FIELD_DISPLAY_NAME_DUPLICATE", "Form Report field display names should be unique inside one report.", { report: label, fieldIndex });
+        names.add(displayName);
+      }
+
+      const sourceInfo = formReportFieldSource(field, subListId, source.variables);
+      if (!sourceInfo.resolved && !field.IsSystem) {
+        issue(report, generatorFinalSeverity(report, "warning"), "FORM_REPORT_FIELD_SOURCE_UNRESOLVED", "Form Report field should reference a valid approval variable or selected sub-list field.", { report: label, fieldIndex, key, sourceKind: sourceInfo.kind });
+      }
+      if (sourceInfo.kind === "sub-list-field") selectedSubListFieldCount += 1;
+      if (sourceInfo.resolved && !formReportMappingCompatible(sourceInfo.variableType, field && (field.L_Type || field.Type))) {
+        issue(report, "warning", "FORM_REPORT_FIELD_TYPE_MAPPING_UNSTUDIED", "Form Report variable-to-field type mapping is not in the export-backed compatibility table.", { report: label, fieldIndex, variableType: sourceInfo.variableType, reportFieldType: field && (field.L_Type || field.Type) });
+      }
+      validateFormReportFieldSettings(field, label, fieldIndex, report);
+    }
+    if (subListId && selectedSubListFieldCount === 0) {
+      issue(report, "warning", "FORM_REPORT_SUBLIST_FIELDS_MISSING", "Form Report selected a sub-list but no sub-list field mappings were detected.", { report: label, subListID: subListId });
+    }
+  }
+}
+
+function formReportVariableIndex(def) {
+  const basicById = new Map();
+  const listVariables = new Set();
+  const listRefsByListVariable = new Map();
+  const listFieldTypes = new Map();
+  const listRefs = new Map();
+  for (const variable of asArray(def && def.variables && def.variables.basic)) {
+    basicById.set(safeString(variable.id), safeString(variable.type || "unknown"));
+  }
+  for (const listRef of asArray(def && def.variables && def.variables.listref)) {
+    listRefs.set(safeString(listRef.id), asArray(listRef.fields));
+  }
+  for (const variable of asArray(def && def.variables && def.variables.basic)) {
+    if (safeString(variable.type) !== "list") continue;
+    const listVariableKey = `vlist_${safeString(variable.id)}`;
+    listVariables.add(listVariableKey);
+    const listRefId = safeString(variable.value && variable.value.listref);
+    listRefsByListVariable.set(listVariableKey, listRefId);
+    for (const field of asArray(listRefs.get(listRefId))) {
+      listFieldTypes.set(`${listVariableKey}:${safeString(field.id)}`, safeString(field.type || "unknown"));
+    }
+  }
+  return { basicById, listVariables, listRefsByListVariable, listFieldTypes };
+}
+
+function formReportFieldSource(field, subListId, variables) {
+  const key = safeString(field && field.Key);
+  const id = safeString(field && field.ID);
+  if (field && field.IsSystem) return { kind: "system", resolved: true, variableType: "system" };
+  if (subListId && key.startsWith(`${subListId}_`)) {
+    const subFieldId = key.slice(`${subListId}_`.length);
+    const variableType = variables.listFieldTypes.get(`${subListId}:${subFieldId}`);
+    return { kind: "sub-list-field", resolved: Boolean(variableType), variableType: variableType || safeString(field && field.Type) || "unknown" };
+  }
+  if (key.startsWith("vlist_")) {
+    return { kind: "approval-list-variable", resolved: variables.listVariables.has(key) || variables.basicById.has(id), variableType: variables.basicById.get(id) || safeString(field && field.Type) || "list" };
+  }
+  return { kind: "approval-variable", resolved: variables.basicById.has(id), variableType: variables.basicById.get(id) || safeString(field && field.Type) || "unknown" };
+}
+
+function formReportMappingCompatible(variableType, reportFieldType) {
+  const vt = safeString(variableType).toLowerCase();
+  const ft = safeString(reportFieldType).toLowerCase();
+  if (!vt || !ft || vt === "system") return true;
+  const allowed = {
+    text: new Set(["input", "textarea", "richtext", "percent", "switch", "signature", "input_number", "currency", "datepicker", "time", "identity-picker", "organization-picker", "location-picker", "cost-center-picker", "file-upload", "icon-upload"]),
+    number: new Set(["input_number", "percent", "currency", "input"]),
+    boolean: new Set(["switch"]),
+    date: new Set(["datepicker", "time"]),
+    file: new Set(["file-upload"]),
+    img: new Set(["icon-upload"]),
+    user: new Set(["identity-picker"]),
+    groupselect: new Set(["organization-picker"]),
+    location: new Set(["location-picker"]),
+    costcenter: new Set(["cost-center-picker"]),
+    metadata: new Set(["metadata"]),
+    "mutiple-metadata": new Set(["mutiple-metadata"]),
+    lookup: new Set(["lookup"]),
+    list: new Set(["textarea"]),
+  };
+  return allowed[vt] ? allowed[vt].has(ft) : false;
+}
+
+function validateFormReportFieldSettings(field, reportLabel, fieldIndex, report) {
+  const type = safeString(field && (field.L_Type || field.Type)).toLowerCase();
+  const rules = field && field.Rules;
+  const hasRules = isObject(rules);
+  const requireRule = (ruleName) => {
+    if (!hasRules || rules[ruleName] === undefined || rules[ruleName] === null || rules[ruleName] === "") {
+      issue(report, "warning", "FORM_REPORT_FIELD_SETTING_MISSING", "Form Report field type usually carries an additional setting in studied exports.", { report: reportLabel, fieldIndex, fieldType: type, setting: ruleName });
+    }
+  };
+  if (["input_number", "percent"].includes(type)) requireRule("rounded-to");
+  if (type === "currency") {
+    requireRule("currencyCode");
+    requireRule("displayFormat");
+    requireRule("rounded-to");
+  }
+  if (type === "switch") requireRule("displayStyle");
+  if (type === "datepicker") {
+    requireRule("showtime");
+    requireRule("dateformat");
+  }
+  if (type === "time") requireRule("dateformat");
+  if (["identity-picker", "organization-picker", "cost-center-picker"].includes(type)) requireRule("multiple");
+  if (type === "lookup") {
+    requireRule("listid");
+    requireRule("listfield");
+  }
 }
 
 function parseOtherModuleData(module, report, expectedType) {
