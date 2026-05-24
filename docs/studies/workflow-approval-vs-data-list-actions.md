@@ -2,13 +2,14 @@
 
 ## Purpose
 
-This study compares export-proven Start action and Assignment Task action shapes between approval form workflows and data-list workflows.
+This study compares export-proven Start action and Assignment Task action shapes between approval form workflows, data-list workflows, and the later quick Scheduled Workflow export study.
 
 Source exports:
 
 - Approval workflow baseline: `/Users/Renger/Downloads/Test ABC.yap`
 - Approval workflow extended settings: `/Users/Renger/Downloads/Test ABC (1).yap`, `/Users/Renger/Downloads/Test ABC (2).yap`, `/Users/Renger/Downloads/Test ABC (3).yap`
 - Data-list workflow: `/Users/Renger/Downloads/Purchase Requests.ydl`
+- Scheduled workflow comparison: `/Users/Renger/Downloads/Workflow Actions Runtime Baseline (1).yap`
 
 The data-list export was decoded read-only. Raw `.ydl`, decoded payloads, private IDs, user names, email addresses, tenant IDs, and raw response data are not committed.
 
@@ -138,3 +139,19 @@ The data-list workflow designer opened with a Start -> Assignment Task -> End gr
 - Approval direct static-user routing is runtime-proven only for the first submitted task in the combined baseline.
 - Data-list task form save/edit behavior for list-bound controls was not runtime-tested.
 - Default/native list field read-only behavior is based only on the studied export shape.
+
+## Scheduled Workflow Addendum
+
+`Workflow Actions Runtime Baseline (1).yap` adds one Scheduled Workflow comparison point. See `docs/studies/workflow-scheduled-vs-approval-data-list-actions.md` for the focused study.
+
+| Capability | Approval form workflow | Data-list workflow | Scheduled workflow | Proof level |
+|---|---|---|---|---|
+| Workflow discriminator | `WorkflowType = 2` | `WorkflowType = 1` | `WorkflowType = 3`, `ListID = 0` | export-proven |
+| Start node | `StartNoneEvent` | `StartNoneEvent` | `StartNoneEvent` | export-proven |
+| Start terminate/recall | present in approval export | absent in data-list export | absent in scheduled export | export-proven |
+| Start email config | present | present | present | product-documented + export-proven |
+| Assignment Task family | `MultiAssignmentTask` | `MultiAssignmentTask` | `MultiAssignmentTask` | export-proven + validator-backed |
+| Scheduled assignee source | approval/applicant context | list-item context available in data-list export | applicant line-manager expression only in scheduled export | export-proven |
+| Data-list field expression source | not found | found | not found in scheduled export | export-proven |
+
+Generation rule: do not copy approval-form terminate/recall fields or data-list field assignee sources into Scheduled Workflow generation unless a Scheduled Workflow export proves those fields. Scheduled Workflow Assignment Task routing remains untested.

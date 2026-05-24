@@ -56,3 +56,20 @@ The wrapper contained 23 `ReplaceIds`. For generated packages, scheduled workflo
 - Validate `QueryData` targets resolve to included data lists.
 - Validate `AI` agent-mode actions resolve to included AI Agent resources.
 - Warn on fixed email recipients and block live execution unless recipients are explicitly safe.
+
+## Start and Assignment Task Comparison Export
+
+`Workflow Actions Runtime Baseline (1).yap` adds one Scheduled Workflow with Start and Assignment Task actions:
+
+| Item | Export-proven shape |
+| --- | --- |
+| Workflow | `WorkflowType = 3`, `ListID = 0` |
+| Schedule | `TimeZone`, `Times[]`, `StartDate`, `EndDate`, `Frequency`, `Interval` |
+| Start | `StartNoneEvent`, no incoming flow, one outgoing flow |
+| Start email | `isenabledemail`, `to`, `subject`, `html` |
+| Start terminate/recall | `terminate`, `terminate-conditions`, and `revoke-conditions` absent |
+| Assignment Task | `MultiAssignmentTask` with `properties.usertaskassignment[]` |
+| Assignee | one applicant-line-manager expression-button assignee |
+| Assignment settings | absent `tasktype`, `approveway = "allapprove"`, `approvepercentage = 100`, absent `issequential`, `duedatedefinition = 120` |
+
+This proves Scheduled Workflow can store the same Start and Assignment Task action families, but not execution behavior. Do not trigger schedules, send email, or claim task routing from this export.

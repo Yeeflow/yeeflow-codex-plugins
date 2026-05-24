@@ -98,6 +98,20 @@ Before any request-submit runtime baseline, select safe test-only assignees or e
 
 Do not submit data-list workflow records or send notification email until safe test recipients and safe assignee routing are explicitly scoped.
 
+## Scheduled Workflow Start and Assignment Task Follow-Up
+
+`Workflow Actions Runtime Baseline (1).yap` export-proves one Scheduled Workflow with `WorkflowType = 3`, a Start action, and one Assignment Task. This quick study does not run a runtime baseline.
+
+Future Scheduled Workflow runtime proof should be a separate focused pass and should start with configuration-only safety:
+
+- import/open/designer proof for a non-deployed or far-future Scheduled Workflow
+- Start action panel proof for email config and absent terminate/recall fields
+- Assignment Task panel proof for applicant-line-manager expression assignee
+- publish proof only if the schedule is safe, disabled, or far-future and no notification delivery is triggered
+- no workflow execution, manual run, task routing, or email delivery unless explicitly scoped with safe recipients and safe assignee targets
+
+Do not combine Scheduled Workflow execution proof with approval/data-list routing proof until each path has a safe test plan.
+
 ## Combined Workflow Actions Baseline
 
 The combined generator `generate-workflow-actions-combined-runtime-baseline.mjs` creates `workflow-actions-combined-runtime-baseline.v1.yap` for one approval form plus one child data list. It is intended to prove import/open/designer/publish behavior for the learned approval-form and data-list workflow action settings together.

@@ -96,6 +96,8 @@ Use these rules for generated packages:
 - Custom list fields can be marked `readonly=true` when the task should not update source list data. Default/native fields such as Created By appear read-only in the studied export; keep broader native-field behavior runtime-pending.
 - Lay out generated workflow nodes with non-overlapping coordinates and keep `SequenceFlow` source/target plus node incoming/outgoing references consistent.
 - For combined workflow-action baselines, include approval-form and data-list workflows in one package only when each workflow keeps its own Start-action rules, process/list IDs, `FlowMappings[]`, task forms, and sequence-flow references. Remap `Data.Forms[].ProcModelID` and data-list workflow `ListID`/`ProcModelID` completely.
+- Scheduled Workflow Assignment Task from `Workflow Actions Runtime Baseline (1).yap` uses the same `MultiAssignmentTask.properties.usertaskassignment[]` family with `WorkflowType = 3`, `ListID = 0`, absent `tasktype`, `approveway="allapprove"`, `approvepercentage=100`, absent `issequential`, `duedatedefinition=120`, and one applicant-line-manager expression assignee. Preserve this as export-proven for Scheduled Workflow only; do not infer Scheduled Workflow support for direct users, positions, groups, Complete task, reminder rules, enabled task email, or data-list field assignee expressions until a scheduled export proves them.
+- Scheduled Workflow Start from the same export has email fields but no approval-form terminate/recall fields. Keep Scheduled Workflow Start generation aligned with the data-list-style absence of terminate/recall unless another scheduled export proves those fields.
 
 ## Runtime-Proof Requirements
 
@@ -154,6 +156,9 @@ These were not found in the current exports or remain insufficiently proven:
 - Start email delivery
 - data-list workflow Created By/list-field assignee routing
 - data-list workflow task form save/edit behavior for list-bound controls
+- scheduled workflow Assignment Task routing and task creation
+- scheduled workflow Start email delivery
+- scheduled workflow terminate/recall support
 
 Do not generate these as schema-safe until an export proves their package shape. Do not claim routing-safe until runtime proof exists.
 
@@ -172,6 +177,8 @@ Validators should remain warning-first for this feature in compatibility mode:
 - warn when `tasktype` uses an unknown explicit value
 - warn when due-date type, expression, working-calendar, or reminder rule shapes are malformed
 - warn when Start action terminate/recall condition or email-notification fields are malformed
+- warn when Scheduled Workflow Start action includes approval-only terminate/recall fields unless a scheduled export proves them
+- warn when Scheduled Workflow Assignment Task uses list-field/Created By expression sources unless a scheduled export proves a list context for that workflow
 
 Hard errors should wait until generated-final invalid shapes are proven to fail import/publish/runtime safely and consistently.
 

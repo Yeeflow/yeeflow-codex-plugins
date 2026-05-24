@@ -38,7 +38,7 @@ The safe baseline branch generated `scheduled-workflow-safe-runtime-baseline.v1.
 - Scheduled Workflow: `Safe scheduled idea summary`
 - workflow graph: `Start -> QueryData -> AI -> MailTask -> End`
 - schedule: far-future weekly Monday/Wednesday, `11:59PM`, with `Deployed = false`
-- recipient: `workflow.safe.test@example.com`
+- recipient: `<REDACTED_SAFE_TEST_EMAIL>`
 - no external connections or credentials
 
 The generated package imported, opened, displayed the local list, listed the Scheduled Workflow resource, opened the workflow detail page, rendered recurrence settings and variables, opened the workflow designer, and opened the `QueryData`, `AI`, and `MailTask` configuration panels. User-confirmed function test passed; exact execution scope not yet documented.
@@ -71,3 +71,25 @@ Only after explicit safe test scope is available, generate a separate execution 
 - raw export and secret scan
 
 For import/open-safe generated baselines, an `AI` workflow node that resolves to a bundled local Agent and contains no credentials should be reported as a runtime-sensitive dependency, not as a package-blocking validation error. Missing Agent references, unresolved `QueryData` list targets, unsafe recipients, embedded secrets, or credential-bearing external actions remain blockers.
+
+## Start and Assignment Task Action Addendum
+
+`Workflow Actions Runtime Baseline (1).yap` adds a quick export-proven Scheduled Workflow comparison for Start and Assignment Task actions:
+
+- one Scheduled Workflow resource with `WorkflowType = 3`, `ListID = 0`, parseable schedule `Settings`, and parseable `DefResource`
+- one `StartNoneEvent` with zero incoming flows, one outgoing flow, `isenabledemail`, `to`, `subject`, `html`, and `taskurl`
+- no `terminate`, `terminate-conditions`, or `revoke-conditions` fields on the scheduled Start action
+- one `MultiAssignmentTask` with `properties.usertaskassignment[]`
+- the scheduled Assignment Task uses one applicant-line-manager expression assignee
+- the scheduled Assignment Task has absent `tasktype`, `approveway = "allapprove"`, `approvepercentage = 100`, absent `issequential`, `duedatedefinition = 120`, `isenabledemail = false`, and no `notifyrules`
+
+Generation rules from this addendum:
+
+- Preserve Scheduled Workflow Start email fields when present, but do not add approval-form terminate/recall fields unless a scheduled export proves them.
+- Preserve Scheduled Workflow Assignment Tasks as the same `MultiAssignmentTask` family, but only treat the applicant-line-manager expression assignee as export-proven for Scheduled Workflow from this source.
+- Do not add data-list field or Created By expression sources to Scheduled Workflow Assignment Tasks unless a scheduled export proves a list/query context that provides those values.
+- Do not claim Scheduled Workflow task routing, task creation, email delivery, due-date behavior, or appointed-order behavior without focused runtime proof.
+
+Reference:
+
+- `docs/studies/workflow-scheduled-vs-approval-data-list-actions.md`
