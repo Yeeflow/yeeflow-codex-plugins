@@ -173,3 +173,9 @@ Recommended future runtime baseline:
 - optional execution proof only with safe submitted requests and no unintended data mutation
 
 Until then, this study remains export-proven/config-reference-backed/validator-backed only.
+
+## Runtime Baseline Update
+
+The combined `Workflow Actions Batch Runtime Baseline` imported and opened successfully. The approval workflow designer rendered `SetVariableTask` nodes for current-workflow variable settings and another-approval-workflow target settings, and the approval workflow published successfully. The data-list workflow designer rendered a `SetVariableTask` using current-workflow variable settings with list-context value expressions in the generated package, and the data-list workflow published successfully.
+
+This upgrades the generated Set variable shapes to import/open/designer/publish-proven only. Variable mutation, another approval workflow instance mutation, submitted form ID runtime resolution, and any list-field write behavior remain not runtime-proven.
