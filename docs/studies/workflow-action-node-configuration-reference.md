@@ -15,7 +15,7 @@ Source path studied:
 | Assignment Task | `MultiAssignmentTask` | `config_MultiAssignmentTask` | Compare with Claim Task, validate direct-assignment properties. |
 | Claim Task | `CandidateTask` | `config_CandidateTask` | New Claim Task export-learning reference. |
 | Set variable | `SetVariableTask` | `config_SetVariableTask` | Current Set variable export-learning reference. |
-| Set data list | `ContentList` | `config_ContentList` | Useful for future Set data list study. |
+| Set data list | `ContentList` | `config_ContentList` | Set data-list export-learning reference. |
 | Start | `StartNoneEvent` | `config_StartNoneEvent` | Start action comparison across workflow hosts. |
 | Connector line | `SequenceFlow` | `config_SequenceFlow` | Workflow transition condition validation. |
 
@@ -53,7 +53,25 @@ The config reference is useful for validating expected paths, but the export is 
 | Product action | Set variable | Set data list |
 | Target | workflow variables | data-list/document-library records and fields |
 | Current data-list workflow use | set workflow variables; may read list fields as expression values | add/update/delete list records |
-| Reference status | export-proven in Set variable study | config-reference-backed here; product-documented as Set Data List action |
+| Reference status | export-proven in Set variable study | export-proven in Set data list study, config-reference-backed, product-documented |
+
+## ContentList Reference
+
+`Workflow Actions Runtime Baseline (5)_Set data list.yap` proves front-end Set data list serializes as `ContentList` in approval-form and data-list workflows.
+
+| Config path | Export finding | Notes |
+|---|---|---|
+| `properties.listtype` | `select` and `current` found | `select` targets a selected data source; `current` was found in a data-list workflow current-list context. |
+| `properties.appid` | found for `listtype="select"` | Redact app IDs in docs/refs. |
+| `properties.listsetid` | found for `listtype="select"` | Redact listset/application IDs. |
+| `properties.listid` | found for selected and current-list targets | Redact list IDs in docs/refs. |
+| `properties.type` | `add`, `edit`, `remove` found | Use warning-first validation for unknown operation values. |
+| `properties.listdatas` | array found for add/edit and current-list mappings | Each mapping uses `Columns`, `Per`, and `Data`. |
+| `properties.wheres` | array found for edit/remove selected-list filters | Missing/empty filters are high-risk and should warn strongly. |
+
+The config reference is useful for expected paths and operation names, but it is incomplete for numeric field operations: it lists `listdatas[].Per` enum `["0"]`, while the export proves codes `0`, `1`, `2`, `3`, and `4`. Treat the export as source of truth and map those codes to Value, Increase, Decrease, Multiply, and Divide only with product/user-understanding context until runtime proof confirms execution.
+
+Current limitation: this Set data list export targets data lists only. It does not prove document-library target serialization, even though related product docs describe selected data source behavior that can include document libraries.
 
 ## Reference Use Rules
 
@@ -67,6 +85,6 @@ The config reference is useful for validating expected paths, but the export is 
 ## Future Study Candidates
 
 - `SetVariableTask`: validate `properties.variablesetting[]` and cross-workflow variable references.
-- `ContentList`: validate current/select list operations, `listdatas[]`, and `wheres[]`.
+- `ContentList`: add document-library target proof, execution proof for add/edit/remove on disposable data, and runtime proof for sub-list row iteration.
 - `SequenceFlow`: continue aligning transition condition wrappers with expression/condition docs.
 - `StartNoneEvent`: continue separating approval-form-only terminate/recall fields from data-list and scheduled workflow Start shapes.
