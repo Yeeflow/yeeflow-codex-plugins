@@ -385,3 +385,11 @@ Use `docs/studies/workflow-set-data-list-action.md` for workflow Set data list g
 
 Use Set data list for data-list record/field mutation and Set variable for workflow-variable mutation. Add/edit mappings use `Columns`, `Per`, and expression-token-array `Data`. Preserve numeric operation codes `Per="0".."4"` when field metadata supports number operations. Approval-form sub-list/detail-row mappings can be represented through workflow variable references, but row iteration and record creation remain not runtime-proven in this learning pass. Do not execute add/update/delete or claim mutation behavior without a focused runtime baseline on disposable data.
 <!-- workflow-set-data-list-learning:end -->
+
+<!-- workflow-signal-event-learning:start -->
+## Approval Workflow Signal Event Guidance
+
+Use `docs/studies/workflow-signal-event-action.md` for approval workflow Signal event generation/validation. Signal event is export-proven as `SignalEvent` in approval-form workflows. It is a special event source with no incoming flow, one or more outgoing flows, and `properties.eventdefinitions[]` selecting `CancelEventDefinition` and/or `RevokeEventDefinition`.
+
+Use Signal event for recall/terminate compensation branches, for example to connect to Set data list / `ContentList` cleanup actions. Start action controls submitter-facing terminate/recall availability; Signal event listens for those events. Warn if a Signal event listens for cancel/revoke while the approval Start settings appear to make that event unavailable. Do not use Signal event in data-list or scheduled workflows until export-proven, and do not claim recall/terminate execution or downstream cleanup mutation without focused runtime proof.
+<!-- workflow-signal-event-learning:end -->

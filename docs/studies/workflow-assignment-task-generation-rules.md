@@ -263,3 +263,16 @@ Generation rules:
 - Preserve numeric operation codes `Per="0".."4"` from the export. Use codes `1..4` only for number fields when target field metadata is known.
 - Preserve approval-form and data-list sub-list/detail-row value expressions when the source and target fields are export-backed.
 - Do not claim add/update/delete, current-list mutation, document-library mutation, numeric operation execution, or sub-list row iteration without focused runtime proof.
+
+## Signal Event Addendum
+
+`Workflow Actions Runtime Baseline (6)_Signal event.yap` export-proves that front-end Signal event maps to internal `SignalEvent` in approval-form workflows. See `docs/studies/workflow-signal-event-action.md` and normalized refs under `docs/studies/normalized/workflow-signal-event/`.
+
+Generation rules:
+
+- Use `SignalEvent` only for approval-form Signal event branches unless another workflow host is export-proven.
+- Treat Signal event as a special event source with no incoming flow and one or more outgoing flows.
+- Preserve `properties.eventdefinitions[]` with `CancelEventDefinition` and/or `RevokeEventDefinition`.
+- Use Signal event for recall/terminate compensation logic, often followed by Set data list / `ContentList` cleanup.
+- Keep downstream edit/remove filters explicit and safe.
+- Do not claim recall/terminate triggering or cleanup mutation without focused runtime proof.

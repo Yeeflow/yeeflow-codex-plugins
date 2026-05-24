@@ -208,3 +208,19 @@ Do not claim runtime variable mutation, another-workflow updates, or list-field 
 | Document-library target | not found | not found | unproven in this export |
 
 Set data list is the workflow action for data-source mutation. Use it instead of Set variable when the requirement is to add, update, or delete data-list records or fields. Runtime mutation, numeric operation execution, and sub-list row iteration remain not runtime-proven.
+
+## Signal Event Addendum
+
+`Workflow Actions Runtime Baseline (6)_Signal event.yap` adds Signal event comparison coverage.
+
+| Capability | Approval form workflow | Data-list workflow | Scheduled workflow | Proof level |
+|---|---|---|---|---|
+| Internal action type | `SignalEvent` | not found | not found | export-proven absence outside approval workflow in this export |
+| Purpose | recall/terminate event source branch | unproven | unproven | product-documented + export-proven |
+| Incoming flow | none | not applicable | not applicable | export-proven |
+| Outgoing flow | one flow to downstream cleanup branch | not applicable | not applicable | export-proven |
+| Event definitions | `RevokeEventDefinition`, `CancelEventDefinition` | not found | not found | export-proven + config-reference-backed |
+| Relationship to Start | pairs with approval Start terminate/recall settings | data-list Start has no terminate/recall fields in studied exports | scheduled Start has no terminate/recall fields in studied exports | export-proven comparison |
+| Downstream cleanup | `ContentList` edit with nonempty `wheres[]` | not found | not found | export-proven schema; runtime-unproven |
+
+Use Signal event only as approval-workflow-proven schema for now. It is a separate event source with no incoming line, unlike normal workflow actions. It can connect to Set data list / `ContentList` for compensation or cleanup patterns, but recall/terminate firing and downstream data mutation are not runtime-proven.

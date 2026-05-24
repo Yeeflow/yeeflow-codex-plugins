@@ -207,3 +207,19 @@ Future focused Set data list baseline should first prove import/open/designer/pu
 | sub-list to records | prove approval/data-list sub-list field mappings render | designer/open | row iteration not proven |
 
 Execution proof should use disposable data only. Add may be tested first with a dedicated target list. Edit requires one known disposable row and a narrow filter. Remove/delete should remain deferred unless explicitly approved for disposable data. Do not test document-library mutation until a document-library target export proves the shape.
+
+## Signal Event Runtime Follow-Up
+
+`Workflow Actions Runtime Baseline (6)_Signal event.yap` adds export-proven Signal event / `SignalEvent` shape in an approval-form workflow. This is not runtime proof.
+
+Future focused Signal event baseline should first prove import/open/designer/publish behavior only:
+
+| Scenario | Purpose | Proof target | Safety note |
+|---|---|---|---|
+| approval Signal event node | prove `SignalEvent` with no incoming flow renders in workflow designer | designer/open | do not submit or recall request |
+| cancel/terminate event definition | prove `CancelEventDefinition` selection renders | designer/open | do not execute terminate |
+| revoke/recall event definition | prove `RevokeEventDefinition` selection renders | designer/open | do not execute recall |
+| downstream cleanup action | prove downstream Set data list branch renders/publishes | designer/publish | do not mutate data |
+| graph validation | prove Signal event branch is allowed as a separate event-source component | validator/designer | no runtime execution |
+
+Execution proof should be a later separate pass using disposable approval requests and safe target records. Recall/terminate execution, downstream `ContentList` edit/remove mutation, and any email behavior remain deferred until explicitly scoped.

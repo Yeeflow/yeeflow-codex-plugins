@@ -218,6 +218,12 @@ The reference is useful for control-type mapping and path discovery. The export 
 - For sub-list-to-record generation, preserve parent/request reference mappings so detail records can be associated back to the source.
 - Do not claim record creation/update/delete, current-list mutation, document-library mutation, or sub-list row iteration behavior without focused runtime proof.
 
+## Signal Event Cleanup Note
+
+`Workflow Actions Runtime Baseline (6)_Signal event.yap` proves one approval-form `SignalEvent` branch that connects to a Set data list / `ContentList` edit action. The downstream action uses `listtype="select"`, `type="edit"`, one `listdatas[]` mapping, and one nonempty `wheres[]` filter.
+
+This is an export-proven compensation/cleanup schema only. It supports generation guidance that recall/terminate event branches can use Set data list to release or reverse related records, but the workflow event firing, numeric operation execution, and record mutation remain not runtime-proven. Keep the normal high-impact Set data list safeguards: edit/remove actions need explicit safe filters, and destructive cleanup should use disposable records in runtime tests.
+
 ## Runtime Test Plan Addendum
 
 Recommended future runtime baseline:

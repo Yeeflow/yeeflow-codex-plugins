@@ -16,6 +16,7 @@ Source path studied:
 | Claim Task | `CandidateTask` | `config_CandidateTask` | New Claim Task export-learning reference. |
 | Set variable | `SetVariableTask` | `config_SetVariableTask` | Current Set variable export-learning reference. |
 | Set data list | `ContentList` | `config_ContentList` | Set data-list export-learning reference. |
+| Signal event | `SignalEvent` | `config_SignalEvent` | Signal event export-learning reference for recall/terminate event branches. |
 | Start | `StartNoneEvent` | `config_StartNoneEvent` | Start action comparison across workflow hosts. |
 | Connector line | `SequenceFlow` | `config_SequenceFlow` | Workflow transition condition validation. |
 
@@ -73,6 +74,18 @@ The config reference is useful for expected paths and operation names, but it is
 
 Current limitation: this Set data list export targets data lists only. It does not prove document-library target serialization, even though related product docs describe selected data source behavior that can include document libraries.
 
+## SignalEvent Reference
+
+`Workflow Actions Runtime Baseline (6)_Signal event.yap` proves front-end Signal event serializes as `SignalEvent` in an approval-form workflow.
+
+| Config path | Export finding | Notes |
+|---|---|---|
+| `properties.eventdefinitions` | array with `RevokeEventDefinition` and `CancelEventDefinition` | Selects recall/revoke and terminate/cancel event triggers. |
+| incoming flow | none | Signal event is a special event source; graph validation should allow no incoming flow. |
+| outgoing flow | one sequence flow to `ContentList` edit | The branch can run compensation/cleanup actions. Execution is not runtime-proven. |
+
+The config reference is useful for enum names and the required path. The export remains source of truth for graph placement and downstream action shape. Signal event host support is export-proven only for approval-form workflow in this pass; no data-list or scheduled `SignalEvent` was found.
+
 ## Reference Use Rules
 
 - Use this JSON as a map of expected workflow action configuration paths.
@@ -86,5 +99,6 @@ Current limitation: this Set data list export targets data lists only. It does n
 
 - `SetVariableTask`: validate `properties.variablesetting[]` and cross-workflow variable references.
 - `ContentList`: add document-library target proof, execution proof for add/edit/remove on disposable data, and runtime proof for sub-list row iteration.
+- `SignalEvent`: add designer/open/publish proof and later recall/terminate execution proof with disposable requests and safe cleanup targets.
 - `SequenceFlow`: continue aligning transition condition wrappers with expression/condition docs.
 - `StartNoneEvent`: continue separating approval-form-only terminate/recall fields from data-list and scheduled workflow Start shapes.
