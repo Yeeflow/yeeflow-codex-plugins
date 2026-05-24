@@ -12,9 +12,9 @@ const EMAIL_RE = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
 function usage(exitCode = 1) {
   const message = [
     "Usage:",
-    "  node scripts/inspect-workflow-task-forms.mjs <input.yap> --out-dir <normalized-dir>",
+    "  node scripts/inspect-workflow-task-forms.mjs <input.yap|input.ywf> --out-dir <normalized-dir>",
     "",
-    "Decodes a Yeeflow .yap read-only and writes redacted task-form normalized references.",
+    "Decodes a Yeeflow .yap/.ywf read-only and writes redacted task-form normalized references.",
   ].join("\n");
   (exitCode === 0 ? console.log : console.error)(message);
   process.exit(exitCode);
@@ -84,16 +84,37 @@ function parseJson(text, largeNumbers) {
   return JSON.parse(quoteLargeIntegers(text, largeNumbers));
 }
 
-function decodeYap(inputPath) {
+function decodeInput(inputPath) {
   const largeNumbers = new Set();
   const wrapper = parseJson(fs.readFileSync(inputPath, "utf8"), largeNumbers);
+  if (typeof wrapper.Def === "string") {
+    const defResource = parseJson(Buffer.from(wrapper.Def, "base64").toString("utf8"), largeNumbers);
+    return {
+      inputType: "ywf",
+      wrapper,
+      resource: null,
+      data: {
+        Forms: [
+          {
+            Name: wrapper.FlowName || "Approval Form",
+            Key: wrapper.FlowKey || "FORM",
+            WorkflowType: wrapper.WorkflowType ?? defResource.workflowType ?? 2,
+            ListID: 0,
+            DefResource: JSON.stringify(defResource),
+            Settings: wrapper.Settings ?? null,
+          },
+        ],
+      },
+      largeNumbers: [...largeNumbers].sort(),
+    };
+  }
   if (typeof wrapper.Resource !== "string" || !wrapper.Resource.startsWith(GZIP_PREFIX)) {
-    throw new Error(`Input Resource must start with ${GZIP_PREFIX}`);
+    throw new Error(`Input must be a .yap Resource with ${GZIP_PREFIX} or a .ywf Def wrapper`);
   }
   const resourceText = zlib.gunzipSync(Buffer.from(wrapper.Resource.slice(GZIP_PREFIX.length), "base64")).toString("utf8");
   const resource = parseJson(resourceText, largeNumbers);
   const data = parseJson(resource.Data, largeNumbers);
-  return { wrapper, resource, data, largeNumbers: [...largeNumbers].sort() };
+  return { inputType: "yap", wrapper, resource, data, largeNumbers: [...largeNumbers].sort() };
 }
 
 function safeJson(value, fallback = {}) {
@@ -311,7 +332,7 @@ function writeJsonIfAbsent(outDir, filename, value) {
 
 function main() {
   const args = parseArgs(process.argv);
-  const decoded = decodeYap(args.input);
+  const decoded = decodeInput(args.input);
   const forms = asArray(decoded.data.Forms);
   const approvalForms = forms.filter((form) => form.WorkflowType === 2 && form.ListID === 0);
   if (!approvalForms.length) throw new Error("No app-level approval form workflows found.");
@@ -335,6 +356,7 @@ function main() {
   writeJson(args.outDir, "workflow-task-form-inventory.normalized.json", {
     proofLevel: "export-proven",
     sourceExport: path.basename(args.input),
+    inputType: decoded.inputType,
     approvalFormCount: approvalForms.length,
     summaries,
   });

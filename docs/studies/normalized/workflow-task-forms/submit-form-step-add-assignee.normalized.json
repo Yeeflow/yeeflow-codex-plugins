@@ -1,5 +1,6 @@
 {
   "proofLevel": "export-proven",
+  "sourceExport": "Workflow Action Approval Test.ywf",
   "taskForm": "WARTB Task3",
   "actionName": "Add assignee button clicked",
   "submitStep": {
@@ -46,5 +47,10 @@
         }
       ]
     }
+  },
+  "buttonBinding": {
+    "buttonLabel": "Add others to this task",
+    "buttonControlAction": "<REDACTED_ACTION_ID>",
+    "resolvedToThisAction": true
   }
 }

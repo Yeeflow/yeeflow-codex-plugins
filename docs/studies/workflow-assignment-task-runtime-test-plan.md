@@ -137,7 +137,7 @@ Runtime scenarios to add:
 | custom reassign/add assignee | prove user-picker-backed Submit form operations | execute only with safe target user | never add broad/unknown assignees |
 | custom complete button | prove default Submit form complete operation on Complete task | execute only with disposable request | preserve task type compatibility |
 
-Before runtime, correct or intentionally isolate the export-proven `Add others to this task` binding mismatch: the button label implies add-assignee, but the exported button binding points to the reject action while a separate `submitType="5"` action exists. Do not execute that button until the generated package has a verified matching binding.
+Before runtime, use the corrected `Workflow Action Approval Test.ywf` binding shape for Add others/Add assignee. The earlier `.yap` binding mismatch showed why this check matters: label, `attrs.control_action`, resolved action name, and Submit form `submitType` must align before any custom button is executed. Runtime execution of Add assignee remains deferred until safe users and task scope are explicitly selected.
 
 ## Combined Workflow Actions Baseline
 

@@ -177,6 +177,7 @@ Generation guidance:
 - Custom task buttons use `type = "action_button"` with `attrs.control_action` pointing to a `formdef.actions[].id`.
 - Submit form task operations must match task type: approve/reject/reassign/add assignee for Approval tasks and complete for Complete tasks.
 - Export-proven Submit form task operation markers include no `submitType` for default approve/complete by host task context, `submitType = "2"` for reject, `submitType = "4"` for reassign with `forword`/`remark`, and `submitType = "5"` for add assignee with `forword`/`remark`/`assignee`. Preserve the export spelling `forword`.
+- Use `Workflow Action Approval Test.ywf` as the corrected positive reference for Add others/Add assignee custom buttons: the button's `attrs.control_action` should resolve to the `Add assignee button clicked` form action whose Submit form step uses `submitType = "5"`. Do not bind Add others to reject/reassign/approve actions.
 - Do not claim custom task-button execution, reassign/add-assignee behavior, or Complete task execution without focused runtime proof.
 
 ## Custom Code Controls In Approval Forms

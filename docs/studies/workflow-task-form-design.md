@@ -86,7 +86,9 @@ properties.allowskip
 | `Reassign this task to others` | reassign action | `submitType = "4"`, `forword`, `remark` | task comments textarea and user picker | export-proven |
 | `Add others to this task` | expected add-assignee action | `submitType = "5"`, `forword`, `remark`, `assignee` | task comments textarea and user picker | export-proven with warning |
 
-Important warning: the exported `WARTB Task3` includes a form action named `Add assignee button clicked` with `submitType = "5"`, but the visible `Add others to this task` button points to the Reject action ID in this export. Treat this as a potential task-form/action-binding mismatch. A validator should warn when a button label implies an operation but `attrs.control_action` points to a form action whose Submit form operation differs.
+Important correction: the original `.yap` study found that the exported `WARTB Task3` included a form action named `Add assignee button clicked` with `submitType = "5"`, but the visible `Add others to this task` button pointed to the Reject action ID. The follow-up export `Workflow Action Approval Test.ywf` corrects this binding: the visible Add others button now points to the Add assignee action, and that action contains the expected Submit form step with `submitType = "5"`, `forword`, `remark`, and `assignee`.
+
+Treat the corrected binding shape as export-proven. Runtime execution is still not proven until a safe task operation test is run.
 
 `WARTB Task4` removes the Action Panel and adds one custom button:
 
@@ -157,6 +159,16 @@ References:
 | Submit form can approve/reject/complete/reassign/add assignee | submit steps with default, `2`, `4`, `5` submit types | matched | product-documented + export-proven |
 | Copying submission form can set controls readonly | `WARTB Task` copied controls have `readonly=true` | matched | product-documented + export-proven |
 
+## Add Assignee Binding Correction
+
+| Item | Previous `.yap` finding | Updated `.ywf` finding | Change | Proof level | Notes |
+|---|---|---|---|---|---|
+| `WARTB Task3` Add others button | Button label was `Add others to this task`, but `attrs.control_action` resolved to `Reject button click` | Button label resolves to `Add assignee button clicked` | corrected binding | export-proven | Button no longer points to reject |
+| Add-assignee Submit form step | Separate action existed with `submitType="5"` but was not referenced by the Add others button | Add others button references the action with `submitType="5"` | action is now reachable from the button | export-proven | Runtime execution not tested |
+| Add-assignee user mapping | `forword` and `assignee` both referenced the `AnotherUser` user variable | same shape preserved | no schema change | export-proven | Preserve export spelling `forword` |
+| Comment mapping | `comment` and `remark` referenced `Taskcomments` text variable | same shape preserved | no schema change | export-proven | No private data in normalized refs |
+| Validator guidance | Warn for label/action operation mismatches | Warn remains useful, but corrected export is the positive reference | refined | validator-backed after local checks | Do not hard-error compatibility exports |
+
 ## Generation Rules
 
 - Preserve submission form and task forms as separate `pageurls[]` entries.
@@ -166,6 +178,7 @@ References:
 - For simple approve/reject or complete-only tasks, a copied readonly task form with `workflowControlPanel` is export-proven.
 - For task-owner data entry, copied request controls should stay readonly unless intentionally editable, and task-only fields can be added.
 - When replacing Action Panel with custom buttons, ensure each `action_button.attrs.control_action` points to a matching `formdef.actions[].id`.
+- For Add others/Add assignee custom buttons, bind to the form action whose Submit form step uses `submitType="5"`, not to Reject/Reassign/Approve actions.
 - Submit form operations must match task type:
   - approval/default task: approve/reject/reassign/add assignee
   - complete task: complete
@@ -181,7 +194,7 @@ Keep checks warning-first in compatibility mode:
 - warn when `taskurl` does not resolve to a task form page
 - warn when an approval/default task is paired only with complete custom actions
 - warn when a Complete task is paired only with approve/reject custom actions
-- warn when an `action_button` label implies one operation but its bound action uses another Submit form operation
+- warn when an `action_button` label implies one operation but its bound action uses another Submit form operation; `Workflow Action Approval Test.ywf` is the corrected positive Add assignee reference
 - warn when reassign/add-assignee submit steps lack a user expression
 - warn when comment/remark expressions reference missing variables
 - warn when copied task forms unexpectedly leave request controls editable for complete-only review tasks
@@ -202,7 +215,7 @@ Future focused runtime baseline:
 ## Known Gaps
 
 - Claim Task task-form association was not found in this export.
-- Add-assignee custom button binding appears mismatched in this export and needs runtime/UI correction proof.
+- The Add-assignee custom button binding mismatch in the previous `.yap` is corrected in `Workflow Action Approval Test.ywf`; execution still needs runtime proof.
 - Action Panel button labels are product-documented and derived; the export does not store them as explicit child buttons.
 - Complete-task custom submit uses the same default Submit form shape as approval but is distinguished by action/task context; runtime proof is still needed.
 - Reassign/add-assignee execution was not tested.

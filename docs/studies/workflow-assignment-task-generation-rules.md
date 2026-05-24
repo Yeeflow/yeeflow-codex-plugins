@@ -105,7 +105,7 @@ Use these rules for generated packages:
 - The Action Panel control is `type="workflowControlPanel"` with button behavior derived from the associated Assignment Task type and options. The export does not store explicit Approve/Reject/Complete/Reassign/Add assignee child buttons under the panel.
 - Custom task buttons use `type="action_button"` and bind through `attrs.control_action` to a `formdef.actions[].id`. Keep that binding consistent with the button label and Submit form operation.
 - Submit form operation shapes found in task forms are: no `submitType` for approval/default submit on Approval tasks, `submitType="2"` for reject, `submitType="4"` for reassign with `forword` and `remark`, `submitType="5"` for add assignee with `forword`, `remark`, and `assignee`, and no `submitType` for complete on Complete tasks. Preserve the export spelling `forword`.
-- `Workflow Actions Runtime Baseline (2)_Task forms.yap` contains a potential custom-button binding mismatch: the visible `Add others to this task` button points to the reject action ID while a separate `Add assignee button clicked` action contains `submitType="5"`. Generators should not reproduce mismatched bindings; validators should warn when label, bound action, and Submit form operation disagree.
+- `Workflow Actions Runtime Baseline (2)_Task forms.yap` contains a custom-button binding mismatch: the visible `Add others to this task` button points to the reject action ID while a separate `Add assignee button clicked` action contains `submitType="5"`. The follow-up `Workflow Action Approval Test.ywf` corrects this binding so the Add others button resolves to the add-assignee action. Use the corrected `.ywf` shape as the positive export-proven reference, and keep validators warning-first when label, bound action, and Submit form operation disagree.
 
 ## Runtime-Proof Requirements
 
@@ -170,7 +170,7 @@ These were not found in the current exports or remain insufficiently proven:
 - Claim Task task-form association
 - custom task-form button runtime execution for approve/reject/reassign/add-assignee/complete
 - Action Panel explicit button child schema, because buttons appear derived rather than serialized as child controls in the studied export
-- whether the exported `Add others` button binding mismatch is tolerated, corrected by designer, or blocks runtime action execution
+- Add-assignee custom button runtime execution, even though the corrected `.ywf` now proves the intended button-to-action binding shape
 
 Do not generate these as schema-safe until an export proves their package shape. Do not claim routing-safe until runtime proof exists.
 
