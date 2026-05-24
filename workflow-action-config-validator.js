@@ -167,6 +167,7 @@ function validateKnownConditionalShapes(issues, action, shape, type, pointer, op
   }
   if (type === "MultiAssignmentTask") validateMultiAssignmentTaskAssignees(issues, shape, pointer, options);
   if (type === "CandidateTask") validateCandidateTaskReceivers(issues, shape, pointer, options);
+  if (type === "SetVariableTask") validateSetVariableTask(issues, shape, pointer, options);
   if (type === "StartNoneEvent") validateStartActionSettings(issues, shape, pointer, options);
   if (type === "MailTask") validateMailTask(issues, shape, pointer, options);
   if (type === "AI") validateAiAction(issues, shape, pointer, options);
@@ -202,6 +203,8 @@ const ASSIGNMENT_TASK_NOTIFY_RELATIVES = new Set(["-1", "0", "1"]);
 const ASSIGNMENT_TASK_NOTIFY_UNITS = new Set(["day", "hour", "minute"]);
 const ASSIGNMENT_TASK_LIST_FIELD_RE = /listitem|List field|____customListFields/i;
 const CLAIM_TASK_TASKTYPES = new Set(["approve", "complete"]);
+const SET_VARIABLE_FORMTYPES = new Set(["current", "custom"]);
+const SET_VARIABLE_TYPES = new Set(["text", "number", "date", "user", "boolean"]);
 
 function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
   const props = shape.properties || {};
@@ -570,6 +573,119 @@ function validateAssignmentTaskNotifyRules(issues, props, pointer, severity, cod
           path: `${rulePath}.${field}`,
           field,
         });
+      }
+    }
+  });
+}
+
+function validateSetVariableTask(issues, shape, pointer, options) {
+  const props = shape.properties || {};
+  const severity = strictLevel(options, "warning");
+  const formtype = safeString(props.formtype);
+  if (!SET_VARIABLE_FORMTYPES.has(formtype)) {
+    issue(issues, severity, "SET_VARIABLE_FORMTYPE_UNKNOWN", "Set variable formtype should be current or custom in the studied exports.", {
+      path: `${pointer}.properties.formtype`,
+      nodeId: shapeId(shape),
+      formtype,
+      allowed: [...SET_VARIABLE_FORMTYPES],
+    });
+  }
+  if (formtype === "custom") {
+    const data = props.data;
+    if (!isObject(data)) {
+      issue(issues, severity, "SET_VARIABLE_CUSTOM_TARGET_DATA_MISSING", "Another-workflow Set variable should include target approval workflow metadata in properties.data.", {
+        path: `${pointer}.properties.data`,
+        nodeId: shapeId(shape),
+      });
+    } else {
+      for (const key of ["AppID", "ListSetID", "ProcKey"]) {
+        if (valueMissing(data[key])) {
+          issue(issues, severity, "SET_VARIABLE_CUSTOM_TARGET_FIELD_MISSING", "Another-workflow Set variable target metadata should include AppID, ListSetID, and ProcKey.", {
+            path: `${pointer}.properties.data.${key}`,
+            nodeId: shapeId(shape),
+            field: key,
+          });
+        }
+      }
+    }
+    if (valueMissing(props.formids)) {
+      issue(issues, severity, "SET_VARIABLE_CUSTOM_FORMIDS_MISSING", "Another-workflow Set variable should include formids for the target submitted approval request/workflow instance.", {
+        path: `${pointer}.properties.formids`,
+        nodeId: shapeId(shape),
+      });
+    }
+  }
+  if (formtype === "current" && props.data !== undefined && props.data !== null) {
+    issue(issues, "warning", "SET_VARIABLE_CURRENT_TARGET_DATA_PRESENT", "Current-workflow Set variable normally does not need target workflow metadata; preserve only if export-backed for the package.", {
+      path: `${pointer}.properties.data`,
+      nodeId: shapeId(shape),
+    });
+  }
+  const settings = props.variablesetting;
+  if (!Array.isArray(settings)) {
+    issue(issues, severity, "SET_VARIABLE_VARIABLESETTING_INVALID", "Set variable should store assignments as properties.variablesetting array.", {
+      path: `${pointer}.properties.variablesetting`,
+      nodeId: shapeId(shape),
+    });
+    return;
+  }
+  if (!settings.length) {
+    issue(issues, severity, "SET_VARIABLE_VARIABLESETTING_EMPTY", "Set variable variablesetting array should contain at least one variable assignment.", {
+      path: `${pointer}.properties.variablesetting`,
+      nodeId: shapeId(shape),
+    });
+    return;
+  }
+  settings.forEach((setting, index) => {
+    const itemPath = `${pointer}.properties.variablesetting[${index}]`;
+    if (!isObject(setting)) {
+      issue(issues, severity, "SET_VARIABLE_ASSIGNMENT_INVALID", "Set variable assignment entries should be objects.", {
+        path: itemPath,
+        nodeId: shapeId(shape),
+      });
+      return;
+    }
+    for (const field of ["idx", "id", "name", "type", "value"]) {
+      if (valueMissing(setting[field])) {
+        issue(issues, severity, "SET_VARIABLE_ASSIGNMENT_FIELD_MISSING", "Set variable assignment should include idx, id, name, type, and value.", {
+          path: `${itemPath}.${field}`,
+          nodeId: shapeId(shape),
+          field,
+        });
+      }
+    }
+    if (setting.type !== undefined && !SET_VARIABLE_TYPES.has(safeString(setting.type))) {
+      issue(issues, "warning", "SET_VARIABLE_TYPE_UNSTUDIED", "Set variable assignment type is not in the export-studied variable type set.", {
+        path: `${itemPath}.type`,
+        nodeId: shapeId(shape),
+        type: safeString(setting.type),
+        studied: [...SET_VARIABLE_TYPES],
+      });
+    }
+    if (setting.value !== undefined) {
+      if (!Array.isArray(setting.value)) {
+        issue(issues, severity, "SET_VARIABLE_VALUE_EXPRESSION_NOT_ARRAY", "Set variable assignment value should be an expression-token array.", {
+          path: `${itemPath}.value`,
+          nodeId: shapeId(shape),
+        });
+      } else {
+        const result = validateExpressionTokens(setting.value, { path: `${itemPath}.value` });
+        for (const exprIssue of result.issues || []) {
+          if (exprIssue.code === "EXPRESSION_TOKEN_UNKNOWN_SHAPE" && exprIssue.detail && exprIssue.detail.exprType === "list_field") continue;
+          const level = exprIssue.level === "error" ? severity : "warning";
+          issue(issues, level, `SET_VARIABLE_${exprIssue.code}`, "Set variable assignment value expression did not fully match the expression reference.", {
+            path: exprIssue.path,
+            nodeId: shapeId(shape),
+            detail: exprIssue.detail,
+          });
+        }
+        const text = JSON.stringify(setting.value);
+        if (text.includes("\"exprType\":\"list_field\"")) {
+          issue(issues, "warning", "SET_VARIABLE_LIST_FIELD_VALUE_RUNTIME_UNPROVEN", "Set variable value uses a data-list field expression. Preserve this right-side expression shape and runtime-test before claiming variable mutation.", {
+            path: `${itemPath}.value`,
+            nodeId: shapeId(shape),
+          });
+        }
       }
     }
   });

@@ -536,3 +536,11 @@ Use `docs/studies/workflow-claim-task-action.md` before generating Claim Task no
 
 Preserve `tasktype="approve"` or `tasktype="complete"` when present, preserve due-date and email fields, and preserve receiver expression-button strings. Do not generate the config-reference typo `properties.tasktype ` with a trailing space. Do not claim claim execution, claim locking, pending-task ownership, quick completion, or email delivery without a focused runtime baseline.
 <!-- workflow-claim-task-learning:end -->
+
+<!-- workflow-set-variable-learning:start -->
+## Workflow Set Variable Generation Boundary
+
+Use `docs/studies/workflow-set-variable-action.md` before generating workflow Set variable nodes. Set variable is export-proven as `SetVariableTask` in approval-form and data-list workflows. Generate `properties.variablesetting[]` rows for workflow-variable assignments: the row `id` is the target workflow variable and `value` is the expression-token array.
+
+Use `formtype="current"` for the current workflow. Use `formtype="custom"` only for another approval form workflow instance and preserve `properties.data.AppID`, `properties.data.ListSetID`, `properties.data.ProcKey`, and `properties.formids`. In data-list workflows, list fields may be used as right-side `exprType="list_field"` values, but Set variable must not be used to write list fields; use Set data list / `ContentList` for data-list mutation. Do not claim runtime variable mutation or another-workflow updates without focused runtime proof.
+<!-- workflow-set-variable-learning:end -->

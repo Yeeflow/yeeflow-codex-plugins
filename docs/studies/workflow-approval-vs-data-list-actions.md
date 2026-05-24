@@ -172,3 +172,19 @@ Use Claim Task for candidate/receiver pool ownership. Use Assignment Task for di
 | Data-list field expression source | not found | found | not found in scheduled export | export-proven |
 
 Generation rule: do not copy approval-form terminate/recall fields or data-list field assignee sources into Scheduled Workflow generation unless a Scheduled Workflow export proves those fields. Scheduled Workflow Assignment Task routing remains untested.
+
+## Set Variable Addendum
+
+`Workflow Actions Runtime Baseline (4)_Set variable.yap` adds Set variable comparison coverage.
+
+| Capability | Approval form workflow | Data-list workflow | Proof level |
+|---|---|---|---|
+| Internal action type | `SetVariableTask` | `SetVariableTask` | export-proven + config-reference-backed |
+| Current workflow variable target | `formtype="current"` found | `formtype="current"` found | export-proven |
+| Another approval workflow target | `formtype="custom"` with target app/listset/proc key and form id found | same target metadata shape found | export-proven |
+| Multiple variables in one action | 3 `variablesetting[]` rows found | 4 `variablesetting[]` rows found on another-workflow node | export-proven |
+| Data-list field values | not found as right-side values | `exprType="list_field"` right-side values found | export-proven |
+| Data-list field targets | not applicable | not found; Set variable targets workflow variables only | export-proven absence |
+| Data-list field mutation | use Set data list / `ContentList` | use Set data list / `ContentList` | product-documented |
+
+Do not claim runtime variable mutation, another-workflow updates, or list-field value resolution until a focused runtime baseline proves those paths.

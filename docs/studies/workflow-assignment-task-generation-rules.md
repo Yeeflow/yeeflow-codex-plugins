@@ -230,3 +230,18 @@ Generation rules:
 - Do not claim claim-pool behavior, claim locking, Pending Tasks ownership after claim, quick completion, or email delivery until focused runtime proof exists.
 
 Claim Task should be recommended when a team/pool can voluntarily claim ownership. Assignment Task should be recommended when known users must take direct action.
+
+## Set Variable Addendum
+
+`Workflow Actions Runtime Baseline (4)_Set variable.yap` export-proves that front-end Set variable maps to internal `SetVariableTask` in approval-form and data-list workflows. See `docs/studies/workflow-set-variable-action.md` and normalized refs under `docs/studies/normalized/workflow-set-variable/`.
+
+Generation rules:
+
+- Use `SetVariableTask` for Set variable and `ContentList` for Set data list.
+- Treat `properties.variablesetting[]` as workflow-variable assignments. Each row's `id` is the left-side target workflow variable and `value` is the right-side expression-token array.
+- `formtype="current"` targets the current workflow's variables.
+- `formtype="custom"` targets another approval form workflow instance and should preserve `properties.data.AppID`, `properties.data.ListSetID`, `properties.data.ProcKey`, and `properties.formids`.
+- One Set variable node may set one or multiple workflow variables.
+- In data-list workflows, list fields may appear as right-side `exprType="list_field"` values, but Set variable should still target workflow variables.
+- Do not use Set variable to write data-list fields; use Set data list / `ContentList` for list record or field mutation.
+- Do not claim runtime variable mutation, another-workflow updates, or form-id targeting behavior until focused runtime proof exists.

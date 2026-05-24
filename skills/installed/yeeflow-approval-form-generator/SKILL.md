@@ -369,3 +369,11 @@ Use `docs/studies/workflow-claim-task-action.md` for Claim Task generation/valid
 
 Claim Task receiver/candidate config lives in `properties.usertaskassignment[]`, but it should be described as receivers/candidates until a user claims the task. Do not treat it as direct assignee ownership. Do not generate `properties.tasktype ` with a trailing space. Do not claim claim-pool behavior, claim locking, approve/reject/complete execution after claim, quick completion, or email delivery without focused runtime proof.
 <!-- workflow-claim-task-learning:end -->
+
+<!-- workflow-set-variable-learning:start -->
+## Approval Workflow Set Variable Guidance
+
+Use `docs/studies/workflow-set-variable-action.md` for workflow Set variable generation/validation. In approval-form workflows, Set variable is export-proven as `SetVariableTask`. Current-workflow settings use `properties.formtype = "current"` and one or more `properties.variablesetting[]` rows. Another approval workflow settings use `properties.formtype = "custom"`, target metadata in `properties.data.AppID`, `properties.data.ListSetID`, `properties.data.ProcKey`, and a submitted target request/form instance in `properties.formids`.
+
+Each `variablesetting[]` row targets a workflow variable on the left side and stores an expression-token array in `value` on the right side. Static strings/numbers, workflow-variable expressions, operators, and functions such as `iif`/`isNullOrEmpty` are export-proven. Do not claim runtime mutation or another approval workflow updates until a focused runtime baseline executes safely.
+<!-- workflow-set-variable-learning:end -->
