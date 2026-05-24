@@ -161,3 +161,11 @@ Claim Task receiver/candidate expressions use the same expression-button storage
 
 Data-list Claim Task list-item receiver expressions are export-proven only. Do not claim Created By/list-field receiver expansion or claim routing until a focused runtime baseline proves it with safe records and safe users.
 <!-- workflow-claim-task-learning:end -->
+
+<!-- workflow-set-variable-learning:start -->
+## Workflow Set Variable Expression Context
+
+Workflow graph Set variable actions (`SetVariableTask`) store right-side values as expression-token arrays in `properties.variablesetting[].value`. `Workflow Actions Runtime Baseline (4)_Set variable.yap` export-proves static `str`/`num` tokens, workflow variable tokens, `op` tokens, and function tokens such as `iif` and `isNullOrEmpty`. Data-list workflow Set variable values can use list-field tokens such as `exprType="list_field"` on the right side.
+
+Keep this distinct from front-end form action `setvar` steps; the wrapper and target model differ. In `SetVariableTask`, the left-side target is the workflow variable row (`idx`, `id`, `name`, `type`), not an expression token. Do not use Set variable to write data-list fields; use Set data list / `ContentList` for field mutation.
+<!-- workflow-set-variable-learning:end -->

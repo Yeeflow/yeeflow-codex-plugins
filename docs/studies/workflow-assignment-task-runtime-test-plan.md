@@ -172,3 +172,20 @@ Future focused Claim Task baseline should first prove import/open/designer/publi
 | claim execution | prove one receiver can claim and others cannot claim again | runtime execution | defer until safe receiver pool is explicitly selected |
 
 Do not execute claim, approve, reject, complete, quick completion, or email delivery until safe users/groups and disposable records are explicitly scoped.
+
+## Set Variable Runtime Follow-Up
+
+`Workflow Actions Runtime Baseline (4)_Set variable.yap` adds export-proven Set variable shapes in approval-form and data-list workflows. This is not runtime proof.
+
+Future focused Set variable baseline should first prove import/open/designer/publish behavior only:
+
+| Scenario | Purpose | Proof target | Safety note |
+|---|---|---|---|
+| approval current workflow, single variable | prove `SetVariableTask` with one `variablesetting[]` row renders/publishes | designer/publish | no submit required |
+| approval current workflow, multiple variables | prove one action can preserve multiple variable assignments | designer/publish | no submit required |
+| approval another workflow | prove target approval form metadata and form id setting render | designer/publish | do not mutate a real submitted request |
+| data-list current workflow | prove data-list workflow Set variable targets workflow variables | designer/publish | do not create list item |
+| data-list list-field values | prove list fields can appear as right-side expression values | designer/publish | do not claim runtime value mutation |
+| execution proof | prove variable value changes after workflow execution | runtime execution | defer until disposable requests/list records and target form IDs are explicitly safe |
+
+Set data list / `ContentList` should be tested separately for data-list field mutation. Do not use Set variable runtime tests to claim list field updates.

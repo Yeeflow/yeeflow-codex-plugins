@@ -337,3 +337,11 @@ Use `docs/studies/workflow-claim-task-action.md` before generating data-list wor
 
 Preserve list-item/Created By expression-button strings; do not convert them into static user IDs. Treat data-list Claim Task receiver expansion, claim ownership, task routing, and email delivery as unproven until a focused runtime baseline uses safe list records and safe receivers.
 <!-- workflow-claim-task-learning:end -->
+
+<!-- workflow-set-variable-learning:start -->
+## Data-List Workflow Set Variable Guidance
+
+Use `docs/studies/workflow-set-variable-action.md` before generating data-list workflow Set variable actions. In the studied data-list workflow, Set variable is `SetVariableTask` and targets workflow variables through `properties.variablesetting[]`; it does not target data-list fields.
+
+Data-list field values can appear on the right side as expression-token values such as `exprType="list_field"`. Preserve those tokens when they are export-backed. If the business requirement is to add, update, or delete list records/fields, generate Set data list / `ContentList` instead of Set variable. Do not claim data-list field value resolution or workflow variable mutation without focused runtime proof.
+<!-- workflow-set-variable-learning:end -->

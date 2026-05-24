@@ -115,3 +115,9 @@ Recommended next step: merge this as a quick export-learning milestone if review
 `Workflow Actions Runtime Baseline (3)_Claim task.yap` includes approval-form and data-list `CandidateTask` examples, but no Scheduled Workflow Claim Task. The user expectation that Scheduled Workflow Claim Task should be same/similar to approval/application workflow remains unproven by export in this pass.
 
 Do not generate Scheduled Workflow Claim Task as a proven shape until a scheduled export contains `CandidateTask`, or until a focused scheduled runtime/design proof is explicitly scoped. Scheduled Workflow Assignment Task learning remains limited to `MultiAssignmentTask` from the previous scheduled workflow export.
+
+## Set Variable Note
+
+`Workflow Actions Runtime Baseline (4)_Set variable.yap` includes approval-form and data-list `SetVariableTask` examples, but no Scheduled Workflow Set variable node. The scheduled workflow in that export still has workflow variables, but this does not prove scheduled Set variable serialization, expression context, or runtime mutation behavior.
+
+Do not generate Scheduled Workflow Set variable as a proven shape until a scheduled export contains `SetVariableTask`, or until a focused scheduled runtime/design proof is explicitly scoped.
