@@ -98,6 +98,14 @@ Use these rules for generated packages:
 - For combined workflow-action baselines, include approval-form and data-list workflows in one package only when each workflow keeps its own Start-action rules, process/list IDs, `FlowMappings[]`, task forms, and sequence-flow references. Remap `Data.Forms[].ProcModelID` and data-list workflow `ListID`/`ProcModelID` completely.
 - Scheduled Workflow Assignment Task from `Workflow Actions Runtime Baseline (1).yap` uses the same `MultiAssignmentTask.properties.usertaskassignment[]` family with `WorkflowType = 3`, `ListID = 0`, absent `tasktype`, `approveway="allapprove"`, `approvepercentage=100`, absent `issequential`, `duedatedefinition=120`, and one applicant-line-manager expression assignee. Preserve this as export-proven for Scheduled Workflow only; do not infer Scheduled Workflow support for direct users, positions, groups, Complete task, reminder rules, enabled task email, or data-list field assignee expressions until a scheduled export proves them.
 - Scheduled Workflow Start from the same export has email fields but no approval-form terminate/recall fields. Keep Scheduled Workflow Start generation aligned with the data-list-style absence of terminate/recall unless another scheduled export proves those fields.
+- Approval workflow task forms from `Workflow Actions Runtime Baseline (2)_Task forms.yap` are stored in `Data.Forms[].DefResource.pageurls[]` beside the submission form. Preserve `pageurls[].type=1` for submission forms and `pageurls[].type=2` for task forms when using this export family.
+- Every generated `MultiAssignmentTask` should set `properties.taskurl` to an existing task form page ID. Reusing one task form for multiple Assignment Tasks is export-proven when the task-owner responsibilities match.
+- Copied task forms for approve/reject or complete-only review can set copied value-entry controls to `readonly=true`; `WARTB Task` export-proves all copied value controls readonly.
+- Task-specific task forms can keep copied request fields readonly and add editable task-owner fields. `WARTB Task2`, `WARTB Task3`, and `WARTB Task4` prove extra editable inputs, number, textarea, and user-picker-style controls on task forms.
+- The Action Panel control is `type="workflowControlPanel"` with button behavior derived from the associated Assignment Task type and options. The export does not store explicit Approve/Reject/Complete/Reassign/Add assignee child buttons under the panel.
+- Custom task buttons use `type="action_button"` and bind through `attrs.control_action` to a `formdef.actions[].id`. Keep that binding consistent with the button label and Submit form operation.
+- Submit form operation shapes found in task forms are: no `submitType` for approval/default submit on Approval tasks, `submitType="2"` for reject, `submitType="4"` for reassign with `forword` and `remark`, `submitType="5"` for add assignee with `forword`, `remark`, and `assignee`, and no `submitType` for complete on Complete tasks. Preserve the export spelling `forword`.
+- `Workflow Actions Runtime Baseline (2)_Task forms.yap` contains a potential custom-button binding mismatch: the visible `Add others to this task` button points to the reject action ID while a separate `Add assignee button clicked` action contains `submitType="5"`. Generators should not reproduce mismatched bindings; validators should warn when label, bound action, and Submit form operation disagree.
 
 ## Runtime-Proof Requirements
 
@@ -159,6 +167,10 @@ These were not found in the current exports or remain insufficiently proven:
 - scheduled workflow Assignment Task routing and task creation
 - scheduled workflow Start email delivery
 - scheduled workflow terminate/recall support
+- Claim Task task-form association
+- custom task-form button runtime execution for approve/reject/reassign/add-assignee/complete
+- Action Panel explicit button child schema, because buttons appear derived rather than serialized as child controls in the studied export
+- whether the exported `Add others` button binding mismatch is tolerated, corrected by designer, or blocks runtime action execution
 
 Do not generate these as schema-safe until an export proves their package shape. Do not claim routing-safe until runtime proof exists.
 
@@ -179,6 +191,11 @@ Validators should remain warning-first for this feature in compatibility mode:
 - warn when Start action terminate/recall condition or email-notification fields are malformed
 - warn when Scheduled Workflow Start action includes approval-only terminate/recall fields unless a scheduled export proves them
 - warn when Scheduled Workflow Assignment Task uses list-field/Created By expression sources unless a scheduled export proves a list context for that workflow
+- warn when `MultiAssignmentTask.properties.taskurl` is missing or does not resolve to a task form page
+- warn when a custom task-form `action_button.attrs.control_action` is missing or does not resolve to `formdef.actions[]`
+- warn when a custom button label implies approve/reject/reassign/add-assignee/complete but the resolved Submit form operation differs
+- warn when reassign/add-assignee Submit form steps lack user-valued expression sources
+- warn when Complete task pages rely only on approval/reject custom operations, or approval/default task pages rely only on complete custom operations
 
 Hard errors should wait until generated-final invalid shapes are proven to fail import/publish/runtime safely and consistently.
 
