@@ -112,6 +112,35 @@ Future Scheduled Workflow runtime proof should be a separate focused pass and sh
 
 Do not combine Scheduled Workflow execution proof with approval/data-list routing proof until each path has a safe test plan.
 
+## Approval Workflow Task Form Follow-Up
+
+`Workflow Actions Runtime Baseline (2)_Task forms.yap` adds export-proven task-form patterns that should be covered by a future focused runtime baseline:
+
+- submission form plus multiple task forms in `Data.Forms[].DefResource.pageurls[]`
+- copied readonly task form used for approve/reject or complete-only task review
+- task-specific form with copied readonly request fields and additional editable task-owner fields
+- standard Action Panel on submission and task forms
+- custom buttons replacing Action Panel on approval task forms
+- custom complete button replacing Action Panel on complete task forms
+- Submit form operations for approve, reject, reassign, add assignee, and complete
+- task form association through `MultiAssignmentTask.properties.taskurl`
+
+Runtime scenarios to add:
+
+| Scenario | Purpose | Proof target | Safety note |
+|---|---|---|---|
+| copied readonly task form | prove task opens with copied controls readonly | designer/open first, then task open if safe | no submit required for first pass |
+| editable task-owner fields | prove task form can expose selected editable controls | designer/open first | save/edit behavior needs separate proof |
+| standard Action Panel approval | prove derived Approve/Reject panel behavior | task open plus safe approve/reject only if scoped | do not route broad users |
+| standard Action Panel complete | prove derived Complete button behavior | task open plus safe complete only if scoped | Complete execution still unproven |
+| custom approve/reject buttons | prove action-button to Submit form mapping | execute only with disposable request and safe user | no email delivery |
+| custom reassign/add assignee | prove user-picker-backed Submit form operations | execute only with safe target user | never add broad/unknown assignees |
+| custom complete button | prove default Submit form complete operation on Complete task | execute only with disposable request | preserve task type compatibility |
+
+Before runtime, use the corrected `Workflow Action Approval Test.ywf` binding shape for Add others/Add assignee. The earlier `.yap` binding mismatch showed why this check matters: label, `attrs.control_action`, resolved action name, and Submit form `submitType` must align before any custom button is executed. Runtime execution of Add assignee remains deferred until safe users and task scope are explicitly selected.
+
+The focused `Workflow Task Form Runtime Baseline` package was generated from the task-form `.yap` plus the corrected `.ywf` and imported into Yeeflow. It opened the app, opened the approval form, opened the form designer, rendered the submission form plus all four task forms in the selector, rendered `WARTB Task3` custom buttons including `Add others to this task`, opened the workflow designer, and published successfully. Treat this as import/open/designer/publish proof for task-form configuration only. No approval request was submitted, no task operation was executed, no task-owner fields were saved, no reassign/add-assignee operation was run, no Complete task was completed, and no email was sent.
+
 ## Combined Workflow Actions Baseline
 
 The combined generator `generate-workflow-actions-combined-runtime-baseline.mjs` creates `workflow-actions-combined-runtime-baseline.v1.yap` for one approval form plus one child data list. It is intended to prove import/open/designer/publish behavior for the learned approval-form and data-list workflow action settings together.

@@ -163,6 +163,24 @@ This skill can help generate or validate:
 - `.yap` metadata extraction
 - `.ywf` wrapper build with round-trip validation
 
+## Approval Workflow Task Forms
+
+`Workflow Actions Runtime Baseline (2)_Task forms.yap` export-proves that app-level approval forms can store a submission form and multiple task forms under `Data.Forms[].DefResource.pageurls[]`. The studied submission form uses `pageurls[].type = 1`; task forms use `pageurls[].type = 2`. Assignment Task nodes associate to task forms through `MultiAssignmentTask.properties.taskurl`.
+
+Generation guidance:
+
+- Distinguish submission forms from task forms. Task forms are separate pages used by Assignment Task and Claim Task actions.
+- Every generated Assignment Task should reference an existing task form through `properties.taskurl`; a task form may be reused by multiple task nodes when the task responsibilities match.
+- A copied submission-form task page can set all copied value-entry controls to `readonly=true` for approve/reject or complete-only review tasks.
+- Task-specific pages may keep copied request fields readonly and add editable task-owner controls for finance/admin updates, comments, reassignment users, or add-assignee users.
+- The standard Action Panel is `type = "workflowControlPanel"`; its displayed Approve/Reject/Complete/Reassign/Add assignee buttons are derived from the associated task type/options rather than serialized as explicit child buttons in the export.
+- Custom task buttons use `type = "action_button"` with `attrs.control_action` pointing to a `formdef.actions[].id`.
+- Submit form task operations must match task type: approve/reject/reassign/add assignee for Approval tasks and complete for Complete tasks.
+- Export-proven Submit form task operation markers include no `submitType` for default approve/complete by host task context, `submitType = "2"` for reject, `submitType = "4"` for reassign with `forword`/`remark`, and `submitType = "5"` for add assignee with `forword`/`remark`/`assignee`. Preserve the export spelling `forword`.
+- Use `Workflow Action Approval Test.ywf` as the corrected positive reference for Add others/Add assignee custom buttons: the button's `attrs.control_action` should resolve to the `Add assignee button clicked` form action whose Submit form step uses `submitType = "5"`. Do not bind Add others to reject/reassign/approve actions.
+- The focused `Workflow Task Form Runtime Baseline` package imported, opened, rendered the form designer, listed the submission form plus `WARTB Task`, `WARTB Task2`, `WARTB Task3`, and `WARTB Task4`, rendered `WARTB Task3` custom buttons, opened the workflow designer, and published successfully. Treat this as import/open/designer/publish proof for task-form configuration only.
+- Do not claim custom task-button execution, reassign/add-assignee behavior, or Complete task execution without focused runtime proof.
+
 ## Custom Code Controls In Approval Forms
 
 Custom code remains the last implementation layer after standard controls, attrs/defaults/readonly/validation, calculated fields, lookup configuration, form actions, workflow actions, and AI actions.
@@ -267,7 +285,7 @@ Workflow transition condition update: approval-form workflows can use latest Seq
 
 Do not hardcode tenant-specific direct-user assignees in generated approval tasks. Avoid `method: "users"` or `method: "direct"` with local user IDs/titles unless the user explicitly supplies a target-tenant-valid mapping. Prefer requester/current-user expression assignment from an export-backed workflow variable.
 
-Assignment task update: `Test ABC.yap` proves `MultiAssignmentTask.properties.usertaskassignment[]` shapes for direct user, applicant line manager, applicant department manager, direct job position, job position by selected department, job position by applicant department, job position by selected location, and job position by applicant location. `Test ABC (1).yap` adds export-proven multiple-assignee arrays, mixed direct users/positions/expressions, user-group expression, position all-users expression, Sequential Appointed Order via `issequential=true`, Parallel/default by absent `issequential`, `approveway` variants, custom percentage, and email notification fields. `Test ABC (2).yap` adds approval/default task type by absent `tasktype`, Complete task type via `tasktype="complete"`, due-date fields `duedatedefinition`, `duedatetype`, `duedateexpress`, `isfromworkcalendar`, and due-date reminder `notifyrules[]`. `Test ABC (3).yap` adds approval-form Start action `terminate`, `terminate-conditions`, `revoke-conditions`, and Start notification settings. `Purchase Requests.ydl` proves data-list workflow Start action differs: email fields are present but terminate/recall fields are absent, and Assignment Task can use list-item context such as Created By -> LineManager in an expression assignee. Use `docs/studies/workflow-assignment-task-assignee-settings.md`, `docs/studies/workflow-assignment-task-complete-task-and-due-date.md`, `docs/studies/workflow-start-action-settings.md`, `docs/studies/workflow-approval-vs-data-list-actions.md`, `docs/studies/workflow-assignment-task-generation-rules.md`, `docs/studies/workflow-assignment-task-runtime-test-plan.md`, `docs/studies/yeeflow-api-operator-assignment-routing-coverage.md`, and normalized refs under `docs/studies/normalized/workflow-assignment-task-assignees/`, `docs/studies/normalized/workflow-assignment-task/`, `docs/studies/normalized/workflow-start-action/`, and `docs/studies/normalized/workflow-task-forms/` before generating workflow task assignees or Start settings. These shapes are export-proven only; runtime routing, Complete task execution, due-date scheduling, recall/terminate behavior, data-list list-field routing, task-form save/edit behavior, and email delivery are not proven until a focused baseline passes. If real users/departments/locations/positions/groups are needed, use `yeeflow-api-operator` only for authorized read-only lookup and never commit private org data. API-assisted lookup may confirm that static exported values are user, department, location, position, group, group-member, or position-assignment references, but it does not prove workflow routing, group expansion, appointed-order behavior, or notification delivery.
+Assignment task update: `Test ABC.yap` proves `MultiAssignmentTask.properties.usertaskassignment[]` shapes for direct user, applicant line manager, applicant department manager, direct job position, job position by selected department, job position by applicant department, job position by selected location, and job position by applicant location. `Test ABC (1).yap` adds export-proven multiple-assignee arrays, mixed direct users/positions/expressions, user-group expression, position all-users expression, Sequential Appointed Order via `issequential=true`, Parallel/default by absent `issequential`, `approveway` variants, custom percentage, and email notification fields. `Test ABC (2).yap` adds approval/default task type by absent `tasktype`, Complete task type via `tasktype="complete"`, due-date fields `duedatedefinition`, `duedatetype`, `duedateexpress`, `isfromworkcalendar`, and due-date reminder `notifyrules[]`. `Test ABC (3).yap` adds approval-form Start action `terminate`, `terminate-conditions`, `revoke-conditions`, and Start notification settings. `Purchase Requests.ydl` proves data-list workflow Start action differs: email fields are present but terminate/recall fields are absent, and Assignment Task can use list-item context such as Created By -> LineManager in an expression assignee. `Workflow Actions Runtime Baseline (1).yap` proves scheduled workflow comparison: Start email fields are present without terminate/recall fields, and one scheduled `MultiAssignmentTask` uses Applicant Line Manager expression without data-list field context. Use `docs/studies/workflow-assignment-task-assignee-settings.md`, `docs/studies/workflow-assignment-task-complete-task-and-due-date.md`, `docs/studies/workflow-start-action-settings.md`, `docs/studies/workflow-approval-vs-data-list-actions.md`, `docs/studies/workflow-scheduled-vs-approval-data-list-actions.md`, `docs/studies/workflow-assignment-task-generation-rules.md`, `docs/studies/workflow-assignment-task-runtime-test-plan.md`, `docs/studies/yeeflow-api-operator-assignment-routing-coverage.md`, and normalized refs under `docs/studies/normalized/workflow-assignment-task-assignees/`, `docs/studies/normalized/workflow-assignment-task/`, `docs/studies/normalized/workflow-start-action/`, `docs/studies/normalized/workflow-expressions/`, and `docs/studies/normalized/workflow-task-forms/` before generating workflow task assignees or Start settings. These shapes are export-proven only; runtime routing, scheduled workflow execution, Complete task execution, due-date scheduling, recall/terminate behavior, data-list list-field routing, task-form save/edit behavior, and email delivery are not proven until a focused baseline passes. If real users/departments/locations/positions/groups are needed, use `yeeflow-api-operator` only for authorized read-only lookup and never commit private org data. API-assisted lookup may confirm that static exported values are user, department, location, position, group, group-member, or position-assignment references, but it does not prove workflow routing, group expansion, appointed-order behavior, or notification delivery.
 
 ## Field Type Rules
 
@@ -332,14 +350,14 @@ Workflow action validation now covers missing required node properties, invalid 
 
 For new form generation, output:
 
-A. Requirement interpretation  
-B. Decomposition table  
-C. Native feature plan  
-D. Custom code decision  
-E. Dependency list  
-F. Decoded Def draft when ready  
-G. Validation reports  
-H. Wrapper build result only if final validation passes  
+A. Requirement interpretation
+B. Decomposition table
+C. Native feature plan
+D. Custom code decision
+E. Dependency list
+F. Decoded Def draft when ready
+G. Validation reports
+H. Wrapper build result only if final validation passes
 I. Risks, assumptions, and sandbox test checklist
 
 If metadata is missing, stop at draft mode and produce a dependency map.
