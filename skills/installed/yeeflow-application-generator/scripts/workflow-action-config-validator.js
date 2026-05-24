@@ -205,6 +205,9 @@ const ASSIGNMENT_TASK_LIST_FIELD_RE = /listitem|List field|____customListFields/
 const CLAIM_TASK_TASKTYPES = new Set(["approve", "complete"]);
 const SET_VARIABLE_FORMTYPES = new Set(["current", "custom"]);
 const SET_VARIABLE_TYPES = new Set(["text", "number", "date", "user", "boolean"]);
+const CONTENTLIST_LISTTYPES = new Set(["current", "select"]);
+const CONTENTLIST_OPERATION_TYPES = new Set(["add", "edit", "remove"]);
+const CONTENTLIST_NUMERIC_OPERATION_CODES = new Set(["0", "1", "2", "3", "4"]);
 
 function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
   const props = shape.properties || {};
@@ -877,7 +880,26 @@ function validateContentList(issues, shape, pointer, options) {
   const props = shape.properties || {};
   const severity = strictLevel(options, "warning");
   const type = safeString(props.type);
-  if (safeString(props.listtype) === "select") {
+  const listtype = safeString(props.listtype);
+  if (!CONTENTLIST_LISTTYPES.has(listtype)) {
+    issue(issues, severity, "CONTENTLIST_LISTTYPE_UNKNOWN", "Set data list / ContentList listtype should be current or select in the studied exports.", {
+      path: `${pointer}.properties.listtype`,
+      nodeType: "ContentList",
+      nodeId: shapeId(shape),
+      listtype,
+      allowed: [...CONTENTLIST_LISTTYPES],
+    });
+  }
+  if (!CONTENTLIST_OPERATION_TYPES.has(type)) {
+    issue(issues, severity, "CONTENTLIST_OPERATION_TYPE_UNKNOWN", "Set data list / ContentList operation type should be add, edit, or remove in the studied exports.", {
+      path: `${pointer}.properties.type`,
+      nodeType: "ContentList",
+      nodeId: shapeId(shape),
+      type,
+      allowed: [...CONTENTLIST_OPERATION_TYPES],
+    });
+  }
+  if (listtype === "select") {
     for (const key of ["appid", "listsetid", "listid"]) {
       if (valueMissing(props[key])) issue(issues, severity, "CONTENTLIST_SELECTED_TARGET_PROPERTY_MISSING", "ContentList selected-list operation is missing target metadata.", {
         path: `${pointer}.properties.${key}`,
@@ -899,10 +921,35 @@ function validateContentList(issues, shape, pointer, options) {
           path: `${pointer}.properties.listdatas[${index}]`,
           nodeId: shapeId(shape),
         });
+        if (entry && entry.Per !== undefined && !CONTENTLIST_NUMERIC_OPERATION_CODES.has(safeString(entry.Per))) {
+          issue(issues, "warning", "CONTENTLIST_MAPPING_OPERATION_CODE_UNKNOWN", "Set data list mapping uses an unstudied Per operation code. Preserve it and runtime-test before generation claims.", {
+            path: `${pointer}.properties.listdatas[${index}].Per`,
+            nodeId: shapeId(shape),
+            Per: safeString(entry.Per),
+            studied: [...CONTENTLIST_NUMERIC_OPERATION_CODES],
+          });
+        }
         if (!entry || !Object.prototype.hasOwnProperty.call(entry, "Data")) issue(issues, severity, "CONTENTLIST_MAPPING_VALUE_MISSING", "ContentList mapping is missing Data value/expression.", {
           path: `${pointer}.properties.listdatas[${index}].Data`,
           nodeId: shapeId(shape),
         });
+        else if (Array.isArray(entry.Data)) {
+          const result = validateExpressionTokens(entry.Data, { path: `${pointer}.properties.listdatas[${index}].Data` });
+          for (const exprIssue of result.issues || []) {
+            if (exprIssue.code === "EXPRESSION_TOKEN_UNKNOWN_SHAPE" && exprIssue.detail && exprIssue.detail.exprType === "list_field") continue;
+            const level = exprIssue.level === "error" ? severity : "warning";
+            issue(issues, level, `CONTENTLIST_${exprIssue.code}`, "Set data list mapping expression did not fully match the expression reference.", {
+              path: exprIssue.path,
+              nodeId: shapeId(shape),
+              detail: exprIssue.detail,
+            });
+          }
+        } else {
+          issue(issues, severity, "CONTENTLIST_MAPPING_VALUE_NOT_ARRAY", "Set data list mapping Data should be an expression-token array in the studied exports.", {
+            path: `${pointer}.properties.listdatas[${index}].Data`,
+            nodeId: shapeId(shape),
+          });
+        }
       });
     }
   }
@@ -910,6 +957,13 @@ function validateContentList(issues, shape, pointer, options) {
     issue(issues, severity, "CONTENTLIST_WHERES_INVALID", "ContentList edit/remove operation requires properties.wheres array.", {
       path: `${pointer}.properties.wheres`,
       nodeId: shapeId(shape),
+    });
+  }
+  if (["edit", "remove"].includes(type) && Array.isArray(props.wheres) && props.wheres.length === 0) {
+    issue(issues, "warning", "CONTENTLIST_BROAD_MUTATION_FILTER_MISSING", "Set data list update/delete has no filter conditions. Product behavior can affect many records; require explicit safe intent before generation or runtime execution.", {
+      path: `${pointer}.properties.wheres`,
+      nodeId: shapeId(shape),
+      type,
     });
   }
   validateConditionArray(issues, props.wheres, `${pointer}.properties.wheres`, "CONTENTLIST_WHERE_CONDITION_INVALID", severity);

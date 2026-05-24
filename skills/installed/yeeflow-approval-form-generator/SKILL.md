@@ -377,3 +377,11 @@ Use `docs/studies/workflow-set-variable-action.md` for workflow Set variable gen
 
 Each `variablesetting[]` row targets a workflow variable on the left side and stores an expression-token array in `value` on the right side. Static strings/numbers, workflow-variable expressions, operators, and functions such as `iif`/`isNullOrEmpty` are export-proven. Do not claim runtime mutation or another approval workflow updates until a focused runtime baseline executes safely.
 <!-- workflow-set-variable-learning:end -->
+
+<!-- workflow-set-data-list-learning:start -->
+## Approval Workflow Set Data List Guidance
+
+Use `docs/studies/workflow-set-data-list-action.md` for workflow Set data list generation/validation. In approval-form workflows, Set data list is export-proven as `ContentList` with `properties.listtype="select"`, target metadata (`appid`, `listsetid`, `listid`), operation type (`add`, `edit`, or `remove`), `listdatas[]` field mappings, and `wheres[]` filters for update/delete.
+
+Use Set data list for data-list record/field mutation and Set variable for workflow-variable mutation. Add/edit mappings use `Columns`, `Per`, and expression-token-array `Data`. Preserve numeric operation codes `Per="0".."4"` when field metadata supports number operations. Approval-form sub-list/detail-row mappings can be represented through workflow variable references, but row iteration and record creation remain not runtime-proven in this learning pass. Do not execute add/update/delete or claim mutation behavior without a focused runtime baseline on disposable data.
+<!-- workflow-set-data-list-learning:end -->

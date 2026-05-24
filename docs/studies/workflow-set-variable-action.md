@@ -107,7 +107,11 @@ Generation rule: in data-list workflows, use Set variable for workflow variables
 | Left side | workflow variable | data-list field/record mapping |
 | Right side | expression editor value | expression editor value for selected list fields |
 | Data-list workflow behavior | can read list fields as expression values, but still targets workflow variables | writes data-list fields/records |
-| Proof | export-proven in this study | product-documented and config-reference-backed here; separately studied in prior/future ContentList work |
+| Proof | export-proven in this study | export-proven in `Workflow Actions Runtime Baseline (5)_Set data list.yap`; not runtime-proven |
+
+`Workflow Actions Runtime Baseline (5)_Set data list.yap` proves the Set data list side of this distinction. Front-end Set data list serializes as `ContentList`, uses `properties.listtype` for current/selected data source mode, uses `properties.type` for `add`/`edit`/`remove`, uses `properties.listdatas[]` for target field mappings, and uses `properties.wheres[]` for update/delete filters. Data-list workflows can use list fields as right-side values in both Set variable and Set data list, but only Set data list targets list fields/records.
+
+Generation rule update: when a data-list workflow must mutate the current item/list fields, use Set data list `listtype="current"` if the current-list context is export-proven for that generated host. When it must mutate another list or future document library target, use Set data list `listtype="select"` with selected source metadata. Keep Set variable reserved for workflow variable mutation.
 
 ## Node Configuration Reference
 

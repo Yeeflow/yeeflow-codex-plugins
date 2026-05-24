@@ -189,3 +189,21 @@ Future focused Set variable baseline should first prove import/open/designer/pub
 | execution proof | prove variable value changes after workflow execution | runtime execution | defer until disposable requests/list records and target form IDs are explicitly safe |
 
 Set data list / `ContentList` should be tested separately for data-list field mutation. Do not use Set variable runtime tests to claim list field updates.
+
+## Set Data List Runtime Follow-Up
+
+`Workflow Actions Runtime Baseline (5)_Set data list.yap` adds export-proven Set data list / `ContentList` shapes in approval-form and data-list workflows. This is not runtime proof.
+
+Future focused Set data list baseline should first prove import/open/designer/publish behavior only:
+
+| Scenario | Purpose | Proof target | Safety note |
+|---|---|---|---|
+| approval selected-list add | prove `ContentList` selected data source and `listdatas[]` mappings render/publish | designer/publish | no request submit needed |
+| approval selected-list edit | prove field mappings plus `wheres[]` filter render/publish | designer/publish | do not update records |
+| approval selected-list remove | prove delete/remove filter config renders/publishes | designer/publish | destructive execution deferred |
+| data-list current list | prove `listtype="current"` in data-list workflow renders/publishes | designer/publish | do not create/update host records |
+| data-list selected list | prove data-list workflow can target another list with list-field right-side expressions | designer/publish | no list item creation |
+| numeric operations | prove `Per` codes `0..4` display as Value/Increase/Decrease/Multiply/Divide | designer/open | execution pending |
+| sub-list to records | prove approval/data-list sub-list field mappings render | designer/open | row iteration not proven |
+
+Execution proof should use disposable data only. Add may be tested first with a dedicated target list. Edit requires one known disposable row and a narrow filter. Remove/delete should remain deferred unless explicitly approved for disposable data. Do not test document-library mutation until a document-library target export proves the shape.

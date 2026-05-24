@@ -245,3 +245,21 @@ Generation rules:
 - In data-list workflows, list fields may appear as right-side `exprType="list_field"` values, but Set variable should still target workflow variables.
 - Do not use Set variable to write data-list fields; use Set data list / `ContentList` for list record or field mutation.
 - Do not claim runtime variable mutation, another-workflow updates, or form-id targeting behavior until focused runtime proof exists.
+
+## Set Data List Addendum
+
+`Workflow Actions Runtime Baseline (5)_Set data list.yap` export-proves that front-end Set data list maps to internal `ContentList` in approval-form and data-list workflows. See `docs/studies/workflow-set-data-list-action.md` and normalized refs under `docs/studies/normalized/workflow-set-data-list/`.
+
+Generation rules:
+
+- Use `ContentList` for Set data list and `SetVariableTask` for Set variable.
+- Use Set data list for data-source item/field mutation; do not use Set variable to write data-list fields.
+- Preserve `properties.listtype`: `select` for selected data sources, `current` for data-list current-list context.
+- Preserve selected target metadata: `properties.appid`, `properties.listsetid`, and `properties.listid`.
+- Preserve `properties.type` as `add`, `edit`, or `remove`.
+- For add/edit, generate `properties.listdatas[]` entries with `Columns`, `Per`, and expression-token-array `Data`.
+- For edit/remove, require explicit safe `properties.wheres[]` filters unless the user deliberately accepts a broad operation. Missing or empty filters should warn strongly.
+- Treat `remove` as destructive and require explicit user intent plus disposable or tightly filtered target data before runtime execution.
+- Preserve numeric operation codes `Per="0".."4"` from the export. Use codes `1..4` only for number fields when target field metadata is known.
+- Preserve approval-form and data-list sub-list/detail-row value expressions when the source and target fields are export-backed.
+- Do not claim add/update/delete, current-list mutation, document-library mutation, numeric operation execution, or sub-list row iteration without focused runtime proof.

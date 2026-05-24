@@ -188,3 +188,23 @@ Generation rule: do not copy approval-form terminate/recall fields or data-list 
 | Data-list field mutation | use Set data list / `ContentList` | use Set data list / `ContentList` | product-documented |
 
 Do not claim runtime variable mutation, another-workflow updates, or list-field value resolution until a focused runtime baseline proves those paths.
+
+## Set Data List Addendum
+
+`Workflow Actions Runtime Baseline (5)_Set data list.yap` adds Set data list comparison coverage.
+
+| Capability | Approval form workflow | Data-list workflow | Proof level |
+|---|---|---|---|
+| Internal action type | `ContentList` | `ContentList` | export-proven + config-reference-backed |
+| Selected data source | `listtype="select"` found | `listtype="select"` found | export-proven |
+| Current list mode | not found | `listtype="current"` found | export-proven |
+| Add operation | `type="add"` found | `type="add"` found | export-proven |
+| Edit/update operation | `type="edit"` found | `type="edit"` found | export-proven |
+| Delete/remove operation | `type="remove"` found | not found in this export | export-proven |
+| Field mappings | `listdatas[]` with `Columns`, `Per`, `Data` | same shape | export-proven |
+| Filters | `wheres[]` found on edit/remove | `wheres[]` found on edit | export-proven |
+| Numeric operation codes | `Per` codes `0`, `1`, `2`, `3`, `4` found | `Per` codes `0`, `1` found | export-proven |
+| List-field values | approval variables/application context; approval sub-list variable references | `exprType="list_field"` values, including sub-list valueType `list` | export-proven |
+| Document-library target | not found | not found | unproven in this export |
+
+Set data list is the workflow action for data-source mutation. Use it instead of Set variable when the requirement is to add, update, or delete data-list records or fields. Runtime mutation, numeric operation execution, and sub-list row iteration remain not runtime-proven.
