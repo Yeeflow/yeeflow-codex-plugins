@@ -153,3 +153,11 @@ node scripts/smoke-expression-validation.mjs
 ```
 
 Then run the relevant form/app/list/workflow validators for the generated package.
+
+<!-- workflow-claim-task-learning:start -->
+## Claim Task Expression Context
+
+Claim Task receiver/candidate expressions use the same expression-button storage family as Assignment Task receivers, but the task semantics differ. `Workflow Actions Runtime Baseline (3)_Claim task.yap` export-proves user-group receiver expressions in approval-form Claim Tasks and direct/applicant/list-item Created By line-manager receiver expressions in data-list Claim Tasks. Preserve the expression-button HTML and source context; do not convert user group, applicant, or list-item receiver expressions into static IDs.
+
+Data-list Claim Task list-item receiver expressions are export-proven only. Do not claim Created By/list-field receiver expansion or claim routing until a focused runtime baseline proves it with safe records and safe users.
+<!-- workflow-claim-task-learning:end -->

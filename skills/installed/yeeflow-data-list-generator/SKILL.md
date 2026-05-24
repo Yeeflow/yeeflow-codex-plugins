@@ -329,3 +329,11 @@ When generating, report:
 - validation results
 - wrapper build result if created
 - stop conditions and sandbox limitations
+
+<!-- workflow-claim-task-learning:start -->
+## Data-List Workflow Claim Task Guidance
+
+Use `docs/studies/workflow-claim-task-action.md` before generating data-list workflow Claim Tasks. In the studied data-list workflow, Claim Task is `CandidateTask`, uses `properties.usertaskassignment[]`, references a task form through `properties.taskurl`, and supports `tasktype="approve"` and `tasktype="complete"`. The export proves mixed receiver sources: direct user, applicant line manager expression, and list-item Created By line manager expression.
+
+Preserve list-item/Created By expression-button strings; do not convert them into static user IDs. Treat data-list Claim Task receiver expansion, claim ownership, task routing, and email delivery as unproven until a focused runtime baseline uses safe list records and safe receivers.
+<!-- workflow-claim-task-learning:end -->

@@ -528,3 +528,11 @@ The DEMO Innovation Ecosystem Platform study proves app-level AI resources in Ot
 
 Do not include AI Agents, Copilots, or Connections in generated final .yap packages until the target resource graph is fully resolved and local validation passes. External connection tools require placeholders and post-import reconfiguration; do not generate packages that require real Outlook, SharePoint, OAuth, or HTTP credentials.
 <!-- agent-copilot-application-resource-learning:end -->
+
+<!-- workflow-claim-task-learning:start -->
+## Workflow Claim Task Generation Boundary
+
+Use `docs/studies/workflow-claim-task-action.md` before generating Claim Task nodes. Claim Task is export-proven as `CandidateTask` in approval-form and data-list workflows. It shares task form association (`properties.taskurl`) and receiver editor storage (`properties.usertaskassignment[]`) with Assignment Task, but the semantics are receiver/candidate pool ownership rather than direct assignee ownership. Generate Claim Task only when the business process expects a pool/team to claim work; use Assignment Task for direct user assignment.
+
+Preserve `tasktype="approve"` or `tasktype="complete"` when present, preserve due-date and email fields, and preserve receiver expression-button strings. Do not generate the config-reference typo `properties.tasktype ` with a trailing space. Do not claim claim execution, claim locking, pending-task ownership, quick completion, or email delivery without a focused runtime baseline.
+<!-- workflow-claim-task-learning:end -->

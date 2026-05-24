@@ -109,3 +109,9 @@ The Help Center says Assignment Tasks can assign work to users, groups, position
 This branch does not generate, import, publish, execute, or trigger a Scheduled Workflow. All Scheduled Workflow Start and Assignment Task findings are export-proven and validator-backed only. Existing Scheduled Workflow import/open/designer proof from earlier AI Assistant learning remains separate and does not prove Assignment Task routing.
 
 Recommended next step: merge this as a quick export-learning milestone if review is clean, then rebuild the plugin because skill/docs/inspector mirrors changed.
+
+## Claim Task Note
+
+`Workflow Actions Runtime Baseline (3)_Claim task.yap` includes approval-form and data-list `CandidateTask` examples, but no Scheduled Workflow Claim Task. The user expectation that Scheduled Workflow Claim Task should be same/similar to approval/application workflow remains unproven by export in this pass.
+
+Do not generate Scheduled Workflow Claim Task as a proven shape until a scheduled export contains `CandidateTask`, or until a focused scheduled runtime/design proof is explicitly scoped. Scheduled Workflow Assignment Task learning remains limited to `MultiAssignmentTask` from the previous scheduled workflow export.

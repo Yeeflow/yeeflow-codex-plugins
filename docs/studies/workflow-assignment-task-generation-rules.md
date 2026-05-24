@@ -214,3 +214,19 @@ Study doc:
 ```text
 docs/studies/workflow-assignment-task-assignee-settings.md
 ```
+
+## Claim Task Addendum
+
+`Workflow Actions Runtime Baseline (3)_Claim task.yap` export-proves that front-end Claim Task maps to internal `CandidateTask` in approval-form and data-list workflows. See `docs/studies/workflow-claim-task-action.md` and normalized refs under `docs/studies/normalized/workflow-claim-task/`.
+
+Generation rules:
+
+- Use `CandidateTask` for Claim Task and `MultiAssignmentTask` for Assignment Task.
+- Treat `CandidateTask.properties.usertaskassignment[]` as receiver/candidate pool configuration, not direct final assignee ownership.
+- Preserve `CandidateTask.properties.taskurl` and validate it resolves to a task-form page.
+- Preserve `tasktype="approve"` and `tasktype="complete"` when present.
+- Do not generate the config-reference typo `properties.tasktype ` with a trailing space; the export uses `properties.tasktype`.
+- Preserve user group, applicant/context, and data-list Created By/list-item receiver expressions as expression-button strings.
+- Do not claim claim-pool behavior, claim locking, Pending Tasks ownership after claim, quick completion, or email delivery until focused runtime proof exists.
+
+Claim Task should be recommended when a team/pool can voluntarily claim ownership. Assignment Task should be recommended when known users must take direct action.

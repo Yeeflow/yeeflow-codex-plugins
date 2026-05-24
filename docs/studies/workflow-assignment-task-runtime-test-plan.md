@@ -156,3 +156,19 @@ The same imported app exposed the data list, list fields/views, and data-list wo
 The narrow submit/routing pass used Yeeflow API Operator read-only lookup to confirm that directory endpoints were readable and that the approval workflow's first task was one direct-user assignment, not a broad group or position route. One fake approval request was submitted. The submission confirmation appeared, and a new Pending tasks row appeared for `Workflow Action Approval Test` with task label `Static User Assignment`. This is runtime proof for only the first direct static-user assignment route.
 
 No data-list item was submitted because the data-list Assignment Task has mixed direct, expression, user-group, and list-item/Created By assignee sources. Keep data-list routing, group/position/list-field expansion, Complete task execution, due-date reminder execution, Start terminate/recall execution, data-list task-form save/edit behavior, and all email delivery classified as not tested.
+
+## Claim Task Runtime Follow-Up
+
+`Workflow Actions Runtime Baseline (3)_Claim task.yap` adds export-proven Claim Task shapes in approval-form and data-list workflows. This is not runtime proof.
+
+Future focused Claim Task baseline should first prove import/open/designer/publish behavior only:
+
+| Scenario | Purpose | Proof target | Safety note |
+|---|---|---|---|
+| approval Claim Task, approval type | prove `CandidateTask` with user-group receiver and two outgoing paths renders/publishes | designer/publish | do not claim task |
+| approval Claim Task, complete type | prove `CandidateTask` complete task with task form renders/publishes | designer/publish | do not complete task |
+| data-list Claim Task, approval type | prove direct/applicant/list-item receiver expressions render/publish | designer/publish | do not create list item until safe receivers are mapped |
+| data-list Claim Task, complete type | prove complete task config and email fields render/publish | designer/publish | no email delivery |
+| claim execution | prove one receiver can claim and others cannot claim again | runtime execution | defer until safe receiver pool is explicitly selected |
+
+Do not execute claim, approve, reject, complete, quick completion, or email delivery until safe users/groups and disposable records are explicitly scoped.
