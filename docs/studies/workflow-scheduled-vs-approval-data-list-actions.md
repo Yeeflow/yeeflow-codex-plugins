@@ -127,3 +127,9 @@ Do not generate Scheduled Workflow Set variable as a proven shape until a schedu
 `Workflow Actions Runtime Baseline (5)_Set data list.yap` includes approval-form and data-list `ContentList` examples, but no Scheduled Workflow Set data list node. The studied scheduled workflow in that export has no `ContentList` action.
 
 Do not generate Scheduled Workflow Set data list as a scheduled-workflow-proven shape until a scheduled export contains `ContentList`, or until a focused scheduled designer/open proof is explicitly scoped. Approval-form and data-list workflow Set data list findings remain export-proven for those hosts only.
+
+## Signal Event Note
+
+`Workflow Actions Runtime Baseline (6)_Signal event.yap` includes one approval-form workflow `SignalEvent`, but no data-list or Scheduled Workflow Signal event. The studied scheduled workflow in that export has no `SignalEvent` action.
+
+Do not generate Scheduled Workflow Signal event as a proven shape. The current Signal event proof is limited to approval-form workflow, where it has no incoming flow, one outgoing flow, and `properties.eventdefinitions[]` containing `RevokeEventDefinition` and `CancelEventDefinition`. Scheduled workflow recall/terminate event handling remains unproven.

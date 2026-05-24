@@ -169,6 +169,7 @@ function validateKnownConditionalShapes(issues, action, shape, type, pointer, op
   if (type === "CandidateTask") validateCandidateTaskReceivers(issues, shape, pointer, options);
   if (type === "SetVariableTask") validateSetVariableTask(issues, shape, pointer, options);
   if (type === "StartNoneEvent") validateStartActionSettings(issues, shape, pointer, options);
+  if (type === "SignalEvent") validateSignalEvent(issues, shape, pointer, options);
   if (type === "MailTask") validateMailTask(issues, shape, pointer, options);
   if (type === "AI") validateAiAction(issues, shape, pointer, options);
   if (type === "ContentList") validateContentList(issues, shape, pointer, options);
@@ -208,6 +209,7 @@ const SET_VARIABLE_TYPES = new Set(["text", "number", "date", "user", "boolean"]
 const CONTENTLIST_LISTTYPES = new Set(["current", "select"]);
 const CONTENTLIST_OPERATION_TYPES = new Set(["add", "edit", "remove"]);
 const CONTENTLIST_NUMERIC_OPERATION_CODES = new Set(["0", "1", "2", "3", "4"]);
+const SIGNAL_EVENT_DEFINITIONS = new Set(["CancelEventDefinition", "RevokeEventDefinition"]);
 
 function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
   const props = shape.properties || {};
@@ -736,6 +738,46 @@ function validateStartActionSettings(issues, shape, pointer, options) {
       }
     }
   }
+}
+
+function validateSignalEvent(issues, shape, pointer, options) {
+  const props = shape.properties || {};
+  const severity = strictLevel(options, "warning");
+  if (asArray(shape.incoming).length > 0) {
+    issue(issues, severity, "SIGNAL_EVENT_INCOMING_FLOW_PRESENT", "Signal event is an event source and should not have incoming sequence flows in the studied export.", {
+      path: `${pointer}.incoming`,
+      nodeId: shapeId(shape),
+    });
+  }
+  if (asArray(shape.outgoing).length === 0) {
+    issue(issues, severity, "SIGNAL_EVENT_OUTGOING_FLOW_MISSING", "Signal event should have at least one outgoing sequence flow to a compensation or follow-up branch.", {
+      path: `${pointer}.outgoing`,
+      nodeId: shapeId(shape),
+    });
+  }
+  if (!Array.isArray(props.eventdefinitions)) {
+    issue(issues, severity, "SIGNAL_EVENT_DEFINITIONS_INVALID", "Signal event should store trigger events as properties.eventdefinitions array.", {
+      path: `${pointer}.properties.eventdefinitions`,
+      nodeId: shapeId(shape),
+    });
+    return;
+  }
+  if (!props.eventdefinitions.length) {
+    issue(issues, severity, "SIGNAL_EVENT_DEFINITIONS_EMPTY", "Signal event should listen for at least one configured event definition.", {
+      path: `${pointer}.properties.eventdefinitions`,
+      nodeId: shapeId(shape),
+    });
+  }
+  props.eventdefinitions.forEach((definition, index) => {
+    if (!SIGNAL_EVENT_DEFINITIONS.has(safeString(definition))) {
+      issue(issues, "warning", "SIGNAL_EVENT_DEFINITION_UNKNOWN", "Signal event uses an event definition outside the export/config-reference-backed set.", {
+        path: `${pointer}.properties.eventdefinitions[${index}]`,
+        nodeId: shapeId(shape),
+        definition: safeString(definition),
+        allowed: [...SIGNAL_EVENT_DEFINITIONS],
+      });
+    }
+  });
 }
 
 function validateMailTask(issues, shape, pointer, options) {

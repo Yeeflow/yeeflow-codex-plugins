@@ -167,6 +167,28 @@ Validators should warn, not hard-error in compatibility mode, for:
 - Start condition runtime gating was not tested.
 - Start email delivery was not tested.
 
+## Signal Event Relationship
+
+`Workflow Actions Runtime Baseline (6)_Signal event.yap` adds a Signal event comparison point for approval-form workflows.
+
+| Concept | Approval Start action | Signal event | Proof |
+|---|---|---|---|
+| Internal type | `StartNoneEvent` | `SignalEvent` | export-proven |
+| Incoming flow | none | none | export-proven |
+| Outgoing flow | normal workflow branch | event compensation branch | export-proven |
+| Terminate/recall storage | `terminate`, `terminate-conditions`, `revoke-conditions` | `properties.eventdefinitions[]` | export-proven |
+| Cancel/terminate event | Start controls whether terminate is available | Signal listens with `CancelEventDefinition` | product-documented + export-proven config |
+| Recall/revoke event | Start controls recall conditions | Signal listens with `RevokeEventDefinition` | product-documented + export-proven config |
+| Downstream cleanup | not a Start concern | may connect to `ContentList`, Set Variable, task, email, or HTTP branches | product-documented; `ContentList` edit export-proven |
+
+Generation rule: use Start action settings to control submitter-facing terminate/recall availability, and use Signal event only as a separate event source branch for recall/terminate follow-up logic. Warn if a Signal event listens for an event that the Start settings appear to make unavailable. Do not claim recall/terminate execution or downstream cleanup execution without focused runtime proof.
+
+Normalized references:
+
+- `docs/studies/normalized/workflow-signal-event/signal-event-basic.normalized.json`
+- `docs/studies/normalized/workflow-signal-event/signal-event-cancel-and-revoke-definition.normalized.json`
+- `docs/studies/normalized/workflow-signal-event/signal-event-downstream-cleanup-flow.normalized.json`
+
 ## Data-List Workflow Start Action
 
 `Purchase Requests.ydl` adds a data-list workflow Start action comparison point.
