@@ -166,6 +166,7 @@ function validateKnownConditionalShapes(issues, action, shape, type, pointer, op
     validateUnsafeAction(issues, shape, type, pointer, options);
   }
   if (type === "MultiAssignmentTask") validateMultiAssignmentTaskAssignees(issues, shape, pointer, options);
+  if (type === "CandidateTask") validateCandidateTaskReceivers(issues, shape, pointer, options);
   if (type === "StartNoneEvent") validateStartActionSettings(issues, shape, pointer, options);
   if (type === "MailTask") validateMailTask(issues, shape, pointer, options);
   if (type === "AI") validateAiAction(issues, shape, pointer, options);
@@ -200,6 +201,7 @@ const ASSIGNMENT_TASK_DUE_DATE_TYPES = new Set(["hour", "day", "minute", "expres
 const ASSIGNMENT_TASK_NOTIFY_RELATIVES = new Set(["-1", "0", "1"]);
 const ASSIGNMENT_TASK_NOTIFY_UNITS = new Set(["day", "hour", "minute"]);
 const ASSIGNMENT_TASK_LIST_FIELD_RE = /listitem|List field|____customListFields/i;
+const CLAIM_TASK_TASKTYPES = new Set(["approve", "complete"]);
 
 function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
   const props = shape.properties || {};
@@ -349,40 +351,173 @@ function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
   });
 }
 
-function validateAssignmentTaskDueDate(issues, props, pointer, severity) {
+function validateCandidateTaskReceivers(issues, shape, pointer, options) {
+  const props = shape.properties || {};
+  const receivers = props.usertaskassignment;
+  const severity = strictLevel(options, "warning");
+  if (Object.prototype.hasOwnProperty.call(props, "tasktype ")) {
+    issue(issues, "warning", "CLAIM_TASK_TASKTYPE_TRAILING_SPACE_PRESENT", "Claim Task config reference mentions properties.tasktype with a trailing space, but studied exports use properties.tasktype. Preserve export field names and warn on trailing-space variants.", {
+      path: `${pointer}.properties.tasktype `,
+      nodeId: shapeId(shape),
+    });
+  }
+  if (props.tasktype !== undefined && !CLAIM_TASK_TASKTYPES.has(safeString(props.tasktype))) {
+    issue(issues, severity, "CLAIM_TASK_TASKTYPE_UNKNOWN", "Claim Task tasktype should be approve or complete when present in studied exports.", {
+      path: `${pointer}.properties.tasktype`,
+      nodeId: shapeId(shape),
+      tasktype: safeString(props.tasktype),
+      allowed: [...CLAIM_TASK_TASKTYPES],
+    });
+  }
+  validateAssignmentTaskDueDate(issues, props, pointer, severity, "CLAIM_TASK");
+  if (props.isenabledemail === true) {
+    for (const field of ["to", "subject", "html"]) {
+      if (valueMissing(props[field])) {
+        issue(issues, severity, "CLAIM_TASK_EMAIL_NOTIFICATION_FIELD_MISSING", "Email-enabled Claim Task should preserve notification recipient, subject, and body/html fields.", {
+          path: `${pointer}.properties.${field}`,
+          nodeId: shapeId(shape),
+          field,
+        });
+      }
+    }
+  }
+  validateAssignmentTaskNotifyRules(issues, props, pointer, severity, "CLAIM_TASK");
+  if (!Array.isArray(receivers)) {
+    issue(issues, severity, "CLAIM_TASK_RECEIVER_CONFIG_MISSING", "Claim Task should store receiver/candidate configuration as properties.usertaskassignment array.", {
+      path: `${pointer}.properties.usertaskassignment`,
+      nodeId: shapeId(shape),
+    });
+    return;
+  }
+  if (!receivers.length) {
+    issue(issues, severity, "CLAIM_TASK_RECEIVER_CONFIG_EMPTY", "Claim Task usertaskassignment receiver/candidate array is empty.", {
+      path: `${pointer}.properties.usertaskassignment`,
+      nodeId: shapeId(shape),
+    });
+    return;
+  }
+  receivers.forEach((receiver, index) => {
+    const itemPath = `${pointer}.properties.usertaskassignment[${index}]`;
+    if (!isObject(receiver)) {
+      issue(issues, severity, "CLAIM_TASK_RECEIVER_ENTRY_INVALID", "Claim Task receiver/candidate entries should be objects.", {
+        path: itemPath,
+        nodeId: shapeId(shape),
+      });
+      return;
+    }
+    const type = safeString(receiver.type);
+    const method = safeString(receiver.method);
+    if (!type) {
+      issue(issues, severity, "CLAIM_TASK_RECEIVER_TYPE_MISSING", "Claim Task receiver/candidate entry should include type.", {
+        path: `${itemPath}.type`,
+        nodeId: shapeId(shape),
+      });
+    }
+    if (!method) {
+      issue(issues, severity, "CLAIM_TASK_RECEIVER_METHOD_MISSING", "Claim Task receiver/candidate entry should include method.", {
+        path: `${itemPath}.method`,
+        nodeId: shapeId(shape),
+      });
+      return;
+    }
+    if (!ASSIGNMENT_TASK_ASSIGNEE_METHODS.has(method)) {
+      issue(issues, severity, "CLAIM_TASK_RECEIVER_METHOD_UNKNOWN", "Claim Task receiver/candidate method is not in the export/config-reference-backed method list.", {
+        path: `${itemPath}.method`,
+        nodeId: shapeId(shape),
+        receiverType: type,
+        method,
+      });
+    }
+    if (type === "position" && valueMissing(receiver.position)) {
+      issue(issues, severity, "CLAIM_TASK_POSITION_ID_MISSING", "Position-based Claim Task receiver should include a position reference.", {
+        path: `${itemPath}.position`,
+        nodeId: shapeId(shape),
+        method,
+      });
+    }
+    if (["direct", "positionorg", "positionloc"].includes(method) && valueMissing(receiver.value)) {
+      issue(issues, severity, "CLAIM_TASK_STATIC_REFERENCE_MISSING", "Static Claim Task receiver references should include a value.", {
+        path: `${itemPath}.value`,
+        nodeId: shapeId(shape),
+        receiverType: type,
+        method,
+      });
+    }
+    if (["expression", "positionorgexpr", "positionlocexpr"].includes(method)) {
+      if (valueMissing(receiver.value)) {
+        issue(issues, severity, "CLAIM_TASK_EXPRESSION_MISSING", "Expression-based Claim Task receiver should include a rich expression value.", {
+          path: `${itemPath}.value`,
+          nodeId: shapeId(shape),
+          receiverType: type,
+          method,
+        });
+      } else if (typeof receiver.value !== "string" || !receiver.value.includes("<input") || !receiver.value.includes("data=")) {
+        issue(issues, severity, "CLAIM_TASK_EXPRESSION_OPAQUE", "Expression-based Claim Task receiver value is not the export-proven expression-button shape.", {
+          path: `${itemPath}.value`,
+          nodeId: shapeId(shape),
+          receiverType: type,
+          method,
+        });
+      }
+    }
+    if (typeof receiver.value === "string" && ASSIGNMENT_TASK_LIST_FIELD_RE.test(receiver.value)) {
+      issue(issues, "warning", "CLAIM_TASK_LIST_FIELD_RECEIVER_RUNTIME_UNPROVEN", "Data-list Claim Task receiver expression references a list-item field value; preserve the expression shape and runtime-test with safe list records before claiming claim-routing behavior.", {
+        path: itemPath,
+        nodeId: shapeId(shape),
+        method,
+        fieldContext: receiver.value.includes("CreatedBy") ? "CreatedBy" : "listitem",
+      });
+    }
+    if (type === "user" && method === "expression" && typeof receiver.value === "string" && receiver.value.includes("type&quot;:&quot;usergroup")) {
+      issue(issues, "warning", "CLAIM_TASK_USER_GROUP_RUNTIME_UNPROVEN", "User group receiver shape is export-proven/config-reference-backed, but claim pool expansion and ownership behavior require focused runtime proof.", {
+        path: itemPath,
+        nodeId: shapeId(shape),
+      });
+    }
+    if (type === "user" && ["direct", "users"].includes(method)) {
+      issue(issues, "warning", "CLAIM_TASK_DIRECT_USER_TENANT_SENSITIVE", "Direct user receiver config is tenant-sensitive; use only with explicit authorized mapping or read-only directory lookup, and do not commit private user data.", {
+        path: itemPath,
+        nodeId: shapeId(shape),
+        method,
+      });
+    }
+  });
+}
+
+function validateAssignmentTaskDueDate(issues, props, pointer, severity, codePrefix = "ASSIGNMENT_TASK") {
   if (props.duedatedefinition !== undefined && !valueMatchesType(props.duedatedefinition, "number")) {
-    issue(issues, severity, "ASSIGNMENT_TASK_DUE_DATE_VALUE_INVALID", "Assignment task due date definition should be numeric when present.", {
+    issue(issues, severity, `${codePrefix}_DUE_DATE_VALUE_INVALID`, "Workflow task due date definition should be numeric when present.", {
       path: `${pointer}.properties.duedatedefinition`,
     });
   }
   if (props.duedatetype !== undefined && !ASSIGNMENT_TASK_DUE_DATE_TYPES.has(safeString(props.duedatetype))) {
-    issue(issues, severity, "ASSIGNMENT_TASK_DUE_DATE_TYPE_UNKNOWN", "Assignment task due date type is not in the product-documented/export-studied due date unit list.", {
+    issue(issues, severity, `${codePrefix}_DUE_DATE_TYPE_UNKNOWN`, "Workflow task due date type is not in the product-documented/export-studied due date unit list.", {
       path: `${pointer}.properties.duedatetype`,
       duedatetype: safeString(props.duedatetype),
       allowed: [...ASSIGNMENT_TASK_DUE_DATE_TYPES],
     });
   }
   if (safeString(props.duedatetype) === "express" && valueMissing(props.duedateexpress)) {
-    issue(issues, severity, "ASSIGNMENT_TASK_DUE_DATE_EXPRESSION_MISSING", "Expression-based due date should preserve properties.duedateexpress.", {
+    issue(issues, severity, `${codePrefix}_DUE_DATE_EXPRESSION_MISSING`, "Expression-based due date should preserve properties.duedateexpress.", {
       path: `${pointer}.properties.duedateexpress`,
     });
   }
   if (props.duedateexpress !== undefined && (typeof props.duedateexpress !== "string" || !props.duedateexpress.includes("<input"))) {
-    issue(issues, severity, "ASSIGNMENT_TASK_DUE_DATE_EXPRESSION_OPAQUE", "Assignment task due date expression is not the export-proven expression-button shape.", {
+    issue(issues, severity, `${codePrefix}_DUE_DATE_EXPRESSION_OPAQUE`, "Workflow task due date expression is not the export-proven expression-button shape.", {
       path: `${pointer}.properties.duedateexpress`,
     });
   }
   if (props.isfromworkcalendar !== undefined && typeof props.isfromworkcalendar !== "boolean") {
-    issue(issues, severity, "ASSIGNMENT_TASK_WORK_CALENDAR_FLAG_INVALID", "Assignment task working-calendar due-date flag should be boolean when present.", {
+    issue(issues, severity, `${codePrefix}_WORK_CALENDAR_FLAG_INVALID`, "Workflow task working-calendar due-date flag should be boolean when present.", {
       path: `${pointer}.properties.isfromworkcalendar`,
     });
   }
 }
 
-function validateAssignmentTaskNotifyRules(issues, props, pointer, severity) {
+function validateAssignmentTaskNotifyRules(issues, props, pointer, severity, codePrefix = "ASSIGNMENT_TASK") {
   if (props.notifyrules === undefined) return;
   if (!Array.isArray(props.notifyrules)) {
-    issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_RULES_INVALID", "Assignment task due-date notification rules should be stored as an array when present.", {
+    issue(issues, severity, `${codePrefix}_NOTIFY_RULES_INVALID`, "Workflow task due-date notification rules should be stored as an array when present.", {
       path: `${pointer}.properties.notifyrules`,
     });
     return;
@@ -390,39 +525,39 @@ function validateAssignmentTaskNotifyRules(issues, props, pointer, severity) {
   props.notifyrules.forEach((rule, index) => {
     const rulePath = `${pointer}.properties.notifyrules[${index}]`;
     if (!isObject(rule)) {
-      issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_RULE_INVALID", "Assignment task due-date notification rule should be an object.", {
+      issue(issues, severity, `${codePrefix}_NOTIFY_RULE_INVALID`, "Workflow task due-date notification rule should be an object.", {
         path: rulePath,
       });
       return;
     }
     if (safeString(rule.actiontype) && safeString(rule.actiontype) !== "1") {
-      issue(issues, "warning", "ASSIGNMENT_TASK_NOTIFY_ACTIONTYPE_UNSTUDIED", "Assignment task due-date action type is not the reminder actiontype export-studied here.", {
+      issue(issues, "warning", `${codePrefix}_NOTIFY_ACTIONTYPE_UNSTUDIED`, "Workflow task due-date action type is not the reminder actiontype export-studied here.", {
         path: `${rulePath}.actiontype`,
         actiontype: safeString(rule.actiontype),
       });
     }
     const actiondate = rule.actiondate;
     if (!isObject(actiondate)) {
-      issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_ACTIONDATE_MISSING", "Assignment task due-date notification rule should include actiondate.", {
+      issue(issues, severity, `${codePrefix}_NOTIFY_ACTIONDATE_MISSING`, "Workflow task due-date notification rule should include actiondate.", {
         path: `${rulePath}.actiondate`,
       });
       return;
     }
     const relative = safeString(actiondate.relative);
     if (!ASSIGNMENT_TASK_NOTIFY_RELATIVES.has(relative)) {
-      issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_RELATIVE_UNKNOWN", "Assignment task due-date notification relative timing is not export-proven.", {
+      issue(issues, severity, `${codePrefix}_NOTIFY_RELATIVE_UNKNOWN`, "Workflow task due-date notification relative timing is not export-proven.", {
         path: `${rulePath}.actiondate.relative`,
         relative,
       });
     }
     if (relative !== "0") {
       if (valueMissing(actiondate.value) || !valueMatchesType(actiondate.value, "number")) {
-        issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_OFFSET_VALUE_INVALID", "Before/after due-date notification rules should include a numeric offset value.", {
+        issue(issues, severity, `${codePrefix}_NOTIFY_OFFSET_VALUE_INVALID`, "Before/after due-date notification rules should include a numeric offset value.", {
           path: `${rulePath}.actiondate.value`,
         });
       }
       if (!ASSIGNMENT_TASK_NOTIFY_UNITS.has(safeString(actiondate.type))) {
-        issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_OFFSET_UNIT_UNKNOWN", "Before/after due-date notification rules should use a studied time unit.", {
+        issue(issues, severity, `${codePrefix}_NOTIFY_OFFSET_UNIT_UNKNOWN`, "Before/after due-date notification rules should use a studied time unit.", {
           path: `${rulePath}.actiondate.type`,
           type: safeString(actiondate.type),
           allowed: [...ASSIGNMENT_TASK_NOTIFY_UNITS],
@@ -431,7 +566,7 @@ function validateAssignmentTaskNotifyRules(issues, props, pointer, severity) {
     }
     for (const field of ["subject", "content"]) {
       if (valueMissing(rule[field])) {
-        issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_CONTENT_FIELD_MISSING", "Reminder notification rules should preserve subject and content fields.", {
+        issue(issues, severity, `${codePrefix}_NOTIFY_CONTENT_FIELD_MISSING`, "Reminder notification rules should preserve subject and content fields.", {
           path: `${rulePath}.${field}`,
           field,
         });

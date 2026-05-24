@@ -361,3 +361,11 @@ H. Wrapper build result only if final validation passes
 I. Risks, assumptions, and sandbox test checklist
 
 If metadata is missing, stop at draft mode and produce a dependency map.
+
+<!-- workflow-claim-task-learning:start -->
+## Approval Workflow Claim Task Guidance
+
+Use `docs/studies/workflow-claim-task-action.md` for Claim Task generation/validation. In approval-form workflows, Claim Task is export-proven as `CandidateTask`. The studied approval export found user-group receiver expressions, `properties.taskurl` references to task pages, and explicit `tasktype` values `approve` and `complete`. The approval Claim Task approve example used two outgoing flows; the complete example used one outgoing flow.
+
+Claim Task receiver/candidate config lives in `properties.usertaskassignment[]`, but it should be described as receivers/candidates until a user claims the task. Do not treat it as direct assignee ownership. Do not generate `properties.tasktype ` with a trailing space. Do not claim claim-pool behavior, claim locking, approve/reject/complete execution after claim, quick completion, or email delivery without focused runtime proof.
+<!-- workflow-claim-task-learning:end -->

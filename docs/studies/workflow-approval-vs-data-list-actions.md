@@ -140,6 +140,23 @@ The data-list workflow designer opened with a Start -> Assignment Task -> End gr
 - Data-list task form save/edit behavior for list-bound controls was not runtime-tested.
 - Default/native list field read-only behavior is based only on the studied export shape.
 
+## Claim Task Addendum
+
+`Workflow Actions Runtime Baseline (3)_Claim task.yap` adds Claim Task comparison coverage.
+
+| Capability | Approval form workflow | Data-list workflow | Proof level |
+|---|---|---|---|
+| Internal action type | `CandidateTask` | `CandidateTask` | export-proven + config-reference-backed |
+| Receiver/candidate field | `properties.usertaskassignment[]` | `properties.usertaskassignment[]` | export-proven |
+| Task form association | `properties.taskurl` resolves to task pages such as `WARTB Task3`/`WARTB Task4` | `properties.taskurl` resolves to data-list task page `Approval task` | export-proven |
+| Task type | `approve` and `complete` | `approve` and `complete` | export-proven |
+| Receiver sources | user-group expression | direct user, applicant line manager, Created By line manager | export-proven |
+| Data-list field context | not found | `listitem` / `CreatedBy` expression found | export-proven |
+| Email config | fields present but disabled in studied Claim Tasks | `isenabledemail=true` with `to`, `subject`, and `html` | export-proven |
+| Claim ownership behavior | product-documented only | product-documented only | not runtime-proven |
+
+Use Claim Task for candidate/receiver pool ownership. Use Assignment Task for direct assignee ownership. Do not claim group/list-field claim routing or claim locking until a focused runtime baseline proves it.
+
 ## Scheduled Workflow Addendum
 
 `Workflow Actions Runtime Baseline (1).yap` adds one Scheduled Workflow comparison point. See `docs/studies/workflow-scheduled-vs-approval-data-list-actions.md` for the focused study.
