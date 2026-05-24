@@ -154,3 +154,9 @@ Recommended next step is a focused runtime baseline for Claim Task designer/open
 - due-date and email configuration panel proof
 
 Claim execution should remain deferred unless safe receivers are explicitly selected. Email delivery should remain out of scope unless safe recipients and delivery scope are explicitly approved.
+
+## Runtime Baseline Update
+
+The combined `Workflow Actions Batch Runtime Baseline` imported and opened successfully. The approval workflow designer rendered a `CandidateTask` Claim Task with receiver/candidate configuration and task-form selection, and the workflow published successfully. The data-list workflow designer also rendered a `CandidateTask` with direct user, applicant line manager, and Created By line manager candidate expressions plus task-form settings, and the data-list workflow published successfully.
+
+This upgrades the Claim Task baseline to import/open/designer/publish-proven for the generated approval and data-list configuration shapes only. Claim execution, claim locking, pending-task routing, approve/reject/complete after claim, quick completion, and email delivery remain not runtime-proven.

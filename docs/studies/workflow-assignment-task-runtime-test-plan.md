@@ -223,3 +223,13 @@ Future focused Signal event baseline should first prove import/open/designer/pub
 | graph validation | prove Signal event branch is allowed as a separate event-source component | validator/designer | no runtime execution |
 
 Execution proof should be a later separate pass using disposable approval requests and safe target records. Recall/terminate execution, downstream `ContentList` edit/remove mutation, and any email behavior remain deferred until explicitly scoped.
+
+## Batch Workflow Actions Runtime Baseline Result
+
+`Workflow Actions Batch Runtime Baseline` was generated and runtime-tested as a combined designer/open/publish baseline for Claim Task, Set variable, Set data list, and Signal event.
+
+The package imported successfully, the app opened, the approval form opened, the approval form designer opened, the approval workflow designer opened, and the approval workflow published successfully. The approval workflow rendered `CandidateTask`, `SetVariableTask`, `ContentList`, and `SignalEvent` nodes. Sampled panels showed Claim Task receiver/task-form settings, Set variable current and another-workflow settings, Set data list selected-list add settings, Signal event Canceled/Recalled settings, and downstream cleanup Set data list settings.
+
+The data list `Purchase Requests Batch Runtime Test` opened, its workflow designer opened, and the data-list workflow published successfully. The data-list workflow rendered Claim Task, Set variable, current-list Set data list, and selected-list Set data list nodes. Sampled panels showed data-list candidate expressions, current-workflow variable settings, current-list ContentList settings, and selected-list add settings.
+
+Treat this as import/open/designer/publish proof only. Do not claim Claim Task claiming, task routing, approve/reject/complete execution, Set variable mutation, Set data list add/edit/remove execution, sub-list row iteration, Signal event recall/terminate firing, downstream cleanup execution, Products workflow trigger execution, or email delivery from this baseline.

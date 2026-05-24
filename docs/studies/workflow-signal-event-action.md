@@ -134,3 +134,9 @@ This supports the compensation/cleanup pattern: a recall/terminate event can run
 This pass does not import, publish, submit, recall, terminate, trigger, or execute the workflow. It does not prove that Signal event branches run at runtime, that `CancelEventDefinition` or `RevokeEventDefinition` fire, that downstream actions execute, or that data-list updates occur.
 
 Recommended next step: merge this export-learning branch if review is clean, then run a focused combined runtime baseline for Claim Task + Set variable + Set data list + Signal event designer/open/publish proof. Recall/terminate execution and cleanup mutation should remain deferred until explicitly scoped with disposable requests and safe target records.
+
+## Runtime Baseline Update
+
+The combined `Workflow Actions Batch Runtime Baseline` imported and opened successfully. The approval workflow designer rendered a `SignalEvent` with no incoming flow and one outgoing flow to a downstream `ContentList` cleanup branch. The Signal event panel opened and showed both Canceled and Recalled selected. The approval workflow published successfully.
+
+This upgrades the generated Signal event shape to import/open/designer/publish-proven only. Recall or terminate triggering, event firing, downstream cleanup mutation, and any email or task behavior remain not runtime-proven.

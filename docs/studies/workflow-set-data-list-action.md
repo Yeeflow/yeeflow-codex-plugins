@@ -241,3 +241,9 @@ Execution proof should be split by risk:
 - edit proof requires a single disposable target row and a narrow filter
 - remove proof should remain deferred unless the user explicitly approves destructive testing on disposable data
 - document-library mutation should wait for a dedicated export and runtime plan
+
+## Runtime Baseline Update
+
+The combined `Workflow Actions Batch Runtime Baseline` imported and opened successfully. The approval workflow designer rendered selected-list `ContentList` nodes for add, edit, remove, sub-list/detail-row mapping, and Signal-event cleanup settings, and the approval workflow published successfully. The data-list workflow designer rendered current-list and selected-list `ContentList` nodes, and the data-list workflow published successfully.
+
+This upgrades the generated Set data list shapes to import/open/designer/publish-proven only. Record creation, update, delete/remove, current-list mutation, sub-list row iteration, numeric operation execution, document-library mutation, downstream cleanup execution, and Products workflow triggering remain not runtime-proven.
