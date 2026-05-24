@@ -178,6 +178,7 @@ Generation guidance:
 - Submit form task operations must match task type: approve/reject/reassign/add assignee for Approval tasks and complete for Complete tasks.
 - Export-proven Submit form task operation markers include no `submitType` for default approve/complete by host task context, `submitType = "2"` for reject, `submitType = "4"` for reassign with `forword`/`remark`, and `submitType = "5"` for add assignee with `forword`/`remark`/`assignee`. Preserve the export spelling `forword`.
 - Use `Workflow Action Approval Test.ywf` as the corrected positive reference for Add others/Add assignee custom buttons: the button's `attrs.control_action` should resolve to the `Add assignee button clicked` form action whose Submit form step uses `submitType = "5"`. Do not bind Add others to reject/reassign/approve actions.
+- The focused `Workflow Task Form Runtime Baseline` package imported, opened, rendered the form designer, listed the submission form plus `WARTB Task`, `WARTB Task2`, `WARTB Task3`, and `WARTB Task4`, rendered `WARTB Task3` custom buttons, opened the workflow designer, and published successfully. Treat this as import/open/designer/publish proof for task-form configuration only.
 - Do not claim custom task-button execution, reassign/add-assignee behavior, or Complete task execution without focused runtime proof.
 
 ## Custom Code Controls In Approval Forms

@@ -139,6 +139,8 @@ Runtime scenarios to add:
 
 Before runtime, use the corrected `Workflow Action Approval Test.ywf` binding shape for Add others/Add assignee. The earlier `.yap` binding mismatch showed why this check matters: label, `attrs.control_action`, resolved action name, and Submit form `submitType` must align before any custom button is executed. Runtime execution of Add assignee remains deferred until safe users and task scope are explicitly selected.
 
+The focused `Workflow Task Form Runtime Baseline` package was generated from the task-form `.yap` plus the corrected `.ywf` and imported into Yeeflow. It opened the app, opened the approval form, opened the form designer, rendered the submission form plus all four task forms in the selector, rendered `WARTB Task3` custom buttons including `Add others to this task`, opened the workflow designer, and published successfully. Treat this as import/open/designer/publish proof for task-form configuration only. No approval request was submitted, no task operation was executed, no task-owner fields were saved, no reassign/add-assignee operation was run, no Complete task was completed, and no email was sent.
+
 ## Combined Workflow Actions Baseline
 
 The combined generator `generate-workflow-actions-combined-runtime-baseline.mjs` creates `workflow-actions-combined-runtime-baseline.v1.yap` for one approval form plus one child data list. It is intended to prove import/open/designer/publish behavior for the learned approval-form and data-list workflow action settings together.

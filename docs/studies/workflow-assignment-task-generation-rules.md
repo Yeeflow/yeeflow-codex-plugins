@@ -106,6 +106,7 @@ Use these rules for generated packages:
 - Custom task buttons use `type="action_button"` and bind through `attrs.control_action` to a `formdef.actions[].id`. Keep that binding consistent with the button label and Submit form operation.
 - Submit form operation shapes found in task forms are: no `submitType` for approval/default submit on Approval tasks, `submitType="2"` for reject, `submitType="4"` for reassign with `forword` and `remark`, `submitType="5"` for add assignee with `forword`, `remark`, and `assignee`, and no `submitType` for complete on Complete tasks. Preserve the export spelling `forword`.
 - `Workflow Actions Runtime Baseline (2)_Task forms.yap` contains a custom-button binding mismatch: the visible `Add others to this task` button points to the reject action ID while a separate `Add assignee button clicked` action contains `submitType="5"`. The follow-up `Workflow Action Approval Test.ywf` corrects this binding so the Add others button resolves to the add-assignee action. Use the corrected `.ywf` shape as the positive export-proven reference, and keep validators warning-first when label, bound action, and Submit form operation disagree.
+- `generate-workflow-task-form-runtime-baseline.mjs` applies the corrected `.ywf` definition to the studied task-form package family. The resulting package imported, opened, rendered the form designer and workflow designer, showed all four task forms in the selector, showed `WARTB Task3` custom buttons, and published successfully. Treat this as import/open/designer/publish proof only; custom button execution, reassign/add-assignee runtime behavior, Complete task execution, task-owner field persistence, Claim Task task-form behavior, and email delivery remain unproven.
 
 ## Runtime-Proof Requirements
 
@@ -171,6 +172,7 @@ These were not found in the current exports or remain insufficiently proven:
 - custom task-form button runtime execution for approve/reject/reassign/add-assignee/complete
 - Action Panel explicit button child schema, because buttons appear derived rather than serialized as child controls in the studied export
 - Add-assignee custom button runtime execution, even though the corrected `.ywf` now proves the intended button-to-action binding shape
+- task-owner field save/persistence from custom task forms, even though the generated task-form baseline rendered and published
 
 Do not generate these as schema-safe until an export proves their package shape. Do not claim routing-safe until runtime proof exists.
 

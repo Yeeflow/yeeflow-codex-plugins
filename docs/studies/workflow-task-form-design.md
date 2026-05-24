@@ -8,7 +8,7 @@ Source export:
 /Users/Renger/Downloads/Workflow Actions Runtime Baseline (2)_Task forms.yap
 ```
 
-This study is export-proven and product-documented only. No approval request was submitted, no task operation was executed, no workflow was published from this branch, and no email was sent.
+This study is export-proven and product-documented for schema learning. A later focused baseline imported, opened, rendered the designer, and published the generated task-form package; no approval request was submitted, no task operation was executed, and no email was sent.
 
 ## Model Found
 
@@ -169,6 +169,14 @@ References:
 | Comment mapping | `comment` and `remark` referenced `Taskcomments` text variable | same shape preserved | no schema change | export-proven | No private data in normalized refs |
 | Validator guidance | Warn for label/action operation mismatches | Warn remains useful, but corrected export is the positive reference | refined | validator-backed after local checks | Do not hard-error compatibility exports |
 
+## Focused Runtime Baseline
+
+`generate-workflow-task-form-runtime-baseline.mjs` creates `workflow-task-form-runtime-baseline.v1.yap` by applying the corrected `Workflow Action Approval Test.ywf` form definition to the studied package family.
+
+The generated package imported in Yeeflow as `Workflow Task Form Runtime Baseline`, opened successfully, opened the approval form, opened the form designer, rendered the task-form selector with `WARTB`, `WARTB Task`, `WARTB Task2`, `WARTB Task3`, and `WARTB Task4`, rendered `WARTB Task3` with the custom approve/reject/reassign/add-assignee buttons, opened the workflow designer, and published successfully.
+
+This upgrades the package host surfaces to import/open/designer/publish-proven only. It does not prove custom button operation execution, task-owner field persistence, reassign/add-assignee runtime behavior, Complete task execution, Claim Task behavior, or email delivery.
+
 ## Generation Rules
 
 - Preserve submission form and task forms as separate `pageurls[]` entries.
@@ -203,14 +211,14 @@ Hard errors should wait until import/runtime failure is proven for generated-fin
 
 ## Runtime Test Plan
 
-Future focused runtime baseline:
+The first focused task-form baseline is documented in `docs/studies/workflow-task-form-runtime-baseline.md`.
 
-1. Import/open a package with the four task-form patterns.
-2. Confirm task form selection renders on Assignment Task panels.
-3. Publish workflow.
-4. Open task forms through safe disposable tasks.
-5. Execute custom approve/reject/reassign/add-assignee/complete only with safe test assignees.
-6. Do not send email or route to broad/unknown users.
+Future task-operation baseline:
+
+1. Open task forms through safe disposable tasks.
+2. Execute custom approve/reject/reassign/add-assignee/complete only with safe test assignees.
+3. Verify task-owner editable field persistence only on disposable requests.
+4. Do not send email or route to broad/unknown users.
 
 ## Known Gaps
 
@@ -219,3 +227,4 @@ Future focused runtime baseline:
 - Action Panel button labels are product-documented and derived; the export does not store them as explicit child buttons.
 - Complete-task custom submit uses the same default Submit form shape as approval but is distinguished by action/task context; runtime proof is still needed.
 - Reassign/add-assignee execution was not tested.
+- Task-owner field persistence was not tested.
