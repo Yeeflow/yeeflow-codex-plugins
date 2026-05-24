@@ -80,6 +80,8 @@ Data-list workflow export learning: `Spark & AI (1).yap` proves list workflows a
 
 Data-list workflow Assignment Task learning: `Purchase Requests.ydl` proves a data-list workflow can use the same `MultiAssignmentTask` action family as approval workflows, while adding list-item context to assignee expressions. The studied export uses `FlowMappings[].Setting.NewTrigger = true`, `WorkflowType = 1`, a Start action with email notification fields but no terminate/recall fields, and an Assignment Task with a Created By list-field expression resolving `LineManager`. Its task form mixes normal task-form controls with list-bound controls using `isListControl = true`, `identifier`, `InternalName`, `fieldID`, and `____customListFields_` binding. Preserve custom list fields as read-only when the task should not update source list data; default/native fields such as Created By appear read-only in the studied export, but broader native-field behavior remains runtime-pending. Use `docs/studies/workflow-approval-vs-data-list-actions.md` and normalized refs under `docs/studies/normalized/workflow-task-forms/` before generating data-list workflow Assignment Tasks.
 
+Scheduled workflow comparison: `Workflow Actions Runtime Baseline (1).yap` proves scheduled workflow Start and Assignment Task shapes without data-list list-field expression sources. Do not transfer `Created By` or custom list-field assignee context from data-list workflows into scheduled workflows unless a scheduled export or focused runtime baseline proves that host context.
+
 ## References
 
 Load only the relevant reference:

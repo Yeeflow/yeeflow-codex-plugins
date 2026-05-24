@@ -101,7 +101,9 @@ function safeJson(value, fallback = {}) {
 
 function redactText(value) {
   if (typeof value !== "string") return value;
-  return value.replace(EMAIL_RE, "<REDACTED_EMAIL>");
+  return value
+    .replace(EMAIL_RE, "<REDACTED_EMAIL>")
+    .replace(/\b\d{16,}\b/g, "<REDACTED_PRIVATE_ID>");
 }
 
 function redact(value) {
@@ -120,6 +122,127 @@ function redact(value) {
 
 function shapeType(shape) {
   return shape?.stencil?.id || shape?.stencil || shape?.type || "unknown";
+}
+
+function expressionLabel(value) {
+  if (typeof value !== "string" || !value.includes("<input")) return null;
+  const decoded = value
+    .replace(/&quot;/g, "\"")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+  return (decoded.match(/\bvalue="([^"]*)"/) || [])[1] || "expression-button";
+}
+
+function expressionContextHints(value) {
+  if (typeof value !== "string") return [];
+  const hints = new Set();
+  if (/application|Applicant|ApplicantUserID|FlowNo/.test(value)) hints.add("approval-or-application-context");
+  if (/listitem|____customListFields|Created By/.test(value)) hints.add("data-list-item-context");
+  if (/variable|Workflow Variables/.test(value)) hints.add("workflow-variable-context");
+  if (/task|AssigneeID|TaskURL|Current Task Context/.test(value)) hints.add("task-context");
+  if (/usergroup/.test(value)) hints.add("user-group-reference");
+  if (/position/.test(value)) hints.add("position-reference");
+  return [...hints].sort();
+}
+
+function summarizeStartAction(shape) {
+  const props = shape.properties || {};
+  return {
+    id: "<REDACTED_WORKFLOW_NODE_ID>",
+    resourceid: "<REDACTED_WORKFLOW_NODE_ID>",
+    type: "StartNoneEvent",
+    name: props.name || "Start",
+    graph: {
+      incoming: asArray(shape.incoming).length,
+      outgoing: asArray(shape.outgoing).length,
+    },
+    fieldPresence: {
+      taskurl: props.taskurl !== undefined,
+      terminate: props.terminate !== undefined,
+      terminateConditions: props["terminate-conditions"] !== undefined,
+      revokeConditions: props["revoke-conditions"] !== undefined,
+      isenabledemail: props.isenabledemail !== undefined,
+      to: props.to !== undefined,
+      subject: props.subject !== undefined,
+      html: props.html !== undefined,
+    },
+    settingsShape: {
+      isenabledemail: props.isenabledemail ?? null,
+      terminate: props.terminate ?? null,
+      terminateConditions: Array.isArray(props["terminate-conditions"]) ? `array(${props["terminate-conditions"].length})` : props["terminate-conditions"] ?? null,
+      revokeConditions: Array.isArray(props["revoke-conditions"]) ? `array(${props["revoke-conditions"].length})` : props["revoke-conditions"] ?? null,
+      to: props.to ? {
+        expressionLabel: expressionLabel(props.to),
+        contextHints: expressionContextHints(props.to),
+      } : null,
+      subject: props.subject ? {
+        expressionLabel: expressionLabel(props.subject),
+        contextHints: expressionContextHints(props.subject),
+      } : null,
+      html: props.html ? {
+        redactedShape: "rich-text-html",
+        contextHints: expressionContextHints(props.html),
+      } : null,
+      taskurl: props.taskurl ? "<REDACTED_TASK_FORM_PAGE_ID>" : null,
+    },
+  };
+}
+
+function summarizeAssignmentTask(shape) {
+  const props = shape.properties || {};
+  const assignments = asArray(props.usertaskassignment);
+  return {
+    id: "<REDACTED_WORKFLOW_NODE_ID>",
+    resourceid: "<REDACTED_WORKFLOW_NODE_ID>",
+    type: "MultiAssignmentTask",
+    name: props.name || "Assignment Task",
+    graph: {
+      incoming: asArray(shape.incoming).length,
+      outgoing: asArray(shape.outgoing).length,
+    },
+    fieldPresence: {
+      usertaskassignment: props.usertaskassignment !== undefined,
+      tasktype: props.tasktype !== undefined,
+      approveway: props.approveway !== undefined,
+      approvepercentage: props.approvepercentage !== undefined,
+      issequential: props.issequential !== undefined,
+      duedatedefinition: props.duedatedefinition !== undefined,
+      duedatetype: props.duedatetype !== undefined,
+      notifyrules: props.notifyrules !== undefined,
+      isenabledemail: props.isenabledemail !== undefined,
+      taskurl: props.taskurl !== undefined,
+    },
+    settingsShape: {
+      tasktype: props.tasktype ?? null,
+      approveway: props.approveway ?? null,
+      approvepercentage: props.approvepercentage ?? null,
+      appointedOrder: props.issequential === true ? "sequential" : "parallel-or-default",
+      issequential: props.issequential ?? null,
+      isenabledemail: props.isenabledemail ?? null,
+      duedatedefinition: props.duedatedefinition ?? null,
+      duedatetype: props.duedatetype ?? null,
+      notifyrules: Array.isArray(props.notifyrules) ? `array(${props.notifyrules.length})` : props.notifyrules ?? null,
+      taskurl: props.taskurl ? "<REDACTED_TASK_FORM_PAGE_ID>" : null,
+    },
+    assigneeShape: {
+      count: assignments.length,
+      entryFieldNames: assignments.map((entry) => Object.keys(entry || {})),
+      entries: assignments.map((entry) => ({
+        type: entry?.type || null,
+        method: entry?.method || null,
+        hasValue: entry?.value !== undefined,
+        hasPosition: entry?.position !== undefined,
+        valueShape: entry?.value ? {
+          expressionLabel: expressionLabel(entry.value),
+          contextHints: expressionContextHints(entry.value),
+          redactedReference: expressionLabel(entry.value) ? "expression-button" : "<REDACTED_ASSIGNEE_REFERENCE>",
+        } : null,
+        position: entry?.position ? "<REDACTED_POSITION_ID>" : null,
+        title: entry?.title ? "<REDACTED_ASSIGNEE_LABEL>" : null,
+      })),
+    },
+  };
 }
 
 function summarizeActions(def) {
@@ -167,6 +290,16 @@ function summarizeActions(def) {
 
 function summarizeScheduledWorkflow(form) {
   const def = safeJson(form.DefResource, {});
+  const startActions = asArray(def.childshapes).filter((shape) => shapeType(shape) === "StartNoneEvent").map(summarizeStartAction);
+  const assignmentTasks = asArray(def.childshapes).filter((shape) => shapeType(shape) === "MultiAssignmentTask").map(summarizeAssignmentTask);
+  const expressionContextHintsFound = [...new Set([
+    ...startActions.flatMap((start) => [
+      ...asArray(start.settingsShape.to?.contextHints),
+      ...asArray(start.settingsShape.subject?.contextHints),
+      ...asArray(start.settingsShape.html?.contextHints),
+    ]),
+    ...assignmentTasks.flatMap((task) => task.assigneeShape.entries.flatMap((entry) => asArray(entry.valueShape?.contextHints))),
+  ])].sort();
   return {
     name: form.Name || null,
     key: form.Key || null,
@@ -182,6 +315,9 @@ function summarizeScheduledWorkflow(form) {
       variables: redact(def.variables || {}),
       pageurls: asArray(def.pageurls).map((page) => ({ id: page.id || null, title: page.title || page.name || null, pagetype: page.pagetype || null })),
       actions: summarizeActions(def),
+      startActions,
+      assignmentTasks,
+      expressionContextHintsFound,
     },
   };
 }
