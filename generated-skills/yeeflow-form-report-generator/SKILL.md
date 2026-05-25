@@ -23,6 +23,8 @@ Current proof boundary: export-proven and validator-backed only from `docs/studi
 
 Shared data-view update: Form Reports use the same `Layouts[]` family as data lists for list-like views. `Data Lists (1).yap` export-proves data-list view metadata on `Title`, `Type`, `Ext1.Url`, `IsDefault`, and `IsItemPerm`, and view settings in `LayoutView`. For Form Reports, only Type `0` views and `Attr_IsViewDetail` are export-proven in this repository; Help Center documents Form Report data views across additional product view types, but generate gallery/calendar/kanban Form Report views only as product-documented or after a Type `32` export proves the exact settings.
 
+Negative rule: Data List / Document Library manage-permission settings and custom notification `RemindRules` do not apply to Form Report. Do not generate Form Report custom notifications or Data List / Document Library administrator/basic/advanced permission matrices; keep Form Report permissions limited to report access, export permission, and view/detail access patterns proven in Form Report studies.
+
 ## Generation Rules
 
 - Generate Form Reports only when a source approval form exists in the same app package or the dependency is explicitly external and validated.

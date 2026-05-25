@@ -42,7 +42,8 @@ Data-view generation should follow `docs/studies/data-view-resource-settings.md`
 - Fixed filters live in `LayoutView.filter[]`; end-user filterable fields live in `LayoutView.query[]` entries with `IsFilter = true`.
 - Sort fields in `LayoutView.sort[]` must resolve to valid fields or known system fields.
 - Gallery uses `TitleField` and optional `CoverField`; kanban uses `TitleField`, `CategoryField`, optional `CoverField`, and `IncludeUncategorized`; calendar uses `Columns` and calendar color/scope settings.
-- Permission schemas beyond inherited/no view item permission are not export-proven in this sample; warn on opaque custom audiences.
+- Data List permission flags are export-proven in `Data Lists (1).yap` at `ListModel.Perm`, `ListModel.IsBreakInherit`, `ListModel.IsItemPerm`, and view-level `Layouts[].IsItemPerm`. UI-confirmed administrators, basic edit/view audiences, and advanced edit/delete/new/import/export matrix rows were not located in the package payload after deep nested-JSON search; treat those detailed audiences as unproven for generation and warn on opaque custom audiences.
+- Data List notifications are export-proven in `Data.Childs[].RemindRules[]`. `Event planning 5` contains item-added Type `1`, regular reminder Type `2`, date-field reminder Type `3`, and item-changed Type `4` rules. `Rules` and `Receiver` are stringified JSON; recipients can be users Type `1`, departments Type `2`, user groups Type `3`, and list-field recipients via `Receiver.ListDefs[]`. Do not claim notification delivery without runtime proof.
 
 Do not claim runtime behavior for view switching, permissions, calendar rendering, or kanban drag/drop without a focused runtime baseline.
 
@@ -156,6 +157,8 @@ Load only the relevant reference:
 ## Document Library Carry-Forward
 
 Document libraries reuse many data-list mechanics but are not normal data lists. When an app package includes a document library, route app-level generation through `yeeflow-application-generator` and validate the resource as Type `16`.
+
+Data List / Document Library manage-permissions and custom notifications are product-documented for both resource types, but this pass export-proved the package fields only for Data Lists because `Data Lists (1).yap` contains no Type `16` resources. Do not clone Data List `RemindRules` or permission flag generation into Document Library packages as export-proven until a focused Type `16` export proves the exact schema.
 
 Form Reports reuse list-like child resources and Type `0` views but are not normal data lists. `AI Training-2 (1).yap` export-proves Form Reports as Type `32` app child resources generated from submitted approval form variables and optional one sub-list. Do not add arbitrary custom data-list fields, data-list workflows, sample `ListDatas`, or editable forms to a Form Report. If a business requirement needs editable operational records, generate a normal data list; if it needs submitted approval reporting, route through `yeeflow-form-report-generator`.
 

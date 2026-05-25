@@ -99,6 +99,8 @@ For shared data views on list-like resources, also check:
 - unknown view types, opaque permission audiences, and Type `16`/Type `32` advanced view settings should warn rather than fail until matching exports prove the exact schema
 - Form Report `LayoutView.Attr_IsViewDetail` is recognized as the detail-page access flag, but row-click/detail behavior is not runtime proof
 
+For Data List permissions and notifications, use `docs/studies/data-list-document-library-permissions-notifications.md`, `scripts/inspect-data-list-permissions.mjs`, and `scripts/inspect-data-list-notifications.mjs`. Validate `ListModel.Perm`, `IsBreakInherit`, `IsItemPerm`, `AdvanceList`, and view-level `Layouts[].IsItemPerm` warning-first. Validate `RemindRules[]` warning-first: parse stringified `Rules` and `Receiver`, recognize notification Type `1` item-added, Type `2` regular reminder, Type `3` date-field reminder, Type `4` item-changed, and recipient Type `1` user, Type `2` department, Type `3` user group, plus `Receiver.ListDefs[]` list-field recipients. Detailed administrator/basic/advanced permission audience matrices are UI-confirmed but not export-located in `Data Lists (1).yap`; do not hard-fail missing detailed audiences or treat them as generation-ready.
+
 For Form Reports, also check:
 
 - `Data.FormNewReports[]` entries parse `Settings` JSON with `Fields`, `Filters`, and `SubListID`
