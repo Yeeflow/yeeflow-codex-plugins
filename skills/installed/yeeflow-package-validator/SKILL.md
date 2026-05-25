@@ -134,6 +134,8 @@ Report validation as:
 
 Do not claim runtime proof from local validation alone.
 
+`docs/studies/data-list-field-creation-runtime-proof.md` upgrades only a focused generated Data List path to runtime-import/open/field-creation proof: representative columns rendered and `Runtime Extra Field` saved without the duplicate-value error. Keep validator warnings for runtime-sensitive field semantics such as lookup value resolution, calculated results, file/image upload behavior, picker selection, sub-list row entry, metadata, and Document Library behavior unless a future focused runtime proof covers them.
+
 <!-- agent-copilot-application-resource-learning:start -->
 ## AI Agent/Copilot Validation Addendum
 
