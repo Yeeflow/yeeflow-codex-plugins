@@ -115,6 +115,12 @@ Use export-proven settings where relevant: choice `Rules.choices` and `color_cho
 Document Library custom-field applicability is product/user-understanding-backed only in this pass because no Type `16` document library was present. Keep Type `16` default fields and document upload rules from existing document-library studies, and do not claim runtime data-entry behavior for these field settings until focused import/open/field-creation tests pass.
 <!-- data-list-document-library-fields-learning:end -->
 
+<!-- data-list-custom-form-fields-learning:start -->
+## Data List Custom Form Boundary
+
+Data List custom list forms from `docs/studies/data-list-custom-form-fields.md` are normal editable/list-entry surfaces for Type `1` data lists. Do not transfer those custom form layouts, temp variables, or form actions into Form Report generation. Form Reports remain read/reporting-oriented Type `32` resources generated from approval-form submissions and should not receive editable Data List custom forms or Data List form actions unless a future Form Report export proves a distinct supported shape.
+<!-- data-list-custom-form-fields-learning:end -->
+
 <!-- yap-schema-standard-learning:start -->
 ## YAP Schema Standard Guardrails
 

@@ -28,6 +28,15 @@ const ROOT_STYLE_TOKEN_HEX = new Map([
   ["#f7f8f9", "--c--neutral-light"],
   ["#f4f4f6", "--c--neutral-light-hover"],
 ]);
+const CUSTOM_FORM_DISPLAY_USAGES = ["add", "edit", "view"];
+const CUSTOM_FORM_OPEN_MODE_LABELS = {
+  modal: "Pop-up window",
+  slide: "Slide in",
+  page: "Full page",
+  fullpage: "Full page",
+  fullPage: "Full page",
+};
+const CUSTOM_FORM_SIZE_LABELS = new Map([[0, "Medium"], [1, "Small"], [2, "Large"], [3, "Full screen"]]);
 
 const KNOWN_SYSTEM_FIELDS = new Set([
   "ListDataID",
@@ -1011,6 +1020,10 @@ function validateCustomForms(item, fieldByName, report) {
       });
     }
     const form = redact(parsed.value);
+    validateCustomFormActions(form, fieldByName, report, {
+      location: `Item.Layouts[${index}].LayoutInResources[0].Resource`,
+      title: layout.Title || null,
+    });
     validateUiUxStandardListForm(form, report, {
       location: `Item.Layouts[${index}].LayoutInResources[0].Resource`,
       title: layout.Title || null,
@@ -1027,7 +1040,7 @@ function validateCustomForms(item, fieldByName, report) {
         const type = controlType(control);
         const binding = controlBinding(control);
         const location = `Item.Layouts[${index}].form.children[${childIndex}]${pointer.slice(1)}`;
-        if (binding && !fieldByName.has(binding)) {
+        if (binding && !(control.attrs && control.attrs.list_field === true) && !fieldByName.has(binding)) {
           issue(report, "error", "FORM_CONTROL_BINDING_NOT_FOUND", "Form control binds to an unknown field.", {
             location,
             type,
@@ -1041,6 +1054,7 @@ function validateCustomForms(item, fieldByName, report) {
             label: control.label || control.title || null,
           });
         }
+        if (type === "list") validateCustomFormSubListControl(control, fieldByName, report, { location, title: layout.Title || null });
 
         if (type === "lookup") {
           const boundField = binding ? fieldByName.get(binding) : null;
@@ -1106,6 +1120,163 @@ function validateCustomForms(item, fieldByName, report) {
     }
   }
   return customFormCount;
+}
+
+function defaultCustomFormOpenModeForUsage(usage) {
+  return usage === "view" ? "Slide in" : "Pop-up window";
+}
+
+function validateCustomFormDisplaySettings(item, report) {
+  const listModel = item && item.ListModel;
+  if (!isObject(listModel)) return;
+  const parsedLayoutView = tryParseJson(listModel.LayoutView);
+  if (!parsedLayoutView.ok) {
+    if (asArray(item.Layouts).some((layout) => Number(layout.Type) === 1)) {
+      issue(report, "warning", "CUSTOM_FORM_DISPLAY_SETTINGS_UNPARSEABLE", "Custom form display settings live in ListModel.LayoutView, but the value could not be parsed.", {
+        location: "Item.ListModel.LayoutView",
+        error: parsedLayoutView.error || null,
+      });
+    }
+    return;
+  }
+  const layoutView = parsedLayoutView.value;
+  if (!isObject(layoutView)) {
+    issue(report, "warning", "CUSTOM_FORM_DISPLAY_SETTINGS_INVALID", "Custom form display settings should parse to an object.", {
+      location: "Item.ListModel.LayoutView",
+    });
+    return;
+  }
+
+  const customFormLayoutIds = new Set(asArray(item.Layouts)
+    .filter((layout) => Number(layout.Type) === 1)
+    .map((layout) => safeString(layout.LayoutID))
+    .filter(Boolean));
+  const opentype = isObject(layoutView.opentype) ? layoutView.opentype : {};
+  const modalsize = isObject(layoutView.modalsize) ? layoutView.modalsize : {};
+
+  CUSTOM_FORM_DISPLAY_USAGES.forEach((usage) => {
+    const formRef = safeString(layoutView[usage] === undefined ? "default" : layoutView[usage]);
+    const usesDefault = formRef === "" || formRef === "default";
+    if (!usesDefault && !customFormLayoutIds.has(formRef)) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_DISPLAY_FORM_REF_NOT_FOUND", "New/Edit/View display setting references a custom list form layout that does not exist.", {
+        location: `Item.ListModel.LayoutView.${usage}`,
+        usage,
+        formRef,
+      });
+    }
+
+    const rawOpenMode = safeString(opentype[usage]);
+    const openMode = rawOpenMode ? CUSTOM_FORM_OPEN_MODE_LABELS[rawOpenMode] : defaultCustomFormOpenModeForUsage(usage);
+    if (!openMode) {
+      issue(report, "warning", "CUSTOM_FORM_DISPLAY_OPEN_MODE_UNKNOWN", "Custom list form display setting uses an unknown open mode.", {
+        location: `Item.ListModel.LayoutView.opentype.${usage}`,
+        usage,
+        openMode: rawOpenMode,
+      });
+    }
+
+    const rawSize = modalsize[usage];
+    const hasSize = rawSize !== undefined && rawSize !== null && rawSize !== "";
+    if (hasSize && !CUSTOM_FORM_SIZE_LABELS.has(Number(rawSize))) {
+      issue(report, "warning", "CUSTOM_FORM_DISPLAY_SIZE_UNKNOWN", "Custom list form display setting uses an unknown size code.", {
+        location: `Item.ListModel.LayoutView.modalsize.${usage}`,
+        usage,
+        size: rawSize,
+      });
+    }
+    if (openMode === "Full page" && hasSize) {
+      issue(report, "warning", "CUSTOM_FORM_DISPLAY_FULL_PAGE_SIZE_SET", "Full page display settings should not rely on pop-up/slide size behavior unless a future export proves it.", {
+        location: `Item.ListModel.LayoutView.modalsize.${usage}`,
+        usage,
+        size: rawSize,
+      });
+    }
+  });
+}
+
+function customFormTempVarAliases(tempVar) {
+  const id = safeString(tempVar && tempVar.id);
+  if (!id) return [];
+  return [id, id.startsWith("__temp_") ? id.replace(/^__temp_/, "") : `__temp_${id}`];
+}
+
+function collectCustomFormActionRefs(value) {
+  const refs = { fields: [], tempVars: [] };
+  walk(value, (node) => {
+    if (!isObject(node)) return;
+    if (node.exprType === "list_field" && node.prop) refs.fields.push(String(node.prop));
+    if (node.exprType === "variable" && (node.id || node.name)) refs.tempVars.push(String(node.id || node.name));
+  });
+  return refs;
+}
+
+function validateCustomFormActions(form, fieldByName, report, context) {
+  if (form.tempVars !== undefined && !Array.isArray(form.tempVars)) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_TEMPVARS_NOT_ARRAY", "Custom form tempVars should be an array.", context);
+  if (form.actions !== undefined && !Array.isArray(form.actions)) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_ACTIONS_NOT_ARRAY", "Custom form actions should be an array when present.", context);
+  const tempVars = new Set();
+  const seenTempVars = new Set();
+  asArray(form.tempVars).forEach((tempVar, index) => {
+    if (!tempVar || !tempVar.id) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_TEMPVAR_ID_MISSING", "Custom form tempVars entries should include id.", { ...context, index });
+      return;
+    }
+    const id = safeString(tempVar.id);
+    if (seenTempVars.has(id)) issue(report, "error", "CUSTOM_FORM_TEMPVAR_ID_DUPLICATE", "Custom form tempVars ids should be unique within the form.", { ...context, index, id });
+    seenTempVars.add(id);
+    customFormTempVarAliases(tempVar).forEach((alias) => tempVars.add(alias));
+  });
+
+  const actionIds = new Set();
+  asArray(form.actions).forEach((action, actionIndex) => {
+    if (!action || !action.id) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_ACTION_ID_MISSING", "Custom form actions should include id.", { ...context, actionIndex });
+    else if (actionIds.has(String(action.id))) issue(report, "error", "CUSTOM_FORM_ACTION_ID_DUPLICATE", "Custom form action ids should be unique within the form.", { ...context, actionIndex });
+    else actionIds.add(String(action.id));
+    if (!Array.isArray(action && action.steps)) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_ACTION_STEPS_NOT_ARRAY", "Custom form action steps should be an array.", { ...context, actionIndex, actionName: action && action.name || null });
+    asArray(action && action.steps).forEach((step, stepIndex) => {
+      if (!step || !step.type) issue(report, "warning", "CUSTOM_FORM_ACTION_STEP_TYPE_MISSING", "Custom form action step should include type.", { ...context, actionIndex, stepIndex });
+      if (step && step.type && !["setvar", "submit", "submit_form", "save", "close", "open", "message"].includes(String(step.type))) {
+        issue(report, "warning", "CUSTOM_FORM_ACTION_STEP_UNKNOWN", "Custom form action step type is not yet export-learned.", { ...context, actionIndex, stepIndex, stepType: step.type });
+      }
+      const refs = collectCustomFormActionRefs(step);
+      refs.fields.forEach((fieldRef) => {
+        if (!fieldByName.has(fieldRef) && !KNOWN_SYSTEM_FIELDS.has(fieldRef)) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_ACTION_FIELD_REF_NOT_FOUND", "Custom form action references an unknown list field.", { ...context, actionIndex, stepIndex, fieldRef });
+      });
+      refs.tempVars.forEach((tempVar) => {
+        if (!tempVars.has(tempVar) && !tempVars.has(tempVar.replace(/^__temp_/, ""))) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_ACTION_TEMPVAR_REF_NOT_FOUND", "Custom form action references an unknown temp variable.", { ...context, actionIndex, stepIndex, tempVar });
+      });
+    });
+  });
+
+  for (const [hook, actionId] of Object.entries(form.formAction || {})) {
+    if (actionId && !actionIds.has(String(actionId))) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_FORMACTION_REF_NOT_FOUND", "Custom form formAction hook references an unknown action.", { ...context, hook });
+  }
+  asArray(form.children).forEach((child, childIndex) => {
+    walkControls(child, (control, pointer) => {
+      const actionId = control && control.attrs && control.attrs.control_action;
+      if (actionId && !actionIds.has(String(actionId))) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_BUTTON_ACTION_REF_NOT_FOUND", "Custom form action button references an unknown action.", { ...context, childIndex, pointer });
+    });
+  });
+}
+
+function validateCustomFormSubListControl(control, fieldByName, report, context) {
+  const variables = asArray(control.attrs && control.attrs["list-variables"]);
+  const listFields = asArray(control.attrs && control.attrs["list-fields"]);
+  if (!variables.length) issue(report, "warning", "CUSTOM_FORM_SUBLIST_VARIABLES_MISSING", "Sub-list custom form control should include attrs.list-variables.", context);
+  if (!listFields.length) issue(report, "warning", "CUSTOM_FORM_SUBLIST_FIELDS_MISSING", "Sub-list custom form control should include attrs.list-fields.", context);
+  const variableNames = new Set(variables.map((item) => safeString(item && item.name)).filter(Boolean));
+  listFields.forEach((entry, index) => {
+    const name = safeString(entry && entry.name);
+    if (name && !variableNames.has(name)) issue(report, "warning", "CUSTOM_FORM_SUBLIST_FIELD_VARIABLE_NOT_FOUND", "Sub-list attrs.list-fields entry should resolve to attrs.list-variables by name.", { ...context, index, name });
+    const nestedControl = entry && entry.control;
+    if (!nestedControl || !nestedControl.type || !nestedControl.binding) issue(report, "warning", "CUSTOM_FORM_SUBLIST_NESTED_CONTROL_INCOMPLETE", "Sub-list nested field controls should include type and binding.", { ...context, index, name });
+    if (nestedControl && nestedControl.attrs && nestedControl.attrs.list_field_binding !== control.binding) issue(report, "warning", "CUSTOM_FORM_SUBLIST_PARENT_BINDING_MISMATCH", "Sub-list nested field control should point back to the parent sub-list field binding.", { ...context, index, name });
+  });
+  const boundField = fieldByName.get(safeString(control.binding));
+  const rules = tryParseJson(boundField && boundField.Rules);
+  const ruleVariables = asArray(rules.ok ? rules.value && rules.value["list-variables"] : []);
+  if (boundField && ruleVariables.length && variables.length !== ruleVariables.length) {
+    issue(report, "warning", "CUSTOM_FORM_SUBLIST_VARIABLE_COUNT_DIFFERS_FROM_FIELD_RULES", "Sub-list form control variable count differs from the parent field Rules.list-variables count.", { ...context, controlVariables: variables.length, fieldRuleVariables: ruleVariables.length });
+  }
 }
 
 function validateUiUxStandardListForm(form, report, details) {
@@ -1539,6 +1710,7 @@ function validate(inputPath, mode, stage, dependencyMapPath = null) {
   const externalLookupFields = new Set(lookupRelationships.filter((lookup) => lookup.targetListId && !knownListIds.has(String(lookup.targetListId))).map((lookup) => lookup.sourceFieldName));
   const viewCount = validateViews(item, fieldByName, report);
   const customFormCount = validateCustomForms(item, fieldByName, report);
+  validateCustomFormDisplaySettings(item, report);
   validateWorkflows(decoded.data, item, fieldByName, knownListIds, report);
   validateSampleData(item, fieldByName, report, dependencyMap, externalLookupFields, decoded.resource);
   validateLookupRelationships(lookupRelationships, knownListIds, report, dependencyMap);

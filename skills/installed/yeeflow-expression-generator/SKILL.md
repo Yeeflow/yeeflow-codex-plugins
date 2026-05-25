@@ -187,3 +187,11 @@ Use export-proven settings where relevant: choice `Rules.choices` and `color_cho
 
 Document Library custom-field applicability is product/user-understanding-backed only in this pass because no Type `16` document library was present. Keep Type `16` default fields and document upload rules from existing document-library studies, and do not claim runtime data-entry behavior for these field settings until focused import/open/field-creation tests pass.
 <!-- data-list-document-library-fields-learning:end -->
+
+<!-- data-list-custom-form-fields-learning:start -->
+## Data List Custom Form Expressions
+
+Use `docs/studies/data-list-custom-form-fields.md` when generating or validating expressions in Data List custom list forms. The export-proven custom form action shape stores actions in `LayoutInResources[0].Resource.actions[]`, with `setvar` steps that can target either `exprType = "list_field"` entries or form-scoped temp variables. `formAction.onLoad` and `action_button.attrs.control_action` reference action ids.
+
+Data List custom form temp variables are not workflow variables. They live in `Resource.tempVars[]` and may be referenced through aliases such as `__temp_var_*` / `var_*`. Validate that every list-field expression resolves to `Defs[]`, every temp variable expression resolves to `tempVars[]`, and every button/form action reference resolves before package handoff. Do not infer submit/save action expression behavior from approval-form actions until Data List custom-form exports or runtime tests prove it.
+<!-- data-list-custom-form-fields-learning:end -->

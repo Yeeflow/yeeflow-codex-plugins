@@ -289,6 +289,14 @@ Use export-proven settings where relevant: choice `Rules.choices` and `color_cho
 Document Library custom-field applicability is product/user-understanding-backed only in this pass because no Type `16` document library was present. Keep Type `16` default fields and document upload rules from existing document-library studies, and do not claim runtime data-entry behavior for these field settings until focused import/open/field-creation tests pass.
 <!-- data-list-document-library-fields-learning:end -->
 
+<!-- data-list-custom-form-fields-learning:start -->
+## Data List Custom List Form Learning
+
+For Data List custom list form export learning, use `docs/studies/data-list-custom-form-fields.md`, `docs/studies/normalized/data-list-custom-forms/`, and `scripts/inspect-data-list-custom-forms.mjs`. `Data Lists (3).yap` export-proves four custom list forms across `Data list with fields part A`, `Data list with fields part B`, and `Data list with fields part C`, including Type `1` layout storage, embedded form resources, `ListModel.LayoutView` add/edit/view assignment, `flex_grid` field placement, top-level list-field controls, sub-list nested controls, temp variables, `setvar` form actions, `formAction.onLoad`, and action button bindings.
+
+Keep the proof boundary explicit: this is Data List export proof and validator-backed guidance only. Document Library custom-form applicability remains product/user-understanding-backed unless Type `16` custom-form exports prove it. Do not claim runtime rendering, save behavior, submit/save action execution, sub-list row behavior, uploads, lookup resolution, or Document Library custom form behavior without a focused runtime baseline.
+<!-- data-list-custom-form-fields-learning:end -->
+
 <!-- yap-schema-standard-learning:start -->
 ## YAP Schema Standard Learning
 
