@@ -7,8 +7,9 @@
 - Fixed package: `business-travel-budget-control.schema-fixed.v1.yap`
 - Downloads copy: `/Users/Renger/Downloads/business-travel-budget-control.schema-fixed.v1.yap`
 - Manual import test status: user-proven after `ListModel.Flags = 1` repair
+- Manual workflow publish test status: user-proven for `Business Travel Request`
 
-This is a focused package repair and runtime-practice pass. It claims only the user-proven import after the `ListModel.Flags` repair. It does not claim workflow publish success, workflow execution, routing, request submission, or data mutation.
+This is a focused package repair and runtime-practice pass. It claims only user-proven import/open/workflow publish for the fixed Business Travel package. It does not claim workflow execution, routing, request submission, approval completion, email delivery, true Finance Manager position assignment, or data mutation.
 
 ## Original Validation Findings
 
@@ -86,15 +87,31 @@ Fixed package validation:
 
 Remaining package-validator warnings are UI/design-system warnings unrelated to the YAP schema-standard repair.
 
+## User-Proven Runtime Publish Result
+
+Package: `business-travel-budget-control.schema-fixed.v1.yap`
+
+Proof source: user manual test on 2026-05-25.
+
+User-confirmed runtime results:
+
+- Import result: success.
+- App open result: success.
+- Approval form workflow open result: success for `Business Travel Request`.
+- Workflow publish result: success.
+
+This proves the repaired package can import, open, open the approval workflow, and publish the workflow. It does not prove workflow execution, request submission, routing, approval completion, email delivery, ContentList/data-list mutation, budget-control behavior, or true Finance Manager position assignment.
+
 ## Proof Boundary
 
 - Schema repair: validator-backed.
 - Generated package format: schema-repair-backed.
 - Manual Yeeflow import after `ListModel.Flags = 1`: user-proven.
-- Workflow publish: pending user confirmation after the variable and assignee repairs.
+- Business Travel app open, workflow open, and workflow publish: user-proven for the fixed package.
 - Workflow routing/execution: not runtime-proven.
 - Budget-control submit guard behavior: not runtime-proven.
+- True Finance Manager position assignment: not proven; no real numeric tenant position ID was validated.
 
 ## Next Step
 
-Manually publish-test the `Business Travel Request` approval workflow from `/Users/Renger/Downloads/business-travel-budget-control.schema-fixed.v1.yap`. If publish succeeds, record publish proof separately before merging or promoting workflow claims.
+Review and merge the publish proof, then rebuild a plugin patch release. Keep request submission, routing, approval completion, ContentList mutation, budget-control lifecycle, and true Finance Manager assignment as separate scoped runtime tests.
