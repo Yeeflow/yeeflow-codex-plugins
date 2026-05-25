@@ -595,6 +595,18 @@ Document Library custom-field applicability is product/user-understanding-backed
 Focused runtime proof in `docs/studies/data-list-field-creation-runtime-proof.md` confirms generated Data List import/open behavior and post-import manual field creation for a representative subset: `input`, `textarea` schema, `input_number`, `currency`, `percent`, `switch`, `checkbox`, `datepicker`, `time`, `identity-picker`, `organization-picker`, `file-upload`, `icon-upload`, local `lookup` schema, `calculated-column` schema, and `list` schema. Use this to prefer native generated fields for import/open baselines, but do not claim record entry, lookup resolution, calculated results, uploads, picker selection, nested row behavior, Document Library, workflow, or Form Report runtime behavior.
 <!-- data-list-document-library-fields-learning:end -->
 
+<!-- data-list-custom-form-fields-learning:start -->
+## Data List Custom List Form Generation
+
+Use `docs/studies/data-list-custom-form-fields.md`, `docs/studies/normalized/data-list-custom-forms/`, and `scripts/inspect-data-list-custom-forms.mjs` when an app needs generated Data List custom forms. Generate custom forms as Data List `Layouts[]` entries with `Type = 1`, `LayoutView = null`, `LayoutInResources[0].ID = RefId = LayoutID`, and embedded form JSON in `LayoutInResources[0].Resource`. Assign forms through `ListModel.LayoutView.add/edit/view`; the export-proven patterns include separate add/edit forms and one form reused for add/edit/view.
+
+For list fields on forms, generate controls under a conservative `container` -> `container` -> `flex_grid` shell. Each top-level field control should use the field `Type`, `binding = FieldName`, `fieldID = FieldID`, label/display metadata, and compatible `attrs` from field rules. Keep default/system fields explicit and system-aware. Validate no duplicate control ids, no unresolved bindings, no fieldID/binding mismatches, and no overlap-prone layout inventions.
+
+For sub-list fields, generate a parent `type = "list"` control and nested controls only inside `attrs.list-fields[]`, with `attrs.list_field = true`, `attrs.list_field_binding` pointing to the parent field, and scoped bindings such as `field_1`. Generate temp variables and form actions only when needed; action buttons, `formAction` hooks, Set variable list-field targets, and temp variable references must resolve. Do not assume approval-form action behavior for Data List custom forms without Data List export/runtime proof.
+
+Document Library custom-list-form applicability is product/user-understanding-backed unless a Type `16` export proves the exact shape. Runtime rendering/action execution is not proven by the export-learning pass.
+<!-- data-list-custom-form-fields-learning:end -->
+
 <!-- yap-schema-standard-learning:start -->
 ## YAP Schema Standard Guardrails
 

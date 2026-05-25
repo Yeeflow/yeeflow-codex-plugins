@@ -217,7 +217,7 @@ function fieldLabel(field, index) {
 
 function listLabel(list, index) {
   const title = safeString(list?.ListModel?.Title);
-  if (title === "Data list with fields part A" || title === "Data list with fields part B") return title;
+  if (title === "Data list with fields part A" || title === "Data list with fields part B" || title === "Data list with fields part C") return title;
   return `list-${index + 1}`;
 }
 

@@ -395,6 +395,20 @@ Document Library custom-field applicability is product/user-understanding-backed
 Focused runtime proof in `docs/studies/data-list-field-creation-runtime-proof.md` confirms a generated package imported, opened `Field Creation Runtime Test`, displayed representative columns for `input`, `input_number`, `currency`, `percent`, `switch`, `checkbox`, `datepicker`, `time`, `identity-picker`, `organization-picker`, `file-upload`, and `icon-upload`, opened `+ New column`, and saved `Runtime Extra Field` without the duplicate-value error. Keep the boundary narrow: this proves representative import/open/field-creation, not exhaustive data entry, lookup resolution, calculated results, uploads, picker selection, sub-list row behavior, metadata, Document Library, workflow, or Form Report.
 <!-- data-list-document-library-fields-learning:end -->
 
+<!-- data-list-custom-form-fields-learning:start -->
+## Data List Custom List Form Field Learning
+
+Use `docs/studies/data-list-custom-form-fields.md`, `docs/studies/normalized/data-list-custom-forms/`, and `scripts/inspect-data-list-custom-forms.mjs` before generating or validating Data List custom list forms. `Data Lists (3).yap` export-proves three Type `1` target data lists with four custom list forms: `Layouts[]` entries with `Type = 1`, embedded JSON in `LayoutInResources[0].Resource`, `LayoutInResources[0].ID = RefId = LayoutID`, `LayoutView = null`, and display assignment through `ListModel.LayoutView.add/edit/view`.
+
+Custom list form resources use `children`, `attrs`, `title`, `filterVars`, `ver`, `tempVars`, `exts`, optional `actions`, optional `formAction`, and optional `filter`. List-bound controls usually live under a `container` -> `container` -> `flex_grid` shell. Controls bind to Data List fields with `binding = Defs[].FieldName`, `fieldID = Defs[].FieldID`, matching `type`, a label, field metadata, and field-specific `attrs` copied from field rules. Validate that bindings and field IDs resolve in the same list.
+
+Sub-list fields use a parent `type = "list"` control with `attrs.list-variables[]` and `attrs.list-fields[]`. Nested controls are scoped to the sub-list with bindings such as `field_1`, `attrs.list_field = true`, `attrs.list_field_binding` pointing to the parent field, and `attrs.list_control_id` pointing to the parent list control. Do not validate nested sub-list control bindings as top-level `Defs[]` fields.
+
+Data List custom form temp variables are form-scoped, not workflow variables. They live in `Resource.tempVars[]` with `idx` and `id`; form actions may reference them via `exprType = "variable"` aliases such as `__temp_var_*` / `var_*`. Validate action references, button `attrs.control_action`, `formAction` hooks, Set variable list-field targets, and temp variable references before package handoff. This export proves `setvar` action steps only; submit/save execution remains unproven for Data List custom forms.
+
+Document Library custom-form applicability remains product/user-understanding-backed unless a Type `16` export proves the exact custom form shape. Runtime rendering, field save behavior, action execution, sub-list row entry, upload behavior, lookup resolution, and Document Library custom-form behavior are not runtime-proven by this learning pass.
+<!-- data-list-custom-form-fields-learning:end -->
+
 <!-- yap-schema-standard-learning:start -->
 ## YAP Schema Standard Guardrails
 

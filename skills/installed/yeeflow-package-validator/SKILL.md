@@ -208,6 +208,16 @@ Use export-proven settings where relevant: choice `Rules.choices` and `color_cho
 Document Library custom-field applicability is product/user-understanding-backed only in this pass because no Type `16` document library was present. Keep Type `16` default fields and document upload rules from existing document-library studies, and do not claim runtime data-entry behavior for these field settings until focused import/open/field-creation tests pass.
 <!-- data-list-document-library-fields-learning:end -->
 
+<!-- data-list-custom-form-fields-learning:start -->
+## Data List Custom List Form Validation
+
+Use `docs/studies/data-list-custom-form-fields.md` and `scripts/inspect-data-list-custom-forms.mjs` for Data List custom form validation. `Data Lists (3).yap` export-proves custom list forms as Type `1` layouts with embedded JSON in `LayoutInResources[0].Resource`, display assignment through `ListModel.LayoutView.add/edit/view`, and list-bound controls under a `container` -> `container` -> `flex_grid` shell.
+
+Validate custom list forms separately from approval submission/task forms. Check that embedded form resources parse; `children`, `filterVars`, and `tempVars` are arrays; control ids are unique; list-bound `binding` and `fieldID` resolve to the same `Defs[]` field; `action_button.attrs.control_action` resolves to `actions[].id`; `formAction` hooks resolve; `setvar` action list-field targets resolve; temp variable references resolve; and sub-list parent controls include `attrs.list-variables[]` plus `attrs.list-fields[]`.
+
+Nested sub-list controls use `attrs.list_field = true`, `attrs.list_field_binding`, `attrs.list_control_id`, and scoped bindings such as `field_1`; do not hard-fail them as missing top-level list fields. Unknown action step types, unknown control shapes, and Document Library applicability should warn until export/runtime proof exists. Runtime form rendering, save behavior, action execution, sub-list row entry, and Document Library custom forms are not proven by this export.
+<!-- data-list-custom-form-fields-learning:end -->
+
 <!-- yap-schema-standard-learning:start -->
 ## YAP Schema Standard Validation
 

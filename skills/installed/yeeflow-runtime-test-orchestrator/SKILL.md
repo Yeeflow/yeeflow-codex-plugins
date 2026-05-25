@@ -165,6 +165,14 @@ Document Library custom-field applicability is product/user-understanding-backed
 Focused runtime proof in `docs/studies/data-list-field-creation-runtime-proof.md` imported `data-list-field-creation-runtime-proof.v1.yap`, opened `Data List Field Creation Runtime Proof`, opened `Field Creation Runtime Test`, observed representative generated columns, opened `+ New column`, and saved `Runtime Extra Field` with `Added Successfully`. Label this runtime-import-proven, data-list-open-proven, and representative data-list-field-creation-proven only; keep lookup resolution, calculated correctness, uploads, picker selection, sub-list data entry, metadata, Document Library, workflow, and Form Report out of scope.
 <!-- data-list-document-library-fields-learning:end -->
 
+<!-- data-list-custom-form-fields-learning:start -->
+## Data List Custom List Form Runtime Boundary
+
+`docs/studies/data-list-custom-form-fields.md` is export-proof only. Before claiming runtime behavior for generated Data List custom forms, run a focused import/open baseline that proves the app opens, the target list opens, New/Edit/View display settings route to the expected custom forms, representative field controls render, sub-list controls render if included, action buttons are visible, and any tested form action executes safely.
+
+Do not treat export-proven `setvar` action shape, `formAction.onLoad`, action button bindings, temp variables, or sub-list nested controls as runtime action proof. Keep Document Library custom-form behavior product/user-understanding-backed unless a Type `16` package is imported/opened and the custom form is reached at runtime.
+<!-- data-list-custom-form-fields-learning:end -->
+
 <!-- yap-schema-standard-learning:start -->
 ## YAP Schema Standard Runtime Gate
 
