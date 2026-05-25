@@ -441,6 +441,63 @@ function validateIdentity(item, resource, report) {
   }
 }
 
+function validatePermissionsAndNotifications(item, report) {
+  const model = item.ListModel || {};
+  const isListOrDocumentLibrary = [1, 16].includes(Number(model.Type || 1));
+  if (!isListOrDocumentLibrary) return;
+  if (model.Perm !== undefined && typeof model.Perm !== "number") {
+    issue(report, "warning", "DATA_LIST_PERMISSION_PERM_INVALID", "ListModel.Perm should be numeric when present.", { location: "Item.ListModel.Perm", valueType: typeof model.Perm });
+  }
+  if (model.IsBreakInherit !== undefined && typeof model.IsBreakInherit !== "boolean") {
+    issue(report, "warning", "DATA_LIST_PERMISSION_INHERIT_FLAG_INVALID", "ListModel.IsBreakInherit should be boolean when present.", { location: "Item.ListModel.IsBreakInherit", valueType: typeof model.IsBreakInherit });
+  }
+  if (model.IsItemPerm !== undefined && typeof model.IsItemPerm !== "boolean") {
+    issue(report, "warning", "DATA_LIST_PERMISSION_ITEM_FLAG_INVALID", "ListModel.IsItemPerm should be boolean when present.", { location: "Item.ListModel.IsItemPerm", valueType: typeof model.IsItemPerm });
+  }
+  if (model.AdvanceList !== undefined && !Array.isArray(model.AdvanceList)) {
+    issue(report, "warning", "DATA_LIST_PERMISSION_ADVANCELIST_INVALID", "ListModel.AdvanceList should be an array when present in studied data-list exports.", { location: "Item.ListModel.AdvanceList" });
+  }
+
+  const knownNotificationTypes = new Set(["1", "2", "3", "4"]);
+  const knownRecipientTypes = new Set(["1", "2", "3"]);
+  asArray(item.RemindRules).forEach((rule, index) => {
+    if (!isObject(rule)) {
+      issue(report, "warning", "DATA_LIST_NOTIFICATION_RULE_NOT_OBJECT", "RemindRules entries should be objects.", { location: `Item.RemindRules[${index}]` });
+      return;
+    }
+    const type = safeString(rule.Type);
+    if (type && !knownNotificationTypes.has(type)) {
+      issue(report, "warning", "DATA_LIST_NOTIFICATION_TYPE_UNKNOWN", "Unknown RemindRules Type; export-proven types are 1 item-added, 2 regular reminder, 3 date-field reminder, and 4 item-changed.", { location: `Item.RemindRules[${index}].Type`, type });
+    }
+    const parsedRules = typeof rule.Rules === "string" ? tryParseJson(rule.Rules) : { ok: isObject(rule.Rules), value: rule.Rules };
+    if (!parsedRules.ok || !isObject(parsedRules.value)) {
+      issue(report, "warning", "DATA_LIST_NOTIFICATION_RULES_JSON_INVALID", "RemindRules.Rules should parse as JSON.", { location: `Item.RemindRules[${index}].Rules` });
+    } else {
+      const conditionData = parsedRules.value.Conditions && parsedRules.value.Conditions.Data;
+      if (typeof conditionData === "string" && conditionData.trim()) {
+        const parsedConditions = tryParseJson(conditionData);
+        if (!parsedConditions.ok || !Array.isArray(parsedConditions.value)) {
+          issue(report, "warning", "DATA_LIST_NOTIFICATION_CONDITIONS_JSON_INVALID", "RemindRules.Conditions.Data should parse as an array when non-empty.", { location: `Item.RemindRules[${index}].Rules.Conditions.Data` });
+        }
+      }
+    }
+    const parsedReceiver = typeof rule.Receiver === "string" ? tryParseJson(rule.Receiver) : { ok: isObject(rule.Receiver), value: rule.Receiver };
+    if (!parsedReceiver.ok || !isObject(parsedReceiver.value)) {
+      issue(report, "warning", "DATA_LIST_NOTIFICATION_RECEIVER_JSON_INVALID", "RemindRules.Receiver should parse as JSON.", { location: `Item.RemindRules[${index}].Receiver` });
+    } else {
+      asArray(parsedReceiver.value.Identities).forEach((identity, identityIndex) => {
+        const recipientType = safeString(identity && identity.Type);
+        if (recipientType && !knownRecipientTypes.has(recipientType)) {
+          issue(report, "warning", "DATA_LIST_NOTIFICATION_RECIPIENT_TYPE_UNKNOWN", "Unknown notification recipient Type; export-proven values are 1 user, 2 department, and 3 user group.", { location: `Item.RemindRules[${index}].Receiver.Identities[${identityIndex}].Type`, recipientType });
+        }
+      });
+      if (parsedReceiver.value.ListDefs !== undefined && !Array.isArray(parsedReceiver.value.ListDefs)) {
+        issue(report, "warning", "DATA_LIST_NOTIFICATION_LISTDEFS_INVALID", "Notification Receiver.ListDefs should be an array when present.", { location: `Item.RemindRules[${index}].Receiver.ListDefs` });
+      }
+    }
+  });
+}
+
 function parsedRulesForField(field, index, report) {
   if (field.Rules === null || field.Rules === undefined || field.Rules === "") return {};
   if (isObject(field.Rules)) return field.Rules;
@@ -1369,6 +1426,7 @@ function validate(inputPath, mode, stage, dependencyMapPath = null) {
   const item = validateStructure(decoded.data, decoded.resource, report);
   if (!item) return finishReport(report);
   validateIdentity(item, decoded.resource, report);
+  validatePermissionsAndNotifications(item, report);
   const { fieldByName, lookupRelationships } = validateFields(item, report);
   const knownListIds = collectKnownListIds(decoded.data);
   const externalLookupFields = new Set(lookupRelationships.filter((lookup) => lookup.targetListId && !knownListIds.has(String(lookup.targetListId))).map((lookup) => lookup.sourceFieldName));

@@ -1335,6 +1335,79 @@ function validateApplicationUserGroups(data, replaceIds, report) {
   });
 }
 
+function validateDataListPermissionsAndNotifications(item, pathPrefix, resourceType, report) {
+  const list = item.ListModel || {};
+  const title = safeString(list.Title);
+  if (!["data list", "document library"].includes(resourceType)) return;
+
+  if (list.Perm !== undefined && typeof list.Perm !== "number") {
+    issue(report, "warning", "DATA_LIST_PERMISSION_PERM_INVALID", "ListModel.Perm should be numeric when present.", { path: `${pathPrefix}.ListModel.Perm`, list: title, valueType: typeof list.Perm });
+  }
+  if (list.IsBreakInherit !== undefined && typeof list.IsBreakInherit !== "boolean") {
+    issue(report, "warning", "DATA_LIST_PERMISSION_INHERIT_FLAG_INVALID", "ListModel.IsBreakInherit should be boolean when present.", { path: `${pathPrefix}.ListModel.IsBreakInherit`, list: title, valueType: typeof list.IsBreakInherit });
+  }
+  if (list.IsItemPerm !== undefined && typeof list.IsItemPerm !== "boolean") {
+    issue(report, "warning", "DATA_LIST_PERMISSION_ITEM_FLAG_INVALID", "ListModel.IsItemPerm should be boolean when present.", { path: `${pathPrefix}.ListModel.IsItemPerm`, list: title, valueType: typeof list.IsItemPerm });
+  }
+  if (list.AdvanceList !== undefined && !Array.isArray(list.AdvanceList)) {
+    issue(report, "warning", "DATA_LIST_PERMISSION_ADVANCELIST_INVALID", "ListModel.AdvanceList should be an array when present in studied data-list exports.", { path: `${pathPrefix}.ListModel.AdvanceList`, list: title });
+  }
+  for (const key of ["Ext1", "Ext2", "Ext3"]) {
+    if (typeof list[key] === "string" && /perm|permission|admin|advanced|audience/i.test(list[key]) && !tryParseJson(list[key])) {
+      issue(report, "warning", "DATA_LIST_PERMISSION_EXT_JSON_INVALID", `ListModel.${key} contains permission-like text but does not parse as JSON.`, { path: `${pathPrefix}.ListModel.${key}`, list: title });
+    }
+  }
+
+  const rules = asArray(item.RemindRules);
+  const knownNotificationTypes = new Set(["1", "2", "3", "4"]);
+  const knownRecipientTypes = new Set(["1", "2", "3"]);
+  rules.forEach((rule, index) => {
+    if (!isObject(rule)) {
+      issue(report, "warning", "DATA_LIST_NOTIFICATION_RULE_NOT_OBJECT", "RemindRules entries should be objects.", { path: `${pathPrefix}.RemindRules[${index}]`, list: title });
+      return;
+    }
+    const type = safeString(rule.Type);
+    if (type && !knownNotificationTypes.has(type)) {
+      issue(report, "warning", "DATA_LIST_NOTIFICATION_TYPE_UNKNOWN", "Unknown RemindRules Type; export-proven types are 1 item-added, 2 regular reminder, 3 date-field reminder, and 4 item-changed.", { path: `${pathPrefix}.RemindRules[${index}].Type`, list: title, type });
+    }
+    if (rule.Status !== undefined && typeof rule.Status !== "number") {
+      issue(report, "warning", "DATA_LIST_NOTIFICATION_STATUS_INVALID", "RemindRules Status should be numeric when present.", { path: `${pathPrefix}.RemindRules[${index}].Status`, list: title });
+    }
+    const parsedRules = typeof rule.Rules === "string" ? tryParseJson(rule.Rules) : rule.Rules;
+    if (!isObject(parsedRules)) {
+      issue(report, "warning", "DATA_LIST_NOTIFICATION_RULES_JSON_INVALID", "RemindRules.Rules should parse as JSON.", { path: `${pathPrefix}.RemindRules[${index}].Rules`, list: title });
+    } else {
+      const conditionData = parsedRules.Conditions && parsedRules.Conditions.Data;
+      if (typeof conditionData === "string" && conditionData.trim()) {
+        const parsedConditions = tryParseJson(conditionData);
+        if (!Array.isArray(parsedConditions)) {
+          issue(report, "warning", "DATA_LIST_NOTIFICATION_CONDITIONS_JSON_INVALID", "RemindRules.Conditions.Data should parse as an array when non-empty.", { path: `${pathPrefix}.RemindRules[${index}].Rules.Conditions.Data`, list: title });
+        }
+      }
+      if (type === "2") {
+        const period = safeString(parsedRules.Rules && parsedRules.Rules.Period);
+        if (period && !["Daily", "Weekly", "Monthly", "Yearly"].includes(period)) {
+          issue(report, "warning", "DATA_LIST_NOTIFICATION_PERIOD_UNKNOWN", "Regular reminder Period is not one of the export-proven values.", { path: `${pathPrefix}.RemindRules[${index}].Rules.Rules.Period`, list: title, period });
+        }
+      }
+    }
+    const parsedReceiver = typeof rule.Receiver === "string" ? tryParseJson(rule.Receiver) : rule.Receiver;
+    if (!isObject(parsedReceiver)) {
+      issue(report, "warning", "DATA_LIST_NOTIFICATION_RECEIVER_JSON_INVALID", "RemindRules.Receiver should parse as JSON.", { path: `${pathPrefix}.RemindRules[${index}].Receiver`, list: title });
+    } else {
+      asArray(parsedReceiver.Identities).forEach((identity, identityIndex) => {
+        const recipientType = safeString(identity && identity.Type);
+        if (recipientType && !knownRecipientTypes.has(recipientType)) {
+          issue(report, "warning", "DATA_LIST_NOTIFICATION_RECIPIENT_TYPE_UNKNOWN", "Unknown notification recipient Type; export-proven values are 1 user, 2 department, and 3 user group.", { path: `${pathPrefix}.RemindRules[${index}].Receiver.Identities[${identityIndex}].Type`, list: title, recipientType });
+        }
+      });
+      if (parsedReceiver.ListDefs !== undefined && !Array.isArray(parsedReceiver.ListDefs)) {
+        issue(report, "warning", "DATA_LIST_NOTIFICATION_LISTDEFS_INVALID", "Notification Receiver.ListDefs should be an array when present.", { path: `${pathPrefix}.RemindRules[${index}].Receiver.ListDefs`, list: title });
+      }
+    }
+  });
+}
+
 function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, localIds, listsById, fieldsByList, fieldIdsByApp, report) {
   const pathPrefix = isRoot ? "$.Item" : `$.Childs[${index - 1}]`;
   if (!isObject(item) || !isObject(item.ListModel)) {
@@ -1453,6 +1526,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   if (!isRoot && resourceType === "document library") {
     validateDocumentLibraryFields(item, fieldsByName, pathPrefix, report);
   }
+  if (!isRoot) validateDataListPermissionsAndNotifications(item, pathPrefix, resourceType, report);
 
   const layouts = asArray(item.Layouts);
   const layoutIds = new Set(layouts.map((layout) => safeString(layout.LayoutID)).filter(Boolean));
