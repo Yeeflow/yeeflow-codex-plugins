@@ -181,3 +181,7 @@ Ignored local fixed package checks:
 This pass is `product-rule-backed` and `validator-backed`.
 
 It is not runtime-import-proven. A future focused runtime pass should regenerate fixed packages, import them, and only then upgrade proof to import/open/designer/runtime behavior.
+
+## Follow-Up Field Type Expansion From Data Lists (2).yap
+
+`Data Lists (2).yap` export-proves a single metadata data-list custom field with `Type = "metadata"`, `FieldType = "Bigint"`, and Rules containing `source` plus `categoryId`. This is an export-proven addition/exception to the earlier product-team supported type list, which named `mutiple-metadata` but did not name single `metadata`. Validators should accept `metadata` as a known field type while preserving the v0.5.12 generation-blocking gates for FieldIndex/FieldName synchronization, unique identifiers, valid InternalName, valid process keys, and valid NoRule.
