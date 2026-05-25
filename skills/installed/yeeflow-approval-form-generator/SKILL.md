@@ -5,6 +5,8 @@ description: generate, inspect, validate, package, and improve yeeflow approval 
 
 # Yeeflow Approval Form Generator
 
+Business Travel workflow-publish practice: import success and approval workflow publish success are separate gates. Before packaging, ensure every variable referenced by form controls, sub-list summaries, sequence-flow `conditioninfo`, Set Variable `variablesetting[]`, and assignment `usertaskassignment[]` expressions exists in `DefResource.variables`. Sequence flows must not reference deleted variables. Set Variable targets must exist and use the target variable's `idx`, `id`, `name`, and `type`. Direct job-position assignments require numeric position IDs; placeholders like `__POSITION_ID_REQUIRED_*__` are blocking errors. If a real tenant position ID is unavailable, stop for mapping or document a user-approved fallback.
+
 ## Application Navigation References
 
 When an approval form is included in application navigation, reference it from the root app `Data.Item.ListModel.LayoutView.sort[]` using `Type = 105` and `ListID = Data.Forms[].Key`. App-level approval forms in generated packages keep `ListID = 0` on the form record; the navigation item points to the form key, not a child data-list ID.

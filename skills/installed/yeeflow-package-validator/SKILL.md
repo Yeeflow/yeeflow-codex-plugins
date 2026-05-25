@@ -5,6 +5,8 @@ description: Standardize Yeeflow package validation before import or runtime tes
 
 # Yeeflow Package Validator
 
+Business Travel runtime-practice update: `yap-v1-schema_v2.json` and the Business Travel repair pass make `ListModel.Flags = 1` mandatory for generated root and child list-like resources. `ListModel.Status` is schema-fixed to `1` when present, and `ListModel.Type` must be one of `1`, `16`, `32`, `64`, `128`, or `1024`. Import after the Flags repair is user-proven for the Business Travel package only. Workflow publish blockers must be caught separately: sequence-flow conditions, Set Variable targets, task-assignment expressions, form bindings, and summaries must reference declared workflow variables; direct position assignees require numeric position IDs and must never use placeholders such as `__POSITION_ID_REQUIRED_*__`.
+
 ## Core Rule
 
 Validate before import. Do not runtime-test a package with blocking structural, graph, wrapper, workflow, list, field, materialization, FlowKey, or unsafe `.yapk` issues.

@@ -8,6 +8,7 @@ const GZIP_PREFIX = "[______gizp______]";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
 const PROCESS_KEY_RE = /^[A-Za-z0-9_]+$/;
 const WRAPPER_REQUIRED = ["Title", "Description", "IconUrl", "IsListSet", "Resource"];
+const CUSTOM_LIST_MODEL_TYPES = new Set([1, 16, 32, 64, 128, 1024]);
 const PERMISSION_RULES = {
   approvalForms: { mask: 1 | 16 | 32, label: "Submit=1, ReadTasks=16, ProcessTasks=32" },
   dataLists: { mask: 1 | 2 | 4 | 8, label: "Submit=1, Edit=2, Delete=4, Read=8" },
@@ -155,6 +156,19 @@ function inspectListExportItem(item, exportPath, findings, summary) {
     if (!Object.prototype.hasOwnProperty.call(item, key)) add(findings, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_MISSING`, `ListExportItem.${key} is required.`, { path: `${exportPath}.${key}` });
     else if (value === null) add(findings, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_NULL`, `ListExportItem.${key} cannot be null; use [] when empty.`, { path: `${exportPath}.${key}` });
     else if (!Array.isArray(value)) add(findings, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_NOT_ARRAY`, `ListExportItem.${key} must be an array.`, { path: `${exportPath}.${key}`, actualType: typeof value });
+  }
+  if (!isObject(item.ListModel)) {
+    add(findings, "error", "LIST_EXPORT_ITEM_LISTMODEL_MISSING", "ListExportItem.ListModel is required for generated app/list resources.", { path: `${exportPath}.ListModel` });
+  } else {
+    if (item.ListModel.Flags !== 1) {
+      add(findings, "error", "LISTMODEL_FLAGS_INVALID", "Product schema v2 requires CustomListModel.Flags = 1; missing or different values can fail import.", { path: `${exportPath}.ListModel.Flags`, value: item.ListModel.Flags });
+    }
+    if (item.ListModel.Status !== undefined && item.ListModel.Status !== 1) {
+      add(findings, "error", "LISTMODEL_STATUS_INVALID", "Product schema v2 fixes CustomListModel.Status to 1 when present.", { path: `${exportPath}.ListModel.Status`, value: item.ListModel.Status });
+    }
+    if (item.ListModel.Type !== undefined && !CUSTOM_LIST_MODEL_TYPES.has(Number(item.ListModel.Type))) {
+      add(findings, "error", "LISTMODEL_TYPE_INVALID", "Product schema v2 allows CustomListModel.Type values 1, 16, 32, 64, 128, or 1024.", { path: `${exportPath}.ListModel.Type`, value: item.ListModel.Type });
+    }
   }
   summary.defs += asArray(item.Defs).length;
   summary.layouts += asArray(item.Layouts).length;

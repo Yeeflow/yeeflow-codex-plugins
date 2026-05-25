@@ -9,6 +9,7 @@ const LARGE_INTEGER_RE = /^-?\d{16,}$/;
 const INTERNAL_NAME_RE = /^[A-Za-z0-9_]+$/;
 const PROCESS_KEY_RE = /^[A-Za-z0-9_]+$/;
 const IDENTIFIER_MAX_LENGTH = 255;
+const CUSTOM_LIST_MODEL_TYPES = new Set([1, 16, 32, 64, 128, 1024]);
 const SUPPORTED_TYPES = new Set([
   "input", "textarea", "richtext", "hyperlink",
   "input_number", "currency", "percent", "calculated-column", "rate",
@@ -119,6 +120,19 @@ function inspectList(list, index, findings) {
     if (!Object.prototype.hasOwnProperty.call(list || {}, key)) addFinding(findings, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_MISSING`, `ListExportItem.${key} is required; use [] when empty.`, { list: title });
     else if (list?.[key] === null) addFinding(findings, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_NULL`, `ListExportItem.${key} cannot be null; use [] when empty.`, { list: title });
     else if (!Array.isArray(list?.[key])) addFinding(findings, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_NOT_ARRAY`, `ListExportItem.${key} must be an array.`, { list: title, actualType: typeof list?.[key] });
+  }
+  if (!list?.ListModel || typeof list.ListModel !== "object") {
+    addFinding(findings, "error", "LIST_EXPORT_ITEM_LISTMODEL_MISSING", "ListExportItem.ListModel is required for generated app/list resources.", { list: title });
+  } else {
+    if (list.ListModel.Flags !== 1) {
+      addFinding(findings, "error", "LISTMODEL_FLAGS_INVALID", "Product schema v2 requires CustomListModel.Flags = 1; missing or different values can fail import.", { list: title, value: list.ListModel.Flags });
+    }
+    if (list.ListModel.Status !== undefined && list.ListModel.Status !== 1) {
+      addFinding(findings, "error", "LISTMODEL_STATUS_INVALID", "Product schema v2 fixes CustomListModel.Status to 1 when present.", { list: title, value: list.ListModel.Status });
+    }
+    if (list.ListModel.Type !== undefined && !CUSTOM_LIST_MODEL_TYPES.has(Number(list.ListModel.Type))) {
+      addFinding(findings, "error", "LISTMODEL_TYPE_INVALID", "Product schema v2 allows CustomListModel.Type values 1, 16, 32, 64, 128, or 1024.", { list: title, value: list.ListModel.Type });
+    }
   }
   const seen = {
     DisplayName: new Map(),

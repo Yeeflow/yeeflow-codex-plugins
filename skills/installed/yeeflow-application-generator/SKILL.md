@@ -5,6 +5,8 @@ description: generate, inspect, validate, package, debug, and improve small yeef
 
 # Yeeflow Application Generator
 
+Business Travel runtime-practice rule: every generated root app/listset and child list-like resource must emit `ListModel.Flags = 1`. Emit `ListModel.Status = 1` when including Status, keep `ListModel.Type` inside the schema-v2 enum `1`, `16`, `32`, `64`, `128`, `1024`, and keep `Defs`/`Layouts` arrays. Before package handoff, validate that workflow variables are declared before use in controls, summaries, sequence-flow conditions, Set Variable targets, task-assignment expressions, and ContentList mappings. Do not emit placeholder user/group/position IDs into final packages; direct `method="position"` assignees require real numeric position IDs or a user-approved fallback.
+
 Use this skill for small Yeeflow `.yap` application packages that combine related data lists and approval forms. Keep v1 scoped to proven patterns: data lists, custom list forms, lookup relationships, simple approval forms, and `ContentList` persistence.
 
 For existing-app upgrades, do not reuse `.yap` new-app generation rules blindly. Yeeflow Version management downloads `.yapk` packages for Upgrade application. Studied `.yapk` wrappers preserve app identity fields such as `TenantID`, `AppID`, and `ListID`, but `PackageId`, `Sign`, and opaque high-entropy `Resource` values change across Yeeflow-generated versions. A metadata-only wrapper edit was rejected at runtime even with `Resource` and `Sign` preserved. Until `.yapk` resource encoding/signing is proven, only inspect/validate wrappers and produce change plans or `.yap` clones; do not claim externally edited `.yapk` packages are valid upgrades.

@@ -5,6 +5,8 @@ description: generate, inspect, validate, and document Yeeflow expression editor
 
 # Yeeflow Expression Generator
 
+Business Travel workflow-publish practice: expression-bearing workflow surfaces must resolve variable IDs before packaging. Sequence-flow conditions, assignment expressions, Set Variable values/targets, form bindings, and sub-list summary bindings cannot reference deleted or undeclared variables. If a summary-bound variable is renamed, update every `conditioninfo`, binding, and expression-token reference together. Treat unresolved workflow variables as publish blockers, not cosmetic warnings.
+
 Use this skill when generating or validating Yeeflow expression editor output across approval forms, dashboards, data-list forms, lookup filters, workflow transitions, workflow action conditions, default values, request numbers, and calculated controls.
 
 <!-- scheduled-workflow-ai-assistant-learning:start -->

@@ -5,6 +5,8 @@ description: Standardize runtime testing for generated or modified Yeeflow appli
 
 # Yeeflow Runtime Test Orchestrator
 
+Business Travel runtime-practice checkpoint: when a generated package imports, continue with a separate workflow designer publish check before claiming workflow readiness. Record exact publish errors, repair only schema/variable/assignee issues that are safely derivable, and keep workflow execution, routing, request submission, and data mutation unproven until explicitly tested. A package that imports after `ListModel.Flags = 1` is not automatically workflow-publish-proven.
+
 ## Core Rule
 
 Treat local package validation and Yeeflow runtime proof as separate gates. A package can be locally valid but still not accepted as a baseline until the runtime pass is documented.

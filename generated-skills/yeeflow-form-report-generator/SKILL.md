@@ -5,6 +5,8 @@ description: generate, inspect, validate, and plan runtime proof for Yeeflow For
 
 # Yeeflow Form Report Generator
 
+Schema-v2 carry-forward: Form Report child resources are list-like `CustomListModel` resources and must follow the same standard gates where applicable: `ListModel.Flags = 1`, schema-supported `ListModel.Type = 32`, arrays for `Defs` and `Layouts`, and valid approval-form variable references. Do not use Business Travel import or workflow-publish practice as Form Report runtime proof.
+
 Use this skill when a Yeeflow application needs Form Report resources or when studying/export-validating Form Report schema. A Form Report is an app-level reporting resource based on an approval form. It is not a standalone data list, does not own a workflow, and must not be treated as an editable record store.
 
 Current proof boundary: export-proven and validator-backed only from `docs/studies/form-report-resource.md` and normalized refs under `docs/studies/normalized/form-report/`. Do not claim runtime behavior until a focused import/open/designer/submission/export-back baseline passes.
