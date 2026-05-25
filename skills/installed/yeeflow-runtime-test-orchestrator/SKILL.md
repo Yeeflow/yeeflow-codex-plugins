@@ -173,6 +173,14 @@ Focused runtime proof in `docs/studies/data-list-field-creation-runtime-proof.md
 Do not treat export-proven `setvar` action shape, `formAction.onLoad`, action button bindings, temp variables, or sub-list nested controls as runtime action proof. Keep Document Library custom-form behavior product/user-understanding-backed unless a Type `16` package is imported/opened and the custom form is reached at runtime.
 <!-- data-list-custom-form-fields-learning:end -->
 
+<!-- data-list-public-form-learning:start -->
+## Data List Public Form Runtime Boundary
+
+`docs/studies/data-list-public-forms.md` is export-proof only. Before claiming runtime behavior for Data List Public Forms, run a focused import/open/share baseline that proves package import, app open, public form designer/open behavior, allowed field/control rendering, submit button visibility, public URL generation/opening if safe, and anonymous submission only if the target list and test data are disposable.
+
+Do not treat export-proven public form structure as proof of anonymous submit, public URL access, save/data creation, upload behavior, sub-list data entry, signature capture, or validation-message behavior. Document Library public-form behavior is unproven unless a Type `16` public-form package is imported/opened and tested.
+<!-- data-list-public-form-learning:end -->
+
 <!-- yap-schema-standard-learning:start -->
 ## YAP Schema Standard Runtime Gate
 

@@ -220,6 +220,16 @@ Validate display settings in `ListModel.LayoutView` separately from embedded for
 Nested sub-list controls use `attrs.list_field = true`, `attrs.list_field_binding`, `attrs.list_control_id`, and scoped bindings such as `field_1`; do not hard-fail them as missing top-level list fields. Unknown action step types, unknown control shapes, and Document Library applicability should warn until export/runtime proof exists. Runtime form rendering, save behavior, action execution, sub-list row entry, and Document Library custom forms are not proven by this export.
 <!-- data-list-custom-form-fields-learning:end -->
 
+<!-- data-list-public-form-learning:start -->
+## Data List Public Form Validation
+
+Use `docs/studies/data-list-public-forms.md` and `scripts/inspect-data-list-public-forms.mjs` for Data List Public Form validation. Public Forms live in `Data.Childs[].PublicForms[]`; each entry should include parseable JSON-string `Resource` with `pagetype = 3`, `children[]`, `attrs`, `tempVars`, and `ver`.
+
+Validate Public Forms separately from Custom List Forms and approval forms. Check that list-bound controls resolve to fields in the same list, control ids are unique, `Resource.children` is an array, known public-field disallow rules are enforced, and a collection form includes a `submit-button`. Hard-error generated-final public forms that include Id/Created/Modified default fields, login-dependent fields, known UI-unavailable field types, or unresolved `binding`/`fieldID` references. Treat unknown controls/settings warning-first until product or runtime proof says they break import/open.
+
+The export-proven top-level public field allowlist from `Data Lists (4).yap` is `input`, `textarea`, `richtext`, `input_number`, `percent`, `currency`, `switch`, `radio`, `checkbox`, `datepicker`, `time`, `file-upload`, `icon-upload`, `rate`, `hyperlink`, `signer`, and `list`, with `Title` as a special primary-field exception. Public share URLs and codes must be redacted in committed docs, normalized refs, and validation reports.
+<!-- data-list-public-form-learning:end -->
+
 <!-- yap-schema-standard-learning:start -->
 ## YAP Schema Standard Validation
 

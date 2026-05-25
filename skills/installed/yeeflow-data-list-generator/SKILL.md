@@ -413,6 +413,18 @@ Data List custom form temp variables are form-scoped, not workflow variables. Th
 Document Library custom-form applicability remains product/user-understanding-backed unless a Type `16` export proves the exact custom form shape. Runtime rendering, field save behavior, action execution, sub-list row entry, upload behavior, lookup resolution, and Document Library custom-form behavior are not runtime-proven by this learning pass.
 <!-- data-list-custom-form-fields-learning:end -->
 
+<!-- data-list-public-form-learning:start -->
+## Data List Public Form Generation
+
+Use `docs/studies/data-list-public-forms.md`, `docs/studies/normalized/data-list-public-forms/`, and `scripts/inspect-data-list-public-forms.mjs` before generating or validating Data List Public Forms. Public Forms are stored separately from Custom List Forms under `Data.Childs[].PublicForms[]`; each entry has a JSON-string `Resource` with `pagetype = 3`, `ver = 2`, `attrs`, `children`, and `tempVars`.
+
+Public Forms are anonymous/no-login collection forms, so use a restricted field/control set. Export-proven top-level public field types from `Data Lists (4).yap` are `input`, `textarea`, `richtext`, `input_number`, `percent`, `currency`, `switch`, `radio`, `checkbox`, `datepicker`, `time`, `file-upload`, `icon-upload`, `rate`, `hyperlink`, `signer`, and `list`. The native primary `Title` field appears as an export-proven special case; do not treat that as permission to add other default/system fields.
+
+Do not generate default/system fields such as Id, Created By, Created Time, Modified By, or Modified Time into Public Forms. Do not generate login-dependent or UI-unavailable field types such as `identity-picker`, `organization-picker`, `location-picker`, `lookup`, `calculated-column`, `metadata`, `mutiple-metadata`, `cost-center-picker`, `tag`, or `autonumber` unless a future product/export/runtime proof expands the allowlist. Use only Public Form controls that are export-proven or UI-reference-backed, and include a `submit-button` for anonymous collection forms.
+
+Public share URLs and share codes must be redacted in docs/logs/normalized refs. This learning is export-proven for Type `1` Data Lists only; anonymous submit behavior, public URL access, save behavior, uploads, sub-list entry, and Document Library public forms are not runtime-proven.
+<!-- data-list-public-form-learning:end -->
+
 <!-- yap-schema-standard-learning:start -->
 ## YAP Schema Standard Guardrails
 
