@@ -21,6 +21,8 @@ Current proof boundary: export-proven and validator-backed only from `docs/studi
 - Inherited permission shape is `ListModel.IsBreakInherit = false`; custom permission audience shapes remain unproven.
 - Form Reports can appear in root navigation as `Data.Item.ListModel.LayoutView.sort[]` entries with `Type = 32`.
 
+Shared data-view update: Form Reports use the same `Layouts[]` family as data lists for list-like views. `Data Lists (1).yap` export-proves data-list view metadata on `Title`, `Type`, `Ext1.Url`, `IsDefault`, and `IsItemPerm`, and view settings in `LayoutView`. For Form Reports, only Type `0` views and `Attr_IsViewDetail` are export-proven in this repository; Help Center documents Form Report data views across additional product view types, but generate gallery/calendar/kanban Form Report views only as product-documented or after a Type `32` export proves the exact settings.
+
 ## Generation Rules
 
 - Generate Form Reports only when a source approval form exists in the same app package or the dependency is explicitly external and validated.
@@ -33,6 +35,9 @@ Current proof boundary: export-proven and validator-backed only from `docs/studi
 - Generate at most one selected sub-list via `Settings.SubListID`.
 - If a sub-list is selected, include deliberate selected sub-list field mappings with keys shaped as `<SubListID>_<subFieldId>`.
 - If no filter is selected, use no filter/null filter shape rather than inventing a catch-all condition.
+- Every generated Form Report list-like child resource should include one default view where possible; detect the default with `IsDefault = true`, not only the title `All Items`.
+- Custom report views need a unique `Ext1.Url` key within the report resource.
+- Keep fixed view filters (`LayoutView.filter[]`) separate from Form Report source filters (`Data.FormNewReports[].Settings.Filters`) and separate from end-user query filters (`LayoutView.query[].IsFilter`).
 - Treat row multiplication from selected sub-list as product-understanding-backed until runtime-proven.
 
 ## Field Mapping Rules

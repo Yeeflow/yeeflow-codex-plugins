@@ -52,6 +52,8 @@ Generate these export-proven document-library fields:
 
 Document-library views can reuse data-list view generation where compatible. A newly created library may export an empty default view `LayoutView = ""`; this is runtime-proven for the one-library `New Document Library` baseline. For the minimal runtime baseline, preserve the sample-proven empty-string default view before adding configured view JSON. The v2 `Enterprise Document Center` runtime pass accepted additional configured Type `0` views for multiple document libraries.
 
+Cross-resource data-view guidance: configured views should keep top-level metadata on `Layouts[]` (`Title`, `Type`, `Ext1.Url`, `IsDefault`, `IsItemPerm`) and view settings in parsed `LayoutView`. Data-list export proves Type `0` list, `999` gallery, `104` kanban, and `100` calendar, but document-library exports in this repository only prove Type `0` document-library views. Warn rather than hard-fail when a generated document library uses a product-documented but Type `16`-unproven view type.
+
 ## Custom Forms
 
 Document-library custom forms reuse the data-list custom form storage shape. Generate New/Edit/View custom forms only when the intended mapping is clear:

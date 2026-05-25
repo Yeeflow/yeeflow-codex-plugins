@@ -647,7 +647,9 @@ function validateViews(item, fieldByName, report) {
   const isDocumentLibrary = Number(item.ListModel && item.ListModel.Type) === 16;
   let viewCount = 0;
   let defaultViews = 0;
-  const knownTypes = new Set(["", "0", "104"]);
+  const knownTypes = new Set(["", "0", "100", "104", "999"]);
+  const viewNames = new Set();
+  const viewUrls = new Set();
 
   layouts.forEach((layout, index) => {
     validateGeneratedId(report, layout.LayoutID, "GENERATED_LAYOUT_ID_NOT_LARGE_NUMERIC_STRING", "Generated LayoutID should be a large numeric string ID.", {
@@ -657,8 +659,16 @@ function validateViews(item, fieldByName, report) {
     if (layoutType(layout) === "1") return;
     viewCount += 1;
     if (!layout.Title) issue(report, "warning", "VIEW_TITLE_MISSING", "View layout is missing a title.", { location: `Item.Layouts[${index}]` });
+    else if (viewNames.has(String(layout.Title))) issue(report, "warning", "VIEW_TITLE_DUPLICATE", "View names should be unique within a list-like resource unless an export proves duplicate-name behavior.", { location: `Item.Layouts[${index}]`, title: layout.Title });
+    viewNames.add(String(layout.Title || ""));
     if (isTruthy(layout.IsDefault)) defaultViews += 1;
     const type = layoutType(layout);
+    const ext = tryParseJson(layout.Ext1);
+    if (ext.ok && ext.value && ext.value.Url) {
+      const url = String(ext.value.Url);
+      if (viewUrls.has(url)) issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "VIEW_URL_DUPLICATE", "View URL/key should be unique within a resource.", { title: layout.Title || null, url });
+      viewUrls.add(url);
+    }
     if (report.mode === "generator" && !knownTypes.has(type)) {
       issue(report, "warning", "UNKNOWN_VIEW_TYPE", "Unknown view Type; generated lists should use confirmed view types.", { title: layout.Title || null, type });
     }
@@ -678,6 +688,15 @@ function validateViews(item, fieldByName, report) {
       return;
     }
     if (!view) return;
+    if (type === "100") {
+      if (!isObject(view.Columns)) issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "CALENDAR_VIEW_COLUMNS_MISSING", "Calendar views should include LayoutView.Columns.", { title: layout.Title || null });
+      for (const [setting, fieldName] of Object.entries(isObject(view.Columns) ? view.Columns : {})) {
+        const ref = String(fieldName || "");
+        if (ref && !fieldByName.has(ref) && !KNOWN_SYSTEM_FIELDS.has(ref)) {
+          issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "CALENDAR_VIEW_COLUMN_FIELD_NOT_FOUND", "Calendar view Columns setting references an unknown field.", { title: layout.Title || null, setting, fieldName: ref });
+        }
+      }
+    }
 
     for (const [columnIndex, column] of asArray(view.layout).entries()) {
       const fieldName = column.field || column.name || column.FieldName;
@@ -711,9 +730,23 @@ function validateViews(item, fieldByName, report) {
         });
       }
     }
+    for (const [queryIndex, query] of asArray(view.query).entries()) {
+      const fieldName = query.FieldName || query.field;
+      if (fieldName && !fieldByName.has(fieldName) && !KNOWN_SYSTEM_FIELDS.has(fieldName)) {
+        issue(report, "warning", "VIEW_USER_FILTER_FIELD_NOT_FOUND", "View query/user-filter field references an unknown field.", {
+          viewTitle: layout.Title,
+          queryIndex,
+          fieldName,
+        });
+      }
+      if (query.IsFilter !== undefined && typeof query.IsFilter !== "boolean") {
+        issue(report, "warning", "VIEW_USER_FILTER_FLAG_INVALID", "View query IsFilter should be boolean when present.", { viewTitle: layout.Title, queryIndex });
+      }
+    }
   });
 
   if (viewCount && defaultViews === 0) issue(report, "warning", "DEFAULT_VIEW_MISSING", "No default view was found.");
+  if (defaultViews > 1) issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DEFAULT_VIEW_DUPLICATE", "Only one default view is export-proven per list-like resource.", { defaultViews });
   return viewCount;
 }
 

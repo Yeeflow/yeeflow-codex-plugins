@@ -89,6 +89,16 @@ For Doc library controls on dashboards and form-hosted JSON surfaces, also check
 - dynamic `attrs.data.customPath` is an expression-token array when present; warn rather than claim runtime proof
 - document-library custom-form controls are runtime-proven for root-bound display and disabled search/add; approval-form controls remain partial until live published request-page proof; data-list custom-form controls remain validation-only
 
+For shared data views on list-like resources, also check:
+
+- each data-list, document-library, or Form Report child resource has at least one view where the resource shape expects views
+- exactly one default view is present where possible, detected by `IsDefault = true`
+- view names and parsed `Ext1.Url` keys are unique within a resource
+- known view type codes are `0` list, `999` gallery, `104` kanban, and `100` calendar
+- visible columns in `LayoutView.layout[]`, fixed filters in `LayoutView.filter[]`, user filters in `LayoutView.query[]`, sort fields in `LayoutView.sort[]`, and type-specific field selectors resolve to resource fields or known system fields
+- unknown view types, opaque permission audiences, and Type `16`/Type `32` advanced view settings should warn rather than fail until matching exports prove the exact schema
+- Form Report `LayoutView.Attr_IsViewDetail` is recognized as the detail-page access flag, but row-click/detail behavior is not runtime proof
+
 For Form Reports, also check:
 
 - `Data.FormNewReports[]` entries parse `Settings` JSON with `Fields`, `Filters`, and `SubListID`

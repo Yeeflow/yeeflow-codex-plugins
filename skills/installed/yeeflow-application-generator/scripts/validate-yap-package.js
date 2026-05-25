@@ -32,6 +32,21 @@ const ROOT_STYLE_TOKEN_HEX = new Map([
   ["#f7f8f9", "--c--neutral-light"],
   ["#f4f4f6", "--c--neutral-light-hover"],
 ]);
+const KNOWN_SYSTEM_FIELDS = new Set([
+  "ListDataID",
+  "Title",
+  "Created",
+  "CreatedBy",
+  "CreatedByName",
+  "Modified",
+  "ModifiedBy",
+  "ModifiedByName",
+  "Author",
+  "Editor",
+  "Status",
+  "TenantID",
+  "AppID",
+]);
 
 function usage(exitCode = 1) {
   const text = [
@@ -1441,6 +1456,10 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
 
   const layouts = asArray(item.Layouts);
   const layoutIds = new Set(layouts.map((layout) => safeString(layout.LayoutID)).filter(Boolean));
+  const viewNames = new Set();
+  const viewUrls = new Set();
+  let defaultViewCount = 0;
+  let viewCount = 0;
   if (!isRoot && item.ListModel && item.ListModel.LayoutView) {
     const listLayoutView = tryParseJson(item.ListModel.LayoutView);
     if (listLayoutView) {
@@ -1478,10 +1497,31 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
     const layoutId = safeString(layout.LayoutID);
     if (!layoutId) issue(report, "error", "LAYOUT_ID_MISSING", "LayoutID is required.", { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutID`, list: title });
     else localIds.add(layoutId);
-    if (!isRoot && Number(layout.Type || 0) === 0) validateDataListViewLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report, resourceType);
+    if (!isRoot && Number(layout.Type) !== 1) {
+      viewCount += 1;
+      if (layout.IsDefault === true) defaultViewCount += 1;
+      const viewName = safeString(layout.Title);
+      if (!viewName) issue(report, "warning", "DATA_VIEW_NAME_MISSING", "Data view should have a name.", { path: `${pathPrefix}.Layouts[${layoutIndex}]`, list: title });
+      else if (viewNames.has(viewName)) issue(report, "warning", "DATA_VIEW_NAME_DUPLICATE", "Data view names should be unique within a list-like resource unless a focused export proves duplicates are accepted.", { list: title, viewName });
+      viewNames.add(viewName);
+      const ext = tryParseJson(layout.Ext1) || {};
+      const viewUrl = safeString(ext.Url);
+      if (viewUrl && viewUrls.has(viewUrl)) issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DATA_VIEW_URL_DUPLICATE", "Data view URL/key should be unique within a list-like resource.", { list: title, viewUrl });
+      if (viewUrl) viewUrls.add(viewUrl);
+      validateDataListViewLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report, resourceType);
+    }
     if (Number(layout.Type) === 1) validateCustomFormLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report);
     if (Number(layout.Type) === 103 && isRoot) report.summary.dashboards += 1;
   });
+  if (!isRoot && viewCount === 0 && ["data list", "document library", "form report/list resource"].includes(resourceType)) {
+    issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DATA_VIEW_MISSING", "List-like resources should include at least one data view.", { list: title, resourceType });
+  }
+  if (!isRoot && viewCount > 0 && defaultViewCount === 0) {
+    issue(report, "warning", "DATA_VIEW_DEFAULT_MISSING", "List-like resources should include one default data view; detect it with IsDefault=true rather than only the view name.", { list: title, resourceType });
+  }
+  if (!isRoot && defaultViewCount > 1) {
+    issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DATA_VIEW_DEFAULT_DUPLICATE", "Only one default data view is export-proven per list-like resource.", { list: title, defaultViewCount });
+  }
 
   const recordCount = item.ListDatas && isObject(item.ListDatas) ? Object.keys(item.ListDatas).length : 0;
   if (item.ListDatas && !isObject(item.ListDatas)) issue(report, "error", "LISTDATAS_BAD_TYPE", "Item.ListDatas must be an object when present.", { path: `${pathPrefix}.ListDatas`, list: title });
@@ -1534,7 +1574,22 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
 
 function validateDataListViewLayout(layout, fieldsByName, pathPrefix, report, resourceType = "data list") {
   const view = tryParseJson(layout.LayoutView);
-  const severity = report.mode === "generator" && report.stage === "final" ? "error" : "warning";
+  const isFormReportResource = resourceType === "form report/list resource";
+  const severity = report.mode === "generator" && report.stage === "final" && !isFormReportResource ? "error" : "warning";
+  const type = safeString(layout.Type);
+  const knownViewTypes = new Set(["0", "100", "104", "999"]);
+  const listLikeViewTypes = new Set(["0", "104", "999"]);
+  const ext = tryParseJson(layout.Ext1) || {};
+  const viewTitle = layout.Title || null;
+  if (!knownViewTypes.has(type)) {
+    issue(report, "warning", "DATA_VIEW_TYPE_UNKNOWN", "Data view uses an unknown view Type; known export-proven codes are 0 list, 100 calendar, 104 kanban, and 999 gallery.", { path: pathPrefix, title: viewTitle, type });
+  }
+  if (type !== "0" && resourceType !== "data list") {
+    issue(report, "warning", "DATA_VIEW_TYPE_RESOURCE_SCOPE_UNPROVEN", "Gallery, calendar, and kanban settings are data-list export-proven in this workspace but not yet proven for this resource type.", { path: pathPrefix, title: viewTitle, type, resourceType });
+  }
+  if (layout.IsDefault === true && safeString(ext.Url) && !["default", "all"].includes(safeString(ext.Url))) {
+    issue(report, "warning", "DATA_VIEW_DEFAULT_URL_UNUSUAL", "Default views commonly use URL/key default or all in studied exports; confirm custom default URLs before relying on runtime behavior.", { path: pathPrefix, title: viewTitle, url: ext.Url });
+  }
   if (!view) {
     if (resourceType === "document library") {
       issue(report, "warning", "DOCUMENT_LIBRARY_VIEW_LAYOUTVIEW_EMPTY_OR_INVALID", "A newly created document library export may have an empty default view LayoutView; configured libraries should use the normal list view layout JSON.", { path: `${pathPrefix}.LayoutView`, title: layout.Title || null });
@@ -1546,13 +1601,42 @@ function validateDataListViewLayout(layout, fieldsByName, pathPrefix, report, re
   if (Array.isArray(view.fields) && !Array.isArray(view.layout)) {
     issue(report, severity, "DATA_LIST_VIEW_LAYOUTVIEW_LIGHTWEIGHT_FIELDS", "Generated data-list view LayoutView uses a lightweight fields array instead of Yeeflow's layout/sort/query/rowColor/filter schema.", { title: layout.Title });
   }
-  for (const key of ["layout", "sort", "query", "rowColor", "filter"]) {
-    if (!Array.isArray(view[key])) {
-      issue(report, severity, "DATA_LIST_VIEW_LAYOUTVIEW_REQUIRED_ARRAY_MISSING", `Data-list view LayoutView missing ${key} array.`, { title: layout.Title, key });
+  if (listLikeViewTypes.has(type)) {
+    const formReportMinimalView = isFormReportResource && view.Attr_IsViewDetail !== undefined && !Array.isArray(view.layout) && !Array.isArray(view.query);
+    if (!formReportMinimalView) {
+      for (const key of ["layout", "query"]) {
+        if (!Array.isArray(view[key])) {
+          issue(report, severity, "DATA_LIST_VIEW_LAYOUTVIEW_REQUIRED_ARRAY_MISSING", `Data-list view LayoutView missing ${key} array.`, { title: layout.Title, key });
+        }
+      }
+      for (const key of ["sort", "rowColor", "filter"]) {
+        if (view[key] !== undefined && !Array.isArray(view[key])) {
+          issue(report, severity, "DATA_LIST_VIEW_LAYOUTVIEW_OPTIONAL_ARRAY_INVALID", `Data-list view LayoutView ${key} should be an array when present.`, { title: layout.Title, key });
+        }
+      }
     }
   }
-  if (!Array.isArray(view.layout)) return;
-  view.layout.forEach((column, index) => {
+  if (type === "100") {
+    const columns = isObject(view.Columns) ? view.Columns : null;
+    if (!columns) issue(report, severity, "CALENDAR_VIEW_COLUMNS_MISSING", "Calendar view should include LayoutView.Columns.", { title: layout.Title });
+    for (const [setting, fieldName] of Object.entries(columns || {})) {
+      const ref = safeString(fieldName);
+      if (ref && !fieldsByName.has(ref) && !KNOWN_SYSTEM_FIELDS.has(ref)) {
+        issue(report, severity, "CALENDAR_VIEW_COLUMN_FIELD_NOT_FOUND", "Calendar view Columns setting references an unknown field.", { title: layout.Title, setting, fieldName: ref });
+      }
+    }
+    for (const key of ["Scope", "DefaultColor", "ColorClass", "ColorClassSetting", "Filter", "ExternalSetting", "query"]) {
+      if (view[key] === undefined) issue(report, "warning", "CALENDAR_VIEW_SETTING_MISSING", "Calendar view is missing a setting found in the studied export shape.", { title: layout.Title, key });
+    }
+  }
+  if (type === "999") validateViewExtField(ext, "TitleField", fieldsByName, layout, report, severity);
+  if (type === "999" && ext.CoverField !== undefined) validateViewExtField(ext, "CoverField", fieldsByName, layout, report, severity);
+  if (type === "104") {
+    validateViewExtField(ext, "TitleField", fieldsByName, layout, report, severity);
+    validateViewExtField(ext, "CategoryField", fieldsByName, layout, report, severity);
+    if (ext.CoverField !== undefined) validateViewExtField(ext, "CoverField", fieldsByName, layout, report, severity);
+  }
+  asArray(view.layout).forEach((column, index) => {
     const fieldId = safeString(column.FieldID);
     const fieldName = safeString(column.FieldName);
     const displayName = safeString(column.DisplayName);
@@ -1565,10 +1649,52 @@ function validateDataListViewLayout(layout, fieldsByName, pathPrefix, report, re
     if (fieldName && !fieldsByName.has(fieldName)) {
       issue(report, severity, "DATA_LIST_VIEW_FIELDNAME_NOT_FOUND", "Data-list view FieldName does not resolve to a list field.", { title: layout.Title, index, fieldName });
     }
-    if (safeString(column.Type) === "textarea") {
+    if (type === "0" && safeString(column.Type) === "textarea") {
       issue(report, severity, "DATA_LIST_VIEW_TEXTAREA_COLUMN_UNPROVEN", "Generated Type 0 data-list grid views should not include textarea columns; working app exports keep long text fields in forms but omit them from grid layout.", { title: layout.Title, index, fieldName });
     }
   });
+  asArray(view.sort).forEach((sort, index) => {
+    const fieldName = safeString(sort.SortName || sort.FieldName || sort.field);
+    if (fieldName && !fieldsByName.has(fieldName) && !KNOWN_SYSTEM_FIELDS.has(fieldName)) {
+      issue(report, severity, "DATA_VIEW_SORT_FIELD_NOT_FOUND", "Data view sort field does not resolve to a list field or known system field.", { title: layout.Title, index, fieldName });
+    }
+    if (sort.SortByDesc !== undefined && typeof sort.SortByDesc !== "boolean") {
+      issue(report, severity, "DATA_VIEW_SORT_DIRECTION_INVALID", "Data view SortByDesc should be boolean when present.", { title: layout.Title, index });
+    }
+  });
+  asArray(view.filter).forEach((filter, index) => {
+    const fieldName = safeString(filter.left || filter.FieldName || filter.field);
+    if (fieldName && !fieldsByName.has(fieldName) && !KNOWN_SYSTEM_FIELDS.has(fieldName)) {
+      issue(report, severity, "DATA_VIEW_FILTER_FIELD_NOT_FOUND", "Data view fixed filter field does not resolve to a list field or known system field.", { title: layout.Title, index, fieldName });
+    }
+    if (!safeString(filter.op)) issue(report, "warning", "DATA_VIEW_FILTER_OPERATOR_MISSING", "Data view fixed filter condition should include an operator.", { title: layout.Title, index });
+  });
+  asArray(view.query).forEach((query, index) => {
+    const fieldName = safeString(query.FieldName || query.field || query.Name);
+    if (fieldName && !fieldsByName.has(fieldName) && !KNOWN_SYSTEM_FIELDS.has(fieldName)) {
+      issue(report, severity, "DATA_VIEW_USER_FILTER_FIELD_NOT_FOUND", "Data view query/user-filter field does not resolve to a list field or known system field.", { title: layout.Title, index, fieldName });
+    }
+    if (query.IsFilter !== undefined && typeof query.IsFilter !== "boolean") {
+      issue(report, "warning", "DATA_VIEW_USER_FILTER_FLAG_INVALID", "Data view query IsFilter should be boolean when present.", { title: layout.Title, index });
+    }
+  });
+}
+
+function validateViewExtField(ext, key, fieldsByName, layout, report, severity) {
+  const raw = ext[key];
+  const parsed = typeof raw === "string" ? tryParseJson(raw) : raw;
+  if (!isObject(parsed)) {
+    issue(report, severity, "DATA_VIEW_TYPE_SETTING_INVALID", `Data view ${key} setting should be a field reference object or JSON string.`, { title: layout.Title, key });
+    return;
+  }
+  const fieldName = safeString(parsed.FieldName);
+  const fieldId = safeString(parsed.FieldID);
+  if (fieldName && !fieldsByName.has(fieldName) && !KNOWN_SYSTEM_FIELDS.has(fieldName)) {
+    issue(report, severity, "DATA_VIEW_TYPE_SETTING_FIELD_NOT_FOUND", `Data view ${key} field name does not resolve to a list field.`, { title: layout.Title, key, fieldName });
+  }
+  if (fieldId && !fieldsByName.has(fieldId)) {
+    issue(report, severity, "DATA_VIEW_TYPE_SETTING_FIELD_ID_NOT_FOUND", `Data view ${key} field ID does not resolve to a list field.`, { title: layout.Title, key, fieldId });
+  }
 }
 
 function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
