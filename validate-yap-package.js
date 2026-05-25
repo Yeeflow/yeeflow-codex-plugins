@@ -93,6 +93,15 @@ const APP_RESOURCE_PERMISSION_CONFLICT_KEYS = {
   formReports: { schemaAllowed: new Set([0, 8]), rulesAllowed: new Set([0, 1]), label: "schema says Read=8; rules document says Submit=1" },
   dataReports: { schemaAllowed: new Set([0, 8]), rulesAllowed: new Set([0, 1]), label: "schema says Read=8; rules document says Submit=1" },
 };
+const CUSTOM_FORM_DISPLAY_USAGES = ["add", "edit", "view"];
+const CUSTOM_FORM_OPEN_MODE_LABELS = {
+  modal: "Pop-up window",
+  slide: "Slide in",
+  page: "Full page",
+  fullpage: "Full page",
+  fullPage: "Full page",
+};
+const CUSTOM_FORM_SIZE_LABELS = new Map([[0, "Medium"], [1, "Small"], [2, "Large"], [3, "Full screen"]]);
 
 function usage(exitCode = 1) {
   const text = [
@@ -1774,6 +1783,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
           issue(report, "warning", "UI_STANDARD_VIEW_NOT_USING_VIEW_ITEM_FORM", "Generated data-list View item display setting should use the View Item custom form.", { list: title, listId, expectedLayoutId: viewLayout.LayoutID, actualLayoutId: listLayoutView.view });
         }
       }
+      validateCustomFormDisplaySettings(listLayoutView, layouts, report, { list: title, listId, path: `${pathPrefix}.ListModel.LayoutView` });
     }
   }
   layouts.forEach((layout, layoutIndex) => {
@@ -1853,6 +1863,31 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   if (resourceType === "data list") report.summary.dataLists += 1;
   if (resourceType === "document library") report.dependencies.push({ code: "DOCUMENT_LIBRARY_RESOURCE", message: "Document library resource present; validate Type 16 fields, views, forms, folder behavior, and upload behavior before runtime claims.", list: title, listId });
   if (resourceType === "report/data resource" || resourceType === "form report/list resource") report.summary.reports += 1;
+}
+
+function defaultCustomFormOpenModeForUsage(usage) {
+  return usage === "view" ? "Slide in" : "Pop-up window";
+}
+
+function validateCustomFormDisplaySettings(layoutView, layouts, report, context) {
+  if (!isObject(layoutView)) return;
+  const customFormLayoutIds = new Set(asArray(layouts).filter((layout) => Number(layout.Type) === 1).map((layout) => safeString(layout.LayoutID)).filter(Boolean));
+  const opentype = isObject(layoutView.opentype) ? layoutView.opentype : {};
+  const modalsize = isObject(layoutView.modalsize) ? layoutView.modalsize : {};
+  for (const usage of CUSTOM_FORM_DISPLAY_USAGES) {
+    const formRef = safeString(layoutView[usage] === undefined ? "default" : layoutView[usage]);
+    const usesDefault = formRef === "" || formRef === "default";
+    if (!usesDefault && !customFormLayoutIds.has(formRef)) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_DISPLAY_FORM_REF_NOT_FOUND", "New/Edit/View display setting references a custom list form layout that does not exist.", { ...context, usage, formRef });
+    }
+    const rawOpenMode = safeString(opentype[usage]);
+    const openMode = rawOpenMode ? CUSTOM_FORM_OPEN_MODE_LABELS[rawOpenMode] : defaultCustomFormOpenModeForUsage(usage);
+    if (!openMode) issue(report, "warning", "CUSTOM_FORM_DISPLAY_OPEN_MODE_UNKNOWN", "Custom list form display setting uses an unknown open mode.", { ...context, usage, openMode: rawOpenMode });
+    const rawSize = modalsize[usage];
+    const hasSize = rawSize !== undefined && rawSize !== null && rawSize !== "";
+    if (hasSize && !CUSTOM_FORM_SIZE_LABELS.has(Number(rawSize))) issue(report, "warning", "CUSTOM_FORM_DISPLAY_SIZE_UNKNOWN", "Custom list form display setting uses an unknown size code.", { ...context, usage, size: rawSize });
+    if (openMode === "Full page" && hasSize) issue(report, "warning", "CUSTOM_FORM_DISPLAY_FULL_PAGE_SIZE_SET", "Full page display settings should not rely on pop-up/slide size behavior unless a future export proves it.", { ...context, usage, size: rawSize });
+  }
 }
 
 function validateDataListViewLayout(layout, fieldsByName, pathPrefix, report, resourceType = "data list") {

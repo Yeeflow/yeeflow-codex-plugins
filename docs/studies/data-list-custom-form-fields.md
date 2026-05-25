@@ -254,6 +254,73 @@ Validation rules:
 - Temp variable references must resolve to `form.tempVars`.
 - Unknown action step types should warn, not fail, until export-proven.
 
+## Custom List Form Display Settings
+
+Custom form display settings are stored on the list resource, separate from the form layout itself.
+
+Export-proven path:
+
+- `Data.Childs[].ListModel.LayoutView`
+
+Observed schema:
+
+- `add`: New Item form assignment.
+- `edit`: Edit Item form assignment.
+- `view`: View Item form assignment.
+- `opentype`: optional object keyed by `add`, `edit`, and `view`.
+- `modalsize`: optional object keyed by `add`, `edit`, and `view`.
+
+Form assignment values are either a custom form `Layouts[].LayoutID` or the literal `default`. The `default` value means the built-in default layout is used instead of a custom list form. In this export, custom form references resolve to `Layouts[]` entries with `Type = 1`.
+
+Open mode mapping:
+
+- `opentype.<usage> = "modal"` maps to Pop-up window.
+- `opentype.<usage> = "slide"` maps to Slide in.
+- missing `opentype.<usage>` uses the export/UI default: New Item and Edit Item open as Pop-up window; View Item opens as Slide in.
+- Full page appears in the UI screenshots but was not found in the target-list export, so its exact export token remains unproven in this pass.
+
+Size mapping:
+
+- `modalsize.<usage> = 0` maps to Medium.
+- `modalsize.<usage> = 1` maps to Small.
+- `modalsize.<usage> = 2` maps to Large.
+- `modalsize.<usage> = 3` maps to Full screen.
+- missing `modalsize.<usage>` means Default size in the export, seen on Part B New Item.
+
+The export proves size settings for Pop-up window and Slide in. Full page should not rely on pop-up/slide size behavior unless a future export proves that shape.
+
+Target-list combinations found:
+
+| List | Usage | Form assignment | Open mode | Size |
+| --- | --- | --- | --- | --- |
+| `Data list with fields part A` | New Item | `Custom list form 2` | Pop-up window | Small |
+| `Data list with fields part A` | Edit Item | `Custom list form` | Pop-up window | Large |
+| `Data list with fields part A` | View Item | Default layout | Slide in | Medium |
+| `Data list with fields part B` | New Item | `Custom list form` | Slide in | Default |
+| `Data list with fields part B` | Edit Item | `Custom list form` | Slide in | Large |
+| `Data list with fields part B` | View Item | `Custom list form` | Pop-up window | Full screen |
+| `Data list with fields part C` | New Item | `Custom list form` | Pop-up window | Full screen |
+| `Data list with fields part C` | Edit Item | `Custom list form` | Pop-up window | Large |
+| `Data list with fields part C` | View Item | Default layout | Slide in | Medium |
+
+Validation rules:
+
+- New/Edit/View form references must resolve to either `default` or an existing custom form layout.
+- Open mode should be one of the export-proven values, or warn if unknown.
+- Size should be one of the export-proven codes, or warn if unknown.
+- Pop-up window and Slide in should preserve valid size settings when specified.
+- Full page should not require a size setting; a size paired with Full page should warn until product/export evidence proves it.
+
+Generation rules:
+
+- Generated Data Lists may assign separate custom/default layouts for New Item, Edit Item, and View Item.
+- Choose open mode and size based on form complexity: simple forms can use Small/Medium, longer field-heavy forms should use Large/Full screen.
+- If the user does not specify display behavior, use conservative defaults: New Item in Pop-up window with Medium or Large, Edit Item in Pop-up window or Slide in with Medium/Large, and View Item in Slide in with Medium.
+- Validate display settings independently from form layout validity.
+- Document Library display-setting applicability remains product/user-understanding-backed only until a Type `16` export proves the exact shape.
+
+Proof boundary: Data List custom list form display settings are export-proven from `Data Lists (3).yap`; the screenshots were used only as visual UI-label reference. Runtime opening/rendering behavior is not proven in this pass.
+
 ## Generation Rules
 
 For generated Data List custom list forms:
@@ -303,5 +370,11 @@ Created refs:
 - `custom-list-form-temp-variable.normalized.json`
 - `custom-list-form-action.normalized.json`
 - `custom-list-form-button-action-binding.normalized.json`
+- `custom-list-form-display-new-item-popup-small.normalized.json`
+- `custom-list-form-display-edit-item-popup-large.normalized.json`
+- `custom-list-form-display-view-item-slide-medium.normalized.json`
+- `custom-list-form-display-default-layout.normalized.json`
+- `custom-list-form-display-view-item-popup-full-screen.normalized.json`
 
 No `custom-list-form-submit-action-step.normalized.json` was created because no submit/save step was found in the target custom list forms.
+No `custom-list-form-display-full-page.normalized.json` was created because Full page was not found in the target-list export.

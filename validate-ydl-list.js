@@ -28,6 +28,15 @@ const ROOT_STYLE_TOKEN_HEX = new Map([
   ["#f7f8f9", "--c--neutral-light"],
   ["#f4f4f6", "--c--neutral-light-hover"],
 ]);
+const CUSTOM_FORM_DISPLAY_USAGES = ["add", "edit", "view"];
+const CUSTOM_FORM_OPEN_MODE_LABELS = {
+  modal: "Pop-up window",
+  slide: "Slide in",
+  page: "Full page",
+  fullpage: "Full page",
+  fullPage: "Full page",
+};
+const CUSTOM_FORM_SIZE_LABELS = new Map([[0, "Medium"], [1, "Small"], [2, "Large"], [3, "Full screen"]]);
 
 const KNOWN_SYSTEM_FIELDS = new Set([
   "ListDataID",
@@ -1113,6 +1122,78 @@ function validateCustomForms(item, fieldByName, report) {
   return customFormCount;
 }
 
+function defaultCustomFormOpenModeForUsage(usage) {
+  return usage === "view" ? "Slide in" : "Pop-up window";
+}
+
+function validateCustomFormDisplaySettings(item, report) {
+  const listModel = item && item.ListModel;
+  if (!isObject(listModel)) return;
+  const parsedLayoutView = tryParseJson(listModel.LayoutView);
+  if (!parsedLayoutView.ok) {
+    if (asArray(item.Layouts).some((layout) => Number(layout.Type) === 1)) {
+      issue(report, "warning", "CUSTOM_FORM_DISPLAY_SETTINGS_UNPARSEABLE", "Custom form display settings live in ListModel.LayoutView, but the value could not be parsed.", {
+        location: "Item.ListModel.LayoutView",
+        error: parsedLayoutView.error || null,
+      });
+    }
+    return;
+  }
+  const layoutView = parsedLayoutView.value;
+  if (!isObject(layoutView)) {
+    issue(report, "warning", "CUSTOM_FORM_DISPLAY_SETTINGS_INVALID", "Custom form display settings should parse to an object.", {
+      location: "Item.ListModel.LayoutView",
+    });
+    return;
+  }
+
+  const customFormLayoutIds = new Set(asArray(item.Layouts)
+    .filter((layout) => Number(layout.Type) === 1)
+    .map((layout) => safeString(layout.LayoutID))
+    .filter(Boolean));
+  const opentype = isObject(layoutView.opentype) ? layoutView.opentype : {};
+  const modalsize = isObject(layoutView.modalsize) ? layoutView.modalsize : {};
+
+  CUSTOM_FORM_DISPLAY_USAGES.forEach((usage) => {
+    const formRef = safeString(layoutView[usage] === undefined ? "default" : layoutView[usage]);
+    const usesDefault = formRef === "" || formRef === "default";
+    if (!usesDefault && !customFormLayoutIds.has(formRef)) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_DISPLAY_FORM_REF_NOT_FOUND", "New/Edit/View display setting references a custom list form layout that does not exist.", {
+        location: `Item.ListModel.LayoutView.${usage}`,
+        usage,
+        formRef,
+      });
+    }
+
+    const rawOpenMode = safeString(opentype[usage]);
+    const openMode = rawOpenMode ? CUSTOM_FORM_OPEN_MODE_LABELS[rawOpenMode] : defaultCustomFormOpenModeForUsage(usage);
+    if (!openMode) {
+      issue(report, "warning", "CUSTOM_FORM_DISPLAY_OPEN_MODE_UNKNOWN", "Custom list form display setting uses an unknown open mode.", {
+        location: `Item.ListModel.LayoutView.opentype.${usage}`,
+        usage,
+        openMode: rawOpenMode,
+      });
+    }
+
+    const rawSize = modalsize[usage];
+    const hasSize = rawSize !== undefined && rawSize !== null && rawSize !== "";
+    if (hasSize && !CUSTOM_FORM_SIZE_LABELS.has(Number(rawSize))) {
+      issue(report, "warning", "CUSTOM_FORM_DISPLAY_SIZE_UNKNOWN", "Custom list form display setting uses an unknown size code.", {
+        location: `Item.ListModel.LayoutView.modalsize.${usage}`,
+        usage,
+        size: rawSize,
+      });
+    }
+    if (openMode === "Full page" && hasSize) {
+      issue(report, "warning", "CUSTOM_FORM_DISPLAY_FULL_PAGE_SIZE_SET", "Full page display settings should not rely on pop-up/slide size behavior unless a future export proves it.", {
+        location: `Item.ListModel.LayoutView.modalsize.${usage}`,
+        usage,
+        size: rawSize,
+      });
+    }
+  });
+}
+
 function customFormTempVarAliases(tempVar) {
   const id = safeString(tempVar && tempVar.id);
   if (!id) return [];
@@ -1629,6 +1710,7 @@ function validate(inputPath, mode, stage, dependencyMapPath = null) {
   const externalLookupFields = new Set(lookupRelationships.filter((lookup) => lookup.targetListId && !knownListIds.has(String(lookup.targetListId))).map((lookup) => lookup.sourceFieldName));
   const viewCount = validateViews(item, fieldByName, report);
   const customFormCount = validateCustomForms(item, fieldByName, report);
+  validateCustomFormDisplaySettings(item, report);
   validateWorkflows(decoded.data, item, fieldByName, knownListIds, report);
   validateSampleData(item, fieldByName, report, dependencyMap, externalLookupFields, decoded.resource);
   validateLookupRelationships(lookupRelationships, knownListIds, report, dependencyMap);

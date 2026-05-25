@@ -11,6 +11,16 @@ const TARGET_LISTS = [
   "Data list with fields part B",
   "Data list with fields part C",
 ];
+const USAGES = ["add", "edit", "view"];
+const USAGE_LABELS = { add: "New Item", edit: "Edit Item", view: "View Item" };
+const SIZE_LABELS = { 0: "Medium", 1: "Small", 2: "Large", 3: "Full screen" };
+const EXPLICIT_OPEN_MODE_LABELS = {
+  modal: "Pop-up window",
+  slide: "Slide in",
+  page: "Full page",
+  fullpage: "Full page",
+  fullPage: "Full page",
+};
 
 function usage(exitCode = 1) {
   const text = [
@@ -203,6 +213,62 @@ function summarizeGrid(control) {
     childCount: asArray(control.children).length,
     proof: "export-proven; IDs redacted",
   };
+}
+
+function defaultOpenModeForUsage(usage) {
+  return usage === "view" ? "Slide in" : "Pop-up window";
+}
+
+function normalizeOpenMode(rawMode, usage) {
+  const raw = safeString(rawMode);
+  if (!raw) return { code: null, label: defaultOpenModeForUsage(usage), source: "default" };
+  return { code: raw, label: EXPLICIT_OPEN_MODE_LABELS[raw] || "Unknown", source: "explicit" };
+}
+
+function normalizeSize(rawSize) {
+  if (rawSize === undefined || rawSize === null || rawSize === "") return { code: null, label: "Default", source: "missing" };
+  return { code: rawSize, label: SIZE_LABELS[Number(rawSize)] || "Unknown", source: "explicit" };
+}
+
+function inspectDisplaySettings(item, formsByLayoutId, listName, findings) {
+  const parsed = parseMaybeJson(item.ListModel?.LayoutView);
+  const value = parsed.value || {};
+  if (!parsed.ok || !isObject(value)) {
+    addFinding(findings, "warning", "CUSTOM_FORM_DISPLAY_SETTINGS_PARSE_FAILED", "ListModel.LayoutView should parse as a display-settings object.", { list: listName, error: parsed.error || null });
+    return [];
+  }
+  const settings = [];
+  for (const usage of USAGES) {
+    const formRef = value[usage] === undefined ? "default" : value[usage];
+    const refKey = safeString(formRef);
+    const usesDefaultLayout = refKey === "" || refKey === "default";
+    const selectedForm = usesDefaultLayout ? null : formsByLayoutId.get(refKey);
+    const openMode = normalizeOpenMode(value.opentype && value.opentype[usage], usage);
+    const size = normalizeSize(value.modalsize && value.modalsize[usage]);
+    if (!usesDefaultLayout && !selectedForm) {
+      addFinding(findings, "error", "CUSTOM_FORM_DISPLAY_FORM_REF_NOT_FOUND", "Custom list form display setting references a form layout that does not exist.", { list: listName, usage, formRef: "__LAYOUT_ID_REDACTED__" });
+    }
+    if (openMode.label === "Unknown") {
+      addFinding(findings, "warning", "CUSTOM_FORM_DISPLAY_OPEN_MODE_UNKNOWN", "Custom list form display setting uses an unknown open mode.", { list: listName, usage, openMode: openMode.code });
+    }
+    if (size.label === "Unknown") {
+      addFinding(findings, "warning", "CUSTOM_FORM_DISPLAY_SIZE_UNKNOWN", "Custom list form display setting uses an unknown size code.", { list: listName, usage, size: size.code });
+    }
+    if (openMode.label === "Full page" && size.code !== null) {
+      addFinding(findings, "warning", "CUSTOM_FORM_DISPLAY_FULL_PAGE_SIZE_SET", "Full page display settings should not rely on pop-up/slide size behavior unless a future export proves it.", { list: listName, usage, size: size.label });
+    }
+    settings.push({
+      usage,
+      label: USAGE_LABELS[usage],
+      formReference: usesDefaultLayout ? "default" : "__LAYOUT_ID__",
+      formName: selectedForm ? selectedForm.Title || null : usesDefaultLayout ? "Default layout" : null,
+      usesDefaultLayout,
+      openMode,
+      size,
+      proofLevel: "export-proven for Data Lists (3).yap; UI label mapping uses provided screenshots as visual reference",
+    });
+  }
+  return settings;
 }
 
 function listFieldMap(fields) {
@@ -451,6 +517,8 @@ function buildReport(decoded, targetNames) {
     const customLayouts = asArray(item.Layouts)
       .map((layout, index) => ({ ...layout, __layoutIndex: index }))
       .filter((layout) => Number(layout.Type) === 1);
+    const formsByLayoutId = new Map(customLayouts.map((layout) => [safeString(layout.LayoutID), layout]));
+    const displaySettings = inspectDisplaySettings(item, formsByLayoutId, listName, findings);
     const layoutView = parseMaybeJson(item.ListModel?.LayoutView).value || {};
     const forms = [];
     for (const layout of customLayouts) {
@@ -476,6 +544,7 @@ function buildReport(decoded, targetNames) {
       systemFieldCount: fields.filter((field) => field.IsSystem === true).length,
       customFormCount: forms.length,
       customFormNames: forms.map((form) => form.name),
+      displaySettings,
       controlsCount: forms.reduce((sum, form) => sum + form.controlCount, 0),
       listBoundControlsCount: forms.reduce((sum, form) => sum + form.listBoundControlCount, 0),
       gridControlsCount: forms.reduce((sum, form) => sum + form.gridControlCount, 0),
@@ -507,6 +576,9 @@ function buildReport(decoded, targetNames) {
       gridControlsInspected: listReports.reduce((sum, list) => sum + list.gridControlsCount, 0),
       tempVariablesFound: listReports.reduce((sum, list) => sum + list.tempVariablesCount, 0),
       formActionsFound: listReports.reduce((sum, list) => sum + list.formActionsCount, 0),
+      displaySettings: listReports.flatMap((list) => list.displaySettings).length,
+      openModesFound: [...new Set(listReports.flatMap((list) => list.displaySettings).map((setting) => setting.openMode.label))].sort(),
+      sizesFound: [...new Set(listReports.flatMap((list) => list.displaySettings).map((setting) => setting.size.label))].sort(),
       fieldTypesRepresented: [...new Set(listReports.flatMap((list) => list.fieldTypesRepresented))].sort(),
     },
     lists: listReports,
@@ -615,6 +687,34 @@ function writeNormalizedRefs(report, decoded, outputDir) {
     const value = factory();
     if (!value) continue;
     fs.writeFileSync(path.join(outputDir, fileName), `${JSON.stringify(value, null, 2)}\n`);
+  }
+
+  const displaySettings = report.lists.flatMap((list) => list.displaySettings.map((setting) => ({ list: list.list, ...setting })));
+  const displayRefs = [
+    ["custom-list-form-display-new-item-popup-small.normalized.json", (setting) => setting.usage === "add" && setting.openMode.label === "Pop-up window" && setting.size.label === "Small"],
+    ["custom-list-form-display-edit-item-popup-large.normalized.json", (setting) => setting.usage === "edit" && setting.openMode.label === "Pop-up window" && setting.size.label === "Large"],
+    ["custom-list-form-display-view-item-slide-medium.normalized.json", (setting) => setting.usage === "view" && setting.openMode.label === "Slide in" && setting.size.label === "Medium"],
+    ["custom-list-form-display-full-page.normalized.json", (setting) => setting.openMode.label === "Full page"],
+    ["custom-list-form-display-default-layout.normalized.json", (setting) => setting.usesDefaultLayout],
+    ["custom-list-form-display-view-item-popup-full-screen.normalized.json", (setting) => setting.usage === "view" && setting.openMode.label === "Pop-up window" && setting.size.label === "Full screen"],
+  ];
+  for (const [fileName, predicate] of displayRefs) {
+    const setting = displaySettings.find(predicate);
+    if (!setting) continue;
+    fs.writeFileSync(path.join(outputDir, fileName), `${JSON.stringify({
+      proof: "export-proven from Data Lists (3).yap target data lists; private values redacted",
+      exportPath: "Data.Childs[].ListModel.LayoutView",
+      normalizedDisplaySetting: {
+        list: "__LIST_TITLE_REDACTED__",
+        usage: setting.usage,
+        label: setting.label,
+        formReference: setting.formReference,
+        formName: setting.usesDefaultLayout ? "Default layout" : "__FORM_TITLE_REDACTED__",
+        usesDefaultLayout: setting.usesDefaultLayout,
+        openMode: setting.openMode,
+        size: setting.size,
+      },
+    }, null, 2)}\n`);
   }
 }
 
