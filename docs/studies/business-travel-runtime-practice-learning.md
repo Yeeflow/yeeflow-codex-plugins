@@ -1,6 +1,6 @@
 # Business Travel Runtime Practice Learning
 
-Proof boundary: schema-v2-backed, runtime-practice-backed, validator-backed, and generator-hardened. Import after the `ListModel.Flags` repair is user-proven. Workflow publish fixes are validator-backed until the user confirms a successful publish. Workflow execution, request submission, routing, data-list mutation, and budget-control behavior are not runtime-proven.
+Proof boundary: schema-v2-backed, runtime-practice-backed, validator-backed, generator-hardened, and user-proven for import/open/workflow publish on the fixed Business Travel package. Workflow execution, request submission, routing, data-list mutation, and budget-control behavior are not runtime-proven.
 
 ## Sources
 
@@ -32,6 +32,21 @@ Subsequent approval-form workflow publish attempts exposed workflow designer iss
 - `Configuration error on node Finance Approval: Assignee: model.Method (position) model.Position (__POSITION_ID_REQUIRED_FINANCE_MANAGER__) must be a valid number`
 
 These are workflow publish blockers, not workflow execution results.
+
+## User-Proven Runtime Publish Result
+
+Package: `business-travel-budget-control.schema-fixed.v1.yap`
+
+Proof source: user manual test on 2026-05-25.
+
+User-confirmed runtime results:
+
+- Import result: success.
+- App open result: success.
+- Approval form workflow open result: success for `Business Travel Request`.
+- Workflow publish result: success.
+
+This upgrades only the fixed Business Travel package to import/open/publish-proven. It does not prove workflow execution, request submission, routing, approval completion, email delivery, ContentList/data-list mutation, budget-control lifecycle behavior, or true Finance Manager position assignment. The Finance Approval assignment was made publish-oriented by avoiding an invalid placeholder position ID; a true Finance Manager role requires a real numeric tenant position ID or another safely proven mapping.
 
 ## Learned Fixes
 
@@ -90,11 +105,11 @@ Future `.yap` generators must:
 ## Proof Boundary
 
 - Business Travel import after `Flags = 1`: user-proven.
-- Current repaired workflow publish fixes: validator-backed and ready for manual publish test.
-- Workflow publish success: pending user confirmation.
+- Business Travel app open and `Business Travel Request` workflow open: user-proven for the fixed package.
+- Business Travel workflow publish success: user-proven for the fixed package.
 - Workflow execution/routing/submission/data mutation: not runtime-proven.
 - True Finance Manager assignment: not proven; requires real numeric position ID or safe tenant lookup.
 
 ## Recommended Next Step
 
-Manually publish-test the latest `Business Travel Request` approval workflow from `/Users/Renger/Downloads/business-travel-budget-control.schema-fixed.v1.yap`. If publish succeeds, record that proof separately before merging broader runtime claims or rebuilding the plugin.
+Review and merge this proof update, then rebuild a plugin patch release so users receive the schema-v2-backed and publish-proven Business Travel lessons. Keep any request submission, routing, ContentList mutation, budget-control lifecycle, and true Finance Manager assignment tests as separate scoped runtime passes.

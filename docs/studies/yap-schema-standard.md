@@ -78,6 +78,8 @@ Hard validation errors:
 
 Business Travel runtime practice made `ListModel.Flags = 1` import-sensitive: the package imported after root and child list resources were repaired to include `Flags = 1`. Validators should hard-fail generated packages when `ListModel.Flags` is missing or not `1`.
 
+Follow-up user testing proved the same fixed Business Travel package imports, opens, opens the `Business Travel Request` workflow, and publishes successfully after schema, variable-reference, and publish-safe assignment repairs. That proof is package-specific; workflow execution, request submission, routing, data mutation, and true Finance Manager position assignment remain unproven.
+
 Validation severity:
 
 - `Flags` missing or not `1`: hard error for generated packages.

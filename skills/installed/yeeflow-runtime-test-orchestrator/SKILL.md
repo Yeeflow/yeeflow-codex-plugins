@@ -5,7 +5,7 @@ description: Standardize runtime testing for generated or modified Yeeflow appli
 
 # Yeeflow Runtime Test Orchestrator
 
-Business Travel runtime-practice checkpoint: when a generated package imports, continue with a separate workflow designer publish check before claiming workflow readiness. Record exact publish errors, repair only schema/variable/assignee issues that are safely derivable, and keep workflow execution, routing, request submission, and data mutation unproven until explicitly tested. A package that imports after `ListModel.Flags = 1` is not automatically workflow-publish-proven.
+Business Travel runtime-practice checkpoint: when a generated package imports, continue with a separate workflow designer publish check before claiming workflow readiness. The fixed `business-travel-budget-control.schema-fixed.v1.yap` package is user-proven for import, app open, workflow open, and workflow publish after schema/variable/assignee repairs. Keep workflow execution, routing, request submission, email, ContentList/data mutation, and true Finance Manager assignment unproven until explicitly tested. A package that imports after `ListModel.Flags = 1` is not automatically workflow-publish-proven.
 
 ## Core Rule
 
