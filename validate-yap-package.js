@@ -82,6 +82,7 @@ const APP_CREATION_IDENTIFIER_MAX_LENGTH = 255;
 const APP_CREATION_INTERNAL_NAME_RE = /^[A-Za-z0-9_]+$/;
 const APP_CREATION_PROCESS_KEY_RE = /^[A-Za-z0-9_]+$/;
 const YAP_WRAPPER_REQUIRED_KEYS = ["Title", "Description", "IconUrl", "IsListSet", "Resource"];
+const CUSTOM_LIST_MODEL_TYPES = new Set([1, 16, 32, 64, 128, 1024]);
 const APP_RESOURCE_PERMISSION_RULES = {
   approvalForms: { mask: 1 | 16 | 32, label: "Submit=1, ReadTasks=16, ProcessTasks=32" },
   dataLists: { mask: 1 | 2 | 4 | 8, label: "Submit=1, Edit=2, Delete=4, Read=8" },
@@ -1459,6 +1460,19 @@ function validateListExportItemSchema(item, pathPrefix, report) {
       issue(report, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_NOT_ARRAY`, `ListExportItem.${key} must be an array.`, { path, actualType: Array.isArray(value) ? "array" : typeof value });
     }
   }
+  if (!isObject(item.ListModel)) {
+    issue(report, generatorFinalSeverity(report), "LIST_EXPORT_ITEM_LISTMODEL_MISSING", "Generated app/list resources should include ListExportItem.ListModel.", { path: `${pathPrefix}.ListModel` });
+  } else {
+    if (item.ListModel.Flags !== 1) {
+      issue(report, generatorFinalSeverity(report), "LISTMODEL_FLAGS_INVALID", "Product schema v2 requires CustomListModel.Flags = 1; missing or different values can fail import.", { path: `${pathPrefix}.ListModel.Flags`, value: item.ListModel.Flags });
+    }
+    if (item.ListModel.Status !== undefined && item.ListModel.Status !== 1) {
+      issue(report, generatorFinalSeverity(report), "LISTMODEL_STATUS_INVALID", "Product schema v2 fixes CustomListModel.Status to 1 when present.", { path: `${pathPrefix}.ListModel.Status`, value: item.ListModel.Status });
+    }
+    if (item.ListModel.Type !== undefined && !CUSTOM_LIST_MODEL_TYPES.has(Number(item.ListModel.Type))) {
+      issue(report, generatorFinalSeverity(report), "LISTMODEL_TYPE_INVALID", "Product schema v2 allows CustomListModel.Type values 1, 16, 32, 64, 128, or 1024.", { path: `${pathPrefix}.ListModel.Type`, value: item.ListModel.Type });
+    }
+  }
 }
 
 function validateApplicationUserGroups(data, replaceIds, report) {
@@ -2182,6 +2196,7 @@ function validateWorkflowDesignerCompatibility(form, def, report) {
   if (def.graphver === undefined) issue(report, severity, "WORKFLOW_DEF_GRAPHVER_MISSING", "Workflow designer expects DefResource.graphver metadata.", { form: formName, key });
 
   const shapes = collectShapes(def);
+  const workflowVariableIds = collectWorkflowVariableIds(def);
   shapes.forEach((shape, index) => {
     const type = shapeType(shape);
     const id = safeString(shape.id);
@@ -2196,8 +2211,82 @@ function validateWorkflowDesignerCompatibility(form, def, report) {
       if (!shape.target || !safeString(shape.target.id) || !safeString(shape.target.resourceid)) {
         issue(report, severity, "WORKFLOW_SEQUENCE_TARGET_INVALID", "SequenceFlow target should include id and resourceid.", { form: formName, key, index });
       }
+      validateSequenceFlowConditionVariables(shape, workflowVariableIds, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.conditioninfo` });
+    } else if (type === "SetVariableTask") {
+      validateSetVariableTaskTargets(shape, workflowVariableIds, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.variablesetting` });
+    } else if (type === "MultiAssignmentTask" || type === "CandidateTask") {
+      validateTaskAssignmentVariables(shape, workflowVariableIds, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.usertaskassignment` });
     } else if (!isObject(shape.position)) {
       issue(report, severity, "WORKFLOW_NODE_POSITION_MISSING", "Workflow designer expects non-sequence workflow nodes to include position metadata.", { form: formName, key, index, type });
+    }
+  });
+}
+
+function collectWorkflowVariableIds(def) {
+  const ids = new Set();
+  for (const variable of asArray(def && def.variables && def.variables.basic)) {
+    const id = safeString(variable && variable.id);
+    if (id) ids.add(id);
+  }
+  for (const listref of asArray(def && def.variables && def.variables.listref)) {
+    const id = safeString(listref && listref.id);
+    if (id) ids.add(id);
+    for (const field of asArray(listref && listref.fields)) {
+      const fieldId = safeString(field && field.id);
+      if (fieldId) ids.add(fieldId);
+    }
+  }
+  return ids;
+}
+
+function validateSequenceFlowConditionVariables(shape, workflowVariableIds, report, context) {
+  const conditions = asArray(shape && shape.properties && shape.properties.conditioninfo);
+  conditions.forEach((condition, conditionIndex) => {
+    for (const side of ["left", "right"]) {
+      const operand = condition && condition[side];
+      const token = isObject(operand) && isObject(operand.value) ? operand.value : null;
+      if (!token || token.exprType !== "variable") continue;
+      const id = safeString(token.id);
+      if (id && !workflowVariableIds.has(id)) {
+        issue(report, generatorFinalSeverity(report), "WORKFLOW_SEQUENCE_CONDITION_VARIABLE_UNRESOLVED", "SequenceFlow condition references a workflow variable that is not present in DefResource.variables.", {
+          ...context,
+          path: `${context.path}[${conditionIndex}].${side}.value.id`,
+          node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
+          variableId: id,
+        });
+      }
+    }
+  });
+}
+
+function validateSetVariableTaskTargets(shape, workflowVariableIds, report, context) {
+  asArray(shape && shape.properties && shape.properties.variablesetting).forEach((setting, settingIndex) => {
+    const id = safeString(setting && setting.id);
+    if (id && !workflowVariableIds.has(id)) {
+      issue(report, generatorFinalSeverity(report), "SETVARIABLE_UNKNOWN_VARIABLE", "SetVariableTask references a workflow variable that is not present in DefResource.variables.", {
+        ...context,
+        path: `${context.path}[${settingIndex}].id`,
+        node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
+        variableId: id,
+      });
+    }
+  });
+}
+
+function validateTaskAssignmentVariables(shape, workflowVariableIds, report, context) {
+  asArray(shape && shape.properties && shape.properties.usertaskassignment).forEach((assignment, assignmentIndex) => {
+    const text = JSON.stringify(assignment || {});
+    const variableIds = [...text.matchAll(/\\"id\\":\\"([^"\\]+)\\"|"id":"([^"]+)"/g)]
+      .map((match) => safeString(match[1] || match[2]))
+      .filter((id) => id && !["FlowNo"].includes(id));
+    for (const id of variableIds) {
+      if (workflowVariableIds.has(id)) continue;
+      issue(report, generatorFinalSeverity(report), "TASK_ASSIGNMENT_VARIABLE_UNRESOLVED", "Task assignment references a workflow variable that is not present in DefResource.variables.", {
+        ...context,
+        path: `${context.path}[${assignmentIndex}]`,
+        node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
+        variableId: id,
+      });
     }
   });
 }

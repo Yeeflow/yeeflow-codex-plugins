@@ -5,6 +5,7 @@ Proof level: product-schema-backed, product-rule-backed, validator-backed after 
 ## Sources
 
 - Product schema reference: `/Users/Renger/Downloads/yap-schema.json`
+- Latest product schema reference: `/Users/Renger/Downloads/yap-v1-schema_v2.json`
 - Product rules reference: `/Users/Renger/Downloads/Yeeflow App Creation Rules.md`
 - Requested `/mnt/data/...` attachment paths were not present in this desktop workspace; the same provided files were available from `/Users/Renger/Downloads/`.
 
@@ -60,6 +61,29 @@ Hard validation errors:
 - `Defs` not array
 - `Layouts` not array
 - same rules for every `Childs[]` resource
+
+## CustomListModel
+
+`yap-v1-schema_v2.json` adds schema-backed `CustomListModel` constraints for list-like resources:
+
+- `Flags` is fixed to `1`.
+- `Status` is fixed to `1` when present. The v2 schema defines the fixed value, but the field is not marked required; known imported packages may omit it.
+- `Type` is limited to:
+  - `1` List
+  - `16` Document
+  - `32` WorkflowReport
+  - `64` DataReport
+  - `128` EPUser
+  - `1024` ListSet
+
+Business Travel runtime practice made `ListModel.Flags = 1` import-sensitive: the package imported after root and child list resources were repaired to include `Flags = 1`. Validators should hard-fail generated packages when `ListModel.Flags` is missing or not `1`.
+
+Validation severity:
+
+- `Flags` missing or not `1`: hard error for generated packages.
+- `Status` present and not `1`: hard error.
+- `Status` missing: warning or accepted, because schema v2 fixes the value but does not require the property and an imported Business Travel package omitted it.
+- invalid `Type`: hard error.
 
 ## ListDefinitionModel
 
@@ -136,6 +160,9 @@ Generators that emit `.yap`, `.ydl`, or `.ywf` packages must:
 
 - emit `Item.Defs` and `Item.Layouts` as arrays, never `null`
 - emit child resource `Defs` and `Layouts` as arrays, never `null`
+- emit root and child `ListModel.Flags = 1`
+- emit `ListModel.Status = 1` when they choose to include `Status`
+- keep `ListModel.Type` within the v2 schema allowed set
 - preserve the FieldIndex/FieldName suffix synchronization gate
 - keep list identifiers unique and valid
 - emit valid process keys

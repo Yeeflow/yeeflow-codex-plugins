@@ -310,6 +310,14 @@ function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
         method,
       });
     }
+    if (type === "position" && method === "position" && !valueMissing(assignment.position) && !/^\d+$/.test(safeString(assignment.position))) {
+      issue(issues, severity, "ASSIGNMENT_TASK_POSITION_ID_INVALID", "Direct position assignment should use a numeric position ID; placeholders or labels can block workflow publish.", {
+        path: `${itemPath}.position`,
+        nodeId: shapeId(shape),
+        method,
+        value: safeString(assignment.position),
+      });
+    }
     if (["direct", "positionorg", "positionloc"].includes(method) && valueMissing(assignment.value)) {
       issue(issues, severity, "ASSIGNMENT_TASK_STATIC_REFERENCE_MISSING", "Static user, department, or location assignment should include a value reference.", {
         path: `${itemPath}.value`,

@@ -5,6 +5,8 @@ description: generate, inspect, validate, package, debug, and improve yeeflow da
 
 # Yeeflow Data List Generator
 
+Business Travel schema-practice carry-forward: generated data-list and document-library child resources must include `ListModel.Flags = 1`, keep `ListModel.Type` within the schema-v2 enum, and use `ListModel.Status = 1` when Status is emitted. `Defs` and `Layouts` must be arrays, not `null`. FieldIndex/FieldName suffix synchronization, unique identifiers, and valid InternalName rules remain hard gates before import.
+
 ## Application Navigation References
 
 When a generated application exposes data lists through the app navigation menu, reference each list from the root app `Data.Item.ListModel.LayoutView.sort[]` using `Type = 1`, the list `ListID`, root `ListSetID`, `Title`, optional `DisplayName`, optional `Icon`, and boolean `IsHidden` when needed. Omit `DisplayName` to allow Yeeflow to use the data list title as the menu label. Use `Icon: ""` for no-icon.
