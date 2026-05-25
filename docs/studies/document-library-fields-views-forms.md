@@ -47,6 +47,13 @@ Configured document-library views use the same high-level view JSON keys as data
 
 The newly created `New Document library` / `New Document Library` resources have one default Type `0` view with empty-string `LayoutView = ""`. This is now runtime-proven for the one-library `New Document Library` baseline. The minimal generated baseline should keep the empty-string view first; configured view JSON can be added after import/open proof.
 
+Cross-resource data-view update from `Data Lists (1).yap`:
+
+- Shared data-view metadata lives on `Layouts[]`: `Title`, `Type`, `Ext1.Url`, `IsDefault`, and `IsItemPerm`.
+- Configured views split settings between `Ext1` and parsed `LayoutView`; data-list exports prove `Ext1.Url`, `displayStyle`, `ShowTable`, and type-specific selectors such as `TitleField`, `CoverField`, `CategoryField`, and `IncludeUncategorized`.
+- Data-list export proves Type codes `0` list, `999` gallery, `104` kanban, and `100` calendar, but document-library exports in this repo currently prove only Type `0` configured/default views. Treat gallery/calendar/kanban document-library view generation as product-documented until a Type `16` export proves the exact settings.
+- Default view detection should use `IsDefault = true` where present; default view names can be user-facing labels, not a hard-coded schema guarantee.
+
 ## Custom Forms
 
 Document libraries use the same Type `1` custom form storage model as data lists:

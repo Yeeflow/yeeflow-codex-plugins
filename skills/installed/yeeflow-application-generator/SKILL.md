@@ -49,6 +49,8 @@ Before generating with a newly learned feature, decide whether the work is:
 
 If generated package import/rendering, workflow execution, app setting rendering, AI/email/external execution, custom code execution, document upload/persistence, user/group membership, permissions, or row mutation is involved, recommend a focused runtime baseline before merge or broad reuse. The baseline should use the smallest possible app, fresh IDs, local validation before build, and runtime testing only after the user requests it. If runtime is deferred, report the feature as export-proven/validator-backed/planning-guidance/import-proven/partial and list the focused runtime follow-up.
 
+Shared data-view generation note: data lists, document libraries, and Form Reports expose list-like views through `Layouts[]`. `Data Lists (1).yap` export-proves data-list view metadata on `Title`, `Type`, `Ext1.Url`, `IsDefault`, and `IsItemPerm`, plus settings in parsed `LayoutView`. Known exported data-list view type codes are `0` list, `999` gallery, `104` kanban, and `100` calendar. Use `scripts/inspect-data-views.mjs` and `docs/studies/data-view-resource-settings.md` before generating advanced views. Treat non-list Type `16`/Type `32` advanced view settings as product-documented until a matching export proves the exact shape.
+
 ## Application Capability Planning Checklist
 
 For full app generation, write a `Capability Coverage Plan` before implementation. Use `docs/studies/application-planning-capability-coverage.md` when present. The plan must select relevant capabilities, explicitly exclude irrelevant ones, defer partial or unproven features honestly, and assign each selected capability to the right generator, validator, and runtime-test path.

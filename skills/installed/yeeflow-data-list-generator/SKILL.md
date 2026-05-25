@@ -33,6 +33,19 @@ business requirement
 
 Prefer native Yeeflow list features first: fields, Rules, lookups, views, custom list forms, sample data, and list workflows only when truly needed.
 
+Data-view generation should follow `docs/studies/data-view-resource-settings.md` and the redacted refs under `docs/studies/normalized/data-views/`. Export-proven view rules from `Data Lists (1).yap`:
+
+- Views are `Layouts[]` entries.
+- View URL/key lives in parsed `Ext1.Url` and should be unique within the resource.
+- Default view detection uses `IsDefault = true`; do not rely only on the title `All Items` because one sampled default was renamed.
+- Type `0` is list view, Type `999` gallery, Type `104` kanban, and Type `100` calendar.
+- Fixed filters live in `LayoutView.filter[]`; end-user filterable fields live in `LayoutView.query[]` entries with `IsFilter = true`.
+- Sort fields in `LayoutView.sort[]` must resolve to valid fields or known system fields.
+- Gallery uses `TitleField` and optional `CoverField`; kanban uses `TitleField`, `CategoryField`, optional `CoverField`, and `IncludeUncategorized`; calendar uses `Columns` and calendar color/scope settings.
+- Permission schemas beyond inherited/no view item permission are not export-proven in this sample; warn on opaque custom audiences.
+
+Do not claim runtime behavior for view switching, permissions, calendar rendering, or kanban drag/drop without a focused runtime baseline.
+
 ## Hard Stop Conditions
 
 Do not build a final `.ydl` when:
@@ -59,6 +72,7 @@ Do not import anything, operate Yeeflow UI, or modify original exports unless th
 Use bundled scripts from `scripts/`:
 
 - `inspect-ydl-package.js`: decode `.ydl` and inventory fields, views, forms, workflows, lookups, sample data.
+- `inspect-data-views.mjs`: decode `.yap` and inventory data-list/document-library/Form Report view schema without writing raw payloads.
 - `extract-ydl-metadata.js`: extract machine-readable metadata from one or more `.ydl` files.
 - `validate-ydl-list.js`: validate decoded data-list JSON or `.ydl` wrapper.
 - `validate-ydl-against-yap.js`: validate list dependencies against `.yap` metadata or compatible metadata.

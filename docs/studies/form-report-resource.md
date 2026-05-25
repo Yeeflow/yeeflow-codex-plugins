@@ -142,6 +142,13 @@ Export-proven:
 - Custom views can include `layout`, `sort`, `query`, `rowColor`, `filter`, and `Attr_IsViewDetail`.
 - `Attr_IsViewDetail` is the export flag for whether users can access the submitted form detail page from the view.
 
+Cross-resource data-view update from `Data Lists (1).yap`:
+
+- Data views are stored in the same `Layouts[]` family used by data lists and document libraries, with `Layouts[].Title`, `Type`, `Ext1.Url`, `IsDefault`, and `IsItemPerm` as top-level view metadata.
+- Data-list export proves view type codes `0` list, `999` gallery, `104` kanban, and `100` calendar. The Form Report sample only proved `Type = 0`, so gallery/calendar/kanban Form Report view generation remains product-documented until a Form Report export proves those specific Type `32` settings.
+- Default view detection should use `IsDefault = true`, not only the name `All Items`; the data-list export includes one default view renamed `All tasks`.
+- Form Report views should continue recognizing `Attr_IsViewDetail` as a Form Report-specific detail-page access flag.
+
 Runtime-sensitive:
 
 - Whether row click actually opens or blocks the submitted detail page was not tested.

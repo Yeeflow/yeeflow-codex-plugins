@@ -35,6 +35,8 @@ For unproven dashboard areas, use this with `yeeflow-feature-learning-orchestrat
 - For app shell/list/form hard rules, also use `yeeflow-application-generator`, `yeeflow-data-list-generator`, and `yeeflow-approval-form-generator` as needed.
 - For dashboard expressions, data filters, dynamic display/style rules, filter-bound chart conditions, Collection item text expressions, and formula-like widget settings, also use `yeeflow-expression-generator`, `yeeflow-expression-functions.normalized.json`, `yeeflow-expression-function-knowledge-base.normalized.json`, `yeeflow-expression-operators.normalized.json`, `yeeflow-expression-utils.js`, `docs/yeeflow-expression-generation-rules.md`, and `docs/yeeflow-expression-editor-ui-contexts.md`.
 
+When a dashboard/reporting control depends on a data-list, document-library, or Form Report view, inspect `docs/studies/data-view-resource-settings.md` first. Data views are `Layouts[]` entries with URL/default/filter/sort/user-filter settings; do not treat a dashboard data source as runtime-proven just because a view exists in the package. Confirm the target list-like resource and selected view fields/filters resolve before generation, and keep view-driven dashboard behavior runtime-sensitive until focused proof observes it.
+
 ## Core Rule
 
 Do not start complex dashboard generation from a complex dashboard export.
