@@ -140,3 +140,9 @@ For Signal event, start with import/open/designer/publish proof only. A focused 
 
 The combined `Workflow Actions Batch Runtime Baseline` imported, opened, rendered, and published generated approval and data-list workflows containing Claim Task / `CandidateTask`, Set variable / `SetVariableTask`, Set data list / `ContentList`, and Signal event / `SignalEvent`. Treat this as import/open/designer/publish proof only. The baseline does not prove Claim Task claiming, pending-task routing, approve/reject/complete execution, Set variable mutation, Set data list add/edit/remove execution, sub-list row iteration, Signal event recall/terminate firing, downstream cleanup mutation, Products workflow triggering, or email delivery.
 <!-- workflow-assignment-task-assignee-learning:end -->
+
+<!-- app-creation-rules-learning:start -->
+## App Creation Rule Runtime Boundary
+
+Before runtime import tests, run the app creation rule validators from `docs/studies/yeeflow-app-creation-rules.md`. A generated package with FieldIndex/FieldName suffix mismatch, duplicate list identifiers, invalid process keys, or malformed approval-form `NoRule` must not be imported. Product-rule-backed and validator-backed fixes are not runtime proof; only upgrade to import/open/designer/runtime labels after a focused regenerated package imports and opens in Yeeflow.
+<!-- app-creation-rules-learning:end -->

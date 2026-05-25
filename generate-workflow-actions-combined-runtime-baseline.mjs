@@ -134,6 +134,57 @@ function replaceDeep(value, replacements) {
   return value;
 }
 
+function appCreationNoRule(prefix) {
+  return {
+    Prefix: `${prefix}_{date}_{index}`,
+    StartIndex: 1,
+    CustomLength: 8,
+    AutoIncrement: 1,
+  };
+}
+
+function renameFieldReferences(value, renames) {
+  if (typeof value === "string") {
+    let out = value;
+    for (const [from, to] of renames) {
+      const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      out = out.replace(new RegExp(`(^|[^A-Za-z0-9_])${escaped}(?![A-Za-z0-9_])`, "g"), `$1${to}`);
+    }
+    return out;
+  }
+  if (Array.isArray(value)) return value.map((item) => renameFieldReferences(item, renames));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, renameFieldReferences(child, renames)]));
+  }
+  return value;
+}
+
+function synchronizeFieldIndexNames(listItem, linkedObjects = []) {
+  const fields = Array.isArray(listItem?.Defs) ? listItem.Defs : [];
+  const names = new Set(fields.map((field) => String(field.FieldName || "")).filter(Boolean));
+  const renames = [];
+  for (const field of fields) {
+    const fieldName = String(field.FieldName || "");
+    const fieldIndex = Number(field.FieldIndex);
+    if (!fieldName || fieldName === "Title" || !Number.isInteger(fieldIndex) || fieldIndex <= 0) continue;
+    const suffix = fieldName.match(/(\d+)$/);
+    if (suffix && Number(suffix[1]) === fieldIndex) continue;
+    const prefix = fieldName.replace(/\d+$/, "") || String(field.FieldType || "Text");
+    const nextName = `${prefix}${fieldIndex}`;
+    if (names.has(nextName) && nextName !== fieldName) {
+      throw new Error(`Cannot synchronize ${fieldName} to ${nextName}; target field name already exists.`);
+    }
+    names.delete(fieldName);
+    names.add(nextName);
+    renames.push([fieldName, nextName]);
+    field.FieldName = nextName;
+  }
+  return {
+    renames,
+    linkedObjects: renames.length ? linkedObjects.map((entry) => renameFieldReferences(entry, renames)) : linkedObjects,
+  };
+}
+
 function shapeType(shape) {
   return shape?.stencil?.id || shape?.stencil || shape?.type || "unknown";
 }
@@ -269,6 +320,7 @@ function appendApprovalCoverage(baseData, args) {
   };
   baseData.Forms[0].Name = "Workflow Action Approval Test";
   baseData.Forms[0].Description = "Combined workflow action runtime baseline approval form.";
+  baseData.Forms[0].NoRule = appCreationNoRule(args.approvalKey);
   baseData.Forms[0].DefResource = JSON.stringify(nextDef);
 }
 
@@ -332,8 +384,12 @@ function appendDataListWorkflow(baseResource, baseData, args) {
   listDef.graphzoom = 0.85;
   workflow.DefResource = JSON.stringify(listDef);
 
-  baseData.Childs = [...(baseData.Childs || []), child];
-  baseData.Forms = [...(baseData.Forms || []), workflow];
+  const sync = synchronizeFieldIndexNames(child, [workflow]);
+  const syncedChild = sync.renames.length ? renameFieldReferences(child, sync.renames) : child;
+  const [syncedWorkflow] = sync.linkedObjects;
+
+  baseData.Childs = [...(baseData.Childs || []), syncedChild];
+  baseData.Forms = [...(baseData.Forms || []), syncedWorkflow];
   baseResource.ReplaceIds = [...new Set([...(baseResource.ReplaceIds || []).map(String), ...newIds])];
   baseResource.FormKeys = [...new Set([...(baseResource.FormKeys || []), args.approvalKey, args.dataWorkflowKey])];
 

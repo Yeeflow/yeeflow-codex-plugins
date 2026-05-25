@@ -14,6 +14,8 @@ const PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
 const NUMERIC_OPS = new Set(["n.>", "n.>=", "n.<", "n.<=", "n.=", "n.!=", ">", ">=", "<", "<="]);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const CORRUPTED_REPLACEMENT_KEY_RE = /^pr[0-9]+x$/;
+const PROCESS_KEY_RE = /^[A-Za-z0-9_]+$/;
+const PROCESS_KEY_MAX_LENGTH = 255;
 const FLOW_KEY_RESERVED_PROPERTY_NAMES = [
   "prefix",
   "suffix",
@@ -281,6 +283,12 @@ function validateDecodedDef(def, options = {}) {
           addIssue(errors, "GRAPHPOSITION_MISSING_DIMENSION", `graphposition.${key} must be a number for workflow designer layout`, `$.graphposition.${key}`);
         }
       }
+    }
+    if (typeof def.defkey === "string" && def.defkey.length > PROCESS_KEY_MAX_LENGTH) {
+      addIssue(errors, "PROCESS_KEY_TOO_LONG", "Process keys must not exceed 255 characters", "$.defkey", { keyLength: def.defkey.length });
+    }
+    if (typeof def.defkey === "string" && def.defkey && !PROCESS_KEY_RE.test(def.defkey)) {
+      addIssue(errors, "PROCESS_KEY_INVALID_CHARS", "Process keys may contain only letters, numbers, and underscores", "$.defkey", { flowKey: def.defkey });
     }
   }
 

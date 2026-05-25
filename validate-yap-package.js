@@ -47,6 +47,39 @@ const KNOWN_SYSTEM_FIELDS = new Set([
   "TenantID",
   "AppID",
 ]);
+const APP_CREATION_SUPPORTED_LIST_TYPES = new Set([
+  "input",
+  "textarea",
+  "richtext",
+  "hyperlink",
+  "input_number",
+  "currency",
+  "percent",
+  "calculated-column",
+  "rate",
+  "switch",
+  "checkbox",
+  "radio",
+  "select",
+  "tag",
+  "datepicker",
+  "time",
+  "identity-picker",
+  "organization-picker",
+  "cost-center-picker",
+  "signer",
+  "file-upload",
+  "icon-upload",
+  "lookup",
+  "mutiple-metadata",
+  "location-picker",
+  "flowstatus",
+  "autonumber",
+  "list",
+]);
+const APP_CREATION_IDENTIFIER_MAX_LENGTH = 255;
+const APP_CREATION_INTERNAL_NAME_RE = /^[A-Za-z0-9_]+$/;
+const APP_CREATION_PROCESS_KEY_RE = /^[A-Za-z0-9_]+$/;
 
 function usage(exitCode = 1) {
   const text = [
@@ -182,6 +215,88 @@ function issue(report, level, code, message, details = {}) {
 
 function generatorFinalSeverity(report, fallback = "warning") {
   return report.mode === "generator" && report.stage === "final" ? "error" : fallback;
+}
+
+function validateAppCreationFieldRules(field, report, context = {}) {
+  const severity = generatorFinalSeverity(report);
+  const fieldName = safeString(field && field.FieldName);
+  const internalName = safeString(field && field.InternalName);
+  const displayName = safeString(field && field.DisplayName);
+  const type = safeString(field && field.Type).toLowerCase();
+  const pathPrefix = context.path || "field";
+  const list = context.list || null;
+
+  for (const [key, value] of [["DisplayName", displayName], ["FieldName", fieldName], ["InternalName", internalName]]) {
+    if (value && value.length > APP_CREATION_IDENTIFIER_MAX_LENGTH) {
+      issue(report, severity, `FIELD_${key.toUpperCase()}_TOO_LONG`, `${key} must not exceed 255 characters.`, { list, path: `${pathPrefix}.${key}`, length: value.length });
+    }
+  }
+
+  if (internalName && !APP_CREATION_INTERNAL_NAME_RE.test(internalName)) {
+    issue(report, severity, "FIELD_INTERNAL_NAME_INVALID_CHARS", "InternalName may contain only letters, numbers, and underscores.", { list, path: `${pathPrefix}.InternalName`, internalName });
+  }
+
+  if (type && !APP_CREATION_SUPPORTED_LIST_TYPES.has(type)) {
+    issue(report, "warning", "LIST_FIELD_TYPE_UNSUPPORTED", "List field Type is not in the product-team supported Type list.", { list, path: `${pathPrefix}.Type`, fieldName, type });
+  }
+
+  if (!fieldName || KNOWN_SYSTEM_FIELDS.has(fieldName)) return;
+  const fieldIndex = Number(field && field.FieldIndex);
+  if (!Number.isInteger(fieldIndex) || fieldIndex <= 0) return;
+  const suffixMatch = fieldName.match(/(\d+)$/);
+  if (!suffixMatch) {
+    issue(report, severity, "FIELD_NAME_NUMERIC_SUFFIX_MISSING", "FieldName numeric suffix must match FieldIndex; generated non-system fields must end with their FieldIndex value.", { list, path: `${pathPrefix}.FieldName`, fieldName, fieldIndex });
+    return;
+  }
+  const suffix = Number(suffixMatch[1]);
+  if (suffix !== fieldIndex) {
+    issue(report, severity, "FIELD_NAME_FIELDINDEX_MISMATCH", "FieldName numeric suffix must match FieldIndex.", { list, path: `${pathPrefix}.FieldName`, fieldName, fieldIndex, suffix });
+  }
+}
+
+function validateProcessKey(value, report, context = {}) {
+  const key = safeString(value);
+  if (!key) return;
+  const severity = generatorFinalSeverity(report);
+  if (key.length > APP_CREATION_IDENTIFIER_MAX_LENGTH) {
+    issue(report, severity, "PROCESS_KEY_TOO_LONG", "Process keys must not exceed 255 characters.", { path: context.path, form: context.form, keyLength: key.length });
+  }
+  if (!APP_CREATION_PROCESS_KEY_RE.test(key)) {
+    issue(report, severity, "PROCESS_KEY_INVALID_CHARS", "Process keys may contain only letters, numbers, and underscores.", { path: context.path, form: context.form, key });
+  }
+}
+
+function validateNoRule(form, report, context = {}) {
+  const severity = generatorFinalSeverity(report);
+  const formName = context.form || safeString(form && form.Name);
+  const key = context.key || safeString(form && form.Key);
+  const pathPrefix = context.path || "Data.Forms[]";
+  if (!Object.prototype.hasOwnProperty.call(form || {}, "NoRule")) {
+    issue(report, severity, "NORULE_MISSING", "Approval form NoRule must be an object with Prefix, StartIndex, CustomLength, and AutoIncrement.", { form: formName, key, path: `${pathPrefix}.NoRule` });
+    return;
+  }
+  const noRule = form.NoRule;
+  if (!isObject(noRule)) {
+    issue(report, severity, "NORULE_INVALID_OBJECT", "NoRule must be an object with Prefix, StartIndex, CustomLength, and AutoIncrement.", { form: formName, key, path: `${pathPrefix}.NoRule`, actualType: Array.isArray(noRule) ? "array" : noRule === null ? "null" : typeof noRule });
+    return;
+  }
+  const prefix = safeString(noRule.Prefix);
+  if (!prefix) {
+    issue(report, severity, "NORULE_PREFIX_MISSING", "NoRule.Prefix is required.", { form: formName, key, path: `${pathPrefix}.NoRule.Prefix` });
+  } else if (!prefix.includes("{index}")) {
+    issue(report, severity, "NORULE_PREFIX_INDEX_MISSING", "NoRule.Prefix must include {index}.", { form: formName, key, path: `${pathPrefix}.NoRule.Prefix`, prefix });
+  }
+  for (const [prop, minimum] of [["StartIndex", 1], ["CustomLength", 1], ["AutoIncrement", 0]]) {
+    const value = noRule[prop];
+    if (!Number.isInteger(value) || value < minimum) {
+      issue(report, severity, `NORULE_${prop.toUpperCase()}_INVALID`, `NoRule.${prop} must be an integer greater than or equal to ${minimum}.`, { form: formName, key, path: `${pathPrefix}.NoRule.${prop}`, value });
+    }
+  }
+  for (const prop of Object.keys(noRule)) {
+    if (!["Prefix", "StartIndex", "CustomLength", "AutoIncrement"].includes(prop)) {
+      issue(report, "warning", "NORULE_UNKNOWN_FIELD", "NoRule contains an unknown optional field; confirm import behavior before relying on it.", { form: formName, key, path: `${pathPrefix}.NoRule.${prop}` });
+    }
+  }
 }
 
 function redactDetails(value) {
@@ -1491,6 +1606,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
       fieldDisplayNames.add(displayName);
       fieldsByName.set(displayName, field);
     }
+    validateAppCreationFieldRules(field, report, { list: title, path: fp });
     if (fieldId) fieldsByName.set(fieldId, field);
     if (!isRoot && resourceType === "data list" && fieldName === "Title" && (field.Status !== 0 || field.IsSystem !== true || field.IsIndex !== true || field.FieldIndex !== 0)) {
       issue(
@@ -1926,6 +2042,8 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     const workflowType = String(form.WorkflowType || "");
     if (!formName) issue(report, "warning", "FORM_NAME_MISSING", "Form Name is missing.", { index });
     if (!key) issue(report, "error", "FORM_KEY_MISSING", "Form Key is required.", { form: formName, index });
+    validateProcessKey(key, report, { form: formName, path: `Data.Forms[${index}].Key` });
+    validateProcessKey(form.FlowKey, report, { form: formName, path: `Data.Forms[${index}].FlowKey` });
     if (!workflowType) issue(report, "warning", "FORM_WORKFLOWTYPE_MISSING", "Form WorkflowType is missing.", { form: formName, key });
     const def = parseDefResource(form, report, index);
     const shapes = collectShapes(def);
@@ -1938,6 +2056,7 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     else if (scheduledLike) report.summary.scheduledWorkflows += 1;
     else report.summary.listWorkflows += 1;
     report.inventories.forms.push({ name: formName, key, workflowType, kind: approvalLike ? "approval form" : scheduledLike ? "scheduled workflow" : "list/process workflow", pages: asArray(def && def.pageurls).length, nodeTypes });
+    if (approvalLike && String(form.ListID || "0") === "0") validateNoRule(form, report, { form: formName, key, path: `Data.Forms[${index}]` });
     if (approvalLike && Object.prototype.hasOwnProperty.call(form, "ListID") && String(form.ListID) !== "0") {
       issue(
         report,
@@ -1948,6 +2067,7 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
       );
     }
     if (!def) return;
+    validateProcessKey(def.defkey, report, { form: formName, path: `Data.Forms[${index}].DefResource.defkey` });
     if (def.defkey && key && String(def.defkey) !== key) issue(report, "warning", "FORM_DEFKEY_MISMATCH", "Form Key and decoded Def defkey differ.", { form: formName, key, defkey: def.defkey });
     validateWorkflowDesignerCompatibility(form, def, report);
     if (scheduledLike) validateScheduledWorkflow(form, def, report);

@@ -568,3 +568,11 @@ Use `docs/studies/workflow-set-data-list-action.md` before generating workflow S
 
 Use `docs/studies/workflow-signal-event-action.md` before generating approval workflow Signal event branches. Signal event is export-proven as `SignalEvent` in an approval-form workflow. It has no incoming flow, should have at least one outgoing flow, and uses `properties.eventdefinitions[]` with `CancelEventDefinition` and/or `RevokeEventDefinition`. Treat it as a special event source for recall/terminate compensation, not a normal action in the Start branch. Validate downstream Set data list filters carefully and do not claim recall/terminate or cleanup execution without focused runtime proof.
 <!-- workflow-set-variable-learning:end -->
+
+<!-- app-creation-rules-learning:start -->
+## App Creation Rule Guardrails
+
+Before generating or importing any `.yap`, enforce the product-team app creation rules in `docs/studies/yeeflow-app-creation-rules.md`. Generated list fields must keep `FieldIndex` synchronized with the numeric suffix at the absolute end of `FieldName` (`FieldIndex: 11` uses `Text11`, not `Text6`). `DisplayName`, `FieldName`, and `InternalName` must each be unique within the same list; `InternalName` and process keys may contain only letters, numbers, and underscores; all three field identifiers and process keys are limited to 255 characters.
+
+Approval forms must emit `NoRule` as an object with `Prefix`, `StartIndex`, `CustomLength`, and `AutoIncrement`; `NoRule.Prefix` must include `{index}`. Treat these as generation-blocking validation errors, not style warnings. Any generated package failing these checks must not be imported.
+<!-- app-creation-rules-learning:end -->

@@ -266,3 +266,11 @@ Navigation layout values are `default` for horizontal/default, `left` for vertic
 
 Application user groups are export-proven in `Data.AppGroups[]` with `{ ID, Name, Description }`; v6 proves group IDs belong in `Resource.ReplaceIds[]`. Member storage was not present in the studied export, so do not generate group members or real users until a safe member-bearing export proves the schema.
 <!-- application-settings-navigation-user-groups-learning:end -->
+
+<!-- app-creation-rules-learning:start -->
+## App Creation Rule Learning
+
+When a product-team rules document identifies generation-breaking shapes, record the rule separately from runtime proof and harden validators before broad generation. For Yeeflow app creation, preserve the FieldIndex/FieldName suffix rule, list identifier uniqueness, `InternalName`/process-key character restrictions, and approval-form `NoRule` object shape from `docs/studies/yeeflow-app-creation-rules.md`.
+
+Mark these rules `product-rule-backed` and `validator-backed`. Do not upgrade to runtime-import-proven until a focused regenerated package imports and opens successfully.
+<!-- app-creation-rules-learning:end -->

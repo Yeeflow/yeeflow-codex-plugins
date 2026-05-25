@@ -125,6 +125,54 @@ function replaceDeep(value, replacements) {
   return value;
 }
 
+function appCreationNoRule(prefix) {
+  return {
+    Prefix: `${prefix}_{date}_{index}`,
+    StartIndex: 1,
+    CustomLength: 8,
+    AutoIncrement: 1,
+  };
+}
+
+function renameFieldReferences(value, renames) {
+  if (typeof value === "string") {
+    let out = value;
+    for (const [from, to] of renames) {
+      const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      out = out.replace(new RegExp(`(^|[^A-Za-z0-9_])${escaped}(?![A-Za-z0-9_])`, "g"), `$1${to}`);
+    }
+    return out;
+  }
+  if (Array.isArray(value)) return value.map((item) => renameFieldReferences(item, renames));
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, renameFieldReferences(child, renames)]));
+  }
+  return value;
+}
+
+function synchronizeFieldIndexNames(listItem) {
+  const fields = Array.isArray(listItem?.Defs) ? listItem.Defs : [];
+  const names = new Set(fields.map((field) => String(field.FieldName || "")).filter(Boolean));
+  const renames = [];
+  for (const field of fields) {
+    const fieldName = String(field.FieldName || "");
+    const fieldIndex = Number(field.FieldIndex);
+    if (!fieldName || fieldName === "Title" || !Number.isInteger(fieldIndex) || fieldIndex <= 0) continue;
+    const suffix = fieldName.match(/(\d+)$/);
+    if (suffix && Number(suffix[1]) === fieldIndex) continue;
+    const prefix = fieldName.replace(/\d+$/, "") || String(field.FieldType || "Text");
+    const nextName = `${prefix}${fieldIndex}`;
+    if (names.has(nextName) && nextName !== fieldName) {
+      throw new Error(`Cannot synchronize ${fieldName} to ${nextName}; target field name already exists.`);
+    }
+    names.delete(fieldName);
+    names.add(nextName);
+    renames.push([fieldName, nextName]);
+    field.FieldName = nextName;
+  }
+  return renames;
+}
+
 function stencilId(shape) {
   return shape?.stencil?.id || shape?.stencil || shape?.type || "unknown";
 }
@@ -202,6 +250,7 @@ function setDef(form, def) {
 }
 
 function patchTitleFields(data) {
+  const allRenames = [];
   for (const child of data.Childs || []) {
     child.ListModel.ListType = child.ListModel.ListType ?? 1;
     child.ListDatas = {};
@@ -224,6 +273,14 @@ function patchTitleFields(data) {
         field.FieldIndex = 0;
       }
     }
+    if (String(child.ListModel?.Title || "").includes("Purchase Requests")) {
+      allRenames.push(...synchronizeFieldIndexNames(child));
+    }
+  }
+  if (allRenames.length) {
+    data.Forms = renameFieldReferences(data.Forms || [], allRenames);
+    data.Item = renameFieldReferences(data.Item, allRenames);
+    data.Childs = (data.Childs || []).map((child) => String(child.ListModel?.Title || "").includes("Purchase Requests") ? renameFieldReferences(child, allRenames) : child);
   }
 }
 
@@ -356,10 +413,12 @@ function main() {
 
   approval.Key = APPROVAL_KEY;
   approval.ListID = 0;
+  approval.NoRule = appCreationNoRule(APPROVAL_KEY);
   approval.Description = "Approval workflow runtime baseline for Claim Task, Set variable, Set data list, and Signal event designer proof.";
   dataWorkflow.Key = DATA_WORKFLOW_KEY;
   targetApproval.Key = TARGET_APPROVAL_KEY;
   targetApproval.ListID = 0;
+  targetApproval.NoRule = appCreationNoRule(TARGET_APPROVAL_KEY);
   targetApproval.Description = "Hidden target approval workflow used only for Set variable custom target designer proof.";
 
   pruneApprovalWorkflow(approval);

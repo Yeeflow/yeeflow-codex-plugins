@@ -395,3 +395,11 @@ Use `docs/studies/workflow-signal-event-action.md` for approval workflow Signal 
 
 Use Signal event for recall/terminate compensation branches, for example to connect to Set data list / `ContentList` cleanup actions. Start action controls submitter-facing terminate/recall availability; Signal event listens for those events. Warn if a Signal event listens for cancel/revoke while the approval Start settings appear to make that event unavailable. Do not use Signal event in data-list or scheduled workflows until export-proven, and do not claim recall/terminate execution or downstream cleanup mutation without focused runtime proof.
 <!-- workflow-signal-event-learning:end -->
+
+<!-- app-creation-rules-learning:start -->
+## App Creation Rule Guardrails
+
+Generated approval forms must use process keys containing only letters, numbers, and underscores, with a maximum length of 255 characters. Keep `Data.Forms[].Key`, optional `FlowKey`, and decoded `DefResource.defkey` aligned to that rule.
+
+Emit `Forms[].NoRule` as an object, not a boolean/string/array: `Prefix`, `StartIndex`, `CustomLength`, and `AutoIncrement` are required, and `Prefix` must include `{index}`. A malformed `NoRule` is product-team-confirmed import-breaking, so treat it as a generation-blocking validation error. Do not claim runtime import/open proof until a regenerated package with valid `NoRule` is imported successfully.
+<!-- app-creation-rules-learning:end -->
