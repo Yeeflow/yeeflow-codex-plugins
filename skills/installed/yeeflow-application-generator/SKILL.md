@@ -616,7 +616,9 @@ Use `docs/studies/data-list-public-forms.md`, `docs/studies/normalized/data-list
 
 Generate only public-safe top-level field controls proven in `Data Lists (4).yap`: `input`, `textarea`, `richtext`, `input_number`, `percent`, `currency`, `switch`, `radio`, `checkbox`, `datepicker`, `time`, `file-upload`, `icon-upload`, `rate`, `hyperlink`, `signer`, and `list`. The `Title` primary field is export-proven as a special system-field exception; do not include Id/Created/Modified default fields or login-dependent picker fields.
 
-Use conservative page structure such as `container` and `flex_grid`, and include `submit-button` when the Public Form is meant to collect submissions. Redact share URLs/codes in all docs and logs. Treat anonymous submit, public URL access, upload execution, sub-list row entry, and Document Library public-form behavior as unproven until focused runtime proof exists.
+Use conservative page structure such as `container` and `flex_grid`, and include `submit-button` when the Public Form is meant to collect submissions. For generated Public Forms, use export-shaped `flex_grid` attrs (`ver: 1`, structured `columns`/`rows`, `cgap`, `cgapU`) and set `displayLabel: [null, false]` when the grid is only a layout wrapper. Put `submit-button` inside a centered container and use inline width `common.positioning.widthtype: [null, "2"]`.
+
+Focused runtime proof in `docs/studies/data-list-public-form-runtime-proof.md` confirms generated Data List Public Form import/open/list-open/designer-open/control-render behavior after the grid and centered inline submit fix. Redact share URLs/codes in all docs and logs. Treat anonymous submit, public URL access outside the authenticated designer unless separately confirmed, upload execution, sub-list row entry, save/data mutation, and Document Library public-form behavior as unproven until a focused runtime proof covers them.
 <!-- data-list-public-form-learning:end -->
 
 <!-- yap-schema-standard-learning:start -->
