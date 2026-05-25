@@ -112,3 +112,11 @@ Use export-proven settings where relevant: choice `Rules.choices` and `color_cho
 
 Document Library custom-field applicability is product/user-understanding-backed only in this pass because no Type `16` document library was present. Keep Type `16` default fields and document upload rules from existing document-library studies, and do not claim runtime data-entry behavior for these field settings until focused import/open/field-creation tests pass.
 <!-- data-list-document-library-fields-learning:end -->
+
+<!-- yap-schema-standard-learning:start -->
+## YAP Schema Standard Guardrails
+
+Form Report packages must satisfy the same YAP schema-standard envelope as other app resources. The root `Item` and the matching Type `32` child resource for each Form Report must include `Defs` and `Layouts` arrays; empty arrays are valid, but `null` is invalid. Validate with `scripts/inspect-yap-schema-standard.mjs` before import attempts.
+
+Access app resource permission flags for Form Reports currently have a product conflict: `yap-schema.json` says `formReports` uses Read `8`, while the updated rules document says Submit `1`. Keep Form Report access-resource permission generation warning-level until product team clarifies. This does not resolve the separate Form Report field-source runtime diagnosis.
+<!-- yap-schema-standard-learning:end -->

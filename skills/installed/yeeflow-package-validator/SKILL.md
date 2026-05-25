@@ -205,3 +205,13 @@ Use export-proven settings where relevant: choice `Rules.choices` and `color_cho
 
 Document Library custom-field applicability is product/user-understanding-backed only in this pass because no Type `16` document library was present. Keep Type `16` default fields and document upload rules from existing document-library studies, and do not claim runtime data-entry behavior for these field settings until focused import/open/field-creation tests pass.
 <!-- data-list-document-library-fields-learning:end -->
+
+<!-- yap-schema-standard-learning:start -->
+## YAP Schema Standard Validation
+
+Use `docs/studies/yap-schema-standard.md` and `scripts/inspect-yap-schema-standard.mjs` for product-team YAP schema checks. Hard-error malformed wrappers, missing `[______gizp______]` `Resource` prefix, malformed decoded `Resource`, missing `ListExportInfo.Item`, missing `Defs`/`Layouts`, `Defs: null`, `Layouts: null`, and non-array `Defs`/`Layouts` on root or child list-export items. Empty `[]` is valid.
+
+Preserve the existing hard errors for invalid process keys, invalid approval/process `NoRule`, and missing `{index}` in `NoRule.Prefix`. Validate AI Agent/Copilot Access app resource permission bitmasks for approval forms, data lists, document libraries, and AI agents. Warn, do not hard-fail, for `formReports` and `dataReports` permission bit conflicts until product team clarifies schema Read `8` versus rules-doc Submit `1`.
+
+Do not enforce schema `additionalProperties: false` as a global hard error yet; treat unknown product fields as warnings because the provided schema is partial relative to known exports.
+<!-- yap-schema-standard-learning:end -->

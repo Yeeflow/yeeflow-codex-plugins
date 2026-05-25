@@ -592,3 +592,13 @@ Document Library custom-field applicability is product/user-understanding-backed
 
 Focused runtime proof in `docs/studies/data-list-field-creation-runtime-proof.md` confirms generated Data List import/open behavior and post-import manual field creation for a representative subset: `input`, `textarea` schema, `input_number`, `currency`, `percent`, `switch`, `checkbox`, `datepicker`, `time`, `identity-picker`, `organization-picker`, `file-upload`, `icon-upload`, local `lookup` schema, `calculated-column` schema, and `list` schema. Use this to prefer native generated fields for import/open baselines, but do not claim record entry, lookup resolution, calculated results, uploads, picker selection, nested row behavior, Document Library, workflow, or Form Report runtime behavior.
 <!-- data-list-document-library-fields-learning:end -->
+
+<!-- yap-schema-standard-learning:start -->
+## YAP Schema Standard Guardrails
+
+Before packaging any generated `.yap`, ensure the wrapper has schema-required `Title`, `Description`, `IconUrl`, `IsListSet`, and `[______gizp______]`-prefixed `Resource`. The decoded resource must contain `Data` as a JSON string whose `ListExportInfo.Item` exists.
+
+Every generated `ListExportItem`, including root `Item` and every `Childs[]` resource, must emit `Defs` and `Layouts` as arrays. Never emit `null`; use `[]` for empty definitions or layouts. Generated packages must pass `scripts/inspect-yap-schema-standard.mjs` and `validate-yap-package.js` before import attempts.
+
+For app-contained AI Agent/Copilot Access app resources tools, keep resource permissions as numeric bitmasks. Use schema-backed masks for approval forms, data lists, document libraries, and AI agents. Keep `formReports` and `dataReports` warning-level until product clarifies whether the correct bit is schema Read `8` or rules-doc Submit `1`.
+<!-- yap-schema-standard-learning:end -->

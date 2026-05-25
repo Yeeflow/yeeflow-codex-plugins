@@ -81,6 +81,17 @@ const APP_CREATION_SUPPORTED_LIST_TYPES = new Set([
 const APP_CREATION_IDENTIFIER_MAX_LENGTH = 255;
 const APP_CREATION_INTERNAL_NAME_RE = /^[A-Za-z0-9_]+$/;
 const APP_CREATION_PROCESS_KEY_RE = /^[A-Za-z0-9_]+$/;
+const YAP_WRAPPER_REQUIRED_KEYS = ["Title", "Description", "IconUrl", "IsListSet", "Resource"];
+const APP_RESOURCE_PERMISSION_RULES = {
+  approvalForms: { mask: 1 | 16 | 32, label: "Submit=1, ReadTasks=16, ProcessTasks=32" },
+  dataLists: { mask: 1 | 2 | 4 | 8, label: "Submit=1, Edit=2, Delete=4, Read=8" },
+  documentLibraries: { mask: 1 | 2 | 4 | 8, label: "Submit=1, Edit=2, Delete=4, Read=8" },
+  aiAgents: { mask: 1, label: "Submit=1" },
+};
+const APP_RESOURCE_PERMISSION_CONFLICT_KEYS = {
+  formReports: { schemaAllowed: new Set([0, 8]), rulesAllowed: new Set([0, 1]), label: "schema says Read=8; rules document says Submit=1" },
+  dataReports: { schemaAllowed: new Set([0, 8]), rulesAllowed: new Set([0, 1]), label: "schema says Read=8; rules document says Submit=1" },
+};
 
 function usage(exitCode = 1) {
   const text = [
@@ -358,6 +369,7 @@ function decodeInput(inputPath, report) {
       wrapperJsonValid: true,
       resourcePrefixValid: wrapper.Resource.startsWith(GZIP_PREFIX),
     };
+    validateYapWrapperSchema(wrapper, report);
     if (!wrapper.Resource.startsWith(GZIP_PREFIX)) {
       issue(report, "error", "RESOURCE_PREFIX_MISSING", `Wrapped .yap Resource must start with ${GZIP_PREFIX}.`);
       return null;
@@ -405,6 +417,19 @@ function decodeInput(inputPath, report) {
 
   report.wrapper = { inputType: "decoded-data-json", wrapperJsonValid: true, resourcePrefixValid: null };
   return { wrapper: null, resource: null, data: parsed };
+}
+
+function validateYapWrapperSchema(wrapper, report) {
+  for (const key of YAP_WRAPPER_REQUIRED_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(wrapper || {}, key)) {
+      issue(report, "error", "YAP_WRAPPER_REQUIRED_PROPERTY_MISSING", "YAP wrapper is missing a product-schema-required property.", { path: `$.${key}`, key });
+    }
+  }
+  if (typeof wrapper.Resource !== "string") {
+    issue(report, "error", "YAP_RESOURCE_NOT_STRING", "YAP wrapper Resource must be a string.");
+  } else if (!wrapper.Resource.startsWith(GZIP_PREFIX)) {
+    issue(report, "error", "YAP_RESOURCE_PREFIX_INVALID", `YAP wrapper Resource must start with ${GZIP_PREFIX}.`);
+  }
 }
 
 function normalizeType(field) {
@@ -1403,6 +1428,8 @@ function validateBasicStructure(data, resource, report) {
   }
   if (!isObject(data.Item)) issue(report, "error", "DATA_ITEM_MISSING", "Data.Item is required.");
   if (!Array.isArray(data.Childs)) issue(report, "error", "DATA_CHILDS_NOT_ARRAY", "Data.Childs must be an array.");
+  validateListExportItemSchema(data.Item, "Data.Item", report);
+  asArray(data.Childs).forEach((child, index) => validateListExportItemSchema(child, `Data.Childs[${index}]`, report));
   for (const key of ["Forms", "OtherModules", "FormReports", "DataReports", "FormNewReports", "AppGroups", "AppThemes"]) {
     if (data[key] !== undefined && data[key] !== null && !Array.isArray(data[key])) {
       issue(report, "error", `${key.toUpperCase()}_NOT_ARRAY`, `Data.${key} must be an array when present.`);
@@ -1415,6 +1442,21 @@ function validateBasicStructure(data, resource, report) {
     }
     if (isDocumentLibraryOnlyPackage(data) && resource.SimplePortal !== null) {
       issue(report, "warning", "DOCUMENT_LIBRARY_SIMPLEPORTAL_NOT_NULL", "Known-good document-library exports use Resource.SimplePortal = null. Generated [] wrappers failed Yeeflow create in v1/v2.", { simplePortalType: Array.isArray(resource.SimplePortal) ? "array" : typeof resource.SimplePortal });
+    }
+  }
+}
+
+function validateListExportItemSchema(item, pathPrefix, report) {
+  if (!isObject(item)) return;
+  for (const key of ["Defs", "Layouts"]) {
+    const value = item[key];
+    const path = `${pathPrefix}.${key}`;
+    if (!Object.prototype.hasOwnProperty.call(item, key)) {
+      issue(report, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_MISSING`, `ListExportItem.${key} is required by yap-schema.json. Use an empty array when there are no entries.`, { path });
+    } else if (value === null) {
+      issue(report, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_NULL`, `ListExportItem.${key} cannot be null. Use [] for an empty collection.`, { path });
+    } else if (!Array.isArray(value)) {
+      issue(report, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_NOT_ARRAY`, `ListExportItem.${key} must be an array.`, { path, actualType: Array.isArray(value) ? "array" : typeof value });
     }
   }
 }
@@ -2930,6 +2972,7 @@ function validateAgentCopilotModules(data, listsById, report) {
           if (componentSettings.resources.dataLists && !Array.isArray(componentSettings.resources.dataLists.items)) {
             issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_DATALISTS_INVALID", "Application-resource access tool dataLists.items should be an array when present.", { aiResource: resourceName, component: componentName });
           }
+          validateApplicationResourcePermissionGroups(componentSettings.resources, report, { aiResource: resourceName, component: componentName });
           dataListItems.forEach((entry, entryIndex) => {
             const resourceListId = safeString(entry && entry.id);
             if (!resourceListId) {
@@ -2977,6 +3020,52 @@ function validateAgentCopilotModules(data, listsById, report) {
       }
     });
   });
+}
+
+function validateApplicationResourcePermissionGroups(resources, report, context = {}) {
+  if (!isObject(resources)) return;
+  const permissionRoot = isObject(resources.permissions) ? resources.permissions : resources;
+  for (const [groupName, rule] of Object.entries(APP_RESOURCE_PERMISSION_RULES)) {
+    const entries = asArray(permissionRoot[groupName] && permissionRoot[groupName].items);
+    entries.forEach((entry, entryIndex) => {
+      validateApplicationResourcePermissionValue(entry && entry.permissions, groupName, rule, report, { ...context, entryIndex, resourceId: safeString(entry && entry.id) });
+    });
+  }
+  for (const [groupName, conflict] of Object.entries(APP_RESOURCE_PERMISSION_CONFLICT_KEYS)) {
+    const entries = asArray(permissionRoot[groupName] && permissionRoot[groupName].items);
+    entries.forEach((entry, entryIndex) => {
+      const raw = entry && entry.permissions;
+      if (raw === undefined || raw === null || raw === "") {
+        issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_MISSING", "Application-resource access tool entry should include numeric permissions.", { ...context, groupName, entryIndex, resourceId: safeString(entry && entry.id) });
+        return;
+      }
+      const value = Number(raw);
+      if (!Number.isInteger(value)) {
+        issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_INVALID", "Application-resource access tool permissions should be an integer bitmask.", { ...context, groupName, entryIndex, resourceId: safeString(entry && entry.id), permissions: raw });
+        return;
+      }
+      const inSchema = conflict.schemaAllowed.has(value);
+      const inRules = conflict.rulesAllowed.has(value);
+      if (!inSchema || !inRules) {
+        issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_SCHEMA_RULE_CONFLICT", "YAP schema and updated app-creation rules disagree for this resource permission family; keep warning-level until product team clarifies.", { ...context, groupName, entryIndex, resourceId: safeString(entry && entry.id), permissions: value, conflict: conflict.label });
+      }
+    });
+  }
+}
+
+function validateApplicationResourcePermissionValue(raw, groupName, rule, report, context = {}) {
+  if (raw === undefined || raw === null || raw === "") {
+    issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_MISSING", "Application-resource access tool entry should include numeric permissions.", { ...context, groupName });
+    return;
+  }
+  const value = Number(raw);
+  if (!Number.isInteger(value)) {
+    issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_INVALID", "Application-resource access tool permissions should be an integer bitmask.", { ...context, groupName, permissions: raw });
+    return;
+  }
+  if ((value & ~rule.mask) !== 0) {
+    issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_INVALID_BITS", "Application-resource access tool permissions include bits outside the schema-backed allowed mask.", { ...context, groupName, permissions: value, allowed: rule.label });
+  }
 }
 
 function validateLookupRelationships(listsById, fieldsByList, report) {

@@ -497,8 +497,15 @@ function validateStructure(data, resource, report) {
   if (!isObject(data.Item)) issue(report, "error", "ITEM_MISSING", "Data.Item must exist.");
   const item = isObject(data.Item) ? data.Item : {};
   if (!isObject(item.ListModel)) issue(report, "error", "LIST_MODEL_MISSING", "Data.Item.ListModel must exist.");
-  if (!Array.isArray(item.Defs)) issue(report, "error", "DEFS_NOT_ARRAY", "Data.Item.Defs must be an array.");
-  if (!Array.isArray(item.Layouts)) issue(report, "error", "LAYOUTS_NOT_ARRAY", "Data.Item.Layouts must be an array.");
+  for (const key of ["Defs", "Layouts"]) {
+    if (!Object.prototype.hasOwnProperty.call(item, key)) {
+      issue(report, "error", `${key.toUpperCase()}_MISSING`, `Data.Item.${key} is required by yap-schema.json. Use [] when empty.`);
+    } else if (item[key] === null) {
+      issue(report, "error", `${key.toUpperCase()}_NULL`, `Data.Item.${key} cannot be null. Use [] when empty.`);
+    } else if (!Array.isArray(item[key])) {
+      issue(report, "error", `${key.toUpperCase()}_NOT_ARRAY`, `Data.Item.${key} must be an array.`);
+    }
+  }
   if (item.ListDatas !== undefined && !isObject(item.ListDatas)) issue(report, "error", "LISTDATAS_NOT_OBJECT", "Data.Item.ListDatas must be an object if present.");
   if (data.Forms !== undefined && !Array.isArray(data.Forms)) issue(report, "error", "FORMS_NOT_ARRAY", "Data.Forms must be an array if present.");
   if (resource && resource.MainListType === undefined) issue(report, "error", "MAIN_LIST_TYPE_MISSING", "Resource.MainListType must exist.");
