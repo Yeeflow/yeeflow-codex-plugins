@@ -81,6 +81,89 @@ const APP_CREATION_SUPPORTED_LIST_TYPES = new Set([
 const APP_CREATION_IDENTIFIER_MAX_LENGTH = 255;
 const APP_CREATION_INTERNAL_NAME_RE = /^[A-Za-z0-9_]+$/;
 const APP_CREATION_PROCESS_KEY_RE = /^[A-Za-z0-9_]+$/;
+const YAP_WRAPPER_REQUIRED_KEYS = ["Title", "Description", "IconUrl", "IsListSet", "Resource"];
+const CUSTOM_LIST_MODEL_TYPES = new Set([1, 16, 32, 64, 128, 1024]);
+const APP_RESOURCE_PERMISSION_RULES = {
+  approvalForms: { mask: 1 | 16 | 32, label: "Submit=1, ReadTasks=16, ProcessTasks=32" },
+  dataLists: { mask: 1 | 2 | 4 | 8, label: "Submit=1, Edit=2, Delete=4, Read=8" },
+  documentLibraries: { mask: 1 | 2 | 4 | 8, label: "Submit=1, Edit=2, Delete=4, Read=8" },
+  aiAgents: { mask: 1, label: "Submit=1" },
+};
+const APP_RESOURCE_PERMISSION_CONFLICT_KEYS = {
+  formReports: { schemaAllowed: new Set([0, 8]), rulesAllowed: new Set([0, 1]), label: "schema says Read=8; rules document says Submit=1" },
+  dataReports: { schemaAllowed: new Set([0, 8]), rulesAllowed: new Set([0, 1]), label: "schema says Read=8; rules document says Submit=1" },
+};
+const CUSTOM_FORM_DISPLAY_USAGES = ["add", "edit", "view"];
+const CUSTOM_FORM_OPEN_MODE_LABELS = {
+  modal: "Pop-up window",
+  slide: "Slide in",
+  page: "Full page",
+  fullpage: "Full page",
+  fullPage: "Full page",
+};
+const CUSTOM_FORM_SIZE_LABELS = new Map([[0, "Medium"], [1, "Small"], [2, "Large"], [3, "Full screen"]]);
+const PUBLIC_FORM_ALLOWED_FIELD_TYPES = new Set([
+  "input",
+  "textarea",
+  "richtext",
+  "input_number",
+  "percent",
+  "currency",
+  "switch",
+  "radio",
+  "checkbox",
+  "datepicker",
+  "time",
+  "file-upload",
+  "icon-upload",
+  "rate",
+  "hyperlink",
+  "signer",
+  "list",
+]);
+const PUBLIC_FORM_DISALLOWED_FIELD_TYPES = new Set([
+  "identity-picker",
+  "organization-picker",
+  "location-picker",
+  "lookup",
+  "calculated-column",
+  "metadata",
+  "mutiple-metadata",
+  "cost-center-picker",
+  "tag",
+  "autonumber",
+]);
+const PUBLIC_FORM_DISALLOWED_SYSTEM_FIELDS = new Set([
+  "ListDataID",
+  "Id",
+  "ID",
+  "Created",
+  "CreatedBy",
+  "CreatedByName",
+  "Modified",
+  "ModifiedBy",
+  "ModifiedByName",
+]);
+const PUBLIC_FORM_KNOWN_CONTROL_TYPES = new Set([
+  "container",
+  "flex_grid",
+  "action_button",
+  "submit-button",
+  ...PUBLIC_FORM_ALLOWED_FIELD_TYPES,
+  "text",
+  "number",
+  "boolean",
+  "date",
+  "file",
+  "metadata",
+  "user",
+  "costcenter",
+  "groupselect",
+  "location",
+  "lookup",
+  "img",
+  "total",
+]);
 
 function usage(exitCode = 1) {
   const text = [
@@ -358,6 +441,7 @@ function decodeInput(inputPath, report) {
       wrapperJsonValid: true,
       resourcePrefixValid: wrapper.Resource.startsWith(GZIP_PREFIX),
     };
+    validateYapWrapperSchema(wrapper, report);
     if (!wrapper.Resource.startsWith(GZIP_PREFIX)) {
       issue(report, "error", "RESOURCE_PREFIX_MISSING", `Wrapped .yap Resource must start with ${GZIP_PREFIX}.`);
       return null;
@@ -405,6 +489,19 @@ function decodeInput(inputPath, report) {
 
   report.wrapper = { inputType: "decoded-data-json", wrapperJsonValid: true, resourcePrefixValid: null };
   return { wrapper: null, resource: null, data: parsed };
+}
+
+function validateYapWrapperSchema(wrapper, report) {
+  for (const key of YAP_WRAPPER_REQUIRED_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(wrapper || {}, key)) {
+      issue(report, "error", "YAP_WRAPPER_REQUIRED_PROPERTY_MISSING", "YAP wrapper is missing a product-schema-required property.", { path: `$.${key}`, key });
+    }
+  }
+  if (typeof wrapper.Resource !== "string") {
+    issue(report, "error", "YAP_RESOURCE_NOT_STRING", "YAP wrapper Resource must be a string.");
+  } else if (!wrapper.Resource.startsWith(GZIP_PREFIX)) {
+    issue(report, "error", "YAP_RESOURCE_PREFIX_INVALID", `YAP wrapper Resource must start with ${GZIP_PREFIX}.`);
+  }
 }
 
 function normalizeType(field) {
@@ -1403,6 +1500,8 @@ function validateBasicStructure(data, resource, report) {
   }
   if (!isObject(data.Item)) issue(report, "error", "DATA_ITEM_MISSING", "Data.Item is required.");
   if (!Array.isArray(data.Childs)) issue(report, "error", "DATA_CHILDS_NOT_ARRAY", "Data.Childs must be an array.");
+  validateListExportItemSchema(data.Item, "Data.Item", report);
+  asArray(data.Childs).forEach((child, index) => validateListExportItemSchema(child, `Data.Childs[${index}]`, report));
   for (const key of ["Forms", "OtherModules", "FormReports", "DataReports", "FormNewReports", "AppGroups", "AppThemes"]) {
     if (data[key] !== undefined && data[key] !== null && !Array.isArray(data[key])) {
       issue(report, "error", `${key.toUpperCase()}_NOT_ARRAY`, `Data.${key} must be an array when present.`);
@@ -1415,6 +1514,34 @@ function validateBasicStructure(data, resource, report) {
     }
     if (isDocumentLibraryOnlyPackage(data) && resource.SimplePortal !== null) {
       issue(report, "warning", "DOCUMENT_LIBRARY_SIMPLEPORTAL_NOT_NULL", "Known-good document-library exports use Resource.SimplePortal = null. Generated [] wrappers failed Yeeflow create in v1/v2.", { simplePortalType: Array.isArray(resource.SimplePortal) ? "array" : typeof resource.SimplePortal });
+    }
+  }
+}
+
+function validateListExportItemSchema(item, pathPrefix, report) {
+  if (!isObject(item)) return;
+  for (const key of ["Defs", "Layouts"]) {
+    const value = item[key];
+    const path = `${pathPrefix}.${key}`;
+    if (!Object.prototype.hasOwnProperty.call(item, key)) {
+      issue(report, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_MISSING`, `ListExportItem.${key} is required by yap-schema.json. Use an empty array when there are no entries.`, { path });
+    } else if (value === null) {
+      issue(report, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_NULL`, `ListExportItem.${key} cannot be null. Use [] for an empty collection.`, { path });
+    } else if (!Array.isArray(value)) {
+      issue(report, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_NOT_ARRAY`, `ListExportItem.${key} must be an array.`, { path, actualType: Array.isArray(value) ? "array" : typeof value });
+    }
+  }
+  if (!isObject(item.ListModel)) {
+    issue(report, generatorFinalSeverity(report), "LIST_EXPORT_ITEM_LISTMODEL_MISSING", "Generated app/list resources should include ListExportItem.ListModel.", { path: `${pathPrefix}.ListModel` });
+  } else {
+    if (item.ListModel.Flags !== 1) {
+      issue(report, generatorFinalSeverity(report), "LISTMODEL_FLAGS_INVALID", "Product schema v2 requires CustomListModel.Flags = 1; missing or different values can fail import.", { path: `${pathPrefix}.ListModel.Flags`, value: item.ListModel.Flags });
+    }
+    if (item.ListModel.Status !== undefined && item.ListModel.Status !== 1) {
+      issue(report, generatorFinalSeverity(report), "LISTMODEL_STATUS_INVALID", "Product schema v2 fixes CustomListModel.Status to 1 when present.", { path: `${pathPrefix}.ListModel.Status`, value: item.ListModel.Status });
+    }
+    if (item.ListModel.Type !== undefined && !CUSTOM_LIST_MODEL_TYPES.has(Number(item.ListModel.Type))) {
+      issue(report, generatorFinalSeverity(report), "LISTMODEL_TYPE_INVALID", "Product schema v2 allows CustomListModel.Type values 1, 16, 32, 64, 128, or 1024.", { path: `${pathPrefix}.ListModel.Type`, value: item.ListModel.Type });
     }
   }
 }
@@ -1578,7 +1705,9 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
     if (!listId) issue(report, "error", "CHILD_LISTID_MISSING", "Child ListID is required.", { path: `${pathPrefix}.ListModel.ListID`, title });
     if (!title) issue(report, "warning", "CHILD_TITLE_MISSING", "Child resource title is missing.", { path: `${pathPrefix}.ListModel.Title`, listId });
     if (resourceType === "data list" && list.ListType === undefined) {
-      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "MAIN_LIST_TYPE_MISSING", "Generated child data lists should include ListModel.ListType so extracted standalone list validation does not fail.", { path: `${pathPrefix}.ListModel.ListType`, title, listId });
+      issue(report, generatorFinalSeverity(report), "MAIN_LIST_TYPE_MISSING", "Generated child data lists must include ListModel.ListType before handoff; missing ListType can block Yeeflow import/materialization.", { path: `${pathPrefix}.ListModel.ListType`, title, listId });
+    } else if (resourceType === "data list" && Number(list.ListType) !== 1) {
+      issue(report, generatorFinalSeverity(report), "MAIN_LIST_TYPE_INVALID", "Generated Type 1 data lists must use ListModel.ListType = 1 before handoff.", { path: `${pathPrefix}.ListModel.ListType`, title, listId, listType: list.ListType });
     }
   }
 
@@ -1649,7 +1778,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
         report,
         generatorFinalSeverity(report),
         "DATA_LIST_TITLE_FIELD_NATIVE_METADATA_INVALID",
-        "Generated child data lists must preserve Yeeflow's native Title field metadata; otherwise api/crafts/datas/{AppID}/{ListID}/query can fail or hang at runtime.",
+        "Generated child data lists must preserve Yeeflow's native Title field metadata; otherwise import can succeed partially, list materialization can fail, or api/crafts/datas/{AppID}/{ListID}/query can fail or hang at runtime.",
         {
           list: title,
           listId,
@@ -1718,6 +1847,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
           issue(report, "warning", "UI_STANDARD_VIEW_NOT_USING_VIEW_ITEM_FORM", "Generated data-list View item display setting should use the View Item custom form.", { list: title, listId, expectedLayoutId: viewLayout.LayoutID, actualLayoutId: listLayoutView.view });
         }
       }
+      validateCustomFormDisplaySettings(listLayoutView, layouts, report, { list: title, listId, path: `${pathPrefix}.ListModel.LayoutView` });
     }
   }
   layouts.forEach((layout, layoutIndex) => {
@@ -1740,6 +1870,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
     if (Number(layout.Type) === 1) validateCustomFormLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report);
     if (Number(layout.Type) === 103 && isRoot) report.summary.dashboards += 1;
   });
+  if (!isRoot && resourceType === "data list") validatePublicForms(item, fieldsByName, pathPrefix, report);
   if (!isRoot && viewCount === 0 && ["data list", "document library", "form report/list resource"].includes(resourceType)) {
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DATA_VIEW_MISSING", "List-like resources should include at least one data view.", { list: title, resourceType });
   }
@@ -1797,6 +1928,31 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   if (resourceType === "data list") report.summary.dataLists += 1;
   if (resourceType === "document library") report.dependencies.push({ code: "DOCUMENT_LIBRARY_RESOURCE", message: "Document library resource present; validate Type 16 fields, views, forms, folder behavior, and upload behavior before runtime claims.", list: title, listId });
   if (resourceType === "report/data resource" || resourceType === "form report/list resource") report.summary.reports += 1;
+}
+
+function defaultCustomFormOpenModeForUsage(usage) {
+  return usage === "view" ? "Slide in" : "Pop-up window";
+}
+
+function validateCustomFormDisplaySettings(layoutView, layouts, report, context) {
+  if (!isObject(layoutView)) return;
+  const customFormLayoutIds = new Set(asArray(layouts).filter((layout) => Number(layout.Type) === 1).map((layout) => safeString(layout.LayoutID)).filter(Boolean));
+  const opentype = isObject(layoutView.opentype) ? layoutView.opentype : {};
+  const modalsize = isObject(layoutView.modalsize) ? layoutView.modalsize : {};
+  for (const usage of CUSTOM_FORM_DISPLAY_USAGES) {
+    const formRef = safeString(layoutView[usage] === undefined ? "default" : layoutView[usage]);
+    const usesDefault = formRef === "" || formRef === "default";
+    if (!usesDefault && !customFormLayoutIds.has(formRef)) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_DISPLAY_FORM_REF_NOT_FOUND", "New/Edit/View display setting references a custom list form layout that does not exist.", { ...context, usage, formRef });
+    }
+    const rawOpenMode = safeString(opentype[usage]);
+    const openMode = rawOpenMode ? CUSTOM_FORM_OPEN_MODE_LABELS[rawOpenMode] : defaultCustomFormOpenModeForUsage(usage);
+    if (!openMode) issue(report, "warning", "CUSTOM_FORM_DISPLAY_OPEN_MODE_UNKNOWN", "Custom list form display setting uses an unknown open mode.", { ...context, usage, openMode: rawOpenMode });
+    const rawSize = modalsize[usage];
+    const hasSize = rawSize !== undefined && rawSize !== null && rawSize !== "";
+    if (hasSize && !CUSTOM_FORM_SIZE_LABELS.has(Number(rawSize))) issue(report, "warning", "CUSTOM_FORM_DISPLAY_SIZE_UNKNOWN", "Custom list form display setting uses an unknown size code.", { ...context, usage, size: rawSize });
+    if (openMode === "Full page" && hasSize) issue(report, "warning", "CUSTOM_FORM_DISPLAY_FULL_PAGE_SIZE_SET", "Full page display settings should not rely on pop-up/slide size behavior unless a future export proves it.", { ...context, usage, size: rawSize });
+  }
 }
 
 function validateDataListViewLayout(layout, fieldsByName, pathPrefix, report, resourceType = "data list") {
@@ -1946,6 +2102,7 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
   for (const key of ["children", "attrs", "title", "filterVars", "ver", "tempVars"]) {
     if (form[key] === undefined) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_REQUIRED_KEY_MISSING", `Custom form Resource missing ${key}.`, { title: layout.Title, key });
   }
+  validateCustomFormActions(form, fieldsByName, pathPrefix, report, layout.Title);
   validateUiStandardFormRoot(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix });
   validateUiStandardContainers(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix, requireFormBody: false });
   if (!asArray(form.children).length) {
@@ -1958,13 +2115,177 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
       surface: "custom list form",
     });
     const binding = control.binding;
-    if (binding && !fieldsByName.has(String(binding))) {
+    if (binding && !(control.attrs && control.attrs.list_field === true) && !fieldsByName.has(String(binding))) {
       issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_BINDING_NOT_FOUND", "Custom form control binding does not resolve to a field.", { title: layout.Title, binding, path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}` });
     }
     if (control.fieldID && !fieldsByName.has(String(control.fieldID))) {
       issue(report, "warning", "CUSTOM_FORM_FIELDID_NOT_FOUND", "Custom form control fieldID does not resolve to a field.", { title: layout.Title, fieldID: control.fieldID });
     }
+    if (safeString(control.type) === "list") validateCustomFormSubListControl(control, fieldsByName, report, { title: layout.Title, path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}` });
   }));
+}
+
+function validatePublicForms(item, fieldsByName, pathPrefix, report) {
+  const publicForms = asArray(item.PublicForms);
+  publicForms.forEach((publicForm, publicFormIndex) => {
+    const context = {
+      path: `${pathPrefix}.PublicForms[${publicFormIndex}]`,
+      publicForm: publicForm && publicForm.Name || null,
+    };
+    if (!publicForm || !publicForm.Resource) {
+      issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_RESOURCE_MISSING", "PublicForms[] entry must include Resource.", context);
+      return;
+    }
+    const resource = tryParseJson(publicForm.Resource);
+    if (!resource) {
+      issue(report, "error", "PUBLIC_FORM_RESOURCE_JSON_INVALID", "PublicForms[] Resource must be valid JSON.", context);
+      return;
+    }
+    if (resource.pagetype !== 3) issue(report, "warning", "PUBLIC_FORM_PAGETYPE_UNKNOWN", "Data List Public Form Resource.pagetype is export-proven as 3.", { ...context, pagetype: resource.pagetype });
+    if (!Array.isArray(resource.children)) {
+      issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_CHILDREN_NOT_ARRAY", "Data List Public Form Resource.children must be an array.", { ...context, location: `${context.path}.Resource.children` });
+      return;
+    }
+    if (resource.tempVars !== undefined && !Array.isArray(resource.tempVars)) {
+      issue(report, "warning", "PUBLIC_FORM_TEMPVARS_NOT_ARRAY", "Data List Public Form Resource.tempVars should be an array when present.", { ...context, location: `${context.path}.Resource.tempVars` });
+    }
+
+    const seenControlIds = new Set();
+    let submitControls = 0;
+    resource.children.forEach((child, childIndex) => walkControls(child, (control, pointer) => {
+      const type = safeString(control && control.type);
+      const controlPath = `${context.path}.Resource.children[${childIndex}]${pointer.slice(1)}`;
+      if (!type) return;
+      if (type === "submit-button") submitControls += 1;
+      if (!PUBLIC_FORM_KNOWN_CONTROL_TYPES.has(type)) {
+        issue(report, "warning", "PUBLIC_FORM_CONTROL_TYPE_UNKNOWN", "Public form uses a control type that is not yet export-proven for public forms.", { ...context, path: controlPath, type });
+      }
+      const controlId = safeString(control.id);
+      if (controlId) {
+        if (seenControlIds.has(controlId)) issue(report, "error", "PUBLIC_FORM_CONTROL_ID_DUPLICATE", "Public form control IDs must be unique within a form.", { ...context, path: controlPath, controlId });
+        seenControlIds.add(controlId);
+      }
+
+      const binding = typeof control.binding === "string" ? control.binding : "";
+      const field = control.fieldID ? fieldsByName.get(String(control.fieldID)) : binding ? fieldsByName.get(binding) : null;
+      const isNestedListField = control.attrs && control.attrs.list_field === true;
+      if ((binding || control.fieldID) && !isNestedListField && type !== "total") {
+        if (!field) {
+          issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_FIELD_BINDING_NOT_FOUND", "Public form list-bound control does not resolve to a field in the same data list.", { ...context, path: controlPath, binding: binding || null, type });
+          return;
+        }
+        const fieldName = safeString(field.FieldName);
+        const fieldType = safeString(field.Type);
+        if (PUBLIC_FORM_DISALLOWED_SYSTEM_FIELDS.has(fieldName)) {
+          issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_DEFAULT_FIELD_NOT_ALLOWED", "Default/system list fields should not be generated into Public Forms. Title is the export-proven primary-field exception.", { ...context, path: controlPath, fieldName, fieldType });
+        }
+        if (PUBLIC_FORM_DISALLOWED_FIELD_TYPES.has(fieldType)) {
+          issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_FIELD_TYPE_NOT_ALLOWED", "This field type is UI-reference-backed as unavailable for Data List Public Forms.", { ...context, path: controlPath, fieldName, fieldType });
+        } else if (!PUBLIC_FORM_ALLOWED_FIELD_TYPES.has(fieldType)) {
+          issue(report, "warning", "PUBLIC_FORM_FIELD_TYPE_UNPROVEN", "Public form uses a field type that is not in the export-proven allowed set from Data Lists (4).yap.", { ...context, path: controlPath, fieldName, fieldType });
+        }
+      }
+    }));
+    if (!submitControls) issue(report, "warning", "PUBLIC_FORM_SUBMIT_CONTROL_MISSING", "Public forms intended for anonymous collection should include an export-proven submit control.", context);
+  });
+}
+
+function customFormTempVarAliases(tempVar) {
+  const id = safeString(tempVar && tempVar.id);
+  if (!id) return [];
+  return [id, id.startsWith("__temp_") ? id.replace(/^__temp_/, "") : `__temp_${id}`];
+}
+
+function collectCustomFormActionRefs(value) {
+  const refs = { fields: [], tempVars: [] };
+  walk(value, (node) => {
+    if (!isObject(node)) return;
+    if (node.exprType === "list_field" && node.prop) refs.fields.push(String(node.prop));
+    if (node.exprType === "variable" && (node.id || node.name)) refs.tempVars.push(String(node.id || node.name));
+  });
+  return refs;
+}
+
+function validateCustomFormActions(form, fieldsByName, pathPrefix, report, title) {
+  if (form.tempVars !== undefined && !Array.isArray(form.tempVars)) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_TEMPVARS_NOT_ARRAY", "Custom form tempVars must be an array.", { title, path: `${pathPrefix}.LayoutInResources[0].Resource.tempVars` });
+  }
+  if (form.actions !== undefined && !Array.isArray(form.actions)) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_ACTIONS_NOT_ARRAY", "Custom form actions must be an array when present.", { title, path: `${pathPrefix}.LayoutInResources[0].Resource.actions` });
+  }
+  const tempVars = new Set();
+  const seenTempVars = new Set();
+  asArray(form.tempVars).forEach((tempVar, index) => {
+    if (!tempVar || !tempVar.id) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_TEMPVAR_ID_MISSING", "Custom form tempVars entries should include id.", { title, path: `${pathPrefix}.LayoutInResources[0].Resource.tempVars[${index}]` });
+      return;
+    }
+    for (const alias of customFormTempVarAliases(tempVar)) tempVars.add(alias);
+    const id = safeString(tempVar.id);
+    if (seenTempVars.has(id)) issue(report, "error", "CUSTOM_FORM_TEMPVAR_ID_DUPLICATE", "Custom form tempVars ids should be unique within the form.", { title, path: `${pathPrefix}.LayoutInResources[0].Resource.tempVars[${index}]`, id });
+    seenTempVars.add(id);
+  });
+
+  const actionIds = new Set();
+  asArray(form.actions).forEach((action, actionIndex) => {
+    if (!action || !action.id) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_ACTION_ID_MISSING", "Custom form actions should include id.", { title, path: `${pathPrefix}.LayoutInResources[0].Resource.actions[${actionIndex}]` });
+    } else if (actionIds.has(String(action.id))) {
+      issue(report, "error", "CUSTOM_FORM_ACTION_ID_DUPLICATE", "Custom form action ids should be unique within the form.", { title, actionId: action.id });
+    } else {
+      actionIds.add(String(action.id));
+    }
+    if (!Array.isArray(action && action.steps)) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_ACTION_STEPS_NOT_ARRAY", "Custom form action steps must be an array.", { title, actionName: action && action.name || null });
+    }
+    asArray(action && action.steps).forEach((step, stepIndex) => {
+      if (!step || !step.type) issue(report, "warning", "CUSTOM_FORM_ACTION_STEP_TYPE_MISSING", "Custom form action step should include type.", { title, actionName: action.name || null, stepIndex });
+      if (step && step.type && !["setvar", "submit", "submit_form", "save", "close", "open", "message"].includes(String(step.type))) {
+        issue(report, "warning", "CUSTOM_FORM_ACTION_STEP_UNKNOWN", "Custom form action step type is not yet export-learned.", { title, actionName: action.name || null, stepIndex, stepType: step.type });
+      }
+      const refs = collectCustomFormActionRefs(step);
+      refs.fields.forEach((fieldRef) => {
+        if (!fieldsByName.has(fieldRef) && !KNOWN_SYSTEM_FIELDS.has(fieldRef)) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_ACTION_FIELD_REF_NOT_FOUND", "Custom form action references an unknown list field.", { title, actionName: action.name || null, fieldRef });
+      });
+      refs.tempVars.forEach((tempVar) => {
+        if (!tempVars.has(tempVar) && !tempVars.has(tempVar.replace(/^__temp_/, ""))) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_ACTION_TEMPVAR_REF_NOT_FOUND", "Custom form action references an unknown temp variable.", { title, actionName: action.name || null, tempVar });
+      });
+    });
+  });
+  for (const [hook, actionId] of Object.entries(form.formAction || {})) {
+    if (actionId && !actionIds.has(String(actionId))) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_FORMACTION_REF_NOT_FOUND", "Custom form formAction hook references an unknown action.", { title, hook, actionId });
+    }
+  }
+  asArray(form.children).forEach((child, index) => walkControls(child, (control, pointer) => {
+    const actionId = control && control.attrs && control.attrs.control_action;
+    if (actionId && !actionIds.has(String(actionId))) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_BUTTON_ACTION_REF_NOT_FOUND", "Custom form action button references an unknown action.", { title, actionId, path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}` });
+    }
+  }));
+}
+
+function validateCustomFormSubListControl(control, fieldsByName, report, context) {
+  const variables = asArray(control.attrs && control.attrs["list-variables"]);
+  const listFields = asArray(control.attrs && control.attrs["list-fields"]);
+  if (!variables.length) issue(report, "warning", "CUSTOM_FORM_SUBLIST_VARIABLES_MISSING", "Sub-list custom form control should include attrs.list-variables.", context);
+  if (!listFields.length) issue(report, "warning", "CUSTOM_FORM_SUBLIST_FIELDS_MISSING", "Sub-list custom form control should include attrs.list-fields.", context);
+  const variableNames = new Set(variables.map((item) => safeString(item && item.name)).filter(Boolean));
+  listFields.forEach((entry, index) => {
+    const name = safeString(entry && entry.name);
+    if (name && !variableNames.has(name)) issue(report, "warning", "CUSTOM_FORM_SUBLIST_FIELD_VARIABLE_NOT_FOUND", "Sub-list attrs.list-fields entry should resolve to attrs.list-variables by name.", { ...context, index, name });
+    const nestedControl = entry && entry.control;
+    if (!nestedControl || !nestedControl.type || !nestedControl.binding) issue(report, "warning", "CUSTOM_FORM_SUBLIST_NESTED_CONTROL_INCOMPLETE", "Sub-list nested field controls should include type and binding.", { ...context, index, name });
+    if (nestedControl && nestedControl.attrs && nestedControl.attrs.list_field_binding !== control.binding) {
+      issue(report, "warning", "CUSTOM_FORM_SUBLIST_PARENT_BINDING_MISMATCH", "Sub-list nested field control should point back to the parent sub-list field binding.", { ...context, index, name });
+    }
+  });
+  const boundField = fieldsByName.get(safeString(control.binding));
+  const rules = tryParseJson(boundField && boundField.Rules) || {};
+  const ruleVariables = asArray(rules["list-variables"]);
+  if (boundField && ruleVariables.length && variables.length !== ruleVariables.length) {
+    issue(report, "warning", "CUSTOM_FORM_SUBLIST_VARIABLE_COUNT_DIFFERS_FROM_FIELD_RULES", "Sub-list form control variable count differs from the parent field Rules.list-variables count.", { ...context, controlVariables: variables.length, fieldRuleVariables: ruleVariables.length });
+  }
 }
 
 function validateCustomFormDocLibraryControls(data, listsById, fieldsByList, report) {
@@ -2140,6 +2461,7 @@ function validateWorkflowDesignerCompatibility(form, def, report) {
   if (def.graphver === undefined) issue(report, severity, "WORKFLOW_DEF_GRAPHVER_MISSING", "Workflow designer expects DefResource.graphver metadata.", { form: formName, key });
 
   const shapes = collectShapes(def);
+  const workflowVariableIds = collectWorkflowVariableIds(def);
   shapes.forEach((shape, index) => {
     const type = shapeType(shape);
     const id = safeString(shape.id);
@@ -2154,8 +2476,82 @@ function validateWorkflowDesignerCompatibility(form, def, report) {
       if (!shape.target || !safeString(shape.target.id) || !safeString(shape.target.resourceid)) {
         issue(report, severity, "WORKFLOW_SEQUENCE_TARGET_INVALID", "SequenceFlow target should include id and resourceid.", { form: formName, key, index });
       }
+      validateSequenceFlowConditionVariables(shape, workflowVariableIds, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.conditioninfo` });
+    } else if (type === "SetVariableTask") {
+      validateSetVariableTaskTargets(shape, workflowVariableIds, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.variablesetting` });
+    } else if (type === "MultiAssignmentTask" || type === "CandidateTask") {
+      validateTaskAssignmentVariables(shape, workflowVariableIds, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.usertaskassignment` });
     } else if (!isObject(shape.position)) {
       issue(report, severity, "WORKFLOW_NODE_POSITION_MISSING", "Workflow designer expects non-sequence workflow nodes to include position metadata.", { form: formName, key, index, type });
+    }
+  });
+}
+
+function collectWorkflowVariableIds(def) {
+  const ids = new Set();
+  for (const variable of asArray(def && def.variables && def.variables.basic)) {
+    const id = safeString(variable && variable.id);
+    if (id) ids.add(id);
+  }
+  for (const listref of asArray(def && def.variables && def.variables.listref)) {
+    const id = safeString(listref && listref.id);
+    if (id) ids.add(id);
+    for (const field of asArray(listref && listref.fields)) {
+      const fieldId = safeString(field && field.id);
+      if (fieldId) ids.add(fieldId);
+    }
+  }
+  return ids;
+}
+
+function validateSequenceFlowConditionVariables(shape, workflowVariableIds, report, context) {
+  const conditions = asArray(shape && shape.properties && shape.properties.conditioninfo);
+  conditions.forEach((condition, conditionIndex) => {
+    for (const side of ["left", "right"]) {
+      const operand = condition && condition[side];
+      const token = isObject(operand) && isObject(operand.value) ? operand.value : null;
+      if (!token || token.exprType !== "variable") continue;
+      const id = safeString(token.id);
+      if (id && !workflowVariableIds.has(id)) {
+        issue(report, generatorFinalSeverity(report), "WORKFLOW_SEQUENCE_CONDITION_VARIABLE_UNRESOLVED", "SequenceFlow condition references a workflow variable that is not present in DefResource.variables.", {
+          ...context,
+          path: `${context.path}[${conditionIndex}].${side}.value.id`,
+          node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
+          variableId: id,
+        });
+      }
+    }
+  });
+}
+
+function validateSetVariableTaskTargets(shape, workflowVariableIds, report, context) {
+  asArray(shape && shape.properties && shape.properties.variablesetting).forEach((setting, settingIndex) => {
+    const id = safeString(setting && setting.id);
+    if (id && !workflowVariableIds.has(id)) {
+      issue(report, generatorFinalSeverity(report), "SETVARIABLE_UNKNOWN_VARIABLE", "SetVariableTask references a workflow variable that is not present in DefResource.variables.", {
+        ...context,
+        path: `${context.path}[${settingIndex}].id`,
+        node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
+        variableId: id,
+      });
+    }
+  });
+}
+
+function validateTaskAssignmentVariables(shape, workflowVariableIds, report, context) {
+  asArray(shape && shape.properties && shape.properties.usertaskassignment).forEach((assignment, assignmentIndex) => {
+    const text = JSON.stringify(assignment || {});
+    const variableIds = [...text.matchAll(/\\"id\\":\\"([^"\\]+)\\"|"id":"([^"]+)"/g)]
+      .map((match) => safeString(match[1] || match[2]))
+      .filter((id) => id && !["FlowNo"].includes(id));
+    for (const id of variableIds) {
+      if (workflowVariableIds.has(id)) continue;
+      issue(report, generatorFinalSeverity(report), "TASK_ASSIGNMENT_VARIABLE_UNRESOLVED", "Task assignment references a workflow variable that is not present in DefResource.variables.", {
+        ...context,
+        path: `${context.path}[${assignmentIndex}]`,
+        node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
+        variableId: id,
+      });
     }
   });
 }
@@ -2930,6 +3326,7 @@ function validateAgentCopilotModules(data, listsById, report) {
           if (componentSettings.resources.dataLists && !Array.isArray(componentSettings.resources.dataLists.items)) {
             issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_DATALISTS_INVALID", "Application-resource access tool dataLists.items should be an array when present.", { aiResource: resourceName, component: componentName });
           }
+          validateApplicationResourcePermissionGroups(componentSettings.resources, report, { aiResource: resourceName, component: componentName });
           dataListItems.forEach((entry, entryIndex) => {
             const resourceListId = safeString(entry && entry.id);
             if (!resourceListId) {
@@ -2977,6 +3374,52 @@ function validateAgentCopilotModules(data, listsById, report) {
       }
     });
   });
+}
+
+function validateApplicationResourcePermissionGroups(resources, report, context = {}) {
+  if (!isObject(resources)) return;
+  const permissionRoot = isObject(resources.permissions) ? resources.permissions : resources;
+  for (const [groupName, rule] of Object.entries(APP_RESOURCE_PERMISSION_RULES)) {
+    const entries = asArray(permissionRoot[groupName] && permissionRoot[groupName].items);
+    entries.forEach((entry, entryIndex) => {
+      validateApplicationResourcePermissionValue(entry && entry.permissions, groupName, rule, report, { ...context, entryIndex, resourceId: safeString(entry && entry.id) });
+    });
+  }
+  for (const [groupName, conflict] of Object.entries(APP_RESOURCE_PERMISSION_CONFLICT_KEYS)) {
+    const entries = asArray(permissionRoot[groupName] && permissionRoot[groupName].items);
+    entries.forEach((entry, entryIndex) => {
+      const raw = entry && entry.permissions;
+      if (raw === undefined || raw === null || raw === "") {
+        issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_MISSING", "Application-resource access tool entry should include numeric permissions.", { ...context, groupName, entryIndex, resourceId: safeString(entry && entry.id) });
+        return;
+      }
+      const value = Number(raw);
+      if (!Number.isInteger(value)) {
+        issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_INVALID", "Application-resource access tool permissions should be an integer bitmask.", { ...context, groupName, entryIndex, resourceId: safeString(entry && entry.id), permissions: raw });
+        return;
+      }
+      const inSchema = conflict.schemaAllowed.has(value);
+      const inRules = conflict.rulesAllowed.has(value);
+      if (!inSchema || !inRules) {
+        issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_SCHEMA_RULE_CONFLICT", "YAP schema and updated app-creation rules disagree for this resource permission family; keep warning-level until product team clarifies.", { ...context, groupName, entryIndex, resourceId: safeString(entry && entry.id), permissions: value, conflict: conflict.label });
+      }
+    });
+  }
+}
+
+function validateApplicationResourcePermissionValue(raw, groupName, rule, report, context = {}) {
+  if (raw === undefined || raw === null || raw === "") {
+    issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_MISSING", "Application-resource access tool entry should include numeric permissions.", { ...context, groupName });
+    return;
+  }
+  const value = Number(raw);
+  if (!Number.isInteger(value)) {
+    issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_INVALID", "Application-resource access tool permissions should be an integer bitmask.", { ...context, groupName, permissions: raw });
+    return;
+  }
+  if ((value & ~rule.mask) !== 0) {
+    issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_INVALID_BITS", "Application-resource access tool permissions include bits outside the schema-backed allowed mask.", { ...context, groupName, permissions: value, allowed: rule.label });
+  }
 }
 
 function validateLookupRelationships(listsById, fieldsByList, report) {

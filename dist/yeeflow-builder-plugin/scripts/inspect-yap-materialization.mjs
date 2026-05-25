@@ -229,6 +229,29 @@ function inspect(inputPath) {
     const internalNames = new Set();
     const displayNames = new Set();
     if (!fields.length) errors.push({ code: "CHILD_LIST_FIELDS_EMPTY", message: "Child data list has no fields attached.", detail: { title: child?.ListModel?.Title, listId } });
+    if (Number(child?.ListModel?.Type) === 1) {
+      if (child?.ListModel?.ListType === undefined) {
+        errors.push({ code: "CHILD_DATA_LIST_LISTTYPE_MISSING", message: "Generated Type 1 data lists must include ListModel.ListType before Yeeflow import.", detail: { title: child?.ListModel?.Title, listId } });
+      } else if (Number(child.ListModel.ListType) !== 1) {
+        errors.push({ code: "CHILD_DATA_LIST_LISTTYPE_INVALID", message: "Generated Type 1 data lists must use ListModel.ListType = 1 before Yeeflow import.", detail: { title: child?.ListModel?.Title, listId, listType: child.ListModel.ListType } });
+      }
+      const titleField = fields.find((field) => asString(field.FieldName) === "Title");
+      if (titleField && (titleField.Status !== 0 || titleField.IsSystem !== true || titleField.IsIndex !== true || titleField.FieldIndex !== 0)) {
+        errors.push({
+          code: "CHILD_DATA_LIST_TITLE_METADATA_INVALID",
+          message: "Generated data-list native Title fields must use import-safe metadata.",
+          detail: {
+            title: child?.ListModel?.Title,
+            listId,
+            status: titleField.Status,
+            isSystem: titleField.IsSystem,
+            isIndex: titleField.IsIndex,
+            fieldIndex: titleField.FieldIndex,
+            expected: { Status: 0, IsSystem: true, IsIndex: true, FieldIndex: 0 },
+          },
+        });
+      }
+    }
     for (const field of fields) {
       const fieldId = asString(field.FieldID);
       const fieldName = asString(field.FieldName);

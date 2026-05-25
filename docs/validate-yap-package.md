@@ -193,6 +193,19 @@ api/crafts/datas/{AppID}/{ListID}/query -> 400
 
 Generated list views may display a business label such as `Request No.` or `Equipment Name`, but the underlying `Title` field must remain native/system/indexed.
 
+## Projects Center Import-Readiness Hardening
+
+The Projects Center repair promotes several generated-app import blockers to strict generator/final errors. For newly generated `.yap` files:
+
+- Type `1` data lists must include `ListModel.ListType = 1`.
+- Native `Title` fields must use `Status = 0`, `IsSystem = true`, `IsIndex = true`, and `FieldIndex = 0`.
+- Data-view columns must resolve to real fields or explicitly allowed system fields for the current context.
+- Custom page/form/dashboard `LayoutInResources[].ID` and `RefId` must match the owning `LayoutID` where inline resources are used.
+- Dashboard dynamic-display rules and filters must resolve target controls and collection/page fields.
+- `Resource.ReplaceIds` must not include `TenantID`, `CreatedBy`, or `ModifiedBy`.
+
+Compatibility validation remains available for historical exports, but generated app handoff must use strict generator/import-readiness validation.
+
 ## Proven Visitor Expansion Validation Pattern
 
 The Visitor Access Management v6.1 through v10 packages confirm the package-validation profile for incremental generated app expansion.

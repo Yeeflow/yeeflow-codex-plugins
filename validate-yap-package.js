@@ -1705,7 +1705,9 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
     if (!listId) issue(report, "error", "CHILD_LISTID_MISSING", "Child ListID is required.", { path: `${pathPrefix}.ListModel.ListID`, title });
     if (!title) issue(report, "warning", "CHILD_TITLE_MISSING", "Child resource title is missing.", { path: `${pathPrefix}.ListModel.Title`, listId });
     if (resourceType === "data list" && list.ListType === undefined) {
-      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "MAIN_LIST_TYPE_MISSING", "Generated child data lists should include ListModel.ListType so extracted standalone list validation does not fail.", { path: `${pathPrefix}.ListModel.ListType`, title, listId });
+      issue(report, generatorFinalSeverity(report), "MAIN_LIST_TYPE_MISSING", "Generated child data lists must include ListModel.ListType before handoff; missing ListType can block Yeeflow import/materialization.", { path: `${pathPrefix}.ListModel.ListType`, title, listId });
+    } else if (resourceType === "data list" && Number(list.ListType) !== 1) {
+      issue(report, generatorFinalSeverity(report), "MAIN_LIST_TYPE_INVALID", "Generated Type 1 data lists must use ListModel.ListType = 1 before handoff.", { path: `${pathPrefix}.ListModel.ListType`, title, listId, listType: list.ListType });
     }
   }
 
@@ -1776,7 +1778,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
         report,
         generatorFinalSeverity(report),
         "DATA_LIST_TITLE_FIELD_NATIVE_METADATA_INVALID",
-        "Generated child data lists must preserve Yeeflow's native Title field metadata; otherwise api/crafts/datas/{AppID}/{ListID}/query can fail or hang at runtime.",
+        "Generated child data lists must preserve Yeeflow's native Title field metadata; otherwise import can succeed partially, list materialization can fail, or api/crafts/datas/{AppID}/{ListID}/query can fail or hang at runtime.",
         {
           list: title,
           listId,

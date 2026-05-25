@@ -5,6 +5,8 @@ description: orchestrate end-to-end Yeeflow feature learning from real exports b
 
 # Yeeflow Feature Learning Orchestrator
 
+Business Travel runtime-practice lesson: preserve separate proof gates for schema validation, import, workflow publish, and workflow execution. The Business Travel package import became user-proven only after `ListModel.Flags = 1`; later approval workflow publish errors were fixed through validator-backed variable and assignee repairs. Do not promote publish fixes to workflow execution/routing proof without a focused runtime test.
+
 Use this skill when the user asks to study a new Yeeflow feature, learn dashboard or document-library structure from exported files, analyze an exported `.yap` and build a test package, create a generator skill for a feature area, run the full learning cycle, or use the Yeeflow feature learning process.
 
 This is a learning orchestration skill. It does not replace:
@@ -274,3 +276,52 @@ When a product-team rules document identifies generation-breaking shapes, record
 
 Mark these rules `product-rule-backed` and `validator-backed`. Do not upgrade to runtime-import-proven until a focused regenerated package imports and opens successfully.
 <!-- app-creation-rules-learning:end -->
+
+<!-- data-list-document-library-fields-learning:start -->
+## Data List And Document Library Field Type Learning
+
+Use `docs/studies/data-list-document-library-field-types.md`, `docs/studies/normalized/data-list-fields/`, and `scripts/inspect-data-list-fields.mjs` before generating or validating broad Data List custom fields. `Data Lists (2).yap` export-proves the target Type `1` data lists `Data list with fields part A` and `Data list with fields part B` with 90 custom fields across `input`, `textarea`, `richtext`, `hyperlink`, `input_number`, `currency`, `percent`, `calculated-column`, `rate`, `switch`, `checkbox`, `radio`, `tag`, `datepicker`, `time`, `identity-picker`, `organization-picker`, `cost-center-picker`, `signer`, `file-upload`, `icon-upload`, `lookup`, `metadata`, `mutiple-metadata`, `location-picker`, `autonumber`, and `list`. `select` and `flowstatus` remain product-rule-backed/unproven in this export.
+
+Field generation must still pass the v0.5.12 app-creation gates: unique `DisplayName`, `FieldName`, and `InternalName`; `InternalName` matching `[A-Za-z0-9_]`; identifier length <= 255; and generated non-system `FieldName` suffix matching `FieldIndex`. Accept export-proven single metadata fields as `Type = "metadata"` with Bigint storage, even though the earlier product-team 28-type list only named `mutiple-metadata`.
+
+Use export-proven settings where relevant: choice `Rules.choices` and `color_choices`; numeric/currency/percent `displayThousandths`, `rounded-to`, `number_min`, `number_max`, `currencyCode`, `displayFormat`; picker `identity-maxselection`, `multiple`, `metadata-treeselect`, `parentId`; upload `maxsize`, `file_multiple`, `file_typeslimit`, `file_types`, `picture_size_limit`, `controlmultiple`; lookup `appid`, `listsetid`, `listid`, `listfield`, additions, filters, sorting, search, display style, and multiple; calculated columns `calculated_result` plus `calculated`; metadata `source` plus `categoryId`; tag `source`, `category`, `customTags`; autonumber `minDigits`, `startNum`, `prefix`, `suffix`; sub-list `list-variables[]`.
+
+Document Library custom-field applicability is product/user-understanding-backed only in this pass because no Type `16` document library was present. Keep Type `16` default fields and document upload rules from existing document-library studies, and do not claim runtime data-entry behavior for these field settings until focused import/open/field-creation tests pass.
+<!-- data-list-document-library-fields-learning:end -->
+
+<!-- data-list-custom-form-fields-learning:start -->
+## Data List Custom List Form Learning
+
+For Data List custom list form export learning, use `docs/studies/data-list-custom-form-fields.md`, `docs/studies/normalized/data-list-custom-forms/`, and `scripts/inspect-data-list-custom-forms.mjs`. `Data Lists (3).yap` export-proves four custom list forms across `Data list with fields part A`, `Data list with fields part B`, and `Data list with fields part C`, including Type `1` layout storage, embedded form resources, `ListModel.LayoutView` add/edit/view assignment, `flex_grid` field placement, top-level list-field controls, sub-list nested controls, temp variables, `setvar` form actions, `formAction.onLoad`, and action button bindings.
+
+Keep the proof boundary explicit: this is Data List export proof and validator-backed guidance only. Document Library custom-form applicability remains product/user-understanding-backed unless Type `16` custom-form exports prove it. Do not claim runtime rendering, save behavior, submit/save action execution, sub-list row behavior, uploads, lookup resolution, or Document Library custom form behavior without a focused runtime baseline.
+<!-- data-list-custom-form-fields-learning:end -->
+
+<!-- data-list-public-form-learning:start -->
+## Data List Public Form Learning
+
+For Data List Public Form export learning, use `docs/studies/data-list-public-forms.md`, `docs/studies/normalized/data-list-public-forms/`, and `scripts/inspect-data-list-public-forms.mjs`. `Data Lists (4).yap` export-proves two Type `1` target data lists with `PublicForms[]` entries, JSON-string public form resources, `pagetype = 3`, `container`/`flex_grid` layout, list-bound public controls, and `submit-button` controls.
+
+Keep Public Forms distinct from Custom List Forms. Public Forms are anonymous/no-login collection forms and therefore have a restricted field/control palette. Screenshots are UI-reference-backed only; they support the default-field and unavailable-field caveats but are not runtime proof and must not be committed.
+
+Preserve the proof boundary: Data List Public Form structure is export-proven and validator-backed after implementation; anonymous submit behavior, public URL access, save/data mutation, upload execution, sub-list row entry, Document Library applicability, and Form Report behavior are not runtime-proven.
+<!-- data-list-public-form-learning:end -->
+
+<!-- yap-schema-standard-learning:start -->
+## YAP Schema Standard Learning
+
+Use `docs/studies/yap-schema-standard.md`, `docs/studies/normalized/yap-schema-standard/`, and `scripts/inspect-yap-schema-standard.mjs` when product-team schema or package-wrapper failures are in scope. Treat `yap-schema.json` plus the current app creation rules as the standard reference, but keep global `additionalProperties: false` warning-level because known exports may contain product fields not fully covered by the schema.
+
+Hard-stop generated packages when wrapper `Resource` is missing the `[______gizp______]` prefix, decoded `Resource.Data` is malformed, `ListExportInfo.Item` is missing, or any root/child `ListExportItem.Defs` or `Layouts` is missing, null, or not an array. Empty `[]` is valid. Preserve existing app-creation hard gates for FieldIndex/FieldName suffix sync, unique field identifiers, valid `InternalName`, valid process keys, valid `NoRule`, and required `{index}` in `NoRule.Prefix`.
+
+For AI Agent/Copilot Access app resources tools, validate schema-backed bitwise permission masks for approval forms, data lists, document libraries, and AI agents. `formReports` and `dataReports` currently conflict between schema (`Read=8`) and the updated rules document (`Submit=1`), so warn and request product clarification rather than hard-failing either value. Do not claim runtime import proof from this schema-learning pass.
+<!-- yap-schema-standard-learning:end -->
+<!-- projects-center-import-failure-hardening:start -->
+## Projects Center Import-Failure Learning
+
+The Projects Center import failure is user-confirmed only for one generated package and one repaired package: the initial `projects-center-2.v1.yap` failed import, and the fixed package imported successfully after strict repair. Do not broaden this into runtime use, data-entry, document-library behavior, report execution, or workflow proof.
+
+When a generated package passes only compatibility validation, classify that as insufficient for handoff. New `.yap` generation must use strict generator/import-readiness gates before delivery: strict package validation, strict graph validation, materialization inspection, schema-standard inspection, app-creation rule inspection, data-view/dashboard/page reference checks, wrapper round trip, placeholder scan, and safety scan. Use `scripts/inspect-yap-import-readiness.mjs` when available.
+
+Record and promote these import-blocking rules when seen: Type `1` child data lists need `ListModel.ListType = 1`; native `Title` metadata must be generator-safe; views must not reference unresolved pseudo/system/missing fields; `LayoutInResources` IDs must match owning layout IDs; dashboard dynamic-display/filter references must resolve; `ReplaceIds` must exclude tenant/user metadata IDs.
+<!-- projects-center-import-failure-hardening:end -->

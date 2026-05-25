@@ -32,6 +32,138 @@ const ROOT_STYLE_TOKEN_HEX = new Map([
   ["#f7f8f9", "--c--neutral-light"],
   ["#f4f4f6", "--c--neutral-light-hover"],
 ]);
+const KNOWN_SYSTEM_FIELDS = new Set([
+  "ListDataID",
+  "Title",
+  "Created",
+  "CreatedBy",
+  "CreatedByName",
+  "Modified",
+  "ModifiedBy",
+  "ModifiedByName",
+  "Author",
+  "Editor",
+  "Status",
+  "TenantID",
+  "AppID",
+]);
+const APP_CREATION_SUPPORTED_LIST_TYPES = new Set([
+  "input",
+  "textarea",
+  "richtext",
+  "hyperlink",
+  "input_number",
+  "currency",
+  "percent",
+  "calculated-column",
+  "rate",
+  "switch",
+  "checkbox",
+  "radio",
+  "select",
+  "tag",
+  "datepicker",
+  "time",
+  "identity-picker",
+  "organization-picker",
+  "cost-center-picker",
+  "signer",
+  "file-upload",
+  "icon-upload",
+  "lookup",
+  "metadata",
+  "mutiple-metadata",
+  "location-picker",
+  "flowstatus",
+  "autonumber",
+  "list",
+]);
+const APP_CREATION_IDENTIFIER_MAX_LENGTH = 255;
+const APP_CREATION_INTERNAL_NAME_RE = /^[A-Za-z0-9_]+$/;
+const APP_CREATION_PROCESS_KEY_RE = /^[A-Za-z0-9_]+$/;
+const YAP_WRAPPER_REQUIRED_KEYS = ["Title", "Description", "IconUrl", "IsListSet", "Resource"];
+const CUSTOM_LIST_MODEL_TYPES = new Set([1, 16, 32, 64, 128, 1024]);
+const APP_RESOURCE_PERMISSION_RULES = {
+  approvalForms: { mask: 1 | 16 | 32, label: "Submit=1, ReadTasks=16, ProcessTasks=32" },
+  dataLists: { mask: 1 | 2 | 4 | 8, label: "Submit=1, Edit=2, Delete=4, Read=8" },
+  documentLibraries: { mask: 1 | 2 | 4 | 8, label: "Submit=1, Edit=2, Delete=4, Read=8" },
+  aiAgents: { mask: 1, label: "Submit=1" },
+};
+const APP_RESOURCE_PERMISSION_CONFLICT_KEYS = {
+  formReports: { schemaAllowed: new Set([0, 8]), rulesAllowed: new Set([0, 1]), label: "schema says Read=8; rules document says Submit=1" },
+  dataReports: { schemaAllowed: new Set([0, 8]), rulesAllowed: new Set([0, 1]), label: "schema says Read=8; rules document says Submit=1" },
+};
+const CUSTOM_FORM_DISPLAY_USAGES = ["add", "edit", "view"];
+const CUSTOM_FORM_OPEN_MODE_LABELS = {
+  modal: "Pop-up window",
+  slide: "Slide in",
+  page: "Full page",
+  fullpage: "Full page",
+  fullPage: "Full page",
+};
+const CUSTOM_FORM_SIZE_LABELS = new Map([[0, "Medium"], [1, "Small"], [2, "Large"], [3, "Full screen"]]);
+const PUBLIC_FORM_ALLOWED_FIELD_TYPES = new Set([
+  "input",
+  "textarea",
+  "richtext",
+  "input_number",
+  "percent",
+  "currency",
+  "switch",
+  "radio",
+  "checkbox",
+  "datepicker",
+  "time",
+  "file-upload",
+  "icon-upload",
+  "rate",
+  "hyperlink",
+  "signer",
+  "list",
+]);
+const PUBLIC_FORM_DISALLOWED_FIELD_TYPES = new Set([
+  "identity-picker",
+  "organization-picker",
+  "location-picker",
+  "lookup",
+  "calculated-column",
+  "metadata",
+  "mutiple-metadata",
+  "cost-center-picker",
+  "tag",
+  "autonumber",
+]);
+const PUBLIC_FORM_DISALLOWED_SYSTEM_FIELDS = new Set([
+  "ListDataID",
+  "Id",
+  "ID",
+  "Created",
+  "CreatedBy",
+  "CreatedByName",
+  "Modified",
+  "ModifiedBy",
+  "ModifiedByName",
+]);
+const PUBLIC_FORM_KNOWN_CONTROL_TYPES = new Set([
+  "container",
+  "flex_grid",
+  "action_button",
+  "submit-button",
+  ...PUBLIC_FORM_ALLOWED_FIELD_TYPES,
+  "text",
+  "number",
+  "boolean",
+  "date",
+  "file",
+  "metadata",
+  "user",
+  "costcenter",
+  "groupselect",
+  "location",
+  "lookup",
+  "img",
+  "total",
+]);
 
 function usage(exitCode = 1) {
   const text = [
@@ -169,6 +301,88 @@ function generatorFinalSeverity(report, fallback = "warning") {
   return report.mode === "generator" && report.stage === "final" ? "error" : fallback;
 }
 
+function validateAppCreationFieldRules(field, report, context = {}) {
+  const severity = generatorFinalSeverity(report);
+  const fieldName = safeString(field && field.FieldName);
+  const internalName = safeString(field && field.InternalName);
+  const displayName = safeString(field && field.DisplayName);
+  const type = safeString(field && field.Type).toLowerCase();
+  const pathPrefix = context.path || "field";
+  const list = context.list || null;
+
+  for (const [key, value] of [["DisplayName", displayName], ["FieldName", fieldName], ["InternalName", internalName]]) {
+    if (value && value.length > APP_CREATION_IDENTIFIER_MAX_LENGTH) {
+      issue(report, severity, `FIELD_${key.toUpperCase()}_TOO_LONG`, `${key} must not exceed 255 characters.`, { list, path: `${pathPrefix}.${key}`, length: value.length });
+    }
+  }
+
+  if (internalName && !APP_CREATION_INTERNAL_NAME_RE.test(internalName)) {
+    issue(report, severity, "FIELD_INTERNAL_NAME_INVALID_CHARS", "InternalName may contain only letters, numbers, and underscores.", { list, path: `${pathPrefix}.InternalName`, internalName });
+  }
+
+  if (type && !APP_CREATION_SUPPORTED_LIST_TYPES.has(type)) {
+    issue(report, "warning", "LIST_FIELD_TYPE_UNSUPPORTED", "List field Type is not in the product-team supported Type list.", { list, path: `${pathPrefix}.Type`, fieldName, type });
+  }
+
+  if (!fieldName || KNOWN_SYSTEM_FIELDS.has(fieldName)) return;
+  const fieldIndex = Number(field && field.FieldIndex);
+  if (!Number.isInteger(fieldIndex) || fieldIndex <= 0) return;
+  const suffixMatch = fieldName.match(/(\d+)$/);
+  if (!suffixMatch) {
+    issue(report, severity, "FIELD_NAME_NUMERIC_SUFFIX_MISSING", "FieldName numeric suffix must match FieldIndex; generated non-system fields must end with their FieldIndex value.", { list, path: `${pathPrefix}.FieldName`, fieldName, fieldIndex });
+    return;
+  }
+  const suffix = Number(suffixMatch[1]);
+  if (suffix !== fieldIndex) {
+    issue(report, severity, "FIELD_NAME_FIELDINDEX_MISMATCH", "FieldName numeric suffix must match FieldIndex.", { list, path: `${pathPrefix}.FieldName`, fieldName, fieldIndex, suffix });
+  }
+}
+
+function validateProcessKey(value, report, context = {}) {
+  const key = safeString(value);
+  if (!key) return;
+  const severity = generatorFinalSeverity(report);
+  if (key.length > APP_CREATION_IDENTIFIER_MAX_LENGTH) {
+    issue(report, severity, "PROCESS_KEY_TOO_LONG", "Process keys must not exceed 255 characters.", { path: context.path, form: context.form, keyLength: key.length });
+  }
+  if (!APP_CREATION_PROCESS_KEY_RE.test(key)) {
+    issue(report, severity, "PROCESS_KEY_INVALID_CHARS", "Process keys may contain only letters, numbers, and underscores.", { path: context.path, form: context.form, key });
+  }
+}
+
+function validateNoRule(form, report, context = {}) {
+  const severity = generatorFinalSeverity(report);
+  const formName = context.form || safeString(form && form.Name);
+  const key = context.key || safeString(form && form.Key);
+  const pathPrefix = context.path || "Data.Forms[]";
+  if (!Object.prototype.hasOwnProperty.call(form || {}, "NoRule")) {
+    issue(report, severity, "NORULE_MISSING", "Approval form NoRule must be an object with Prefix, StartIndex, CustomLength, and AutoIncrement.", { form: formName, key, path: `${pathPrefix}.NoRule` });
+    return;
+  }
+  const noRule = form.NoRule;
+  if (!isObject(noRule)) {
+    issue(report, severity, "NORULE_INVALID_OBJECT", "NoRule must be an object with Prefix, StartIndex, CustomLength, and AutoIncrement.", { form: formName, key, path: `${pathPrefix}.NoRule`, actualType: Array.isArray(noRule) ? "array" : noRule === null ? "null" : typeof noRule });
+    return;
+  }
+  const prefix = safeString(noRule.Prefix);
+  if (!prefix) {
+    issue(report, severity, "NORULE_PREFIX_MISSING", "NoRule.Prefix is required.", { form: formName, key, path: `${pathPrefix}.NoRule.Prefix` });
+  } else if (!prefix.includes("{index}")) {
+    issue(report, severity, "NORULE_PREFIX_INDEX_MISSING", "NoRule.Prefix must include {index}.", { form: formName, key, path: `${pathPrefix}.NoRule.Prefix`, prefix });
+  }
+  for (const [prop, minimum] of [["StartIndex", 1], ["CustomLength", 1], ["AutoIncrement", 0]]) {
+    const value = noRule[prop];
+    if (!Number.isInteger(value) || value < minimum) {
+      issue(report, severity, `NORULE_${prop.toUpperCase()}_INVALID`, `NoRule.${prop} must be an integer greater than or equal to ${minimum}.`, { form: formName, key, path: `${pathPrefix}.NoRule.${prop}`, value });
+    }
+  }
+  for (const prop of Object.keys(noRule)) {
+    if (!["Prefix", "StartIndex", "CustomLength", "AutoIncrement"].includes(prop)) {
+      issue(report, "warning", "NORULE_UNKNOWN_FIELD", "NoRule contains an unknown optional field; confirm import behavior before relying on it.", { form: formName, key, path: `${pathPrefix}.NoRule.${prop}` });
+    }
+  }
+}
+
 function redactDetails(value) {
   if (Array.isArray(value)) return value.map(redactDetails);
   if (!isObject(value)) return value;
@@ -227,6 +441,7 @@ function decodeInput(inputPath, report) {
       wrapperJsonValid: true,
       resourcePrefixValid: wrapper.Resource.startsWith(GZIP_PREFIX),
     };
+    validateYapWrapperSchema(wrapper, report);
     if (!wrapper.Resource.startsWith(GZIP_PREFIX)) {
       issue(report, "error", "RESOURCE_PREFIX_MISSING", `Wrapped .yap Resource must start with ${GZIP_PREFIX}.`);
       return null;
@@ -276,12 +491,26 @@ function decodeInput(inputPath, report) {
   return { wrapper: null, resource: null, data: parsed };
 }
 
+function validateYapWrapperSchema(wrapper, report) {
+  for (const key of YAP_WRAPPER_REQUIRED_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(wrapper || {}, key)) {
+      issue(report, "error", "YAP_WRAPPER_REQUIRED_PROPERTY_MISSING", "YAP wrapper is missing a product-schema-required property.", { path: `$.${key}`, key });
+    }
+  }
+  if (typeof wrapper.Resource !== "string") {
+    issue(report, "error", "YAP_RESOURCE_NOT_STRING", "YAP wrapper Resource must be a string.");
+  } else if (!wrapper.Resource.startsWith(GZIP_PREFIX)) {
+    issue(report, "error", "YAP_RESOURCE_PREFIX_INVALID", `YAP wrapper Resource must start with ${GZIP_PREFIX}.`);
+  }
+}
+
 function normalizeType(field) {
   const rules = tryParseJson(field && field.Rules) || {};
   const fieldType = safeString(field && field.FieldType).toLowerCase();
   const controlType = safeString(field && field.Type).toLowerCase();
   const combined = `${fieldType} ${controlType}`;
   if (controlType === "lookup" || rules.listid || rules.listsetid || rules.listfield) return "lookup";
+  if (controlType === "metadata" || controlType === "mutiple-metadata") return "metadata";
   if (controlType === "textarea" || controlType === "richtext") return "longText";
   if (controlType === "checkbox") return "multiChoice";
   if (controlType === "radio" || controlType === "dropdown" || controlType === "select") return "choice";
@@ -1271,6 +1500,8 @@ function validateBasicStructure(data, resource, report) {
   }
   if (!isObject(data.Item)) issue(report, "error", "DATA_ITEM_MISSING", "Data.Item is required.");
   if (!Array.isArray(data.Childs)) issue(report, "error", "DATA_CHILDS_NOT_ARRAY", "Data.Childs must be an array.");
+  validateListExportItemSchema(data.Item, "Data.Item", report);
+  asArray(data.Childs).forEach((child, index) => validateListExportItemSchema(child, `Data.Childs[${index}]`, report));
   for (const key of ["Forms", "OtherModules", "FormReports", "DataReports", "FormNewReports", "AppGroups", "AppThemes"]) {
     if (data[key] !== undefined && data[key] !== null && !Array.isArray(data[key])) {
       issue(report, "error", `${key.toUpperCase()}_NOT_ARRAY`, `Data.${key} must be an array when present.`);
@@ -1283,6 +1514,34 @@ function validateBasicStructure(data, resource, report) {
     }
     if (isDocumentLibraryOnlyPackage(data) && resource.SimplePortal !== null) {
       issue(report, "warning", "DOCUMENT_LIBRARY_SIMPLEPORTAL_NOT_NULL", "Known-good document-library exports use Resource.SimplePortal = null. Generated [] wrappers failed Yeeflow create in v1/v2.", { simplePortalType: Array.isArray(resource.SimplePortal) ? "array" : typeof resource.SimplePortal });
+    }
+  }
+}
+
+function validateListExportItemSchema(item, pathPrefix, report) {
+  if (!isObject(item)) return;
+  for (const key of ["Defs", "Layouts"]) {
+    const value = item[key];
+    const path = `${pathPrefix}.${key}`;
+    if (!Object.prototype.hasOwnProperty.call(item, key)) {
+      issue(report, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_MISSING`, `ListExportItem.${key} is required by yap-schema.json. Use an empty array when there are no entries.`, { path });
+    } else if (value === null) {
+      issue(report, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_NULL`, `ListExportItem.${key} cannot be null. Use [] for an empty collection.`, { path });
+    } else if (!Array.isArray(value)) {
+      issue(report, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_NOT_ARRAY`, `ListExportItem.${key} must be an array.`, { path, actualType: Array.isArray(value) ? "array" : typeof value });
+    }
+  }
+  if (!isObject(item.ListModel)) {
+    issue(report, generatorFinalSeverity(report), "LIST_EXPORT_ITEM_LISTMODEL_MISSING", "Generated app/list resources should include ListExportItem.ListModel.", { path: `${pathPrefix}.ListModel` });
+  } else {
+    if (item.ListModel.Flags !== 1) {
+      issue(report, generatorFinalSeverity(report), "LISTMODEL_FLAGS_INVALID", "Product schema v2 requires CustomListModel.Flags = 1; missing or different values can fail import.", { path: `${pathPrefix}.ListModel.Flags`, value: item.ListModel.Flags });
+    }
+    if (item.ListModel.Status !== undefined && item.ListModel.Status !== 1) {
+      issue(report, generatorFinalSeverity(report), "LISTMODEL_STATUS_INVALID", "Product schema v2 fixes CustomListModel.Status to 1 when present.", { path: `${pathPrefix}.ListModel.Status`, value: item.ListModel.Status });
+    }
+    if (item.ListModel.Type !== undefined && !CUSTOM_LIST_MODEL_TYPES.has(Number(item.ListModel.Type))) {
+      issue(report, generatorFinalSeverity(report), "LISTMODEL_TYPE_INVALID", "Product schema v2 allows CustomListModel.Type values 1, 16, 32, 64, 128, or 1024.", { path: `${pathPrefix}.ListModel.Type`, value: item.ListModel.Type });
     }
   }
 }
@@ -1320,6 +1579,113 @@ function validateApplicationUserGroups(data, replaceIds, report) {
   });
 }
 
+function validateDataListPermissionsAndNotifications(item, pathPrefix, resourceType, report) {
+  const list = item.ListModel || {};
+  const title = safeString(list.Title);
+  if (!["data list", "document library"].includes(resourceType)) return;
+
+  if (list.Perm !== undefined && typeof list.Perm !== "number") {
+    issue(report, "warning", "DATA_LIST_PERMISSION_PERM_INVALID", "ListModel.Perm should be numeric when present.", { path: `${pathPrefix}.ListModel.Perm`, list: title, valueType: typeof list.Perm });
+  }
+  if (list.IsBreakInherit !== undefined && typeof list.IsBreakInherit !== "boolean") {
+    issue(report, "warning", "DATA_LIST_PERMISSION_INHERIT_FLAG_INVALID", "ListModel.IsBreakInherit should be boolean when present.", { path: `${pathPrefix}.ListModel.IsBreakInherit`, list: title, valueType: typeof list.IsBreakInherit });
+  }
+  if (list.IsItemPerm !== undefined && typeof list.IsItemPerm !== "boolean") {
+    issue(report, "warning", "DATA_LIST_PERMISSION_ITEM_FLAG_INVALID", "ListModel.IsItemPerm should be boolean when present.", { path: `${pathPrefix}.ListModel.IsItemPerm`, list: title, valueType: typeof list.IsItemPerm });
+  }
+  if (list.AdvanceList !== undefined && !Array.isArray(list.AdvanceList)) {
+    issue(report, "warning", "DATA_LIST_PERMISSION_ADVANCELIST_INVALID", "ListModel.AdvanceList should be an array when present in studied data-list exports.", { path: `${pathPrefix}.ListModel.AdvanceList`, list: title });
+  }
+  for (const key of ["Ext1", "Ext2", "Ext3"]) {
+    if (typeof list[key] === "string" && /perm|permission|admin|advanced|audience/i.test(list[key]) && !tryParseJson(list[key])) {
+      issue(report, "warning", "DATA_LIST_PERMISSION_EXT_JSON_INVALID", `ListModel.${key} contains permission-like text but does not parse as JSON.`, { path: `${pathPrefix}.ListModel.${key}`, list: title });
+    }
+  }
+
+  const rules = asArray(item.RemindRules);
+  const knownNotificationTypes = new Set(["1", "2", "3", "4"]);
+  const knownRecipientTypes = new Set(["1", "2", "3"]);
+  rules.forEach((rule, index) => {
+    if (!isObject(rule)) {
+      issue(report, "warning", "DATA_LIST_NOTIFICATION_RULE_NOT_OBJECT", "RemindRules entries should be objects.", { path: `${pathPrefix}.RemindRules[${index}]`, list: title });
+      return;
+    }
+    const type = safeString(rule.Type);
+    if (type && !knownNotificationTypes.has(type)) {
+      issue(report, "warning", "DATA_LIST_NOTIFICATION_TYPE_UNKNOWN", "Unknown RemindRules Type; export-proven types are 1 item-added, 2 regular reminder, 3 date-field reminder, and 4 item-changed.", { path: `${pathPrefix}.RemindRules[${index}].Type`, list: title, type });
+    }
+    if (rule.Status !== undefined && typeof rule.Status !== "number") {
+      issue(report, "warning", "DATA_LIST_NOTIFICATION_STATUS_INVALID", "RemindRules Status should be numeric when present.", { path: `${pathPrefix}.RemindRules[${index}].Status`, list: title });
+    }
+    const parsedRules = typeof rule.Rules === "string" ? tryParseJson(rule.Rules) : rule.Rules;
+    if (!isObject(parsedRules)) {
+      issue(report, "warning", "DATA_LIST_NOTIFICATION_RULES_JSON_INVALID", "RemindRules.Rules should parse as JSON.", { path: `${pathPrefix}.RemindRules[${index}].Rules`, list: title });
+    } else {
+      const conditionData = parsedRules.Conditions && parsedRules.Conditions.Data;
+      if (typeof conditionData === "string" && conditionData.trim()) {
+        const parsedConditions = tryParseJson(conditionData);
+        if (!Array.isArray(parsedConditions)) {
+          issue(report, "warning", "DATA_LIST_NOTIFICATION_CONDITIONS_JSON_INVALID", "RemindRules.Conditions.Data should parse as an array when non-empty.", { path: `${pathPrefix}.RemindRules[${index}].Rules.Conditions.Data`, list: title });
+        }
+      }
+      if (type === "2") {
+        const period = safeString(parsedRules.Rules && parsedRules.Rules.Period);
+        if (period && !["Daily", "Weekly", "Monthly", "Yearly"].includes(period)) {
+          issue(report, "warning", "DATA_LIST_NOTIFICATION_PERIOD_UNKNOWN", "Regular reminder Period is not one of the export-proven values.", { path: `${pathPrefix}.RemindRules[${index}].Rules.Rules.Period`, list: title, period });
+        }
+      }
+    }
+    const parsedReceiver = typeof rule.Receiver === "string" ? tryParseJson(rule.Receiver) : rule.Receiver;
+    if (!isObject(parsedReceiver)) {
+      issue(report, "warning", "DATA_LIST_NOTIFICATION_RECEIVER_JSON_INVALID", "RemindRules.Receiver should parse as JSON.", { path: `${pathPrefix}.RemindRules[${index}].Receiver`, list: title });
+    } else {
+      asArray(parsedReceiver.Identities).forEach((identity, identityIndex) => {
+        const recipientType = safeString(identity && identity.Type);
+        if (recipientType && !knownRecipientTypes.has(recipientType)) {
+          issue(report, "warning", "DATA_LIST_NOTIFICATION_RECIPIENT_TYPE_UNKNOWN", "Unknown notification recipient Type; export-proven values are 1 user, 2 department, and 3 user group.", { path: `${pathPrefix}.RemindRules[${index}].Receiver.Identities[${identityIndex}].Type`, list: title, recipientType });
+        }
+      });
+      if (parsedReceiver.ListDefs !== undefined && !Array.isArray(parsedReceiver.ListDefs)) {
+        issue(report, "warning", "DATA_LIST_NOTIFICATION_LISTDEFS_INVALID", "Notification Receiver.ListDefs should be an array when present.", { path: `${pathPrefix}.RemindRules[${index}].Receiver.ListDefs`, list: title });
+      }
+    }
+  });
+}
+
+function validateDataListFieldTypeSettings(field, listTitle, pathPrefix, report) {
+  const type = safeString(field && field.Type).toLowerCase();
+  const rules = parsedFieldRules(field);
+  const context = { list: listTitle, field: field.DisplayName || field.FieldName || null, path: pathPrefix, type };
+
+  if (["radio", "checkbox", "select"].includes(type) && !Array.isArray(rules.choices)) {
+    issue(report, generatorFinalSeverity(report), "CHOICE_OPTIONS_MISSING", "Choice fields should include Rules.choices.", context);
+  }
+  if (type === "tag" && rules.customTags !== true && !Array.isArray(rules.customTags) && !Array.isArray(rules.choices)) {
+    issue(report, "warning", "TAG_OPTIONS_MISSING", "Tag fields should include Rules.customTags=true, a customTags array, or choices before generation.", context);
+  }
+  if (type === "tag" && (!rules.source || !rules.category)) {
+    issue(report, "warning", "TAG_SOURCE_MISSING", "Tag fields should include Rules.source and Rules.category.", context);
+  }
+  if (["metadata", "mutiple-metadata"].includes(type) && (!rules.source || !rules.categoryId)) {
+    issue(report, "warning", "METADATA_SOURCE_MISSING", "Metadata fields should include Rules.source and Rules.categoryId.", context);
+  }
+  if (type === "lookup") {
+    const missing = ["appid", "listsetid", "listid", "listfield"].filter((key) => !rules[key] && !rules[key.replace(/^[a-z]/, (ch) => ch.toUpperCase())]);
+    if (missing.length) {
+      issue(report, generatorFinalSeverity(report), "LOOKUP_RULES_INCOMPLETE", "Lookup fields should include appid, listsetid, listid, and listfield Rules metadata.", { ...context, missing });
+    }
+  }
+  if (type === "calculated-column" && (!rules.calculated_result || !rules.calculated)) {
+    issue(report, "warning", "CALCULATED_COLUMN_RULES_INCOMPLETE", "Calculated columns should include Rules.calculated_result and Rules.calculated.", context);
+  }
+  if (type === "list" && !Array.isArray(rules["list-variables"])) {
+    issue(report, "warning", "LIST_FIELD_METADATA_MISSING", "Sub-list fields should include Rules.list-variables.", context);
+  }
+  if (type === "autonumber" && (rules.minDigits === undefined || rules.startNum === undefined)) {
+    issue(report, "warning", "AUTONUMBER_RULES_INCOMPLETE", "Auto number fields should include Rules.minDigits and Rules.startNum.", context);
+  }
+}
+
 function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, localIds, listsById, fieldsByList, fieldIdsByApp, report) {
   const pathPrefix = isRoot ? "$.Item" : `$.Childs[${index - 1}]`;
   if (!isObject(item) || !isObject(item.ListModel)) {
@@ -1339,7 +1705,9 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
     if (!listId) issue(report, "error", "CHILD_LISTID_MISSING", "Child ListID is required.", { path: `${pathPrefix}.ListModel.ListID`, title });
     if (!title) issue(report, "warning", "CHILD_TITLE_MISSING", "Child resource title is missing.", { path: `${pathPrefix}.ListModel.Title`, listId });
     if (resourceType === "data list" && list.ListType === undefined) {
-      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "MAIN_LIST_TYPE_MISSING", "Generated child data lists should include ListModel.ListType so extracted standalone list validation does not fail.", { path: `${pathPrefix}.ListModel.ListType`, title, listId });
+      issue(report, generatorFinalSeverity(report), "MAIN_LIST_TYPE_MISSING", "Generated child data lists must include ListModel.ListType before handoff; missing ListType can block Yeeflow import/materialization.", { path: `${pathPrefix}.ListModel.ListType`, title, listId });
+    } else if (resourceType === "data list" && Number(list.ListType) !== 1) {
+      issue(report, generatorFinalSeverity(report), "MAIN_LIST_TYPE_INVALID", "Generated Type 1 data lists must use ListModel.ListType = 1 before handoff.", { path: `${pathPrefix}.ListModel.ListType`, title, listId, listType: list.ListType });
     }
   }
 
@@ -1403,13 +1771,14 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
       fieldDisplayNames.add(displayName);
       fieldsByName.set(displayName, field);
     }
+    validateAppCreationFieldRules(field, report, { list: title, path: fp });
     if (fieldId) fieldsByName.set(fieldId, field);
     if (!isRoot && resourceType === "data list" && fieldName === "Title" && (field.Status !== 0 || field.IsSystem !== true || field.IsIndex !== true || field.FieldIndex !== 0)) {
       issue(
         report,
         generatorFinalSeverity(report),
         "DATA_LIST_TITLE_FIELD_NATIVE_METADATA_INVALID",
-        "Generated child data lists must preserve Yeeflow's native Title field metadata; otherwise api/crafts/datas/{AppID}/{ListID}/query can fail or hang at runtime.",
+        "Generated child data lists must preserve Yeeflow's native Title field metadata; otherwise import can succeed partially, list materialization can fail, or api/crafts/datas/{AppID}/{ListID}/query can fail or hang at runtime.",
         {
           list: title,
           listId,
@@ -1423,6 +1792,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
       );
     }
     if (field.Rules && !tryParseJson(field.Rules)) issue(report, "warning", "FIELD_RULES_JSON_INVALID", "Field Rules is not valid JSON.", { list: title, field: displayName || fieldName });
+    validateDataListFieldTypeSettings(field, title, fp, report);
     validateFieldAgainstSchema(field, report._controlFieldSchemas).forEach((schemaIssue) => {
       issue(report, "warning", `FIELD_SCHEMA_${schemaIssue.code}`, schemaIssue.message, {
         list: title,
@@ -1438,9 +1808,14 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   if (!isRoot && resourceType === "document library") {
     validateDocumentLibraryFields(item, fieldsByName, pathPrefix, report);
   }
+  if (!isRoot) validateDataListPermissionsAndNotifications(item, pathPrefix, resourceType, report);
 
   const layouts = asArray(item.Layouts);
   const layoutIds = new Set(layouts.map((layout) => safeString(layout.LayoutID)).filter(Boolean));
+  const viewNames = new Set();
+  const viewUrls = new Set();
+  let defaultViewCount = 0;
+  let viewCount = 0;
   if (!isRoot && item.ListModel && item.ListModel.LayoutView) {
     const listLayoutView = tryParseJson(item.ListModel.LayoutView);
     if (listLayoutView) {
@@ -1472,16 +1847,39 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
           issue(report, "warning", "UI_STANDARD_VIEW_NOT_USING_VIEW_ITEM_FORM", "Generated data-list View item display setting should use the View Item custom form.", { list: title, listId, expectedLayoutId: viewLayout.LayoutID, actualLayoutId: listLayoutView.view });
         }
       }
+      validateCustomFormDisplaySettings(listLayoutView, layouts, report, { list: title, listId, path: `${pathPrefix}.ListModel.LayoutView` });
     }
   }
   layouts.forEach((layout, layoutIndex) => {
     const layoutId = safeString(layout.LayoutID);
     if (!layoutId) issue(report, "error", "LAYOUT_ID_MISSING", "LayoutID is required.", { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutID`, list: title });
     else localIds.add(layoutId);
-    if (!isRoot && Number(layout.Type || 0) === 0) validateDataListViewLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report, resourceType);
+    if (!isRoot && Number(layout.Type) !== 1) {
+      viewCount += 1;
+      if (layout.IsDefault === true) defaultViewCount += 1;
+      const viewName = safeString(layout.Title);
+      if (!viewName) issue(report, "warning", "DATA_VIEW_NAME_MISSING", "Data view should have a name.", { path: `${pathPrefix}.Layouts[${layoutIndex}]`, list: title });
+      else if (viewNames.has(viewName)) issue(report, "warning", "DATA_VIEW_NAME_DUPLICATE", "Data view names should be unique within a list-like resource unless a focused export proves duplicates are accepted.", { list: title, viewName });
+      viewNames.add(viewName);
+      const ext = tryParseJson(layout.Ext1) || {};
+      const viewUrl = safeString(ext.Url);
+      if (viewUrl && viewUrls.has(viewUrl)) issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DATA_VIEW_URL_DUPLICATE", "Data view URL/key should be unique within a list-like resource.", { list: title, viewUrl });
+      if (viewUrl) viewUrls.add(viewUrl);
+      validateDataListViewLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report, resourceType);
+    }
     if (Number(layout.Type) === 1) validateCustomFormLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report);
     if (Number(layout.Type) === 103 && isRoot) report.summary.dashboards += 1;
   });
+  if (!isRoot && resourceType === "data list") validatePublicForms(item, fieldsByName, pathPrefix, report);
+  if (!isRoot && viewCount === 0 && ["data list", "document library", "form report/list resource"].includes(resourceType)) {
+    issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DATA_VIEW_MISSING", "List-like resources should include at least one data view.", { list: title, resourceType });
+  }
+  if (!isRoot && viewCount > 0 && defaultViewCount === 0) {
+    issue(report, "warning", "DATA_VIEW_DEFAULT_MISSING", "List-like resources should include one default data view; detect it with IsDefault=true rather than only the view name.", { list: title, resourceType });
+  }
+  if (!isRoot && defaultViewCount > 1) {
+    issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DATA_VIEW_DEFAULT_DUPLICATE", "Only one default data view is export-proven per list-like resource.", { list: title, defaultViewCount });
+  }
 
   const recordCount = item.ListDatas && isObject(item.ListDatas) ? Object.keys(item.ListDatas).length : 0;
   if (item.ListDatas && !isObject(item.ListDatas)) issue(report, "error", "LISTDATAS_BAD_TYPE", "Item.ListDatas must be an object when present.", { path: `${pathPrefix}.ListDatas`, list: title });
@@ -1532,9 +1930,49 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   if (resourceType === "report/data resource" || resourceType === "form report/list resource") report.summary.reports += 1;
 }
 
+function defaultCustomFormOpenModeForUsage(usage) {
+  return usage === "view" ? "Slide in" : "Pop-up window";
+}
+
+function validateCustomFormDisplaySettings(layoutView, layouts, report, context) {
+  if (!isObject(layoutView)) return;
+  const customFormLayoutIds = new Set(asArray(layouts).filter((layout) => Number(layout.Type) === 1).map((layout) => safeString(layout.LayoutID)).filter(Boolean));
+  const opentype = isObject(layoutView.opentype) ? layoutView.opentype : {};
+  const modalsize = isObject(layoutView.modalsize) ? layoutView.modalsize : {};
+  for (const usage of CUSTOM_FORM_DISPLAY_USAGES) {
+    const formRef = safeString(layoutView[usage] === undefined ? "default" : layoutView[usage]);
+    const usesDefault = formRef === "" || formRef === "default";
+    if (!usesDefault && !customFormLayoutIds.has(formRef)) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_DISPLAY_FORM_REF_NOT_FOUND", "New/Edit/View display setting references a custom list form layout that does not exist.", { ...context, usage, formRef });
+    }
+    const rawOpenMode = safeString(opentype[usage]);
+    const openMode = rawOpenMode ? CUSTOM_FORM_OPEN_MODE_LABELS[rawOpenMode] : defaultCustomFormOpenModeForUsage(usage);
+    if (!openMode) issue(report, "warning", "CUSTOM_FORM_DISPLAY_OPEN_MODE_UNKNOWN", "Custom list form display setting uses an unknown open mode.", { ...context, usage, openMode: rawOpenMode });
+    const rawSize = modalsize[usage];
+    const hasSize = rawSize !== undefined && rawSize !== null && rawSize !== "";
+    if (hasSize && !CUSTOM_FORM_SIZE_LABELS.has(Number(rawSize))) issue(report, "warning", "CUSTOM_FORM_DISPLAY_SIZE_UNKNOWN", "Custom list form display setting uses an unknown size code.", { ...context, usage, size: rawSize });
+    if (openMode === "Full page" && hasSize) issue(report, "warning", "CUSTOM_FORM_DISPLAY_FULL_PAGE_SIZE_SET", "Full page display settings should not rely on pop-up/slide size behavior unless a future export proves it.", { ...context, usage, size: rawSize });
+  }
+}
+
 function validateDataListViewLayout(layout, fieldsByName, pathPrefix, report, resourceType = "data list") {
   const view = tryParseJson(layout.LayoutView);
-  const severity = report.mode === "generator" && report.stage === "final" ? "error" : "warning";
+  const isFormReportResource = resourceType === "form report/list resource";
+  const severity = report.mode === "generator" && report.stage === "final" && !isFormReportResource ? "error" : "warning";
+  const type = safeString(layout.Type);
+  const knownViewTypes = new Set(["0", "100", "104", "999"]);
+  const listLikeViewTypes = new Set(["0", "104", "999"]);
+  const ext = tryParseJson(layout.Ext1) || {};
+  const viewTitle = layout.Title || null;
+  if (!knownViewTypes.has(type)) {
+    issue(report, "warning", "DATA_VIEW_TYPE_UNKNOWN", "Data view uses an unknown view Type; known export-proven codes are 0 list, 100 calendar, 104 kanban, and 999 gallery.", { path: pathPrefix, title: viewTitle, type });
+  }
+  if (type !== "0" && resourceType !== "data list") {
+    issue(report, "warning", "DATA_VIEW_TYPE_RESOURCE_SCOPE_UNPROVEN", "Gallery, calendar, and kanban settings are data-list export-proven in this workspace but not yet proven for this resource type.", { path: pathPrefix, title: viewTitle, type, resourceType });
+  }
+  if (layout.IsDefault === true && safeString(ext.Url) && !["default", "all"].includes(safeString(ext.Url))) {
+    issue(report, "warning", "DATA_VIEW_DEFAULT_URL_UNUSUAL", "Default views commonly use URL/key default or all in studied exports; confirm custom default URLs before relying on runtime behavior.", { path: pathPrefix, title: viewTitle, url: ext.Url });
+  }
   if (!view) {
     if (resourceType === "document library") {
       issue(report, "warning", "DOCUMENT_LIBRARY_VIEW_LAYOUTVIEW_EMPTY_OR_INVALID", "A newly created document library export may have an empty default view LayoutView; configured libraries should use the normal list view layout JSON.", { path: `${pathPrefix}.LayoutView`, title: layout.Title || null });
@@ -1546,13 +1984,42 @@ function validateDataListViewLayout(layout, fieldsByName, pathPrefix, report, re
   if (Array.isArray(view.fields) && !Array.isArray(view.layout)) {
     issue(report, severity, "DATA_LIST_VIEW_LAYOUTVIEW_LIGHTWEIGHT_FIELDS", "Generated data-list view LayoutView uses a lightweight fields array instead of Yeeflow's layout/sort/query/rowColor/filter schema.", { title: layout.Title });
   }
-  for (const key of ["layout", "sort", "query", "rowColor", "filter"]) {
-    if (!Array.isArray(view[key])) {
-      issue(report, severity, "DATA_LIST_VIEW_LAYOUTVIEW_REQUIRED_ARRAY_MISSING", `Data-list view LayoutView missing ${key} array.`, { title: layout.Title, key });
+  if (listLikeViewTypes.has(type)) {
+    const formReportMinimalView = isFormReportResource && view.Attr_IsViewDetail !== undefined && !Array.isArray(view.layout) && !Array.isArray(view.query);
+    if (!formReportMinimalView) {
+      for (const key of ["layout", "query"]) {
+        if (!Array.isArray(view[key])) {
+          issue(report, severity, "DATA_LIST_VIEW_LAYOUTVIEW_REQUIRED_ARRAY_MISSING", `Data-list view LayoutView missing ${key} array.`, { title: layout.Title, key });
+        }
+      }
+      for (const key of ["sort", "rowColor", "filter"]) {
+        if (view[key] !== undefined && !Array.isArray(view[key])) {
+          issue(report, severity, "DATA_LIST_VIEW_LAYOUTVIEW_OPTIONAL_ARRAY_INVALID", `Data-list view LayoutView ${key} should be an array when present.`, { title: layout.Title, key });
+        }
+      }
     }
   }
-  if (!Array.isArray(view.layout)) return;
-  view.layout.forEach((column, index) => {
+  if (type === "100") {
+    const columns = isObject(view.Columns) ? view.Columns : null;
+    if (!columns) issue(report, severity, "CALENDAR_VIEW_COLUMNS_MISSING", "Calendar view should include LayoutView.Columns.", { title: layout.Title });
+    for (const [setting, fieldName] of Object.entries(columns || {})) {
+      const ref = safeString(fieldName);
+      if (ref && !fieldsByName.has(ref) && !KNOWN_SYSTEM_FIELDS.has(ref)) {
+        issue(report, severity, "CALENDAR_VIEW_COLUMN_FIELD_NOT_FOUND", "Calendar view Columns setting references an unknown field.", { title: layout.Title, setting, fieldName: ref });
+      }
+    }
+    for (const key of ["Scope", "DefaultColor", "ColorClass", "ColorClassSetting", "Filter", "ExternalSetting", "query"]) {
+      if (view[key] === undefined) issue(report, "warning", "CALENDAR_VIEW_SETTING_MISSING", "Calendar view is missing a setting found in the studied export shape.", { title: layout.Title, key });
+    }
+  }
+  if (type === "999") validateViewExtField(ext, "TitleField", fieldsByName, layout, report, severity);
+  if (type === "999" && ext.CoverField !== undefined) validateViewExtField(ext, "CoverField", fieldsByName, layout, report, severity);
+  if (type === "104") {
+    validateViewExtField(ext, "TitleField", fieldsByName, layout, report, severity);
+    validateViewExtField(ext, "CategoryField", fieldsByName, layout, report, severity);
+    if (ext.CoverField !== undefined) validateViewExtField(ext, "CoverField", fieldsByName, layout, report, severity);
+  }
+  asArray(view.layout).forEach((column, index) => {
     const fieldId = safeString(column.FieldID);
     const fieldName = safeString(column.FieldName);
     const displayName = safeString(column.DisplayName);
@@ -1565,10 +2032,52 @@ function validateDataListViewLayout(layout, fieldsByName, pathPrefix, report, re
     if (fieldName && !fieldsByName.has(fieldName)) {
       issue(report, severity, "DATA_LIST_VIEW_FIELDNAME_NOT_FOUND", "Data-list view FieldName does not resolve to a list field.", { title: layout.Title, index, fieldName });
     }
-    if (safeString(column.Type) === "textarea") {
+    if (type === "0" && safeString(column.Type) === "textarea") {
       issue(report, severity, "DATA_LIST_VIEW_TEXTAREA_COLUMN_UNPROVEN", "Generated Type 0 data-list grid views should not include textarea columns; working app exports keep long text fields in forms but omit them from grid layout.", { title: layout.Title, index, fieldName });
     }
   });
+  asArray(view.sort).forEach((sort, index) => {
+    const fieldName = safeString(sort.SortName || sort.FieldName || sort.field);
+    if (fieldName && !fieldsByName.has(fieldName) && !KNOWN_SYSTEM_FIELDS.has(fieldName)) {
+      issue(report, severity, "DATA_VIEW_SORT_FIELD_NOT_FOUND", "Data view sort field does not resolve to a list field or known system field.", { title: layout.Title, index, fieldName });
+    }
+    if (sort.SortByDesc !== undefined && typeof sort.SortByDesc !== "boolean") {
+      issue(report, severity, "DATA_VIEW_SORT_DIRECTION_INVALID", "Data view SortByDesc should be boolean when present.", { title: layout.Title, index });
+    }
+  });
+  asArray(view.filter).forEach((filter, index) => {
+    const fieldName = safeString(filter.left || filter.FieldName || filter.field);
+    if (fieldName && !fieldsByName.has(fieldName) && !KNOWN_SYSTEM_FIELDS.has(fieldName)) {
+      issue(report, severity, "DATA_VIEW_FILTER_FIELD_NOT_FOUND", "Data view fixed filter field does not resolve to a list field or known system field.", { title: layout.Title, index, fieldName });
+    }
+    if (!safeString(filter.op)) issue(report, "warning", "DATA_VIEW_FILTER_OPERATOR_MISSING", "Data view fixed filter condition should include an operator.", { title: layout.Title, index });
+  });
+  asArray(view.query).forEach((query, index) => {
+    const fieldName = safeString(query.FieldName || query.field || query.Name);
+    if (fieldName && !fieldsByName.has(fieldName) && !KNOWN_SYSTEM_FIELDS.has(fieldName)) {
+      issue(report, severity, "DATA_VIEW_USER_FILTER_FIELD_NOT_FOUND", "Data view query/user-filter field does not resolve to a list field or known system field.", { title: layout.Title, index, fieldName });
+    }
+    if (query.IsFilter !== undefined && typeof query.IsFilter !== "boolean") {
+      issue(report, "warning", "DATA_VIEW_USER_FILTER_FLAG_INVALID", "Data view query IsFilter should be boolean when present.", { title: layout.Title, index });
+    }
+  });
+}
+
+function validateViewExtField(ext, key, fieldsByName, layout, report, severity) {
+  const raw = ext[key];
+  const parsed = typeof raw === "string" ? tryParseJson(raw) : raw;
+  if (!isObject(parsed)) {
+    issue(report, severity, "DATA_VIEW_TYPE_SETTING_INVALID", `Data view ${key} setting should be a field reference object or JSON string.`, { title: layout.Title, key });
+    return;
+  }
+  const fieldName = safeString(parsed.FieldName);
+  const fieldId = safeString(parsed.FieldID);
+  if (fieldName && !fieldsByName.has(fieldName) && !KNOWN_SYSTEM_FIELDS.has(fieldName)) {
+    issue(report, severity, "DATA_VIEW_TYPE_SETTING_FIELD_NOT_FOUND", `Data view ${key} field name does not resolve to a list field.`, { title: layout.Title, key, fieldName });
+  }
+  if (fieldId && !fieldsByName.has(fieldId)) {
+    issue(report, severity, "DATA_VIEW_TYPE_SETTING_FIELD_ID_NOT_FOUND", `Data view ${key} field ID does not resolve to a list field.`, { title: layout.Title, key, fieldId });
+  }
 }
 
 function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
@@ -1593,6 +2102,7 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
   for (const key of ["children", "attrs", "title", "filterVars", "ver", "tempVars"]) {
     if (form[key] === undefined) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_REQUIRED_KEY_MISSING", `Custom form Resource missing ${key}.`, { title: layout.Title, key });
   }
+  validateCustomFormActions(form, fieldsByName, pathPrefix, report, layout.Title);
   validateUiStandardFormRoot(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix });
   validateUiStandardContainers(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix, requireFormBody: false });
   if (!asArray(form.children).length) {
@@ -1605,13 +2115,177 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
       surface: "custom list form",
     });
     const binding = control.binding;
-    if (binding && !fieldsByName.has(String(binding))) {
+    if (binding && !(control.attrs && control.attrs.list_field === true) && !fieldsByName.has(String(binding))) {
       issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_BINDING_NOT_FOUND", "Custom form control binding does not resolve to a field.", { title: layout.Title, binding, path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}` });
     }
     if (control.fieldID && !fieldsByName.has(String(control.fieldID))) {
       issue(report, "warning", "CUSTOM_FORM_FIELDID_NOT_FOUND", "Custom form control fieldID does not resolve to a field.", { title: layout.Title, fieldID: control.fieldID });
     }
+    if (safeString(control.type) === "list") validateCustomFormSubListControl(control, fieldsByName, report, { title: layout.Title, path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}` });
   }));
+}
+
+function validatePublicForms(item, fieldsByName, pathPrefix, report) {
+  const publicForms = asArray(item.PublicForms);
+  publicForms.forEach((publicForm, publicFormIndex) => {
+    const context = {
+      path: `${pathPrefix}.PublicForms[${publicFormIndex}]`,
+      publicForm: publicForm && publicForm.Name || null,
+    };
+    if (!publicForm || !publicForm.Resource) {
+      issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_RESOURCE_MISSING", "PublicForms[] entry must include Resource.", context);
+      return;
+    }
+    const resource = tryParseJson(publicForm.Resource);
+    if (!resource) {
+      issue(report, "error", "PUBLIC_FORM_RESOURCE_JSON_INVALID", "PublicForms[] Resource must be valid JSON.", context);
+      return;
+    }
+    if (resource.pagetype !== 3) issue(report, "warning", "PUBLIC_FORM_PAGETYPE_UNKNOWN", "Data List Public Form Resource.pagetype is export-proven as 3.", { ...context, pagetype: resource.pagetype });
+    if (!Array.isArray(resource.children)) {
+      issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_CHILDREN_NOT_ARRAY", "Data List Public Form Resource.children must be an array.", { ...context, location: `${context.path}.Resource.children` });
+      return;
+    }
+    if (resource.tempVars !== undefined && !Array.isArray(resource.tempVars)) {
+      issue(report, "warning", "PUBLIC_FORM_TEMPVARS_NOT_ARRAY", "Data List Public Form Resource.tempVars should be an array when present.", { ...context, location: `${context.path}.Resource.tempVars` });
+    }
+
+    const seenControlIds = new Set();
+    let submitControls = 0;
+    resource.children.forEach((child, childIndex) => walkControls(child, (control, pointer) => {
+      const type = safeString(control && control.type);
+      const controlPath = `${context.path}.Resource.children[${childIndex}]${pointer.slice(1)}`;
+      if (!type) return;
+      if (type === "submit-button") submitControls += 1;
+      if (!PUBLIC_FORM_KNOWN_CONTROL_TYPES.has(type)) {
+        issue(report, "warning", "PUBLIC_FORM_CONTROL_TYPE_UNKNOWN", "Public form uses a control type that is not yet export-proven for public forms.", { ...context, path: controlPath, type });
+      }
+      const controlId = safeString(control.id);
+      if (controlId) {
+        if (seenControlIds.has(controlId)) issue(report, "error", "PUBLIC_FORM_CONTROL_ID_DUPLICATE", "Public form control IDs must be unique within a form.", { ...context, path: controlPath, controlId });
+        seenControlIds.add(controlId);
+      }
+
+      const binding = typeof control.binding === "string" ? control.binding : "";
+      const field = control.fieldID ? fieldsByName.get(String(control.fieldID)) : binding ? fieldsByName.get(binding) : null;
+      const isNestedListField = control.attrs && control.attrs.list_field === true;
+      if ((binding || control.fieldID) && !isNestedListField && type !== "total") {
+        if (!field) {
+          issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_FIELD_BINDING_NOT_FOUND", "Public form list-bound control does not resolve to a field in the same data list.", { ...context, path: controlPath, binding: binding || null, type });
+          return;
+        }
+        const fieldName = safeString(field.FieldName);
+        const fieldType = safeString(field.Type);
+        if (PUBLIC_FORM_DISALLOWED_SYSTEM_FIELDS.has(fieldName)) {
+          issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_DEFAULT_FIELD_NOT_ALLOWED", "Default/system list fields should not be generated into Public Forms. Title is the export-proven primary-field exception.", { ...context, path: controlPath, fieldName, fieldType });
+        }
+        if (PUBLIC_FORM_DISALLOWED_FIELD_TYPES.has(fieldType)) {
+          issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_FIELD_TYPE_NOT_ALLOWED", "This field type is UI-reference-backed as unavailable for Data List Public Forms.", { ...context, path: controlPath, fieldName, fieldType });
+        } else if (!PUBLIC_FORM_ALLOWED_FIELD_TYPES.has(fieldType)) {
+          issue(report, "warning", "PUBLIC_FORM_FIELD_TYPE_UNPROVEN", "Public form uses a field type that is not in the export-proven allowed set from Data Lists (4).yap.", { ...context, path: controlPath, fieldName, fieldType });
+        }
+      }
+    }));
+    if (!submitControls) issue(report, "warning", "PUBLIC_FORM_SUBMIT_CONTROL_MISSING", "Public forms intended for anonymous collection should include an export-proven submit control.", context);
+  });
+}
+
+function customFormTempVarAliases(tempVar) {
+  const id = safeString(tempVar && tempVar.id);
+  if (!id) return [];
+  return [id, id.startsWith("__temp_") ? id.replace(/^__temp_/, "") : `__temp_${id}`];
+}
+
+function collectCustomFormActionRefs(value) {
+  const refs = { fields: [], tempVars: [] };
+  walk(value, (node) => {
+    if (!isObject(node)) return;
+    if (node.exprType === "list_field" && node.prop) refs.fields.push(String(node.prop));
+    if (node.exprType === "variable" && (node.id || node.name)) refs.tempVars.push(String(node.id || node.name));
+  });
+  return refs;
+}
+
+function validateCustomFormActions(form, fieldsByName, pathPrefix, report, title) {
+  if (form.tempVars !== undefined && !Array.isArray(form.tempVars)) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_TEMPVARS_NOT_ARRAY", "Custom form tempVars must be an array.", { title, path: `${pathPrefix}.LayoutInResources[0].Resource.tempVars` });
+  }
+  if (form.actions !== undefined && !Array.isArray(form.actions)) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_ACTIONS_NOT_ARRAY", "Custom form actions must be an array when present.", { title, path: `${pathPrefix}.LayoutInResources[0].Resource.actions` });
+  }
+  const tempVars = new Set();
+  const seenTempVars = new Set();
+  asArray(form.tempVars).forEach((tempVar, index) => {
+    if (!tempVar || !tempVar.id) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_TEMPVAR_ID_MISSING", "Custom form tempVars entries should include id.", { title, path: `${pathPrefix}.LayoutInResources[0].Resource.tempVars[${index}]` });
+      return;
+    }
+    for (const alias of customFormTempVarAliases(tempVar)) tempVars.add(alias);
+    const id = safeString(tempVar.id);
+    if (seenTempVars.has(id)) issue(report, "error", "CUSTOM_FORM_TEMPVAR_ID_DUPLICATE", "Custom form tempVars ids should be unique within the form.", { title, path: `${pathPrefix}.LayoutInResources[0].Resource.tempVars[${index}]`, id });
+    seenTempVars.add(id);
+  });
+
+  const actionIds = new Set();
+  asArray(form.actions).forEach((action, actionIndex) => {
+    if (!action || !action.id) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_ACTION_ID_MISSING", "Custom form actions should include id.", { title, path: `${pathPrefix}.LayoutInResources[0].Resource.actions[${actionIndex}]` });
+    } else if (actionIds.has(String(action.id))) {
+      issue(report, "error", "CUSTOM_FORM_ACTION_ID_DUPLICATE", "Custom form action ids should be unique within the form.", { title, actionId: action.id });
+    } else {
+      actionIds.add(String(action.id));
+    }
+    if (!Array.isArray(action && action.steps)) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_ACTION_STEPS_NOT_ARRAY", "Custom form action steps must be an array.", { title, actionName: action && action.name || null });
+    }
+    asArray(action && action.steps).forEach((step, stepIndex) => {
+      if (!step || !step.type) issue(report, "warning", "CUSTOM_FORM_ACTION_STEP_TYPE_MISSING", "Custom form action step should include type.", { title, actionName: action.name || null, stepIndex });
+      if (step && step.type && !["setvar", "submit", "submit_form", "save", "close", "open", "message"].includes(String(step.type))) {
+        issue(report, "warning", "CUSTOM_FORM_ACTION_STEP_UNKNOWN", "Custom form action step type is not yet export-learned.", { title, actionName: action.name || null, stepIndex, stepType: step.type });
+      }
+      const refs = collectCustomFormActionRefs(step);
+      refs.fields.forEach((fieldRef) => {
+        if (!fieldsByName.has(fieldRef) && !KNOWN_SYSTEM_FIELDS.has(fieldRef)) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_ACTION_FIELD_REF_NOT_FOUND", "Custom form action references an unknown list field.", { title, actionName: action.name || null, fieldRef });
+      });
+      refs.tempVars.forEach((tempVar) => {
+        if (!tempVars.has(tempVar) && !tempVars.has(tempVar.replace(/^__temp_/, ""))) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_ACTION_TEMPVAR_REF_NOT_FOUND", "Custom form action references an unknown temp variable.", { title, actionName: action.name || null, tempVar });
+      });
+    });
+  });
+  for (const [hook, actionId] of Object.entries(form.formAction || {})) {
+    if (actionId && !actionIds.has(String(actionId))) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_FORMACTION_REF_NOT_FOUND", "Custom form formAction hook references an unknown action.", { title, hook, actionId });
+    }
+  }
+  asArray(form.children).forEach((child, index) => walkControls(child, (control, pointer) => {
+    const actionId = control && control.attrs && control.attrs.control_action;
+    if (actionId && !actionIds.has(String(actionId))) {
+      issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_BUTTON_ACTION_REF_NOT_FOUND", "Custom form action button references an unknown action.", { title, actionId, path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}` });
+    }
+  }));
+}
+
+function validateCustomFormSubListControl(control, fieldsByName, report, context) {
+  const variables = asArray(control.attrs && control.attrs["list-variables"]);
+  const listFields = asArray(control.attrs && control.attrs["list-fields"]);
+  if (!variables.length) issue(report, "warning", "CUSTOM_FORM_SUBLIST_VARIABLES_MISSING", "Sub-list custom form control should include attrs.list-variables.", context);
+  if (!listFields.length) issue(report, "warning", "CUSTOM_FORM_SUBLIST_FIELDS_MISSING", "Sub-list custom form control should include attrs.list-fields.", context);
+  const variableNames = new Set(variables.map((item) => safeString(item && item.name)).filter(Boolean));
+  listFields.forEach((entry, index) => {
+    const name = safeString(entry && entry.name);
+    if (name && !variableNames.has(name)) issue(report, "warning", "CUSTOM_FORM_SUBLIST_FIELD_VARIABLE_NOT_FOUND", "Sub-list attrs.list-fields entry should resolve to attrs.list-variables by name.", { ...context, index, name });
+    const nestedControl = entry && entry.control;
+    if (!nestedControl || !nestedControl.type || !nestedControl.binding) issue(report, "warning", "CUSTOM_FORM_SUBLIST_NESTED_CONTROL_INCOMPLETE", "Sub-list nested field controls should include type and binding.", { ...context, index, name });
+    if (nestedControl && nestedControl.attrs && nestedControl.attrs.list_field_binding !== control.binding) {
+      issue(report, "warning", "CUSTOM_FORM_SUBLIST_PARENT_BINDING_MISMATCH", "Sub-list nested field control should point back to the parent sub-list field binding.", { ...context, index, name });
+    }
+  });
+  const boundField = fieldsByName.get(safeString(control.binding));
+  const rules = tryParseJson(boundField && boundField.Rules) || {};
+  const ruleVariables = asArray(rules["list-variables"]);
+  if (boundField && ruleVariables.length && variables.length !== ruleVariables.length) {
+    issue(report, "warning", "CUSTOM_FORM_SUBLIST_VARIABLE_COUNT_DIFFERS_FROM_FIELD_RULES", "Sub-list form control variable count differs from the parent field Rules.list-variables count.", { ...context, controlVariables: variables.length, fieldRuleVariables: ruleVariables.length });
+  }
 }
 
 function validateCustomFormDocLibraryControls(data, listsById, fieldsByList, report) {
@@ -1726,6 +2400,8 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     const workflowType = String(form.WorkflowType || "");
     if (!formName) issue(report, "warning", "FORM_NAME_MISSING", "Form Name is missing.", { index });
     if (!key) issue(report, "error", "FORM_KEY_MISSING", "Form Key is required.", { form: formName, index });
+    validateProcessKey(key, report, { form: formName, path: `Data.Forms[${index}].Key` });
+    validateProcessKey(form.FlowKey, report, { form: formName, path: `Data.Forms[${index}].FlowKey` });
     if (!workflowType) issue(report, "warning", "FORM_WORKFLOWTYPE_MISSING", "Form WorkflowType is missing.", { form: formName, key });
     const def = parseDefResource(form, report, index);
     const shapes = collectShapes(def);
@@ -1738,6 +2414,7 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
     else if (scheduledLike) report.summary.scheduledWorkflows += 1;
     else report.summary.listWorkflows += 1;
     report.inventories.forms.push({ name: formName, key, workflowType, kind: approvalLike ? "approval form" : scheduledLike ? "scheduled workflow" : "list/process workflow", pages: asArray(def && def.pageurls).length, nodeTypes });
+    if (approvalLike && String(form.ListID || "0") === "0") validateNoRule(form, report, { form: formName, key, path: `Data.Forms[${index}]` });
     if (approvalLike && Object.prototype.hasOwnProperty.call(form, "ListID") && String(form.ListID) !== "0") {
       issue(
         report,
@@ -1748,6 +2425,7 @@ function validateForms(data, listsById, fieldsByList, replaceIds, localIds, repo
       );
     }
     if (!def) return;
+    validateProcessKey(def.defkey, report, { form: formName, path: `Data.Forms[${index}].DefResource.defkey` });
     if (def.defkey && key && String(def.defkey) !== key) issue(report, "warning", "FORM_DEFKEY_MISMATCH", "Form Key and decoded Def defkey differ.", { form: formName, key, defkey: def.defkey });
     validateWorkflowDesignerCompatibility(form, def, report);
     if (scheduledLike) validateScheduledWorkflow(form, def, report);
@@ -1783,6 +2461,7 @@ function validateWorkflowDesignerCompatibility(form, def, report) {
   if (def.graphver === undefined) issue(report, severity, "WORKFLOW_DEF_GRAPHVER_MISSING", "Workflow designer expects DefResource.graphver metadata.", { form: formName, key });
 
   const shapes = collectShapes(def);
+  const workflowVariableIds = collectWorkflowVariableIds(def);
   shapes.forEach((shape, index) => {
     const type = shapeType(shape);
     const id = safeString(shape.id);
@@ -1797,8 +2476,82 @@ function validateWorkflowDesignerCompatibility(form, def, report) {
       if (!shape.target || !safeString(shape.target.id) || !safeString(shape.target.resourceid)) {
         issue(report, severity, "WORKFLOW_SEQUENCE_TARGET_INVALID", "SequenceFlow target should include id and resourceid.", { form: formName, key, index });
       }
+      validateSequenceFlowConditionVariables(shape, workflowVariableIds, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.conditioninfo` });
+    } else if (type === "SetVariableTask") {
+      validateSetVariableTaskTargets(shape, workflowVariableIds, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.variablesetting` });
+    } else if (type === "MultiAssignmentTask" || type === "CandidateTask") {
+      validateTaskAssignmentVariables(shape, workflowVariableIds, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.usertaskassignment` });
     } else if (!isObject(shape.position)) {
       issue(report, severity, "WORKFLOW_NODE_POSITION_MISSING", "Workflow designer expects non-sequence workflow nodes to include position metadata.", { form: formName, key, index, type });
+    }
+  });
+}
+
+function collectWorkflowVariableIds(def) {
+  const ids = new Set();
+  for (const variable of asArray(def && def.variables && def.variables.basic)) {
+    const id = safeString(variable && variable.id);
+    if (id) ids.add(id);
+  }
+  for (const listref of asArray(def && def.variables && def.variables.listref)) {
+    const id = safeString(listref && listref.id);
+    if (id) ids.add(id);
+    for (const field of asArray(listref && listref.fields)) {
+      const fieldId = safeString(field && field.id);
+      if (fieldId) ids.add(fieldId);
+    }
+  }
+  return ids;
+}
+
+function validateSequenceFlowConditionVariables(shape, workflowVariableIds, report, context) {
+  const conditions = asArray(shape && shape.properties && shape.properties.conditioninfo);
+  conditions.forEach((condition, conditionIndex) => {
+    for (const side of ["left", "right"]) {
+      const operand = condition && condition[side];
+      const token = isObject(operand) && isObject(operand.value) ? operand.value : null;
+      if (!token || token.exprType !== "variable") continue;
+      const id = safeString(token.id);
+      if (id && !workflowVariableIds.has(id)) {
+        issue(report, generatorFinalSeverity(report), "WORKFLOW_SEQUENCE_CONDITION_VARIABLE_UNRESOLVED", "SequenceFlow condition references a workflow variable that is not present in DefResource.variables.", {
+          ...context,
+          path: `${context.path}[${conditionIndex}].${side}.value.id`,
+          node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
+          variableId: id,
+        });
+      }
+    }
+  });
+}
+
+function validateSetVariableTaskTargets(shape, workflowVariableIds, report, context) {
+  asArray(shape && shape.properties && shape.properties.variablesetting).forEach((setting, settingIndex) => {
+    const id = safeString(setting && setting.id);
+    if (id && !workflowVariableIds.has(id)) {
+      issue(report, generatorFinalSeverity(report), "SETVARIABLE_UNKNOWN_VARIABLE", "SetVariableTask references a workflow variable that is not present in DefResource.variables.", {
+        ...context,
+        path: `${context.path}[${settingIndex}].id`,
+        node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
+        variableId: id,
+      });
+    }
+  });
+}
+
+function validateTaskAssignmentVariables(shape, workflowVariableIds, report, context) {
+  asArray(shape && shape.properties && shape.properties.usertaskassignment).forEach((assignment, assignmentIndex) => {
+    const text = JSON.stringify(assignment || {});
+    const variableIds = [...text.matchAll(/\\"id\\":\\"([^"\\]+)\\"|"id":"([^"]+)"/g)]
+      .map((match) => safeString(match[1] || match[2]))
+      .filter((id) => id && !["FlowNo"].includes(id));
+    for (const id of variableIds) {
+      if (workflowVariableIds.has(id)) continue;
+      issue(report, generatorFinalSeverity(report), "TASK_ASSIGNMENT_VARIABLE_UNRESOLVED", "Task assignment references a workflow variable that is not present in DefResource.variables.", {
+        ...context,
+        path: `${context.path}[${assignmentIndex}]`,
+        node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
+        variableId: id,
+      });
     }
   });
 }
@@ -2573,6 +3326,7 @@ function validateAgentCopilotModules(data, listsById, report) {
           if (componentSettings.resources.dataLists && !Array.isArray(componentSettings.resources.dataLists.items)) {
             issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_DATALISTS_INVALID", "Application-resource access tool dataLists.items should be an array when present.", { aiResource: resourceName, component: componentName });
           }
+          validateApplicationResourcePermissionGroups(componentSettings.resources, report, { aiResource: resourceName, component: componentName });
           dataListItems.forEach((entry, entryIndex) => {
             const resourceListId = safeString(entry && entry.id);
             if (!resourceListId) {
@@ -2620,6 +3374,52 @@ function validateAgentCopilotModules(data, listsById, report) {
       }
     });
   });
+}
+
+function validateApplicationResourcePermissionGroups(resources, report, context = {}) {
+  if (!isObject(resources)) return;
+  const permissionRoot = isObject(resources.permissions) ? resources.permissions : resources;
+  for (const [groupName, rule] of Object.entries(APP_RESOURCE_PERMISSION_RULES)) {
+    const entries = asArray(permissionRoot[groupName] && permissionRoot[groupName].items);
+    entries.forEach((entry, entryIndex) => {
+      validateApplicationResourcePermissionValue(entry && entry.permissions, groupName, rule, report, { ...context, entryIndex, resourceId: safeString(entry && entry.id) });
+    });
+  }
+  for (const [groupName, conflict] of Object.entries(APP_RESOURCE_PERMISSION_CONFLICT_KEYS)) {
+    const entries = asArray(permissionRoot[groupName] && permissionRoot[groupName].items);
+    entries.forEach((entry, entryIndex) => {
+      const raw = entry && entry.permissions;
+      if (raw === undefined || raw === null || raw === "") {
+        issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_MISSING", "Application-resource access tool entry should include numeric permissions.", { ...context, groupName, entryIndex, resourceId: safeString(entry && entry.id) });
+        return;
+      }
+      const value = Number(raw);
+      if (!Number.isInteger(value)) {
+        issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_INVALID", "Application-resource access tool permissions should be an integer bitmask.", { ...context, groupName, entryIndex, resourceId: safeString(entry && entry.id), permissions: raw });
+        return;
+      }
+      const inSchema = conflict.schemaAllowed.has(value);
+      const inRules = conflict.rulesAllowed.has(value);
+      if (!inSchema || !inRules) {
+        issue(report, "warning", "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_SCHEMA_RULE_CONFLICT", "YAP schema and updated app-creation rules disagree for this resource permission family; keep warning-level until product team clarifies.", { ...context, groupName, entryIndex, resourceId: safeString(entry && entry.id), permissions: value, conflict: conflict.label });
+      }
+    });
+  }
+}
+
+function validateApplicationResourcePermissionValue(raw, groupName, rule, report, context = {}) {
+  if (raw === undefined || raw === null || raw === "") {
+    issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_MISSING", "Application-resource access tool entry should include numeric permissions.", { ...context, groupName });
+    return;
+  }
+  const value = Number(raw);
+  if (!Number.isInteger(value)) {
+    issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_INVALID", "Application-resource access tool permissions should be an integer bitmask.", { ...context, groupName, permissions: raw });
+    return;
+  }
+  if ((value & ~rule.mask) !== 0) {
+    issue(report, generatorFinalSeverity(report), "AI_APPLICATION_RESOURCE_TOOL_PERMISSION_INVALID_BITS", "Application-resource access tool permissions include bits outside the schema-backed allowed mask.", { ...context, groupName, permissions: value, allowed: rule.label });
+  }
 }
 
 function validateLookupRelationships(listsById, fieldsByList, report) {

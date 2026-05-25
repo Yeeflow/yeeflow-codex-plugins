@@ -5,6 +5,8 @@ description: Standardize runtime testing for generated or modified Yeeflow appli
 
 # Yeeflow Runtime Test Orchestrator
 
+Business Travel runtime-practice checkpoint: when a generated package imports, continue with a separate workflow designer publish check before claiming workflow readiness. The fixed `business-travel-budget-control.schema-fixed.v1.yap` package is user-proven for import, app open, workflow open, and workflow publish after schema/variable/assignee repairs. Keep workflow execution, routing, request submission, email, ContentList/data mutation, and true Finance Manager assignment unproven until explicitly tested. A package that imports after `ListModel.Flags = 1` is not automatically workflow-publish-proven.
+
 ## Core Rule
 
 Treat local package validation and Yeeflow runtime proof as separate gates. A package can be locally valid but still not accepted as a baseline until the runtime pass is documented.
@@ -148,3 +150,50 @@ Before runtime import tests, run the app creation rule validators from `docs/stu
 
 The focused proof in `docs/studies/yeeflow-app-creation-rules-runtime-proof.md` imported the repaired workflow field-rule package, opened the app/approval form/data list, opened the New Field panel, and saved a new single-line field without the duplicate-value error. Label this runtime-import-proven and data-list-field-creation-proven only; keep workflow routing, workflow execution, record mutation, and Form Report separate.
 <!-- app-creation-rules-learning:end -->
+
+<!-- data-list-document-library-fields-learning:start -->
+## Data List And Document Library Field Type Learning
+
+Use `docs/studies/data-list-document-library-field-types.md`, `docs/studies/normalized/data-list-fields/`, and `scripts/inspect-data-list-fields.mjs` before generating or validating broad Data List custom fields. `Data Lists (2).yap` export-proves the target Type `1` data lists `Data list with fields part A` and `Data list with fields part B` with 90 custom fields across `input`, `textarea`, `richtext`, `hyperlink`, `input_number`, `currency`, `percent`, `calculated-column`, `rate`, `switch`, `checkbox`, `radio`, `tag`, `datepicker`, `time`, `identity-picker`, `organization-picker`, `cost-center-picker`, `signer`, `file-upload`, `icon-upload`, `lookup`, `metadata`, `mutiple-metadata`, `location-picker`, `autonumber`, and `list`. `select` and `flowstatus` remain product-rule-backed/unproven in this export.
+
+Field generation must still pass the v0.5.12 app-creation gates: unique `DisplayName`, `FieldName`, and `InternalName`; `InternalName` matching `[A-Za-z0-9_]`; identifier length <= 255; and generated non-system `FieldName` suffix matching `FieldIndex`. Accept export-proven single metadata fields as `Type = "metadata"` with Bigint storage, even though the earlier product-team 28-type list only named `mutiple-metadata`.
+
+Use export-proven settings where relevant: choice `Rules.choices` and `color_choices`; numeric/currency/percent `displayThousandths`, `rounded-to`, `number_min`, `number_max`, `currencyCode`, `displayFormat`; picker `identity-maxselection`, `multiple`, `metadata-treeselect`, `parentId`; upload `maxsize`, `file_multiple`, `file_typeslimit`, `file_types`, `picture_size_limit`, `controlmultiple`; lookup `appid`, `listsetid`, `listid`, `listfield`, additions, filters, sorting, search, display style, and multiple; calculated columns `calculated_result` plus `calculated`; metadata `source` plus `categoryId`; tag `source`, `category`, `customTags`; autonumber `minDigits`, `startNum`, `prefix`, `suffix`; sub-list `list-variables[]`.
+
+Document Library custom-field applicability is product/user-understanding-backed only in this pass because no Type `16` document library was present. Keep Type `16` default fields and document upload rules from existing document-library studies, and do not claim runtime data-entry behavior for these field settings until focused import/open/field-creation tests pass.
+
+Focused runtime proof in `docs/studies/data-list-field-creation-runtime-proof.md` imported `data-list-field-creation-runtime-proof.v1.yap`, opened `Data List Field Creation Runtime Proof`, opened `Field Creation Runtime Test`, observed representative generated columns, opened `+ New column`, and saved `Runtime Extra Field` with `Added Successfully`. Label this runtime-import-proven, data-list-open-proven, and representative data-list-field-creation-proven only; keep lookup resolution, calculated correctness, uploads, picker selection, sub-list data entry, metadata, Document Library, workflow, and Form Report out of scope.
+<!-- data-list-document-library-fields-learning:end -->
+
+<!-- data-list-custom-form-fields-learning:start -->
+## Data List Custom List Form Runtime Boundary
+
+`docs/studies/data-list-custom-form-fields.md` is export-proof only. Before claiming runtime behavior for generated Data List custom forms, run a focused import/open baseline that proves the app opens, the target list opens, New/Edit/View display settings route to the expected custom forms and opening modes/sizes, representative field controls render, sub-list controls render if included, action buttons are visible, and any tested form action executes safely.
+
+Do not treat export-proven `setvar` action shape, `formAction.onLoad`, action button bindings, temp variables, or sub-list nested controls as runtime action proof. Keep Document Library custom-form behavior product/user-understanding-backed unless a Type `16` package is imported/opened and the custom form is reached at runtime.
+<!-- data-list-custom-form-fields-learning:end -->
+
+<!-- data-list-public-form-learning:start -->
+## Data List Public Form Runtime Boundary
+
+`docs/studies/data-list-public-forms.md` is export-proof only. Before claiming runtime behavior for Data List Public Forms, run a focused import/open/share baseline that proves package import, app open, public form designer/open behavior, allowed field/control rendering, submit button visibility, public URL generation/opening if safe, and anonymous submission only if the target list and test data are disposable.
+
+Focused runtime proof in `docs/studies/data-list-public-form-runtime-proof.md` confirms a generated Type `1` Data List Public Form package imported, opened the app/list, showed the Public Form inside the data list, opened the designer, rendered representative allowed list-bound controls, and passed after the grid/display-caption and centered inline submit-button fix. This upgrades only the generated import/open/designer/control-render path for the observed package and layout pattern.
+
+Do not treat export-proven public form structure or this focused proof as proof of anonymous submit, public URL access outside the authenticated designer unless separately confirmed, save/data creation, upload behavior, sub-list data entry, signature capture, or validation-message behavior. Document Library public-form behavior is unproven unless a Type `16` public-form package is imported/opened and tested.
+<!-- data-list-public-form-learning:end -->
+
+<!-- yap-schema-standard-learning:start -->
+## YAP Schema Standard Runtime Gate
+
+Before any runtime import attempt, run `scripts/inspect-yap-schema-standard.mjs` and package validation. Do not import a generated package when the wrapper is malformed, `Resource` lacks the `[______gizp______]` prefix, decoded `Resource.Data` is malformed, `ListExportInfo.Item` is missing, or any root/child `Defs` or `Layouts` value is missing, null, or not an array. Empty arrays are valid.
+
+Schema-standard validation is not runtime proof. A focused runtime proof is still needed for any generator change that repairs a previous import failure such as `Item.Defs: null`. Preserve warning-only status for the unresolved `formReports`/`dataReports` Access app resource permission bit conflict until product team clarifies it.
+<!-- yap-schema-standard-learning:end -->
+<!-- projects-center-import-failure-hardening:start -->
+## Pre-Import Readiness Gate
+
+Before any runtime import attempt for a newly generated `.yap`, require strict generator/import-readiness validation. Do not import packages that only passed compatibility validation. Run strict package validation, strict graph validation, materialization inspection, schema-standard inspection, app-creation rules inspection, data-view/dashboard/page reference checks, wrapper round trip, placeholder scan, and safety scan; use `scripts/inspect-yap-import-readiness.mjs` when present.
+
+The Projects Center fixed package import is user-proven only for import success. It does not prove app open/use, data entry, document-library behavior, scheduled report execution, or workflow behavior. Keep those runtime scopes separate.
+<!-- projects-center-import-failure-hardening:end -->

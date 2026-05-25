@@ -316,3 +316,12 @@ Hard-stop generated packages when wrapper `Resource` is missing the `[______gizp
 
 For AI Agent/Copilot Access app resources tools, validate schema-backed bitwise permission masks for approval forms, data lists, document libraries, and AI agents. `formReports` and `dataReports` currently conflict between schema (`Read=8`) and the updated rules document (`Submit=1`), so warn and request product clarification rather than hard-failing either value. Do not claim runtime import proof from this schema-learning pass.
 <!-- yap-schema-standard-learning:end -->
+<!-- projects-center-import-failure-hardening:start -->
+## Projects Center Import-Failure Learning
+
+The Projects Center import failure is user-confirmed only for one generated package and one repaired package: the initial `projects-center-2.v1.yap` failed import, and the fixed package imported successfully after strict repair. Do not broaden this into runtime use, data-entry, document-library behavior, report execution, or workflow proof.
+
+When a generated package passes only compatibility validation, classify that as insufficient for handoff. New `.yap` generation must use strict generator/import-readiness gates before delivery: strict package validation, strict graph validation, materialization inspection, schema-standard inspection, app-creation rule inspection, data-view/dashboard/page reference checks, wrapper round trip, placeholder scan, and safety scan. Use `scripts/inspect-yap-import-readiness.mjs` when available.
+
+Record and promote these import-blocking rules when seen: Type `1` child data lists need `ListModel.ListType = 1`; native `Title` metadata must be generator-safe; views must not reference unresolved pseudo/system/missing fields; `LayoutInResources` IDs must match owning layout IDs; dashboard dynamic-display/filter references must resolve; `ReplaceIds` must exclude tenant/user metadata IDs.
+<!-- projects-center-import-failure-hardening:end -->

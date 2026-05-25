@@ -122,15 +122,20 @@ function collectPlaceholders(value) {
   return found;
 }
 
-function collectReplaceIds(value) {
+function collectReplaceIds(value, excludedIds = new Set()) {
   const ids = [];
   const seen = new Set();
   deepWalk(value, (node) => {
-    if (typeof node !== "string" || !LARGE_INTEGER_RE.test(node) || seen.has(node)) return;
+    if (typeof node !== "string" || !LARGE_INTEGER_RE.test(node) || seen.has(node) || excludedIds.has(node)) return;
     seen.add(node);
     ids.push(node);
   });
   return ids;
+}
+
+function metadataIdsToPreserve(data) {
+  const model = rootListModel(data);
+  return new Set(["TenantID", "CreatedBy", "ModifiedBy"].map((key) => model[key]).filter((value) => value !== undefined && value !== null && value !== "").map(String));
 }
 
 function readJson(filePath, report) {
@@ -237,12 +242,13 @@ function runValidator(scriptName, inputPath, mode, report, target) {
 
 function buildResource(data, existingResource) {
   const model = rootListModel(data);
+  const metadataIds = metadataIdsToPreserve(data);
   const resource = existingResource
     ? { ...existingResource }
     : {
         MainListType: 1024,
         AppID: model.AppID !== undefined ? model.AppID : 41,
-        ReplaceIds: collectReplaceIds(data),
+        ReplaceIds: collectReplaceIds(data, metadataIds),
         ReportIds: [],
         FormKeys: Array.isArray(data.Forms) ? data.Forms.map((form) => form.FlowKey || form.Key || form.key).filter(Boolean) : [],
         Data: "",
@@ -251,7 +257,7 @@ function buildResource(data, existingResource) {
 
   resource.MainListType = resource.MainListType !== undefined ? resource.MainListType : 1024;
   resource.AppID = resource.AppID !== undefined ? resource.AppID : (model.AppID !== undefined ? model.AppID : 41);
-  resource.ReplaceIds = Array.isArray(resource.ReplaceIds) ? resource.ReplaceIds.map(String) : collectReplaceIds(data);
+  resource.ReplaceIds = Array.isArray(resource.ReplaceIds) ? resource.ReplaceIds.map(String).filter((id) => !metadataIds.has(id)) : collectReplaceIds(data, metadataIds);
   resource.ReportIds = Array.isArray(resource.ReportIds) ? resource.ReportIds.map(String) : [];
   resource.FormKeys = Array.isArray(resource.FormKeys) ? resource.FormKeys : (Array.isArray(data.Forms) ? data.Forms.map((form) => form.FlowKey || form.Key || form.key).filter(Boolean) : []);
   resource.SimplePortal = resource.SimplePortal === undefined ? null : resource.SimplePortal;
