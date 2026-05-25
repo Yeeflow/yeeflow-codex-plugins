@@ -162,3 +162,11 @@ Document Library custom-field applicability is product/user-understanding-backed
 
 Focused runtime proof in `docs/studies/data-list-field-creation-runtime-proof.md` imported `data-list-field-creation-runtime-proof.v1.yap`, opened `Data List Field Creation Runtime Proof`, opened `Field Creation Runtime Test`, observed representative generated columns, opened `+ New column`, and saved `Runtime Extra Field` with `Added Successfully`. Label this runtime-import-proven, data-list-open-proven, and representative data-list-field-creation-proven only; keep lookup resolution, calculated correctness, uploads, picker selection, sub-list data entry, metadata, Document Library, workflow, and Form Report out of scope.
 <!-- data-list-document-library-fields-learning:end -->
+
+<!-- yap-schema-standard-learning:start -->
+## YAP Schema Standard Runtime Gate
+
+Before any runtime import attempt, run `scripts/inspect-yap-schema-standard.mjs` and package validation. Do not import a generated package when the wrapper is malformed, `Resource` lacks the `[______gizp______]` prefix, decoded `Resource.Data` is malformed, `ListExportInfo.Item` is missing, or any root/child `Defs` or `Layouts` value is missing, null, or not an array. Empty arrays are valid.
+
+Schema-standard validation is not runtime proof. A focused runtime proof is still needed for any generator change that repairs a previous import failure such as `Item.Defs: null`. Preserve warning-only status for the unresolved `formReports`/`dataReports` Access app resource permission bit conflict until product team clarifies it.
+<!-- yap-schema-standard-learning:end -->

@@ -215,6 +215,13 @@ function buildWrapper(resource) {
   };
 }
 
+function ensureListExportArrays(data) {
+  for (const item of [data?.Item, ...(Array.isArray(data?.Childs) ? data.Childs : [])].filter(Boolean)) {
+    if (!Array.isArray(item.Defs)) item.Defs = [];
+    if (!Array.isArray(item.Layouts)) item.Layouts = [];
+  }
+}
+
 const sourceResource = JSON.parse(fs.readFileSync(SOURCE_RESOURCE, "utf8"));
 const sourceData = JSON.parse(sourceResource.Data);
 const baseList = sourceData.Childs[0];
@@ -346,6 +353,7 @@ const data = {
   AppGroups: [],
   OtherModules: [],
 };
+ensureListExportArrays(data);
 
 const resource = {
   ...sourceResource,

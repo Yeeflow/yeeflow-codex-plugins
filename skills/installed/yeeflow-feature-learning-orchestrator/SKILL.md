@@ -286,3 +286,13 @@ Use export-proven settings where relevant: choice `Rules.choices` and `color_cho
 
 Document Library custom-field applicability is product/user-understanding-backed only in this pass because no Type `16` document library was present. Keep Type `16` default fields and document upload rules from existing document-library studies, and do not claim runtime data-entry behavior for these field settings until focused import/open/field-creation tests pass.
 <!-- data-list-document-library-fields-learning:end -->
+
+<!-- yap-schema-standard-learning:start -->
+## YAP Schema Standard Learning
+
+Use `docs/studies/yap-schema-standard.md`, `docs/studies/normalized/yap-schema-standard/`, and `scripts/inspect-yap-schema-standard.mjs` when product-team schema or package-wrapper failures are in scope. Treat `yap-schema.json` plus the current app creation rules as the standard reference, but keep global `additionalProperties: false` warning-level because known exports may contain product fields not fully covered by the schema.
+
+Hard-stop generated packages when wrapper `Resource` is missing the `[______gizp______]` prefix, decoded `Resource.Data` is malformed, `ListExportInfo.Item` is missing, or any root/child `ListExportItem.Defs` or `Layouts` is missing, null, or not an array. Empty `[]` is valid. Preserve existing app-creation hard gates for FieldIndex/FieldName suffix sync, unique field identifiers, valid `InternalName`, valid process keys, valid `NoRule`, and required `{index}` in `NoRule.Prefix`.
+
+For AI Agent/Copilot Access app resources tools, validate schema-backed bitwise permission masks for approval forms, data lists, document libraries, and AI agents. `formReports` and `dataReports` currently conflict between schema (`Read=8`) and the updated rules document (`Submit=1`), so warn and request product clarification rather than hard-failing either value. Do not claim runtime import proof from this schema-learning pass.
+<!-- yap-schema-standard-learning:end -->

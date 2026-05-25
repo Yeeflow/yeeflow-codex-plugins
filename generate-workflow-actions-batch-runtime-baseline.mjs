@@ -106,7 +106,15 @@ function readWrapped(inputPath) {
   return { wrapper, resource, data };
 }
 
+function ensureListExportArrays(data) {
+  for (const item of [data?.Item, ...(Array.isArray(data?.Childs) ? data.Childs : [])].filter(Boolean)) {
+    if (!Array.isArray(item.Defs)) item.Defs = [];
+    if (!Array.isArray(item.Layouts)) item.Layouts = [];
+  }
+}
+
 function writeWrapped(outputPath, wrapper, resource, data) {
+  ensureListExportArrays(data);
   const nextResource = { ...resource, Data: JSON.stringify(data) };
   const compressed = zlib.gzipSync(Buffer.from(JSON.stringify(nextResource), "utf8")).toString("base64");
   fs.writeFileSync(outputPath, `${JSON.stringify({ ...wrapper, Resource: `${GZIP_PREFIX}${compressed}` }, null, 2)}\n`);

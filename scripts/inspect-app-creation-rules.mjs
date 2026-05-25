@@ -115,6 +115,11 @@ function addFinding(findings, level, code, message, detail = {}) {
 
 function inspectList(list, index, findings) {
   const title = label(list?.ListModel?.Title, `<list-${index + 1}>`);
+  for (const key of ["Defs", "Layouts"]) {
+    if (!Object.prototype.hasOwnProperty.call(list || {}, key)) addFinding(findings, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_MISSING`, `ListExportItem.${key} is required; use [] when empty.`, { list: title });
+    else if (list?.[key] === null) addFinding(findings, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_NULL`, `ListExportItem.${key} cannot be null; use [] when empty.`, { list: title });
+    else if (!Array.isArray(list?.[key])) addFinding(findings, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_NOT_ARRAY`, `ListExportItem.${key} must be an array.`, { list: title, actualType: typeof list?.[key] });
+  }
   const seen = {
     DisplayName: new Map(),
     FieldName: new Map(),

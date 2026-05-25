@@ -403,3 +403,11 @@ Generated approval forms must use process keys containing only letters, numbers,
 
 Emit `Forms[].NoRule` as an object, not a boolean/string/array: `Prefix`, `StartIndex`, `CustomLength`, and `AutoIncrement` are required, and `Prefix` must include `{index}`. A malformed `NoRule` is product-team-confirmed import-breaking, so treat it as a generation-blocking validation error. Do not claim runtime import/open proof until a regenerated package with valid `NoRule` is imported successfully.
 <!-- app-creation-rules-learning:end -->
+
+<!-- yap-schema-standard-learning:start -->
+## YAP Schema Standard Guardrails
+
+Approval-form packages must also satisfy the YAP schema-standard wrapper and list-export rules in `docs/studies/yap-schema-standard.md`. The generated `.yap` wrapper must use a `[______gizp______]` `Resource`; decoded `Resource.Data` must contain `ListExportInfo.Item`; and every root/child `ListExportItem` must include `Defs` and `Layouts` arrays. Use `[]` for empty collections and never emit `Defs: null` or `Layouts: null`.
+
+Keep `NoRule` as the required process number format object with `{index}` in `Prefix`, and keep form/process keys alphanumeric/underscore only. Run `scripts/inspect-yap-schema-standard.mjs` plus package validation before import attempts.
+<!-- yap-schema-standard-learning:end -->

@@ -392,3 +392,11 @@ Document Library custom-field applicability is product/user-understanding-backed
 
 Focused runtime proof in `docs/studies/data-list-field-creation-runtime-proof.md` confirms a generated package imported, opened `Field Creation Runtime Test`, displayed representative columns for `input`, `input_number`, `currency`, `percent`, `switch`, `checkbox`, `datepicker`, `time`, `identity-picker`, `organization-picker`, `file-upload`, and `icon-upload`, opened `+ New column`, and saved `Runtime Extra Field` without the duplicate-value error. Keep the boundary narrow: this proves representative import/open/field-creation, not exhaustive data entry, lookup resolution, calculated results, uploads, picker selection, sub-list row behavior, metadata, Document Library, workflow, or Form Report.
 <!-- data-list-document-library-fields-learning:end -->
+
+<!-- yap-schema-standard-learning:start -->
+## YAP Schema Standard Guardrails
+
+Data List and Document Library generation must follow `docs/studies/yap-schema-standard.md`: every root or child `ListExportItem` needs `Defs` and `Layouts` arrays. Empty arrays are valid; `null` is product-team-confirmed invalid and must block generation/import.
+
+Continue applying app-creation field gates for unique `DisplayName`, `FieldName`, and `InternalName`, valid `InternalName`, supported field type guidance, and FieldIndex/FieldName suffix synchronization. Validate generated packages with `scripts/inspect-yap-schema-standard.mjs`, `scripts/inspect-app-creation-rules.mjs`, `scripts/inspect-data-list-fields.mjs`, and package validation before runtime import tests.
+<!-- yap-schema-standard-learning:end -->
