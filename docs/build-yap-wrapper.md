@@ -37,6 +37,14 @@ Options:
 - `--validation-mode generator`: strict mode for generated app packages.
 - `--validation-mode compatibility`: tolerant mode for round-tripping real historical exports.
 
+For newly generated `.yap` files, do not use compatibility mode as the final handoff gate. After wrapper build, run strict generator/import-readiness validation, preferably with:
+
+```bash
+node scripts/inspect-yap-import-readiness.mjs ./app.yap
+```
+
+`build-yap-wrapper.js` excludes root `TenantID`, `CreatedBy`, and `ModifiedBy` from auto-collected `ReplaceIds` so generated imports do not remap tenant/user metadata.
+
 ## Supported Input Shapes
 
 The input may be:

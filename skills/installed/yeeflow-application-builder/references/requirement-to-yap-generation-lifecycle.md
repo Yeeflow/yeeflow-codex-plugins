@@ -298,17 +298,21 @@ Run the relevant local checks:
 ```bash
 node --check <generator>
 node scripts/smoke-expression-validation.mjs
-node validate-yap-package.js <app-def-or-yap>
-node validate-yap-graph.js <app-def-or-yap>
+node validate-yap-package.js <app-def-or-yap> --mode generator --stage final
+node validate-yap-graph.js <app-def-or-yap> --mode generator --stage final
 node validate-ywf-def.js <approval-form-def>
 node validate-ydl-list.js <list-def>
 node workflow-action-config-validator.js <app-def-or-workflow>
 node build-yap-wrapper.js <app-def.json> <output.yap>
+node scripts/inspect-yap-materialization.mjs <output.yap>
+node scripts/inspect-yap-schema-standard.mjs <output.yap>
+node scripts/inspect-app-creation-rules.mjs <output.yap>
+node scripts/inspect-yap-import-readiness.mjs <output.yap>
 ```
 
 Also run JSON parse checks for generated specs and decoded/package JSON.
 
-Do not import if validation has blocking errors. Warning-level findings may be acceptable when documented and understood.
+Do not import or hand off a newly generated `.yap` if strict generator/import-readiness validation has structural errors. Compatibility validation is for historical exports and is not sufficient for new generated packages. Warning-level findings may be acceptable only when documented and classified as non-import-blocking.
 
 ## 11. Runtime Test
 

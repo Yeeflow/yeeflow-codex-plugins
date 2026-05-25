@@ -338,3 +338,11 @@ Stop before generation when:
 - generated form structure lacks grid-based field layout or Form bottom action/history placement
 
 Use `yeeflow-feature-learning-orchestrator` when a requested app needs an unproven platform capability that should be learned from exports before production-style generation.
+
+<!-- projects-center-import-failure-hardening:start -->
+## Generated App Import-Readiness Handoff
+
+For newly generated `.yap` packages, compatibility validation is not enough. Before final handoff, require strict package validation, strict graph validation, materialization inspection, schema-standard inspection, app-creation rules inspection, data-view/dashboard/page reference checks, wrapper round trip, placeholder scan, and safety scan. Prefer `scripts/inspect-yap-import-readiness.mjs` when available.
+
+The Projects Center fixed package import is user-proven only for the repaired Projects Center package. Do not claim broad app open/use, data entry, document-library upload/folder behavior, report execution, or workflow proof from that incident. Missing `ListType`, unsafe native `Title` metadata, unresolved view columns, mismatched `LayoutInResources` IDs, unresolved dashboard dynamic-display/filter references, and tenant/user metadata in `ReplaceIds` must block generated-package handoff.
+<!-- projects-center-import-failure-hardening:end -->

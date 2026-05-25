@@ -609,6 +609,21 @@ function inventoryResources(context) {
           }
         );
       }
+      if (!isRoot && resourceType === "dataList" && fieldName === "Title" && field.FieldIndex !== 0) {
+        addIssue(
+          report,
+          strictLevel(report),
+          "DATA_LIST_TITLE_FIELD_NATIVE_FIELDINDEX_INVALID",
+          "Generated child data lists must keep the native Title field at FieldIndex 0 for import-safe materialization.",
+          {
+            list: title,
+            listId,
+            fieldId,
+            fieldIndex: field.FieldIndex,
+            expected: { FieldIndex: 0 },
+          }
+        );
+      }
       validateFieldAgainstSchema(field, report._controlFieldSchemas).forEach((schemaIssue) => {
         addIssue(report, "warning", `FIELD_SCHEMA_${schemaIssue.code}`, schemaIssue.message, {
           list: title,

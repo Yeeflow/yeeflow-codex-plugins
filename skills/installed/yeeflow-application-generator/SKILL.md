@@ -630,3 +630,14 @@ Every generated `ListExportItem`, including root `Item` and every `Childs[]` res
 
 For app-contained AI Agent/Copilot Access app resources tools, keep resource permissions as numeric bitmasks. Use schema-backed masks for approval forms, data lists, document libraries, and AI agents. Keep `formReports` and `dataReports` warning-level until product clarifies whether the correct bit is schema Read `8` or rules-doc Submit `1`.
 <!-- yap-schema-standard-learning:end -->
+<!-- projects-center-import-failure-hardening:start -->
+## Generated App Import-Readiness Gate
+
+The `Projects Center_2` repair proved that compatibility validation can miss generated-import blockers. The initially delivered package passed local compatibility-style checks but failed Yeeflow import; after strict repair, the user confirmed the fixed package imported successfully. Treat that proof narrowly: it proves fixed Projects Center import only, not broad app use, data entry, document-library runtime behavior, report execution, or workflow behavior.
+
+For every newly generated `.yap`, run strict generator/import-readiness validation before handoff. Do not say "local validation passed" when only compatibility validation passed. Compatibility mode is for historical export study; generated app handoff requires `validate-yap-package.js --mode generator --stage final`, `validate-yap-graph.js --mode generator --stage final`, materialization inspection, schema-standard inspection, app-creation rules inspection, data-view/dashboard/page reference checks, wrapper round trip, placeholder scan, and safety scan. Use `scripts/inspect-yap-import-readiness.mjs` when present.
+
+Generation-blocking import-readiness errors include missing or invalid `ListModel.ListType` on Type `1` data lists; export-native native `Title` metadata instead of generator-safe `Status = 0`, `IsSystem = true`, `IsIndex = true`, `FieldIndex = 0`; list/data view columns pointing at unresolved system pseudo-fields or missing fields; custom page/form/dashboard `LayoutInResources[].ID` or `RefId` mismatched from the owning `LayoutID`; dashboard dynamic-display rules or filters referencing unresolved controls/fields, including stale `ListDataID` collection context filters; and `Resource.ReplaceIds` containing tenant/user metadata such as `TenantID`, `CreatedBy`, or `ModifiedBy`.
+
+If strict validation fails, fix the package before handoff. `pass_with_warnings` is acceptable only after the remaining warnings are classified as non-import-blocking runtime/export-derived warnings.
+<!-- projects-center-import-failure-hardening:end -->

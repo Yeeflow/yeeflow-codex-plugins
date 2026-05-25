@@ -18,17 +18,25 @@ Use this checklist before packaging, after local validation, and after runtime t
 
 ## 2. Local Validation Gate
 
-- [ ] Package wrapper validates.
-- [ ] App graph validates.
+- [ ] Newly generated `.yap` uses strict generator/import-readiness validation, not compatibility validation.
+- [ ] Package wrapper validates with `validate-yap-package.js --mode generator --stage final`.
+- [ ] App graph validates with `validate-yap-graph.js --mode generator --stage final`.
+- [ ] `scripts/inspect-yap-import-readiness.mjs` passes when available.
+- [ ] `scripts/inspect-yap-schema-standard.mjs` and `scripts/inspect-app-creation-rules.mjs` pass.
 - [ ] Approval form definitions validate.
 - [ ] Data list definitions validate.
 - [ ] Every generated child data list also passes standalone `validate-ydl-list`; app-level package validation alone is not accepted.
+- [ ] Every generated Type `1` data list includes `ListModel.ListType = 1`.
+- [ ] Every generated Type `1` data list keeps native `Title` metadata as `Status = 0`, `IsSystem = true`, `IsIndex = true`, and `FieldIndex = 0`.
 - [ ] Duplicate field names/internal names are absent.
 - [ ] Duplicate display names inside a data list are absent or explicitly accepted as a materialization risk.
 - [ ] Every generated child-list `FieldID` is unique across the whole `.yap`, not only within its own list.
 - [ ] Every generated field's `ListID` equals its parent data-list `ListID`.
 - [ ] `TenantID`, `CreatedBy`, and `ModifiedBy` retain real baseline metadata and are not included in `Resource.ReplaceIds`.
 - [ ] Root Type `103` dashboard/page layout is owned by the root app/ListSet `ListID`, and its navigation entry points to an existing root layout.
+- [ ] Root/custom page/form/dashboard `LayoutInResources[].ID` and `RefId` match the owning `LayoutID` where inline resources are used.
+- [ ] Data-view columns resolve to real fields or explicitly allowed system fields; stale pseudo-field columns are removed before handoff.
+- [ ] Dashboard dynamic-display rules and filters reference resolvable controls, fields, and page filter variables.
 - [ ] `scripts/inspect-yap-materialization.mjs` passes before Yeeflow runtime import.
 - [ ] Lookup targets, display fields, dependency maps, and sample lookup target rows resolve.
 - [ ] Referenced master/reference lists are present and non-empty when form lookup selection is part of v1.

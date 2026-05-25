@@ -330,3 +330,10 @@ If runtime fails, create a smaller isolation package with fresh IDs instead of g
 ## Shared Form Action Concepts
 
 Form actions are front-end page/form logic, distinct from backend workflow graph actions. Phase 1 approval-form runtime proof covers action buttons, button click triggers, page-load triggers, temp variables, `setvar`, and `confirm`; the same concepts may apply to dashboards only after a dashboard-specific export/runtime proof. Do not promote dashboard form actions from approval-form evidence alone.
+<!-- projects-center-import-failure-hardening:start -->
+## Dashboard/Page Import-Readiness
+
+Generated dashboards, root pages, and custom page resources must pass strict reference checks before `.yap` handoff. `LayoutInResources[].ID` and `RefId` must match the owning `LayoutID` where the current generated-page model requires inline resources. Dynamic display rules must reference the target control id, and formulas/filters must resolve against the active collection source list or page filter variables.
+
+Do not ship dashboard collection filters that reference unresolved `__ctx_coll` fields such as `ListDataID` when that field is not present on the collection source list. Treat stale copied `controlId` values, unresolved field filters, and unresolved data source/list references as generated-final errors, not cosmetic warnings.
+<!-- projects-center-import-failure-hardening:end -->

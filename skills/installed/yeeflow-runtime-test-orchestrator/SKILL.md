@@ -190,3 +190,10 @@ Before any runtime import attempt, run `scripts/inspect-yap-schema-standard.mjs`
 
 Schema-standard validation is not runtime proof. A focused runtime proof is still needed for any generator change that repairs a previous import failure such as `Item.Defs: null`. Preserve warning-only status for the unresolved `formReports`/`dataReports` Access app resource permission bit conflict until product team clarifies it.
 <!-- yap-schema-standard-learning:end -->
+<!-- projects-center-import-failure-hardening:start -->
+## Pre-Import Readiness Gate
+
+Before any runtime import attempt for a newly generated `.yap`, require strict generator/import-readiness validation. Do not import packages that only passed compatibility validation. Run strict package validation, strict graph validation, materialization inspection, schema-standard inspection, app-creation rules inspection, data-view/dashboard/page reference checks, wrapper round trip, placeholder scan, and safety scan; use `scripts/inspect-yap-import-readiness.mjs` when present.
+
+The Projects Center fixed package import is user-proven only for import success. It does not prove app open/use, data entry, document-library behavior, scheduled report execution, or workflow behavior. Keep those runtime scopes separate.
+<!-- projects-center-import-failure-hardening:end -->

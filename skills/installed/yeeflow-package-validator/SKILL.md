@@ -241,3 +241,10 @@ Preserve the existing hard errors for invalid process keys, invalid approval/pro
 
 Do not enforce schema `additionalProperties: false` as a global hard error yet; treat unknown product fields as warnings because the provided schema is partial relative to known exports.
 <!-- yap-schema-standard-learning:end -->
+<!-- projects-center-import-failure-hardening:start -->
+## Generated App Import-Readiness Validation
+
+For newly generated `.yap` files, do not accept compatibility validation as the final result. Run strict generator/final package validation, strict graph validation, materialization inspection, schema-standard inspection, app-creation rules inspection, data-view/dashboard/page reference checks, wrapper round trip, placeholder scan, and safety scan. `scripts/inspect-yap-import-readiness.mjs` is the preferred aggregate gate when available.
+
+Generated-final structural errors include missing/invalid Type `1` `ListModel.ListType`, unsafe native `Title` metadata, unresolved data-view columns or stale system pseudo-fields, mismatched `LayoutInResources` IDs, unresolved dashboard dynamic-display/filter references, unresolved collection `ListDataID` context filters, and `ReplaceIds` entries for `TenantID`, `CreatedBy`, or `ModifiedBy`. Warning-level results are acceptable only when classified as non-import-blocking runtime/export-derived warnings.
+<!-- projects-center-import-failure-hardening:end -->

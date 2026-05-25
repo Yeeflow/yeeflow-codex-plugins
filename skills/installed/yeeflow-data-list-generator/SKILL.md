@@ -434,3 +434,10 @@ Data List and Document Library generation must follow `docs/studies/yap-schema-s
 
 Continue applying app-creation field gates for unique `DisplayName`, `FieldName`, and `InternalName`, valid `InternalName`, supported field type guidance, and FieldIndex/FieldName suffix synchronization. Validate generated packages with `scripts/inspect-yap-schema-standard.mjs`, `scripts/inspect-app-creation-rules.mjs`, `scripts/inspect-data-list-fields.mjs`, and package validation before runtime import tests.
 <!-- yap-schema-standard-learning:end -->
+<!-- projects-center-import-failure-hardening:start -->
+## Generated Data List Import-Readiness
+
+For newly generated app-contained data lists, compatibility validation is not enough. Every Type `1` child data list must emit `ListModel.ListType = 1`; its native `Title` field must use `Status = 0`, `IsSystem = true`, `IsIndex = true`, and `FieldIndex = 0`; and all list/data-view columns must resolve to real fields or explicitly supported system fields for that view context.
+
+Do not carry export-native view columns such as stale `ListDataID`, `CreatedBy`, `Created`, `ModifiedBy`, `Modified`, or copied field IDs into generated-final list views unless the current validator explicitly allows that context. Missing `ListType`, export-native unsafe Title metadata, and unresolved view columns are generated-final hard errors and must be fixed before a `.yap` is handed off.
+<!-- projects-center-import-failure-hardening:end -->

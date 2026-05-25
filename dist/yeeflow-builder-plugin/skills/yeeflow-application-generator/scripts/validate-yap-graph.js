@@ -609,6 +609,21 @@ function inventoryResources(context) {
           }
         );
       }
+      if (!isRoot && resourceType === "dataList" && fieldName === "Title" && field.FieldIndex !== 0) {
+        addIssue(
+          report,
+          strictLevel(report),
+          "DATA_LIST_TITLE_FIELD_NATIVE_FIELDINDEX_INVALID",
+          "Generated child data lists must keep the native Title field at FieldIndex 0 for import-safe materialization.",
+          {
+            list: title,
+            listId,
+            fieldId,
+            fieldIndex: field.FieldIndex,
+            expected: { FieldIndex: 0 },
+          }
+        );
+      }
       validateFieldAgainstSchema(field, report._controlFieldSchemas).forEach((schemaIssue) => {
         addIssue(report, "warning", `FIELD_SCHEMA_${schemaIssue.code}`, schemaIssue.message, {
           list: title,
@@ -895,19 +910,29 @@ function workflowLooksConnected(shapes, edges) {
       adjacency.get(target).add(source);
     }
   });
-  const first = [...nodes][0];
-  const seen = new Set([first]);
-  const stack = [first];
-  while (stack.length) {
-    const current = stack.pop();
-    for (const next of adjacency.get(current) || []) {
-      if (!seen.has(next)) {
-        seen.add(next);
-        stack.push(next);
+  const visited = new Set();
+  for (const first of nodes) {
+    if (visited.has(first)) continue;
+    const component = new Set([first]);
+    const stack = [first];
+    visited.add(first);
+    while (stack.length) {
+      const current = stack.pop();
+      for (const next of adjacency.get(current) || []) {
+        if (!visited.has(next)) {
+          visited.add(next);
+          component.add(next);
+          stack.push(next);
+        }
       }
     }
+    const hasEventSource = [...component].some((id) => {
+      const shape = shapes.find((candidate) => shapeId(candidate) === id);
+      return ["StartNoneEvent", "SignalEvent"].includes(shapeType(shape));
+    });
+    if (!hasEventSource) return false;
   }
-  return seen.size === nodes.size;
+  return true;
 }
 
 function addContentListEdges(context, formNodeId, formName, shape, variableKeys) {

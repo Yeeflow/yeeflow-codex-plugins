@@ -5,6 +5,8 @@ description: generate, inspect, validate, package, debug, and improve small yeef
 
 # Yeeflow Application Generator
 
+Business Travel runtime-practice rule: every generated root app/listset and child list-like resource must emit `ListModel.Flags = 1`. Emit `ListModel.Status = 1` when including Status, keep `ListModel.Type` inside the schema-v2 enum `1`, `16`, `32`, `64`, `128`, `1024`, and keep `Defs`/`Layouts` arrays. Before package handoff, validate that workflow variables are declared before use in controls, summaries, sequence-flow conditions, Set Variable targets, task-assignment expressions, and ContentList mappings. Do not emit placeholder user/group/position IDs into final packages; direct `method="position"` assignees require real numeric position IDs or a user-approved fallback. The fixed Business Travel package is user-proven for import/open/workflow publish only; do not infer workflow execution, routing, data mutation, or true Finance Manager assignment.
+
 Use this skill for small Yeeflow `.yap` application packages that combine related data lists and approval forms. Keep v1 scoped to proven patterns: data lists, custom list forms, lookup relationships, simple approval forms, and `ContentList` persistence.
 
 For existing-app upgrades, do not reuse `.yap` new-app generation rules blindly. Yeeflow Version management downloads `.yapk` packages for Upgrade application. Studied `.yapk` wrappers preserve app identity fields such as `TenantID`, `AppID`, and `ListID`, but `PackageId`, `Sign`, and opaque high-entropy `Resource` values change across Yeeflow-generated versions. A metadata-only wrapper edit was rejected at runtime even with `Resource` and `Sign` preserved. Until `.yapk` resource encoding/signing is proven, only inspect/validate wrappers and produce change plans or `.yap` clones; do not claim externally edited `.yapk` packages are valid upgrades.
@@ -578,3 +580,64 @@ Approval forms must emit `NoRule` as an object with `Prefix`, `StartIndex`, `Cus
 
 Focused runtime proof in `docs/studies/yeeflow-app-creation-rules-runtime-proof.md` confirms the repaired workflow field-rule package imported and accepted a manually saved new data-list field. This upgrades only the app/list import-open and data-list field-creation path for the synchronized `FieldIndex`/`FieldName`, unique identifier, valid process-key, and valid `NoRule` rules; do not extend it to workflow routing or Form Report behavior.
 <!-- app-creation-rules-learning:end -->
+
+<!-- data-list-document-library-fields-learning:start -->
+## Data List And Document Library Field Type Learning
+
+Use `docs/studies/data-list-document-library-field-types.md`, `docs/studies/normalized/data-list-fields/`, and `scripts/inspect-data-list-fields.mjs` before generating or validating broad Data List custom fields. `Data Lists (2).yap` export-proves the target Type `1` data lists `Data list with fields part A` and `Data list with fields part B` with 90 custom fields across `input`, `textarea`, `richtext`, `hyperlink`, `input_number`, `currency`, `percent`, `calculated-column`, `rate`, `switch`, `checkbox`, `radio`, `tag`, `datepicker`, `time`, `identity-picker`, `organization-picker`, `cost-center-picker`, `signer`, `file-upload`, `icon-upload`, `lookup`, `metadata`, `mutiple-metadata`, `location-picker`, `autonumber`, and `list`. `select` and `flowstatus` remain product-rule-backed/unproven in this export.
+
+Field generation must still pass the v0.5.12 app-creation gates: unique `DisplayName`, `FieldName`, and `InternalName`; `InternalName` matching `[A-Za-z0-9_]`; identifier length <= 255; and generated non-system `FieldName` suffix matching `FieldIndex`. Accept export-proven single metadata fields as `Type = "metadata"` with Bigint storage, even though the earlier product-team 28-type list only named `mutiple-metadata`.
+
+Use export-proven settings where relevant: choice `Rules.choices` and `color_choices`; numeric/currency/percent `displayThousandths`, `rounded-to`, `number_min`, `number_max`, `currencyCode`, `displayFormat`; picker `identity-maxselection`, `multiple`, `metadata-treeselect`, `parentId`; upload `maxsize`, `file_multiple`, `file_typeslimit`, `file_types`, `picture_size_limit`, `controlmultiple`; lookup `appid`, `listsetid`, `listid`, `listfield`, additions, filters, sorting, search, display style, and multiple; calculated columns `calculated_result` plus `calculated`; metadata `source` plus `categoryId`; tag `source`, `category`, `customTags`; autonumber `minDigits`, `startNum`, `prefix`, `suffix`; sub-list `list-variables[]`.
+
+Document Library custom-field applicability is product/user-understanding-backed only in this pass because no Type `16` document library was present. Keep Type `16` default fields and document upload rules from existing document-library studies, and do not claim runtime data-entry behavior for these field settings until focused import/open/field-creation tests pass.
+
+Focused runtime proof in `docs/studies/data-list-field-creation-runtime-proof.md` confirms generated Data List import/open behavior and post-import manual field creation for a representative subset: `input`, `textarea` schema, `input_number`, `currency`, `percent`, `switch`, `checkbox`, `datepicker`, `time`, `identity-picker`, `organization-picker`, `file-upload`, `icon-upload`, local `lookup` schema, `calculated-column` schema, and `list` schema. Use this to prefer native generated fields for import/open baselines, but do not claim record entry, lookup resolution, calculated results, uploads, picker selection, nested row behavior, Document Library, workflow, or Form Report runtime behavior.
+<!-- data-list-document-library-fields-learning:end -->
+
+<!-- data-list-custom-form-fields-learning:start -->
+## Data List Custom List Form Generation
+
+Use `docs/studies/data-list-custom-form-fields.md`, `docs/studies/normalized/data-list-custom-forms/`, and `scripts/inspect-data-list-custom-forms.mjs` when an app needs generated Data List custom forms. Generate custom forms as Data List `Layouts[]` entries with `Type = 1`, `LayoutView = null`, `LayoutInResources[0].ID = RefId = LayoutID`, and embedded form JSON in `LayoutInResources[0].Resource`. Assign forms through `ListModel.LayoutView.add/edit/view`; the export-proven patterns include separate add/edit forms and one form reused for add/edit/view.
+
+Display settings are separate from the form layouts: `ListModel.LayoutView.add/edit/view` selects a custom form `LayoutID` or `default`, `opentype` stores opening mode, and `modalsize` stores size. Export-proven modes are Pop-up window via `modal`, Slide in via `slide`, and missing defaults of Pop-up window for New/Edit plus Slide in for View. Export-proven sizes are `0` Medium, `1` Small, `2` Large, `3` Full screen, with missing as Default. Choose mode/size by form complexity and validate references before package handoff. Document Library applicability for these settings remains product/user-understanding-backed until a Type `16` export proves it.
+
+For list fields on forms, generate controls under a conservative `container` -> `container` -> `flex_grid` shell. Each top-level field control should use the field `Type`, `binding = FieldName`, `fieldID = FieldID`, label/display metadata, and compatible `attrs` from field rules. Keep default/system fields explicit and system-aware. Validate no duplicate control ids, no unresolved bindings, no fieldID/binding mismatches, and no overlap-prone layout inventions.
+
+For sub-list fields, generate a parent `type = "list"` control and nested controls only inside `attrs.list-fields[]`, with `attrs.list_field = true`, `attrs.list_field_binding` pointing to the parent field, and scoped bindings such as `field_1`. Generate temp variables and form actions only when needed; action buttons, `formAction` hooks, Set variable list-field targets, and temp variable references must resolve. Do not assume approval-form action behavior for Data List custom forms without Data List export/runtime proof.
+
+Document Library custom-list-form applicability is product/user-understanding-backed unless a Type `16` export proves the exact shape. Runtime rendering/action execution is not proven by the export-learning pass.
+<!-- data-list-custom-form-fields-learning:end -->
+
+<!-- data-list-public-form-learning:start -->
+## Data List Public Form Generation
+
+Use `docs/studies/data-list-public-forms.md`, `docs/studies/normalized/data-list-public-forms/`, and `scripts/inspect-data-list-public-forms.mjs` when an app requires an anonymous public data-collection form. Public Forms are not Custom List Forms: store them under the Data List `PublicForms[]` collection with a JSON-string `Resource`, keep them separate from `Layouts[]`, and validate public-form controls independently from authenticated New/Edit/View forms.
+
+Generate only public-safe top-level field controls proven in `Data Lists (4).yap`: `input`, `textarea`, `richtext`, `input_number`, `percent`, `currency`, `switch`, `radio`, `checkbox`, `datepicker`, `time`, `file-upload`, `icon-upload`, `rate`, `hyperlink`, `signer`, and `list`. The `Title` primary field is export-proven as a special system-field exception; do not include Id/Created/Modified default fields or login-dependent picker fields.
+
+Use conservative page structure such as `container` and `flex_grid`, and include `submit-button` when the Public Form is meant to collect submissions. For generated Public Forms, use export-shaped `flex_grid` attrs (`ver: 1`, structured `columns`/`rows`, `cgap`, `cgapU`) and set `displayLabel: [null, false]` when the grid is only a layout wrapper. Put `submit-button` inside a centered container and use inline width `common.positioning.widthtype: [null, "2"]`.
+
+Focused runtime proof in `docs/studies/data-list-public-form-runtime-proof.md` confirms generated Data List Public Form import/open/list-open/designer-open/control-render behavior after the grid and centered inline submit fix. Redact share URLs/codes in all docs and logs. Treat anonymous submit, public URL access outside the authenticated designer unless separately confirmed, upload execution, sub-list row entry, save/data mutation, and Document Library public-form behavior as unproven until a focused runtime proof covers them.
+<!-- data-list-public-form-learning:end -->
+
+<!-- yap-schema-standard-learning:start -->
+## YAP Schema Standard Guardrails
+
+Before packaging any generated `.yap`, ensure the wrapper has schema-required `Title`, `Description`, `IconUrl`, `IsListSet`, and `[______gizp______]`-prefixed `Resource`. The decoded resource must contain `Data` as a JSON string whose `ListExportInfo.Item` exists.
+
+Every generated `ListExportItem`, including root `Item` and every `Childs[]` resource, must emit `Defs` and `Layouts` as arrays. Never emit `null`; use `[]` for empty definitions or layouts. Generated packages must pass `scripts/inspect-yap-schema-standard.mjs` and `validate-yap-package.js` before import attempts.
+
+For app-contained AI Agent/Copilot Access app resources tools, keep resource permissions as numeric bitmasks. Use schema-backed masks for approval forms, data lists, document libraries, and AI agents. Keep `formReports` and `dataReports` warning-level until product clarifies whether the correct bit is schema Read `8` or rules-doc Submit `1`.
+<!-- yap-schema-standard-learning:end -->
+<!-- projects-center-import-failure-hardening:start -->
+## Generated App Import-Readiness Gate
+
+The `Projects Center_2` repair proved that compatibility validation can miss generated-import blockers. The initially delivered package passed local compatibility-style checks but failed Yeeflow import; after strict repair, the user confirmed the fixed package imported successfully. Treat that proof narrowly: it proves fixed Projects Center import only, not broad app use, data entry, document-library runtime behavior, report execution, or workflow behavior.
+
+For every newly generated `.yap`, run strict generator/import-readiness validation before handoff. Do not say "local validation passed" when only compatibility validation passed. Compatibility mode is for historical export study; generated app handoff requires `validate-yap-package.js --mode generator --stage final`, `validate-yap-graph.js --mode generator --stage final`, materialization inspection, schema-standard inspection, app-creation rules inspection, data-view/dashboard/page reference checks, wrapper round trip, placeholder scan, and safety scan. Use `scripts/inspect-yap-import-readiness.mjs` when present.
+
+Generation-blocking import-readiness errors include missing or invalid `ListModel.ListType` on Type `1` data lists; export-native native `Title` metadata instead of generator-safe `Status = 0`, `IsSystem = true`, `IsIndex = true`, `FieldIndex = 0`; list/data view columns pointing at unresolved system pseudo-fields or missing fields; custom page/form/dashboard `LayoutInResources[].ID` or `RefId` mismatched from the owning `LayoutID`; dashboard dynamic-display rules or filters referencing unresolved controls/fields, including stale `ListDataID` collection context filters; and `Resource.ReplaceIds` containing tenant/user metadata such as `TenantID`, `CreatedBy`, or `ModifiedBy`.
+
+If strict validation fails, fix the package before handoff. `pass_with_warnings` is acceptable only after the remaining warnings are classified as non-import-blocking runtime/export-derived warnings.
+<!-- projects-center-import-failure-hardening:end -->
