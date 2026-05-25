@@ -49,6 +49,10 @@ Before generating with a newly learned feature, decide whether the work is:
 
 If generated package import/rendering, workflow execution, app setting rendering, AI/email/external execution, custom code execution, document upload/persistence, user/group membership, permissions, or row mutation is involved, recommend a focused runtime baseline before merge or broad reuse. The baseline should use the smallest possible app, fresh IDs, local validation before build, and runtime testing only after the user requests it. If runtime is deferred, report the feature as export-proven/validator-backed/planning-guidance/import-proven/partial and list the focused runtime follow-up.
 
+Shared data-view generation note: data lists, document libraries, and Form Reports expose list-like views through `Layouts[]`. `Data Lists (1).yap` export-proves data-list view metadata on `Title`, `Type`, `Ext1.Url`, `IsDefault`, and `IsItemPerm`, plus settings in parsed `LayoutView`. Known exported data-list view type codes are `0` list, `999` gallery, `104` kanban, and `100` calendar. Use `scripts/inspect-data-views.mjs` and `docs/studies/data-view-resource-settings.md` before generating advanced views. Treat non-list Type `16`/Type `32` advanced view settings as product-documented until a matching export proves the exact shape.
+
+Data List permissions and notifications note: use `docs/studies/data-list-document-library-permissions-notifications.md` before generating permission-sensitive lists. Export-proven Data List package fields include `ListModel.Perm`, `IsBreakInherit`, `IsItemPerm`, view-level `Layouts[].IsItemPerm`, and notification `RemindRules[]`. Detailed administrator/basic/advanced audience matrices are UI-confirmed but not export-located in the current package, so do not generate those rows as schema-proven. Document Library permissions/notifications are product-documented only until a Type `16` export proves the package shape. Form Reports must not receive Data List / Document Library manage-permission or custom-notification settings.
+
 ## Application Capability Planning Checklist
 
 For full app generation, write a `Capability Coverage Plan` before implementation. Use `docs/studies/application-planning-capability-coverage.md` when present. The plan must select relevant capabilities, explicitly exclude irrelevant ones, defer partial or unproven features honestly, and assign each selected capability to the right generator, validator, and runtime-test path.
@@ -564,3 +568,11 @@ Use `docs/studies/workflow-set-data-list-action.md` before generating workflow S
 
 Use `docs/studies/workflow-signal-event-action.md` before generating approval workflow Signal event branches. Signal event is export-proven as `SignalEvent` in an approval-form workflow. It has no incoming flow, should have at least one outgoing flow, and uses `properties.eventdefinitions[]` with `CancelEventDefinition` and/or `RevokeEventDefinition`. Treat it as a special event source for recall/terminate compensation, not a normal action in the Start branch. Validate downstream Set data list filters carefully and do not claim recall/terminate or cleanup execution without focused runtime proof.
 <!-- workflow-set-variable-learning:end -->
+
+<!-- app-creation-rules-learning:start -->
+## App Creation Rule Guardrails
+
+Before generating or importing any `.yap`, enforce the product-team app creation rules in `docs/studies/yeeflow-app-creation-rules.md`. Generated list fields must keep `FieldIndex` synchronized with the numeric suffix at the absolute end of `FieldName` (`FieldIndex: 11` uses `Text11`, not `Text6`). `DisplayName`, `FieldName`, and `InternalName` must each be unique within the same list; `InternalName` and process keys may contain only letters, numbers, and underscores; all three field identifiers and process keys are limited to 255 characters.
+
+Approval forms must emit `NoRule` as an object with `Prefix`, `StartIndex`, `CustomLength`, and `AutoIncrement`; `NoRule.Prefix` must include `{index}`. Treat these as generation-blocking validation errors, not style warnings. Any generated package failing these checks must not be imported.
+<!-- app-creation-rules-learning:end -->

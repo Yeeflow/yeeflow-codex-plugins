@@ -33,6 +33,20 @@ business requirement
 
 Prefer native Yeeflow list features first: fields, Rules, lookups, views, custom list forms, sample data, and list workflows only when truly needed.
 
+Data-view generation should follow `docs/studies/data-view-resource-settings.md` and the redacted refs under `docs/studies/normalized/data-views/`. Export-proven view rules from `Data Lists (1).yap`:
+
+- Views are `Layouts[]` entries.
+- View URL/key lives in parsed `Ext1.Url` and should be unique within the resource.
+- Default view detection uses `IsDefault = true`; do not rely only on the title `All Items` because one sampled default was renamed.
+- Type `0` is list view, Type `999` gallery, Type `104` kanban, and Type `100` calendar.
+- Fixed filters live in `LayoutView.filter[]`; end-user filterable fields live in `LayoutView.query[]` entries with `IsFilter = true`.
+- Sort fields in `LayoutView.sort[]` must resolve to valid fields or known system fields.
+- Gallery uses `TitleField` and optional `CoverField`; kanban uses `TitleField`, `CategoryField`, optional `CoverField`, and `IncludeUncategorized`; calendar uses `Columns` and calendar color/scope settings.
+- Data List permission flags are export-proven in `Data Lists (1).yap` at `ListModel.Perm`, `ListModel.IsBreakInherit`, `ListModel.IsItemPerm`, and view-level `Layouts[].IsItemPerm`. UI-confirmed administrators, basic edit/view audiences, and advanced edit/delete/new/import/export matrix rows were not located in the package payload after deep nested-JSON search; treat those detailed audiences as unproven for generation and warn on opaque custom audiences.
+- Data List notifications are export-proven in `Data.Childs[].RemindRules[]`. `Event planning 5` contains item-added Type `1`, regular reminder Type `2`, date-field reminder Type `3`, and item-changed Type `4` rules. `Rules` and `Receiver` are stringified JSON; recipients can be users Type `1`, departments Type `2`, user groups Type `3`, and list-field recipients via `Receiver.ListDefs[]`. Do not claim notification delivery without runtime proof.
+
+Do not claim runtime behavior for view switching, permissions, calendar rendering, or kanban drag/drop without a focused runtime baseline.
+
 ## Hard Stop Conditions
 
 Do not build a final `.ydl` when:
@@ -59,6 +73,7 @@ Do not import anything, operate Yeeflow UI, or modify original exports unless th
 Use bundled scripts from `scripts/`:
 
 - `inspect-ydl-package.js`: decode `.ydl` and inventory fields, views, forms, workflows, lookups, sample data.
+- `inspect-data-views.mjs`: decode `.yap` and inventory data-list/document-library/Form Report view schema without writing raw payloads.
 - `extract-ydl-metadata.js`: extract machine-readable metadata from one or more `.ydl` files.
 - `validate-ydl-list.js`: validate decoded data-list JSON or `.ydl` wrapper.
 - `validate-ydl-against-yap.js`: validate list dependencies against `.yap` metadata or compatible metadata.
@@ -142,6 +157,8 @@ Load only the relevant reference:
 ## Document Library Carry-Forward
 
 Document libraries reuse many data-list mechanics but are not normal data lists. When an app package includes a document library, route app-level generation through `yeeflow-application-generator` and validate the resource as Type `16`.
+
+Data List / Document Library manage-permissions and custom notifications are product-documented for both resource types, but this pass export-proved the package fields only for Data Lists because `Data Lists (1).yap` contains no Type `16` resources. Do not clone Data List `RemindRules` or permission flag generation into Document Library packages as export-proven until a focused Type `16` export proves the exact schema.
 
 Form Reports reuse list-like child resources and Type `0` views but are not normal data lists. `AI Training-2 (1).yap` export-proves Form Reports as Type `32` app child resources generated from submitted approval form variables and optional one sub-list. Do not add arbitrary custom data-list fields, data-list workflows, sample `ListDatas`, or editable forms to a Form Report. If a business requirement needs editable operational records, generate a normal data list; if it needs submitted approval reporting, route through `yeeflow-form-report-generator`.
 
@@ -351,3 +368,11 @@ Use `docs/studies/workflow-set-data-list-action.md` before generating data-list 
 
 Signal event is currently not data-list-workflow-proven. `Workflow Actions Runtime Baseline (6)_Signal event.yap` found `SignalEvent` only in an approval-form workflow and found no data-list or scheduled Signal event. Do not generate data-list Signal event branches unless a future export or focused runtime proof demonstrates that host.
 <!-- workflow-set-variable-learning:end -->
+
+<!-- app-creation-rules-learning:start -->
+## App Creation Rule Guardrails
+
+For generated data lists, allocate `FieldIndex` and `FieldName` together. The numeric suffix at the absolute end of `FieldName` must equal `FieldIndex`; for example `FieldIndex: 11` requires `Text11`, `Decimal11`, or the matching storage prefix with suffix `11`, never a reused lower suffix such as `Text6`.
+
+Within one list, `DisplayName`, `FieldName`, and `InternalName` must each be unique. `InternalName` may contain only `[a-zA-Z0-9_]`, and all three field identifiers are limited to 255 characters. Unknown field `Type` values should warn, but identifier duplicates, invalid `InternalName`, and FieldIndex/FieldName suffix mismatches are generation-blocking errors. Do not import a generated `.ydl` or `.yap` until `validate-ydl-list.js`, `validate-yap-package.js`, or `scripts/inspect-app-creation-rules.mjs` passes these checks.
+<!-- app-creation-rules-learning:end -->

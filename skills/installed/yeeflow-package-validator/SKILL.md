@@ -181,3 +181,11 @@ Workflow assignment task assignee validation should remain warning-first in comp
 
 For assignment-routing API coverage, `yeeflow-api-operator` can safely confirm documented read-only categories for users, user detail, departments, locations, location detail, positions, position assignments, groups, and group members. This supports validation/planning only; do not turn API-readable org data into hard package errors or runtime-routing claims.
 <!-- application-settings-navigation-user-groups-learning:end -->
+
+<!-- app-creation-rules-learning:start -->
+## App Creation Rule Validation Addendum
+
+Use `docs/studies/yeeflow-app-creation-rules.md` and `scripts/inspect-app-creation-rules.mjs` for product-team app creation rules. In generated-final mode, hard-error duplicate `DisplayName`, `FieldName`, and `InternalName` within one list; identifier length above 255; invalid `InternalName` characters; generated non-system `FieldName` missing a numeric suffix; and any `FieldName` numeric suffix that does not equal `FieldIndex`.
+
+Hard-error invalid process keys (`Data.Forms[].Key`, `FlowKey`, and decoded `defkey`) when they contain anything outside `[a-zA-Z0-9_]` or exceed 255 characters. For approval forms, hard-error missing or malformed `NoRule`, missing `{index}` in `NoRule.Prefix`, and invalid `StartIndex`, `CustomLength`, or `AutoIncrement`. Unknown list field `Type` values remain warning-first unless a focused runtime/import failure proves a specific type invalid.
+<!-- app-creation-rules-learning:end -->

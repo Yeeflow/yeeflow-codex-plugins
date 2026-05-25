@@ -368,3 +368,11 @@ Use `docs/studies/workflow-set-data-list-action.md` before generating data-list 
 
 Signal event is currently not data-list-workflow-proven. `Workflow Actions Runtime Baseline (6)_Signal event.yap` found `SignalEvent` only in an approval-form workflow and found no data-list or scheduled Signal event. Do not generate data-list Signal event branches unless a future export or focused runtime proof demonstrates that host.
 <!-- workflow-set-variable-learning:end -->
+
+<!-- app-creation-rules-learning:start -->
+## App Creation Rule Guardrails
+
+For generated data lists, allocate `FieldIndex` and `FieldName` together. The numeric suffix at the absolute end of `FieldName` must equal `FieldIndex`; for example `FieldIndex: 11` requires `Text11`, `Decimal11`, or the matching storage prefix with suffix `11`, never a reused lower suffix such as `Text6`.
+
+Within one list, `DisplayName`, `FieldName`, and `InternalName` must each be unique. `InternalName` may contain only `[a-zA-Z0-9_]`, and all three field identifiers are limited to 255 characters. Unknown field `Type` values should warn, but identifier duplicates, invalid `InternalName`, and FieldIndex/FieldName suffix mismatches are generation-blocking errors. Do not import a generated `.ydl` or `.yap` until `validate-ydl-list.js`, `validate-yap-package.js`, or `scripts/inspect-app-creation-rules.mjs` passes these checks.
+<!-- app-creation-rules-learning:end -->

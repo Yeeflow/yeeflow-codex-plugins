@@ -96,3 +96,7 @@ Validation is not runtime proof. A focused runtime baseline should prove import/
 ## Stop Conditions
 
 Stop and report if the export cannot be decoded, no source approval form resolves from `DefKey`, Form Reports cannot be located, matching Type `32` child resources cannot be located, field mappings are opaque, selected sub-list schema is opaque, permissions cannot be safely redacted, or validation would require unsafe changes.
+
+## App Creation Rule Guardrails
+
+When generating a Form Report baseline that includes a source approval form, the source form must also satisfy app creation rules from `docs/studies/yeeflow-app-creation-rules.md`. Emit approval form `NoRule` as an object with `Prefix`, `StartIndex`, `CustomLength`, and `AutoIncrement`, and include `{index}` in `NoRule.Prefix`. Keep process keys alphanumeric/underscore only. Do not import a generated Form Report package when `validate-yap-package.js` or `scripts/inspect-app-creation-rules.mjs` reports generation-blocking app creation errors.

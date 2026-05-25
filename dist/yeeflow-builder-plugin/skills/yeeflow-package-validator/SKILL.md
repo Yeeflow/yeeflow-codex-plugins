@@ -89,6 +89,18 @@ For Doc library controls on dashboards and form-hosted JSON surfaces, also check
 - dynamic `attrs.data.customPath` is an expression-token array when present; warn rather than claim runtime proof
 - document-library custom-form controls are runtime-proven for root-bound display and disabled search/add; approval-form controls remain partial until live published request-page proof; data-list custom-form controls remain validation-only
 
+For shared data views on list-like resources, also check:
+
+- each data-list, document-library, or Form Report child resource has at least one view where the resource shape expects views
+- exactly one default view is present where possible, detected by `IsDefault = true`
+- view names and parsed `Ext1.Url` keys are unique within a resource
+- known view type codes are `0` list, `999` gallery, `104` kanban, and `100` calendar
+- visible columns in `LayoutView.layout[]`, fixed filters in `LayoutView.filter[]`, user filters in `LayoutView.query[]`, sort fields in `LayoutView.sort[]`, and type-specific field selectors resolve to resource fields or known system fields
+- unknown view types, opaque permission audiences, and Type `16`/Type `32` advanced view settings should warn rather than fail until matching exports prove the exact schema
+- Form Report `LayoutView.Attr_IsViewDetail` is recognized as the detail-page access flag, but row-click/detail behavior is not runtime proof
+
+For Data List permissions and notifications, use `docs/studies/data-list-document-library-permissions-notifications.md`, `scripts/inspect-data-list-permissions.mjs`, and `scripts/inspect-data-list-notifications.mjs`. Validate `ListModel.Perm`, `IsBreakInherit`, `IsItemPerm`, `AdvanceList`, and view-level `Layouts[].IsItemPerm` warning-first. Validate `RemindRules[]` warning-first: parse stringified `Rules` and `Receiver`, recognize notification Type `1` item-added, Type `2` regular reminder, Type `3` date-field reminder, Type `4` item-changed, and recipient Type `1` user, Type `2` department, Type `3` user group, plus `Receiver.ListDefs[]` list-field recipients. Detailed administrator/basic/advanced permission audience matrices are UI-confirmed but not export-located in `Data Lists (1).yap`; do not hard-fail missing detailed audiences or treat them as generation-ready.
+
 For Form Reports, also check:
 
 - `Data.FormNewReports[]` entries parse `Settings` JSON with `Fields`, `Filters`, and `SubListID`
@@ -169,3 +181,11 @@ Workflow assignment task assignee validation should remain warning-first in comp
 
 For assignment-routing API coverage, `yeeflow-api-operator` can safely confirm documented read-only categories for users, user detail, departments, locations, location detail, positions, position assignments, groups, and group members. This supports validation/planning only; do not turn API-readable org data into hard package errors or runtime-routing claims.
 <!-- application-settings-navigation-user-groups-learning:end -->
+
+<!-- app-creation-rules-learning:start -->
+## App Creation Rule Validation Addendum
+
+Use `docs/studies/yeeflow-app-creation-rules.md` and `scripts/inspect-app-creation-rules.mjs` for product-team app creation rules. In generated-final mode, hard-error duplicate `DisplayName`, `FieldName`, and `InternalName` within one list; identifier length above 255; invalid `InternalName` characters; generated non-system `FieldName` missing a numeric suffix; and any `FieldName` numeric suffix that does not equal `FieldIndex`.
+
+Hard-error invalid process keys (`Data.Forms[].Key`, `FlowKey`, and decoded `defkey`) when they contain anything outside `[a-zA-Z0-9_]` or exceed 255 characters. For approval forms, hard-error missing or malformed `NoRule`, missing `{index}` in `NoRule.Prefix`, and invalid `StartIndex`, `CustomLength`, or `AutoIncrement`. Unknown list field `Type` values remain warning-first unless a focused runtime/import failure proves a specific type invalid.
+<!-- app-creation-rules-learning:end -->
