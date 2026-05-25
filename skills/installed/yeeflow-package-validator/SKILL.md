@@ -228,6 +228,8 @@ Use `docs/studies/data-list-public-forms.md` and `scripts/inspect-data-list-publ
 Validate Public Forms separately from Custom List Forms and approval forms. Check that list-bound controls resolve to fields in the same list, control ids are unique, `Resource.children` is an array, known public-field disallow rules are enforced, and a collection form includes a `submit-button`. Hard-error generated-final public forms that include Id/Created/Modified default fields, login-dependent fields, known UI-unavailable field types, or unresolved `binding`/`fieldID` references. Treat unknown controls/settings warning-first until product or runtime proof says they break import/open.
 
 The export-proven top-level public field allowlist from `Data Lists (4).yap` is `input`, `textarea`, `richtext`, `input_number`, `percent`, `currency`, `switch`, `radio`, `checkbox`, `datepicker`, `time`, `file-upload`, `icon-upload`, `rate`, `hyperlink`, `signer`, and `list`, with `Title` as a special primary-field exception. Public share URLs and codes must be redacted in committed docs, normalized refs, and validation reports.
+
+For generated Public Form runtime packages, warn on thin/non-export-shaped grid attrs if they make designer settings unreliable. Prefer `flex_grid` with `ver: 1`, structured `columns`/`rows`, `cgap`, and `cgapU`; use `displayLabel: [null, false]` for layout-only grids; and prefer a centered submit container with inline submit width `common.positioning.widthtype: [null, "2"]`. `docs/studies/data-list-public-form-runtime-proof.md` proves import/open/designer/control-render for this focused pattern only, not anonymous submit or data mutation.
 <!-- data-list-public-form-learning:end -->
 
 <!-- yap-schema-standard-learning:start -->

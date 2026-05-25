@@ -178,7 +178,9 @@ Do not treat export-proven `setvar` action shape, `formAction.onLoad`, action bu
 
 `docs/studies/data-list-public-forms.md` is export-proof only. Before claiming runtime behavior for Data List Public Forms, run a focused import/open/share baseline that proves package import, app open, public form designer/open behavior, allowed field/control rendering, submit button visibility, public URL generation/opening if safe, and anonymous submission only if the target list and test data are disposable.
 
-Do not treat export-proven public form structure as proof of anonymous submit, public URL access, save/data creation, upload behavior, sub-list data entry, signature capture, or validation-message behavior. Document Library public-form behavior is unproven unless a Type `16` public-form package is imported/opened and tested.
+Focused runtime proof in `docs/studies/data-list-public-form-runtime-proof.md` confirms a generated Type `1` Data List Public Form package imported, opened the app/list, showed the Public Form inside the data list, opened the designer, rendered representative allowed list-bound controls, and passed after the grid/display-caption and centered inline submit-button fix. This upgrades only the generated import/open/designer/control-render path for the observed package and layout pattern.
+
+Do not treat export-proven public form structure or this focused proof as proof of anonymous submit, public URL access outside the authenticated designer unless separately confirmed, save/data creation, upload behavior, sub-list data entry, signature capture, or validation-message behavior. Document Library public-form behavior is unproven unless a Type `16` public-form package is imported/opened and tested.
 <!-- data-list-public-form-learning:end -->
 
 <!-- yap-schema-standard-learning:start -->

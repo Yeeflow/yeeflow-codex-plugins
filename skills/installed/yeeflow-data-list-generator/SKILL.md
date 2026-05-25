@@ -422,7 +422,9 @@ Public Forms are anonymous/no-login collection forms, so use a restricted field/
 
 Do not generate default/system fields such as Id, Created By, Created Time, Modified By, or Modified Time into Public Forms. Do not generate login-dependent or UI-unavailable field types such as `identity-picker`, `organization-picker`, `location-picker`, `lookup`, `calculated-column`, `metadata`, `mutiple-metadata`, `cost-center-picker`, `tag`, or `autonumber` unless a future product/export/runtime proof expands the allowlist. Use only Public Form controls that are export-proven or UI-reference-backed, and include a `submit-button` for anonymous collection forms.
 
-Public share URLs and share codes must be redacted in docs/logs/normalized refs. This learning is export-proven for Type `1` Data Lists only; anonymous submit behavior, public URL access, save behavior, uploads, sub-list entry, and Document Library public forms are not runtime-proven.
+For generated Public Form layout, use the export-proven grid shape from `Data Lists (4).yap`: `flex_grid` with `ver: 1`, structured `columns`/`rows`, `cgap`, and `cgapU`. Turn the grid caption off with `displayLabel: [null, false]` when the grid is only a layout wrapper. Put `submit-button` in a separate centered container and set inline width with `common.positioning.widthtype: [null, "2"]`.
+
+Focused runtime proof in `docs/studies/data-list-public-form-runtime-proof.md` confirms a generated Public Form package imported, opened the app/list, displayed the Public Form inside the data list, opened the designer, rendered representative allowed list-bound controls, and passed after the grid/display-caption and centered inline submit-button fix. Public share URLs and share codes must be redacted in docs/logs/normalized refs. This proof is for Type `1` Data Lists only; anonymous submit behavior, public URL access outside the authenticated designer unless separately confirmed, save behavior, uploads, sub-list entry, and Document Library public forms are not runtime-proven.
 <!-- data-list-public-form-learning:end -->
 
 <!-- yap-schema-standard-learning:start -->
