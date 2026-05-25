@@ -71,6 +71,7 @@ const APP_CREATION_SUPPORTED_LIST_TYPES = new Set([
   "file-upload",
   "icon-upload",
   "lookup",
+  "metadata",
   "mutiple-metadata",
   "location-picker",
   "flowstatus",
@@ -412,6 +413,7 @@ function normalizeType(field) {
   const controlType = safeString(field && field.Type).toLowerCase();
   const combined = `${fieldType} ${controlType}`;
   if (controlType === "lookup" || rules.listid || rules.listsetid || rules.listfield) return "lookup";
+  if (controlType === "metadata" || controlType === "mutiple-metadata") return "metadata";
   if (controlType === "textarea" || controlType === "richtext") return "longText";
   if (controlType === "checkbox") return "multiChoice";
   if (controlType === "radio" || controlType === "dropdown" || controlType === "select") return "choice";
@@ -1523,6 +1525,40 @@ function validateDataListPermissionsAndNotifications(item, pathPrefix, resourceT
   });
 }
 
+function validateDataListFieldTypeSettings(field, listTitle, pathPrefix, report) {
+  const type = safeString(field && field.Type).toLowerCase();
+  const rules = parsedFieldRules(field);
+  const context = { list: listTitle, field: field.DisplayName || field.FieldName || null, path: pathPrefix, type };
+
+  if (["radio", "checkbox", "select"].includes(type) && !Array.isArray(rules.choices)) {
+    issue(report, generatorFinalSeverity(report), "CHOICE_OPTIONS_MISSING", "Choice fields should include Rules.choices.", context);
+  }
+  if (type === "tag" && rules.customTags !== true && !Array.isArray(rules.customTags) && !Array.isArray(rules.choices)) {
+    issue(report, "warning", "TAG_OPTIONS_MISSING", "Tag fields should include Rules.customTags=true, a customTags array, or choices before generation.", context);
+  }
+  if (type === "tag" && (!rules.source || !rules.category)) {
+    issue(report, "warning", "TAG_SOURCE_MISSING", "Tag fields should include Rules.source and Rules.category.", context);
+  }
+  if (["metadata", "mutiple-metadata"].includes(type) && (!rules.source || !rules.categoryId)) {
+    issue(report, "warning", "METADATA_SOURCE_MISSING", "Metadata fields should include Rules.source and Rules.categoryId.", context);
+  }
+  if (type === "lookup") {
+    const missing = ["appid", "listsetid", "listid", "listfield"].filter((key) => !rules[key] && !rules[key.replace(/^[a-z]/, (ch) => ch.toUpperCase())]);
+    if (missing.length) {
+      issue(report, generatorFinalSeverity(report), "LOOKUP_RULES_INCOMPLETE", "Lookup fields should include appid, listsetid, listid, and listfield Rules metadata.", { ...context, missing });
+    }
+  }
+  if (type === "calculated-column" && (!rules.calculated_result || !rules.calculated)) {
+    issue(report, "warning", "CALCULATED_COLUMN_RULES_INCOMPLETE", "Calculated columns should include Rules.calculated_result and Rules.calculated.", context);
+  }
+  if (type === "list" && !Array.isArray(rules["list-variables"])) {
+    issue(report, "warning", "LIST_FIELD_METADATA_MISSING", "Sub-list fields should include Rules.list-variables.", context);
+  }
+  if (type === "autonumber" && (rules.minDigits === undefined || rules.startNum === undefined)) {
+    issue(report, "warning", "AUTONUMBER_RULES_INCOMPLETE", "Auto number fields should include Rules.minDigits and Rules.startNum.", context);
+  }
+}
+
 function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, localIds, listsById, fieldsByList, fieldIdsByApp, report) {
   const pathPrefix = isRoot ? "$.Item" : `$.Childs[${index - 1}]`;
   if (!isObject(item) || !isObject(item.ListModel)) {
@@ -1627,6 +1663,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
       );
     }
     if (field.Rules && !tryParseJson(field.Rules)) issue(report, "warning", "FIELD_RULES_JSON_INVALID", "Field Rules is not valid JSON.", { list: title, field: displayName || fieldName });
+    validateDataListFieldTypeSettings(field, title, fp, report);
     validateFieldAgainstSchema(field, report._controlFieldSchemas).forEach((schemaIssue) => {
       issue(report, "warning", `FIELD_SCHEMA_${schemaIssue.code}`, schemaIssue.message, {
         list: title,

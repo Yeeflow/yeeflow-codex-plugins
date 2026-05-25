@@ -46,6 +46,40 @@ const KNOWN_SYSTEM_FIELDS = new Set([
   "ListID",
   "ListSetID",
 ]);
+const APP_CREATION_SUPPORTED_LIST_TYPES = new Set([
+  "input",
+  "textarea",
+  "richtext",
+  "hyperlink",
+  "input_number",
+  "currency",
+  "percent",
+  "calculated-column",
+  "rate",
+  "switch",
+  "checkbox",
+  "radio",
+  "select",
+  "tag",
+  "datepicker",
+  "time",
+  "identity-picker",
+  "organization-picker",
+  "cost-center-picker",
+  "signer",
+  "file-upload",
+  "icon-upload",
+  "lookup",
+  "metadata",
+  "mutiple-metadata",
+  "location-picker",
+  "flowstatus",
+  "autonumber",
+  "list",
+]);
+const APP_CREATION_IDENTIFIER_MAX_LENGTH = 255;
+const APP_CREATION_INTERNAL_NAME_RE = /^[A-Za-z0-9_]+$/;
+const APP_CREATION_PROCESS_KEY_RE = /^[A-Za-z0-9_]+$/;
 
 function usage(exitCode = 1) {
   const text = [
@@ -223,6 +257,7 @@ function normalizeType(field, rules = {}) {
   const controlType = safeString(field.Type).toLowerCase();
   const combined = `${fieldType} ${controlType}`;
   if (controlType === "lookup" || rules.listid || rules.listsetid || rules.listfield) return "lookup";
+  if (controlType === "metadata" || controlType === "mutiple-metadata") return "metadata";
   if (controlType === "textarea" || controlType === "richtext") return "longText";
   if (controlType === "checkbox") return "multiChoice";
   if (controlType === "radio" || controlType === "dropdown" || controlType === "select") return "choice";
@@ -271,6 +306,54 @@ function validateGeneratedAppId(report, value, details = {}) {
 
 function generatorFinalSeverity(report) {
   return report.mode === "generator" && report.stage === "final" ? "error" : "warning";
+}
+
+function validateAppCreationFieldRules(field, report, context = {}) {
+  const severity = generatorFinalSeverity(report);
+  const fieldName = safeString(field && field.FieldName);
+  const internalName = safeString(field && field.InternalName);
+  const displayName = safeString(field && field.DisplayName);
+  const type = safeString(field && field.Type).toLowerCase();
+  const location = context.location || "field";
+
+  for (const [key, value] of [["DisplayName", displayName], ["FieldName", fieldName], ["InternalName", internalName]]) {
+    if (value && value.length > APP_CREATION_IDENTIFIER_MAX_LENGTH) {
+      issue(report, severity, `FIELD_${key.toUpperCase()}_TOO_LONG`, `${key} must not exceed 255 characters.`, { location, length: value.length });
+    }
+  }
+
+  if (internalName && !APP_CREATION_INTERNAL_NAME_RE.test(internalName)) {
+    issue(report, severity, "FIELD_INTERNAL_NAME_INVALID_CHARS", "InternalName may contain only letters, numbers, and underscores.", { location, internalName });
+  }
+
+  if (type && !APP_CREATION_SUPPORTED_LIST_TYPES.has(type)) {
+    issue(report, "warning", "LIST_FIELD_TYPE_UNSUPPORTED", "List field Type is not in the product-team supported Type list.", { location, fieldName, type });
+  }
+
+  if (!fieldName || KNOWN_SYSTEM_FIELDS.has(fieldName)) return;
+  const fieldIndex = Number(field && field.FieldIndex);
+  if (!Number.isInteger(fieldIndex) || fieldIndex <= 0) return;
+  const suffixMatch = fieldName.match(/(\d+)$/);
+  if (!suffixMatch) {
+    issue(report, severity, "FIELD_NAME_NUMERIC_SUFFIX_MISSING", "FieldName numeric suffix must match FieldIndex; generated non-system fields must end with their FieldIndex value.", { location, fieldName, fieldIndex });
+    return;
+  }
+  const suffix = Number(suffixMatch[1]);
+  if (suffix !== fieldIndex) {
+    issue(report, severity, "FIELD_NAME_FIELDINDEX_MISMATCH", "FieldName numeric suffix must match FieldIndex.", { location, fieldName, fieldIndex, suffix });
+  }
+}
+
+function validateProcessKey(value, report, context = {}) {
+  const key = safeString(value);
+  if (!key) return;
+  const severity = generatorFinalSeverity(report);
+  if (key.length > APP_CREATION_IDENTIFIER_MAX_LENGTH) {
+    issue(report, severity, "PROCESS_KEY_TOO_LONG", "Process keys must not exceed 255 characters.", { location: context.location, keyLength: key.length });
+  }
+  if (!APP_CREATION_PROCESS_KEY_RE.test(key)) {
+    issue(report, severity, "PROCESS_KEY_INVALID_CHARS", "Process keys may contain only letters, numbers, and underscores.", { location: context.location, key });
+  }
 }
 
 function decodeInput(inputPath, report) {
@@ -598,6 +681,7 @@ function validateFields(item, report) {
       if (displayNames.has(field.DisplayName)) issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DUPLICATE_DISPLAY_NAME", `Duplicate DisplayName ${field.DisplayName}. Yeeflow generated data-list fields should use unique visible field names to avoid import/materialization failures.`, { location });
       displayNames.add(field.DisplayName);
     }
+    validateAppCreationFieldRules(field, report, { location });
 
     const rules = parsedRulesForField(field, index, report);
     validateFieldAgainstSchema(field, controlFieldSchemas).forEach((schemaIssue) => {
@@ -627,6 +711,17 @@ function validateFields(item, report) {
           controlType: field.Type,
         });
       }
+    }
+    if (safeString(field.Type).toLowerCase() === "tag") {
+      if (rules.customTags !== true && !Array.isArray(rules.customTags) && !Array.isArray(choices)) {
+        issue(report, "warning", "TAG_OPTIONS_MISSING", "Tag fields should include customTags=true, a customTags array, or choices before generation.", { location, fieldName: field.FieldName });
+      }
+      if (!rules.source || !rules.category) {
+        issue(report, "warning", "TAG_SOURCE_MISSING", "Tag fields should include source and category Rules.", { location, fieldName: field.FieldName });
+      }
+    }
+    if (["metadata", "mutiple-metadata"].includes(safeString(field.Type).toLowerCase()) && (!rules.source || !rules.categoryId)) {
+      issue(report, "warning", "METADATA_SOURCE_MISSING", "Metadata fields should include source and categoryId Rules.", { location, fieldName: field.FieldName, controlType: field.Type });
     }
 
     if (normalizedType === "lookup") {
@@ -673,6 +768,9 @@ function validateFields(item, report) {
       if (!hasVars || !hasFields) {
         issue(report, "warning", "LIST_FIELD_METADATA_MISSING", "Nested list field should include list-variables and list-fields metadata when generated.", { location, fieldName: field.FieldName });
       }
+    }
+    if (safeString(field.Type).toLowerCase() === "autonumber" && (rules.minDigits === undefined || rules.startNum === undefined)) {
+      issue(report, "warning", "AUTONUMBER_RULES_INCOMPLETE", "Auto number fields should include minDigits and startNum Rules.", { location, fieldName: field.FieldName });
     }
   });
 
@@ -1067,6 +1165,8 @@ function validateWorkflows(data, item, fieldByName, knownListIds, report) {
     if (!def) return;
     const key = form.FlowKey || form.Key || def.defkey;
     if (!key && !def.defkey) issue(report, "error", "WORKFLOW_KEY_MISSING", "Workflow key/defkey is required.", { location: `Data.Forms[${index}]` });
+    validateProcessKey(key, report, { location: `Data.Forms[${index}].Key` });
+    validateProcessKey(def.defkey, report, { location: `Data.Forms[${index}].DefResource.defkey` });
     if (def.variables === undefined) issue(report, "warning", "WORKFLOW_VARIABLES_MISSING", "Workflow variables are missing; confirm this is valid for this workflow.", { key });
     const workflowActionReport = validateWorkflowActionShapes(asArray(def.childshapes), {
       mode: report.mode,

@@ -70,6 +70,7 @@ const APP_CREATION_SUPPORTED_LIST_TYPES = new Set([
   "file-upload",
   "icon-upload",
   "lookup",
+  "metadata",
   "mutiple-metadata",
   "location-picker",
   "flowstatus",
@@ -256,6 +257,7 @@ function normalizeType(field, rules = {}) {
   const controlType = safeString(field.Type).toLowerCase();
   const combined = `${fieldType} ${controlType}`;
   if (controlType === "lookup" || rules.listid || rules.listsetid || rules.listfield) return "lookup";
+  if (controlType === "metadata" || controlType === "mutiple-metadata") return "metadata";
   if (controlType === "textarea" || controlType === "richtext") return "longText";
   if (controlType === "checkbox") return "multiChoice";
   if (controlType === "radio" || controlType === "dropdown" || controlType === "select") return "choice";
@@ -710,6 +712,17 @@ function validateFields(item, report) {
         });
       }
     }
+    if (safeString(field.Type).toLowerCase() === "tag") {
+      if (rules.customTags !== true && !Array.isArray(rules.customTags) && !Array.isArray(choices)) {
+        issue(report, "warning", "TAG_OPTIONS_MISSING", "Tag fields should include customTags=true, a customTags array, or choices before generation.", { location, fieldName: field.FieldName });
+      }
+      if (!rules.source || !rules.category) {
+        issue(report, "warning", "TAG_SOURCE_MISSING", "Tag fields should include source and category Rules.", { location, fieldName: field.FieldName });
+      }
+    }
+    if (["metadata", "mutiple-metadata"].includes(safeString(field.Type).toLowerCase()) && (!rules.source || !rules.categoryId)) {
+      issue(report, "warning", "METADATA_SOURCE_MISSING", "Metadata fields should include source and categoryId Rules.", { location, fieldName: field.FieldName, controlType: field.Type });
+    }
 
     if (normalizedType === "lookup") {
       const missing = [];
@@ -755,6 +768,9 @@ function validateFields(item, report) {
       if (!hasVars || !hasFields) {
         issue(report, "warning", "LIST_FIELD_METADATA_MISSING", "Nested list field should include list-variables and list-fields metadata when generated.", { location, fieldName: field.FieldName });
       }
+    }
+    if (safeString(field.Type).toLowerCase() === "autonumber" && (rules.minDigits === undefined || rules.startNum === undefined)) {
+      issue(report, "warning", "AUTONUMBER_RULES_INCOMPLETE", "Auto number fields should include minDigits and startNum Rules.", { location, fieldName: field.FieldName });
     }
   });
 
