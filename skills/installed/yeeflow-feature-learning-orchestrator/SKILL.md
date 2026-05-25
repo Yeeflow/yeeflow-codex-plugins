@@ -297,6 +297,16 @@ For Data List custom list form export learning, use `docs/studies/data-list-cust
 Keep the proof boundary explicit: this is Data List export proof and validator-backed guidance only. Document Library custom-form applicability remains product/user-understanding-backed unless Type `16` custom-form exports prove it. Do not claim runtime rendering, save behavior, submit/save action execution, sub-list row behavior, uploads, lookup resolution, or Document Library custom form behavior without a focused runtime baseline.
 <!-- data-list-custom-form-fields-learning:end -->
 
+<!-- data-list-public-form-learning:start -->
+## Data List Public Form Learning
+
+For Data List Public Form export learning, use `docs/studies/data-list-public-forms.md`, `docs/studies/normalized/data-list-public-forms/`, and `scripts/inspect-data-list-public-forms.mjs`. `Data Lists (4).yap` export-proves two Type `1` target data lists with `PublicForms[]` entries, JSON-string public form resources, `pagetype = 3`, `container`/`flex_grid` layout, list-bound public controls, and `submit-button` controls.
+
+Keep Public Forms distinct from Custom List Forms. Public Forms are anonymous/no-login collection forms and therefore have a restricted field/control palette. Screenshots are UI-reference-backed only; they support the default-field and unavailable-field caveats but are not runtime proof and must not be committed.
+
+Preserve the proof boundary: Data List Public Form structure is export-proven and validator-backed after implementation; anonymous submit behavior, public URL access, save/data mutation, upload execution, sub-list row entry, Document Library applicability, and Form Report behavior are not runtime-proven.
+<!-- data-list-public-form-learning:end -->
+
 <!-- yap-schema-standard-learning:start -->
 ## YAP Schema Standard Learning
 

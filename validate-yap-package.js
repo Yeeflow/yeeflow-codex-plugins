@@ -102,6 +102,68 @@ const CUSTOM_FORM_OPEN_MODE_LABELS = {
   fullPage: "Full page",
 };
 const CUSTOM_FORM_SIZE_LABELS = new Map([[0, "Medium"], [1, "Small"], [2, "Large"], [3, "Full screen"]]);
+const PUBLIC_FORM_ALLOWED_FIELD_TYPES = new Set([
+  "input",
+  "textarea",
+  "richtext",
+  "input_number",
+  "percent",
+  "currency",
+  "switch",
+  "radio",
+  "checkbox",
+  "datepicker",
+  "time",
+  "file-upload",
+  "icon-upload",
+  "rate",
+  "hyperlink",
+  "signer",
+  "list",
+]);
+const PUBLIC_FORM_DISALLOWED_FIELD_TYPES = new Set([
+  "identity-picker",
+  "organization-picker",
+  "location-picker",
+  "lookup",
+  "calculated-column",
+  "metadata",
+  "mutiple-metadata",
+  "cost-center-picker",
+  "tag",
+  "autonumber",
+]);
+const PUBLIC_FORM_DISALLOWED_SYSTEM_FIELDS = new Set([
+  "ListDataID",
+  "Id",
+  "ID",
+  "Created",
+  "CreatedBy",
+  "CreatedByName",
+  "Modified",
+  "ModifiedBy",
+  "ModifiedByName",
+]);
+const PUBLIC_FORM_KNOWN_CONTROL_TYPES = new Set([
+  "container",
+  "flex_grid",
+  "action_button",
+  "submit-button",
+  ...PUBLIC_FORM_ALLOWED_FIELD_TYPES,
+  "text",
+  "number",
+  "boolean",
+  "date",
+  "file",
+  "metadata",
+  "user",
+  "costcenter",
+  "groupselect",
+  "location",
+  "lookup",
+  "img",
+  "total",
+]);
 
 function usage(exitCode = 1) {
   const text = [
@@ -1806,6 +1868,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
     if (Number(layout.Type) === 1) validateCustomFormLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report);
     if (Number(layout.Type) === 103 && isRoot) report.summary.dashboards += 1;
   });
+  if (!isRoot && resourceType === "data list") validatePublicForms(item, fieldsByName, pathPrefix, report);
   if (!isRoot && viewCount === 0 && ["data list", "document library", "form report/list resource"].includes(resourceType)) {
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DATA_VIEW_MISSING", "List-like resources should include at least one data view.", { list: title, resourceType });
   }
@@ -2058,6 +2121,71 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
     }
     if (safeString(control.type) === "list") validateCustomFormSubListControl(control, fieldsByName, report, { title: layout.Title, path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}` });
   }));
+}
+
+function validatePublicForms(item, fieldsByName, pathPrefix, report) {
+  const publicForms = asArray(item.PublicForms);
+  publicForms.forEach((publicForm, publicFormIndex) => {
+    const context = {
+      path: `${pathPrefix}.PublicForms[${publicFormIndex}]`,
+      publicForm: publicForm && publicForm.Name || null,
+    };
+    if (!publicForm || !publicForm.Resource) {
+      issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_RESOURCE_MISSING", "PublicForms[] entry must include Resource.", context);
+      return;
+    }
+    const resource = tryParseJson(publicForm.Resource);
+    if (!resource) {
+      issue(report, "error", "PUBLIC_FORM_RESOURCE_JSON_INVALID", "PublicForms[] Resource must be valid JSON.", context);
+      return;
+    }
+    if (resource.pagetype !== 3) issue(report, "warning", "PUBLIC_FORM_PAGETYPE_UNKNOWN", "Data List Public Form Resource.pagetype is export-proven as 3.", { ...context, pagetype: resource.pagetype });
+    if (!Array.isArray(resource.children)) {
+      issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_CHILDREN_NOT_ARRAY", "Data List Public Form Resource.children must be an array.", { ...context, location: `${context.path}.Resource.children` });
+      return;
+    }
+    if (resource.tempVars !== undefined && !Array.isArray(resource.tempVars)) {
+      issue(report, "warning", "PUBLIC_FORM_TEMPVARS_NOT_ARRAY", "Data List Public Form Resource.tempVars should be an array when present.", { ...context, location: `${context.path}.Resource.tempVars` });
+    }
+
+    const seenControlIds = new Set();
+    let submitControls = 0;
+    resource.children.forEach((child, childIndex) => walkControls(child, (control, pointer) => {
+      const type = safeString(control && control.type);
+      const controlPath = `${context.path}.Resource.children[${childIndex}]${pointer.slice(1)}`;
+      if (!type) return;
+      if (type === "submit-button") submitControls += 1;
+      if (!PUBLIC_FORM_KNOWN_CONTROL_TYPES.has(type)) {
+        issue(report, "warning", "PUBLIC_FORM_CONTROL_TYPE_UNKNOWN", "Public form uses a control type that is not yet export-proven for public forms.", { ...context, path: controlPath, type });
+      }
+      const controlId = safeString(control.id);
+      if (controlId) {
+        if (seenControlIds.has(controlId)) issue(report, "error", "PUBLIC_FORM_CONTROL_ID_DUPLICATE", "Public form control IDs must be unique within a form.", { ...context, path: controlPath, controlId });
+        seenControlIds.add(controlId);
+      }
+
+      const binding = typeof control.binding === "string" ? control.binding : "";
+      const field = control.fieldID ? fieldsByName.get(String(control.fieldID)) : binding ? fieldsByName.get(binding) : null;
+      const isNestedListField = control.attrs && control.attrs.list_field === true;
+      if ((binding || control.fieldID) && !isNestedListField && type !== "total") {
+        if (!field) {
+          issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_FIELD_BINDING_NOT_FOUND", "Public form list-bound control does not resolve to a field in the same data list.", { ...context, path: controlPath, binding: binding || null, type });
+          return;
+        }
+        const fieldName = safeString(field.FieldName);
+        const fieldType = safeString(field.Type);
+        if (PUBLIC_FORM_DISALLOWED_SYSTEM_FIELDS.has(fieldName)) {
+          issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_DEFAULT_FIELD_NOT_ALLOWED", "Default/system list fields should not be generated into Public Forms. Title is the export-proven primary-field exception.", { ...context, path: controlPath, fieldName, fieldType });
+        }
+        if (PUBLIC_FORM_DISALLOWED_FIELD_TYPES.has(fieldType)) {
+          issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_FIELD_TYPE_NOT_ALLOWED", "This field type is UI-reference-backed as unavailable for Data List Public Forms.", { ...context, path: controlPath, fieldName, fieldType });
+        } else if (!PUBLIC_FORM_ALLOWED_FIELD_TYPES.has(fieldType)) {
+          issue(report, "warning", "PUBLIC_FORM_FIELD_TYPE_UNPROVEN", "Public form uses a field type that is not in the export-proven allowed set from Data Lists (4).yap.", { ...context, path: controlPath, fieldName, fieldType });
+        }
+      }
+    }));
+    if (!submitControls) issue(report, "warning", "PUBLIC_FORM_SUBMIT_CONTROL_MISSING", "Public forms intended for anonymous collection should include an export-proven submit control.", context);
+  });
 }
 
 function customFormTempVarAliases(tempVar) {

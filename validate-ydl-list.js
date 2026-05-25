@@ -37,6 +37,68 @@ const CUSTOM_FORM_OPEN_MODE_LABELS = {
   fullPage: "Full page",
 };
 const CUSTOM_FORM_SIZE_LABELS = new Map([[0, "Medium"], [1, "Small"], [2, "Large"], [3, "Full screen"]]);
+const PUBLIC_FORM_ALLOWED_FIELD_TYPES = new Set([
+  "input",
+  "textarea",
+  "richtext",
+  "input_number",
+  "percent",
+  "currency",
+  "switch",
+  "radio",
+  "checkbox",
+  "datepicker",
+  "time",
+  "file-upload",
+  "icon-upload",
+  "rate",
+  "hyperlink",
+  "signer",
+  "list",
+]);
+const PUBLIC_FORM_DISALLOWED_FIELD_TYPES = new Set([
+  "identity-picker",
+  "organization-picker",
+  "location-picker",
+  "lookup",
+  "calculated-column",
+  "metadata",
+  "mutiple-metadata",
+  "cost-center-picker",
+  "tag",
+  "autonumber",
+]);
+const PUBLIC_FORM_DISALLOWED_SYSTEM_FIELDS = new Set([
+  "ListDataID",
+  "Id",
+  "ID",
+  "Created",
+  "CreatedBy",
+  "CreatedByName",
+  "Modified",
+  "ModifiedBy",
+  "ModifiedByName",
+]);
+const PUBLIC_FORM_KNOWN_CONTROL_TYPES = new Set([
+  "container",
+  "flex_grid",
+  "action_button",
+  "submit-button",
+  ...PUBLIC_FORM_ALLOWED_FIELD_TYPES,
+  "text",
+  "number",
+  "boolean",
+  "date",
+  "file",
+  "metadata",
+  "user",
+  "costcenter",
+  "groupselect",
+  "location",
+  "lookup",
+  "img",
+  "total",
+]);
 
 const KNOWN_SYSTEM_FIELDS = new Set([
   "ListDataID",
@@ -673,6 +735,8 @@ function validateFields(item, report) {
       fieldNames.add(field.FieldName);
       fieldByName.set(field.FieldName, field);
     }
+    if (field.FieldID) fieldByName.set(String(field.FieldID), field);
+    if (field.InternalName) fieldByName.set(String(field.InternalName), field);
     if (!isDocumentLibrary && field.FieldName === "Title" && (field.Status !== 0 || field.IsSystem !== true || field.IsIndex !== true)) {
       issue(
         report,
@@ -1120,6 +1184,72 @@ function validateCustomForms(item, fieldByName, report) {
     }
   }
   return customFormCount;
+}
+
+function validatePublicForms(item, fieldByName, report) {
+  const publicForms = asArray(item.PublicForms);
+  publicForms.forEach((publicForm, publicFormIndex) => {
+    const context = {
+      location: `Item.PublicForms[${publicFormIndex}]`,
+      publicForm: publicForm && publicForm.Name || null,
+    };
+    if (!publicForm || !publicForm.Resource) {
+      issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_RESOURCE_MISSING", "PublicForms[] entry must include Resource.", context);
+      return;
+    }
+    const parsed = tryParseJson(publicForm.Resource);
+    if (!(parsed.ok && parsed.value)) {
+      issue(report, "error", "PUBLIC_FORM_RESOURCE_JSON_INVALID", "PublicForms[] Resource must be valid JSON.", context);
+      return;
+    }
+    const resource = parsed.value;
+    if (resource.pagetype !== 3) issue(report, "warning", "PUBLIC_FORM_PAGETYPE_UNKNOWN", "Data List Public Form Resource.pagetype is export-proven as 3.", { ...context, pagetype: resource.pagetype });
+    if (!Array.isArray(resource.children)) {
+      issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_CHILDREN_NOT_ARRAY", "Data List Public Form Resource.children must be an array.", { ...context, location: `${context.location}.Resource.children` });
+      return;
+    }
+    if (resource.tempVars !== undefined && !Array.isArray(resource.tempVars)) {
+      issue(report, "warning", "PUBLIC_FORM_TEMPVARS_NOT_ARRAY", "Data List Public Form Resource.tempVars should be an array when present.", { ...context, location: `${context.location}.Resource.tempVars` });
+    }
+    const seenControlIds = new Set();
+    let submitControls = 0;
+    resource.children.forEach((child, childIndex) => {
+      walkControls(child, (control, pointer) => {
+        const type = controlType(control);
+        const location = `${context.location}.Resource.children[${childIndex}]${pointer.slice(1)}`;
+        if (!type) return;
+        if (type === "submit-button") submitControls += 1;
+        if (!PUBLIC_FORM_KNOWN_CONTROL_TYPES.has(type)) {
+          issue(report, "warning", "PUBLIC_FORM_CONTROL_TYPE_UNKNOWN", "Public form uses a control type that is not yet export-proven for public forms.", { ...context, location, type });
+        }
+        const controlId = safeString(control.id);
+        if (controlId) {
+          if (seenControlIds.has(controlId)) issue(report, "error", "PUBLIC_FORM_CONTROL_ID_DUPLICATE", "Public form control IDs must be unique within a form.", { ...context, location, controlId });
+          seenControlIds.add(controlId);
+        }
+        const binding = controlBinding(control);
+        const field = control.fieldID ? fieldByName.get(String(control.fieldID)) : binding ? fieldByName.get(binding) : null;
+        const isNestedListField = control.attrs && control.attrs.list_field === true;
+        if ((binding || control.fieldID) && !isNestedListField && type !== "total") {
+          if (!field) {
+            issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_FIELD_BINDING_NOT_FOUND", "Public form list-bound control does not resolve to a field in the same data list.", { ...context, location, binding: binding || null, type });
+            return;
+          }
+          const fieldName = safeString(field.FieldName);
+          const fieldType = safeString(field.Type);
+          if (PUBLIC_FORM_DISALLOWED_SYSTEM_FIELDS.has(fieldName)) {
+            issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_DEFAULT_FIELD_NOT_ALLOWED", "Default/system list fields should not be generated into Public Forms. Title is the export-proven primary-field exception.", { ...context, location, fieldName, fieldType });
+          }
+          if (PUBLIC_FORM_DISALLOWED_FIELD_TYPES.has(fieldType)) {
+            issue(report, generatorFinalSeverity(report), "PUBLIC_FORM_FIELD_TYPE_NOT_ALLOWED", "This field type is UI-reference-backed as unavailable for Data List Public Forms.", { ...context, location, fieldName, fieldType });
+          } else if (!PUBLIC_FORM_ALLOWED_FIELD_TYPES.has(fieldType)) {
+            issue(report, "warning", "PUBLIC_FORM_FIELD_TYPE_UNPROVEN", "Public form uses a field type that is not in the export-proven allowed set from Data Lists (4).yap.", { ...context, location, fieldName, fieldType });
+          }
+        }
+      });
+    });
+    if (!submitControls) issue(report, "warning", "PUBLIC_FORM_SUBMIT_CONTROL_MISSING", "Public forms intended for anonymous collection should include an export-proven submit control.", context);
+  });
 }
 
 function defaultCustomFormOpenModeForUsage(usage) {
@@ -1710,6 +1840,7 @@ function validate(inputPath, mode, stage, dependencyMapPath = null) {
   const externalLookupFields = new Set(lookupRelationships.filter((lookup) => lookup.targetListId && !knownListIds.has(String(lookup.targetListId))).map((lookup) => lookup.sourceFieldName));
   const viewCount = validateViews(item, fieldByName, report);
   const customFormCount = validateCustomForms(item, fieldByName, report);
+  validatePublicForms(item, fieldByName, report);
   validateCustomFormDisplaySettings(item, report);
   validateWorkflows(decoded.data, item, fieldByName, knownListIds, report);
   validateSampleData(item, fieldByName, report, dependencyMap, externalLookupFields, decoded.resource);

@@ -609,6 +609,16 @@ For sub-list fields, generate a parent `type = "list"` control and nested contro
 Document Library custom-list-form applicability is product/user-understanding-backed unless a Type `16` export proves the exact shape. Runtime rendering/action execution is not proven by the export-learning pass.
 <!-- data-list-custom-form-fields-learning:end -->
 
+<!-- data-list-public-form-learning:start -->
+## Data List Public Form Generation
+
+Use `docs/studies/data-list-public-forms.md`, `docs/studies/normalized/data-list-public-forms/`, and `scripts/inspect-data-list-public-forms.mjs` when an app requires an anonymous public data-collection form. Public Forms are not Custom List Forms: store them under the Data List `PublicForms[]` collection with a JSON-string `Resource`, keep them separate from `Layouts[]`, and validate public-form controls independently from authenticated New/Edit/View forms.
+
+Generate only public-safe top-level field controls proven in `Data Lists (4).yap`: `input`, `textarea`, `richtext`, `input_number`, `percent`, `currency`, `switch`, `radio`, `checkbox`, `datepicker`, `time`, `file-upload`, `icon-upload`, `rate`, `hyperlink`, `signer`, and `list`. The `Title` primary field is export-proven as a special system-field exception; do not include Id/Created/Modified default fields or login-dependent picker fields.
+
+Use conservative page structure such as `container` and `flex_grid`, and include `submit-button` when the Public Form is meant to collect submissions. Redact share URLs/codes in all docs and logs. Treat anonymous submit, public URL access, upload execution, sub-list row entry, and Document Library public-form behavior as unproven until focused runtime proof exists.
+<!-- data-list-public-form-learning:end -->
+
 <!-- yap-schema-standard-learning:start -->
 ## YAP Schema Standard Guardrails
 
