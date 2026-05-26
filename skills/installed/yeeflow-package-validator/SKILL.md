@@ -19,6 +19,8 @@ Data Filter validation: use `scripts/inspect-data-filter-controls.mjs` with dash
 
 Pivot Table validation: use `scripts/inspect-pivot-table-controls.mjs` with dashboard packages and enforce the rules from `docs/studies/pivot-table-control.md`. Pivot Table dashboard controls must have a matching `page.exts[]` `PivotTable` entry; the data source must resolve to a supported list-like source; row, column, and value fields must resolve to source fields; `SUM`, `AVG`, `MIN`, and `MAX` require compatible numeric/currency fields where detectable; date grouping must only be applied to date/time fields; and filter condition fields plus `__filter_<filterVarId>` variable references must resolve. Generated-final validation should fail unresolved Pivot Table references, unsupported Approval Form/Public Form hosts, and incompatible generated aggregations. Unknown schema variants should warn first in compatibility/source-export mode unless a focused export proves them invalid. This is export-proven and validator-backed, not runtime proof.
 
+Seed/add-readiness validation: `docs/studies/pivot-table-control-runtime-proof.md` strongly indicates that v1 missing seed rows and Add failed came from crossed data-list field storage metadata caused by cloning `Defs[]` by array position. Generated-final validation must hard-error `FIELD_NAME_FIELDTYPE_MISMATCH`: `Text*` fields need text storage, `Datetime*` fields need date/datetime storage, `Decimal*` fields need decimal/number storage, `Bigint*` fields need integer storage, and `Bit*` fields need boolean storage. Use the app-creation rules inspector and aggregate import-readiness gate before handing off analytics/demo packages with seed data.
+
 ## Validation Workflow
 
 1. Identify the package type and source of truth. Preserve generated `.yap` files unless the task explicitly asks to regenerate them.
@@ -55,6 +57,7 @@ Load [yap-materialization-rules.md](references/yap-materialization-rules.md) whe
 - app-wide unique `FieldID`
 - `field.ListID` equals parent data list `ListID`
 - unique `FieldName`, `InternalName`, and `DisplayName` inside each list
+- `FieldName` storage prefixes aligned with `FieldType`, so generated seed rows and Add new item use runtime-compatible list field storage
 - no remapping of `TenantID`, `CreatedBy`, or `ModifiedBy`
 - no numeric-looking generated ID exceeds signed `System.Int64` range (`9223372036854775807`), especially `LayoutID`
 - generated app-contained AI Agent/Copilot resources use numeric `Publisher`, normally `0`, rather than `null`
@@ -193,7 +196,7 @@ For assignment-routing API coverage, `yeeflow-api-operator` can safely confirm d
 <!-- app-creation-rules-learning:start -->
 ## App Creation Rule Validation Addendum
 
-Use `docs/studies/yeeflow-app-creation-rules.md` and `scripts/inspect-app-creation-rules.mjs` for product-team app creation rules. In generated-final mode, hard-error duplicate `DisplayName`, `FieldName`, and `InternalName` within one list; identifier length above 255; invalid `InternalName` characters; generated non-system `FieldName` missing a numeric suffix; and any `FieldName` numeric suffix that does not equal `FieldIndex`.
+Use `docs/studies/yeeflow-app-creation-rules.md` and `scripts/inspect-app-creation-rules.mjs` for product-team app creation rules. In generated-final mode, hard-error duplicate `DisplayName`, `FieldName`, and `InternalName` within one list; identifier length above 255; invalid `InternalName` characters; generated non-system `FieldName` missing a numeric suffix; any `FieldName` numeric suffix that does not equal `FieldIndex`; and `FieldName`/`FieldType` storage-family mismatches that can break seeded rows and Add new item behavior.
 
 Hard-error invalid process keys (`Data.Forms[].Key`, `FlowKey`, and decoded `defkey`) when they contain anything outside `[a-zA-Z0-9_]` or exceed 255 characters. For approval forms, hard-error missing or malformed `NoRule`, missing `{index}` in `NoRule.Prefix`, and invalid `StartIndex`, `CustomLength`, or `AutoIncrement`. Unknown list field `Type` values remain warning-first unless a focused runtime/import failure proves a specific type invalid.
 
@@ -205,7 +208,7 @@ Runtime proof update: `docs/studies/yeeflow-app-creation-rules-runtime-proof.md`
 
 Use `docs/studies/data-list-document-library-field-types.md`, `docs/studies/normalized/data-list-fields/`, and `scripts/inspect-data-list-fields.mjs` before generating or validating broad Data List custom fields. `Data Lists (2).yap` export-proves the target Type `1` data lists `Data list with fields part A` and `Data list with fields part B` with 90 custom fields across `input`, `textarea`, `richtext`, `hyperlink`, `input_number`, `currency`, `percent`, `calculated-column`, `rate`, `switch`, `checkbox`, `radio`, `tag`, `datepicker`, `time`, `identity-picker`, `organization-picker`, `cost-center-picker`, `signer`, `file-upload`, `icon-upload`, `lookup`, `metadata`, `mutiple-metadata`, `location-picker`, `autonumber`, and `list`. `select` and `flowstatus` remain product-rule-backed/unproven in this export.
 
-Field generation must still pass the v0.5.12 app-creation gates: unique `DisplayName`, `FieldName`, and `InternalName`; `InternalName` matching `[A-Za-z0-9_]`; identifier length <= 255; and generated non-system `FieldName` suffix matching `FieldIndex`. Accept export-proven single metadata fields as `Type = "metadata"` with Bigint storage, even though the earlier product-team 28-type list only named `mutiple-metadata`.
+Field generation must still pass the app-creation gates: unique `DisplayName`, `FieldName`, and `InternalName`; `InternalName` matching `[A-Za-z0-9_]`; identifier length <= 255; generated non-system `FieldName` suffix matching `FieldIndex`; and generated seed/add-ready fields keeping `FieldName` storage prefix aligned with `FieldType`. Accept export-proven single metadata fields as `Type = "metadata"` with Bigint storage, even though the earlier product-team 28-type list only named `mutiple-metadata`.
 
 Use export-proven settings where relevant: choice `Rules.choices` and `color_choices`; numeric/currency/percent `displayThousandths`, `rounded-to`, `number_min`, `number_max`, `currencyCode`, `displayFormat`; picker `identity-maxselection`, `multiple`, `metadata-treeselect`, `parentId`; upload `maxsize`, `file_multiple`, `file_typeslimit`, `file_types`, `picture_size_limit`, `controlmultiple`; lookup `appid`, `listsetid`, `listid`, `listfield`, additions, filters, sorting, search, display style, and multiple; calculated columns `calculated_result` plus `calculated`; metadata `source` plus `categoryId`; tag `source`, `category`, `customTags`; autonumber `minDigits`, `startNum`, `prefix`, `suffix`; sub-list `list-variables[]`.
 

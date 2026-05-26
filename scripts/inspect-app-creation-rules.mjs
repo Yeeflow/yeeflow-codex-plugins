@@ -104,6 +104,16 @@ function safeString(value) {
   return value === undefined || value === null ? "" : String(value);
 }
 
+function expectedFieldTypeForFieldName(fieldName) {
+  const name = safeString(fieldName);
+  if (name === "Title" || /^Text\d+$/i.test(name)) return { family: "text", allowed: ["text", "string"] };
+  if (/^Datetime\d+$/i.test(name)) return { family: "date", allowed: ["datetime", "date", "time"] };
+  if (/^Decimal\d+$/i.test(name)) return { family: "decimal", allowed: ["decimal", "currency", "number"] };
+  if (/^Bigint\d+$/i.test(name)) return { family: "integer", allowed: ["bigint", "int", "integer", "number"] };
+  if (/^Bit\d+$/i.test(name)) return { family: "boolean", allowed: ["bit", "bool", "boolean"] };
+  return null;
+}
+
 function label(value, fallback) {
   const raw = safeString(value).trim();
   if (!raw) return fallback;
@@ -153,6 +163,16 @@ function inspectList(list, index, findings) {
     const type = safeString(field?.Type).toLowerCase();
     if (type && !SUPPORTED_TYPES.has(type)) addFinding(findings, "warning", "LIST_FIELD_TYPE_UNSUPPORTED", "List field Type is not in the product-team supported Type list.", { location, type });
     const fieldName = safeString(field?.FieldName);
+    const fieldType = safeString(field?.FieldType).toLowerCase();
+    const expectedFieldType = expectedFieldTypeForFieldName(fieldName);
+    if (expectedFieldType && fieldType && !expectedFieldType.allowed.some((token) => fieldType.includes(token))) {
+      addFinding(findings, "error", "FIELD_NAME_FIELDTYPE_MISMATCH", "FieldName storage prefix must align with FieldType; generated fields cloned by array position can import but fail seed/add runtime behavior.", {
+        location,
+        fieldName,
+        fieldType: field?.FieldType,
+        expectedFamily: expectedFieldType.family,
+      });
+    }
     const numericIndex = Number(field?.FieldIndex);
     if (fieldName && !SYSTEM_FIELDS.has(fieldName) && Number.isInteger(numericIndex) && numericIndex > 0) {
       const match = fieldName.match(/(\d+)$/);

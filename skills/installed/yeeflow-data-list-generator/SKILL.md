@@ -7,6 +7,8 @@ description: generate, inspect, validate, package, debug, and improve yeeflow da
 
 Business Travel schema-practice carry-forward: generated data-list and document-library child resources must include `ListModel.Flags = 1`, keep `ListModel.Type` within the schema-v2 enum, and use `ListModel.Status = 1` when Status is emitted. `Defs` and `Layouts` must be arrays, not `null`. FieldIndex/FieldName suffix synchronization, unique identifiers, and valid InternalName rules remain hard gates before import.
 
+Pivot Table runtime-proof carry-forward: the v1 generated package imported but its seeded `ListDatas` rows did not appear and manual Add failed because data-list field definitions were cloned by array position, crossing `FieldName` and `FieldType` storage metadata. The v2 package cloned definitions by `FieldName`, included 20 safe rows, and the user confirmed rows, Pivot Tables, and Add new item worked. Future generated data lists, especially analytics/demo lists, must keep storage families aligned (`Text* -> Text`, `Datetime* -> Datetime/date`, `Decimal* -> Decimal/number`, `Bigint* -> Bigint/integer`, `Bit* -> Bit/boolean`) and validate seed-row keys against those fields before handoff.
+
 ## Application Navigation References
 
 When a generated application exposes data lists through the app navigation menu, reference each list from the root app `Data.Item.ListModel.LayoutView.sort[]` using `Type = 1`, the list `ListID`, root `ListSetID`, `Title`, optional `DisplayName`, optional `Icon`, and boolean `IsHidden` when needed. Omit `DisplayName` to allow Yeeflow to use the data list title as the menu label. Use `Icon: ""` for no-icon.
@@ -60,6 +62,7 @@ Do not build a final `.ydl` when:
 - placeholders remain
 - `validate-ydl-list.js --mode generator --stage final` fails
 - required app/list/field metadata is missing
+- generated field storage metadata is crossed, such as `Text*` with `FieldType: Datetime`, `Datetime*` with `FieldType: Text`, or `Decimal*` with `FieldType: Text`
 - generated main/list metadata is missing `MainListType` or `ListModel.ListType`
 - duplicate `FieldName` or `InternalName` values exist
 - lookup targets or target display fields are unresolved
@@ -158,6 +161,7 @@ Load only the relevant reference:
 - Lookup dependencies must resolve to a target list and display/search field. Standalone generated lists need a dependency map for external lookups; app-level internal lookups should resolve inside the package.
 - Sample lookup values must map to actual referenced target rows. If the master/reference list is local, include sample/reference rows; if it is external, provide a dependency map or omit unsafe sample lookup values.
 - Master/reference lists referenced by generated forms, dashboards, or workflows must be usable runtime lists, not placeholders. Include sample data where needed for local validation and runtime smoke testing.
+- For generated `ListDatas` seed rows, clone field definition templates by target `FieldName`, not by `Defs[]` array position. Seed row keys must resolve to fields whose `FieldName`, `FieldType`, and `Type` agree with the runtime value format. Do not claim analytics runtime proof from empty/unpopulated controls.
 - For generated lists intended as approval-form storage targets, build/import/export the `.ydl` first, then use exported-back list and field metadata to patch the approval form `ContentList` target.
 
 ## Document Library Carry-Forward
