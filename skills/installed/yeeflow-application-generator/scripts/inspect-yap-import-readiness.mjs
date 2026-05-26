@@ -107,6 +107,7 @@ function main() {
     steps.push(runJsonStep("schema-standard-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-yap-schema-standard.mjs"), inputPath]));
     steps.push(runJsonStep("app-creation-rules-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-app-creation-rules.mjs"), inputPath]));
     steps.push(runJsonStep("data-view-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-data-views.mjs"), inputPath]));
+    steps.push(runJsonStep("data-filter-controls-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-data-filter-controls.mjs"), inputPath]));
 
     const decoded = decodeWrapper(inputPath);
     const placeholders = collectPlaceholders(decoded);

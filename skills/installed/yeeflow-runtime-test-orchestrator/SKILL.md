@@ -15,6 +15,8 @@ Never accept fake dashboards, static KPI mockups, or unbound placeholder charts 
 
 For newly learned capabilities, runtime testing should usually be a focused baseline, not a broad full-app test. The runtime plan should prove only the new capability plus required host surfaces, with unrelated app complexity removed. If runtime proof is deferred, classify the branch as export-proven, validator-backed, planning-guidance, import-proven, configuration-visible, render-only, partial, or not tested. Do not recommend merging as runtime-proven until the focused runtime path passed and the tested host/scope is documented.
 
+Data Filter runtime boundary: `Sales_Management_AD.yap` is export-proven for dashboard filter schema only. Do not claim value-change refresh, click-apply refresh, Remove filters reset behavior, approval-form usage, or data-list-form usage as runtime-proven until a focused runtime test imports a minimal package, exercises the filter controls, observes affected data-bound controls, and captures export-back or UI evidence. Runtime reports should separate dashboard schema export proof, Help Center product documentation, validator-backed reference resolution, import/open proof, and actual interactive filter behavior.
+
 ## Runtime Workflow
 
 1. Confirm local validation completed first. If package/materialization validation failed, classify runtime as blocked by package/materialization and do not import.

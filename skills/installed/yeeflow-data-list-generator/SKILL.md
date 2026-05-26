@@ -15,6 +15,8 @@ Data-list menu items can be top-level resources or children of a top-level custo
 
 Use this skill when the user asks to inspect, validate, generate, package, debug, or improve Yeeflow data-list `.ydl` exports or decoded data-list JSON.
 
+Data Filter controls can be used in data list forms at the product level, but `Sales_Management_AD.yap` only export-proves dashboard page usage. Until a data-list-form export proves the exact host schema, treat data-list-form Data Filter placement and runtime behavior as product-documented only. Reuse the shared rules from `docs/studies/data-filter-controls.md`: filter variables bridge value-producing filter controls and downstream data-bound consumers, Apply button and Remove filters are special controls, and generated packages must validate every filter variable reference before handoff.
+
 For existing-app upgrades, data-list changes should be packaged as `.yapk` only from a Yeeflow Version management baseline and only when the upgrade package structure is safe. Preserve existing list IDs and app identity. Do not apply new-app `.yap` fresh-ID rules to existing list objects, and do not claim offline `.yapk` list mutation is safe while the studied `.yapk` `Resource` remains opaque/signed.
 
 ## Standard Workflow

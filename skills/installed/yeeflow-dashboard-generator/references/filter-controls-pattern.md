@@ -8,6 +8,21 @@ Generated validation package: `generated-dashboard-filter-controls-v5.yap`.
 
 Runtime result: proven. `generated-dashboard-filter-controls-v5.yap` imported into `https://codex.yeeflow.com/`, opened, rendered search/radio/range filters, rendered summary/table/chart content, and opened the local `Event Planning` source list with sample rows.
 
+Additional export-learning source: `Sales_Management_AD.yap`, studied in `docs/studies/data-filter-controls.md`.
+
+Export-proven dashboard Data Filter control types from `Sales_Management_AD.yap`:
+
+- `check-filter` for Checkbox filter
+- `select-filter` for Select filter
+- `range-filter` for Range filter
+- `check-range` for Check range
+- `date-filter` for Date filter
+- `relative-period` for Relative period
+- `apply-button` for Apply button
+- `remove-filers` for Remove filters in this sample export
+
+`Sales_Management_AD.yap` also proves filter variables consumed by both dashboard `attrs.data.filter[]` controls and `page.exts[].attr.settings.Conditions[]` report/chart conditions. It includes unresolved stale chart references on the `Dashboard` page, so generated packages must validate every downstream filter variable reference before handoff.
+
 ## App Shape
 
 - one root app/listset
@@ -32,6 +47,8 @@ The dashboard page declares filter variables in `filterVars`:
 - `filter_Range_BudgetNumber`
 
 Filter controls bind to these variables with `binding: "__filter_" + filterVarId`.
+
+`Sales_Management_AD.yap` confirms the same bridge for additional value-producing Data Filter controls. Apply Button and Remove Filters are special controls: they do not bind like normal value-producing filters. Click-apply filters use `attrs.apply_t = "2"` and reference an Apply button through `attrs.apply_btn`.
 
 ## Filter Controls
 
@@ -60,6 +77,16 @@ Range filter:
 - `binding: "__filter_filter_Range_BudgetNumber"`
 - numeric display and behavior settings live in `attrs`
 - studied values include `number_max: 100000`, `number_step: 1000`, `prefix.value: "USD "`, `displayThousandths: "1"`, and `rounded-to: "0"`
+
+Additional `Sales_Management_AD.yap` export-proven controls:
+
+- Checkbox filter: `type: "check-filter"`, `binding: "__filter_<filterVarId>"`, options from `attrs.data.list`, `attrs.display_f`, `attrs.value_f`, optional `attrs.data.filter[]`, and display settings such as `search-enable`, `more-enable`, and `dropdown-enable`.
+- Select filter: `type: "select-filter"`, `binding: "__filter_<filterVarId>"`, options from `attrs.data.list`, `attrs.display_f`, and `attrs.value_f`.
+- Date filter: `type: "date-filter"`, `binding: "__filter_<filterVarId>"`; downstream date-field conditions use the filter variable expression in condition `right`.
+- Check range: `type: "check-range"`, `binding: "__filter_<filterVarId>"`, with `attrs.options[]` range entries. Downstream consumer shape remains unproven in this export.
+- Relative period: `type: "relative-period"`, `binding: "__filter_<filterVarId>"`, with `attrs["choice-options"][]`. Downstream consumer shape remains unproven in this export.
+- Apply button: `type: "apply-button"`; referenced by click-apply filters through `attrs.apply_btn`.
+- Remove filters: exported as `type: "remove-filers"` in this sample. No explicit reset target shape was visible, so clear-all vs selected-reset behavior remains runtime-sensitive.
 
 ## Chart Conditions
 
@@ -107,6 +134,10 @@ Validators should catch:
 - condition variable expression `name` resolves to page `filterVars`
 - condition variable expression `id` equals `__filter_` plus `name`
 - nested condition groups are checked recursively
+- Data Filter controls that bind with `__filter_` must resolve to `page.filterVars[].id`
+- click-apply filters with `attrs.apply_t = "2"` must reference an existing `apply-button` through `attrs.apply_btn`
+- Remove filters explicit reset targets must resolve when present; missing/unknown target structure should warn first
+- unknown Data Filter control types should warn first
 
 ## Stop Conditions
 

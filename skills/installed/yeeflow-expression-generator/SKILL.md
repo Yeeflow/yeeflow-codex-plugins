@@ -9,6 +9,8 @@ Business Travel workflow-publish practice: expression-bearing workflow surfaces 
 
 Use this skill when generating or validating Yeeflow expression editor output across approval forms, dashboards, data-list forms, lookup filters, workflow transitions, workflow action conditions, default values, request numbers, and calculated controls.
 
+Data Filter variables appear in downstream data filter conditions as expression-token arrays with `exprType: "variable"`, `id: "__filter_<filterVarId>"`, and `name: "<filterVarId>"`. `Sales_Management_AD.yap` export-proves this dashboard pattern in data table/list-like filters and report/chart extension `Conditions[]`. Validate that `name` exists in the host page `filterVars[]` and that `id` matches the `__filter_` prefix. Do not invent expression shapes for unsupported Data Filter control types; keep unknown filter variable shapes warning-first until an export proves them.
+
 <!-- scheduled-workflow-ai-assistant-learning:start -->
 ## Scheduled Workflow Expression Context
 

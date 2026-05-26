@@ -1,5 +1,20 @@
 # Yeeflow Application Generation Rules
 
+## Data Filter Controls
+
+Use `docs/studies/data-filter-controls.md` before generating Data Filter controls. The `Sales_Management_AD.yap` learning pass is dashboard export-proven only: value-producing filters bind to embedded dashboard `page.filterVars[]` through `binding = "__filter_" + filterVarId`, and downstream data-bound controls consume those variables through expression-token arrays in data filter conditions.
+
+Generation rules:
+
+- Generate Data Filter controls only when data-bound controls need user-driven filtering.
+- Define filter variables before any control or consumer references them.
+- Wire every value-producing filter control to one existing filter variable.
+- Wire downstream data tables, collections, lookups, charts/reports, summaries, or other data-bound controls to those variables through data filter conditions.
+- Prefer value-change/default behavior for lightweight filters.
+- Use click-apply behavior for multiple or heavier filters, and include a valid Apply button whenever any filter requires it.
+- Include Remove filters only when a reset affordance is useful, and validate explicit reset targets when the export shape is known.
+- Do not generate unsupported Data Filter control types without export/runtime schema proof.
+
 These rules apply to generated new-application `.yap` packages.
 
 ## YAP App Materialization Rules
