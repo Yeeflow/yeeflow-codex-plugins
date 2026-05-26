@@ -255,3 +255,13 @@ For newly generated `.yap` files, do not accept compatibility validation as the 
 
 Generated-final structural errors include missing/invalid Type `1` `ListModel.ListType`, unsafe native `Title` metadata, unresolved data-view columns or stale system pseudo-fields, mismatched `LayoutInResources` IDs, unresolved dashboard dynamic-display/filter references, unresolved collection `ListDataID` context filters, and `ReplaceIds` entries for `TenantID`, `CreatedBy`, or `ModifiedBy`. Warning-level results are acceptable only when classified as non-import-blocking runtime/export-derived warnings.
 <!-- projects-center-import-failure-hardening:end -->
+
+<!-- container-button-action-settings-learning:start -->
+## Container/Button Action Validation
+
+Use `scripts/inspect-container-button-actions.mjs` with dashboard packages that contain actionable Containers or Buttons. `AP Approval Demo v3.yap` export-proves shared action settings for dashboard `container` and `action_button` controls, with action codes `2` Link, `5` Add list item, `6` Open dashboard, and `8` Open approval form.
+
+Generated-final validation must fail unresolved Container/Button action targets: Link without URL/expression URL; Add list item without a resolvable `attrs.data.list.ListID`; passvalues that reference fields missing from the target list; selected `layout` IDs that do not resolve; Open dashboard without a resolvable Type `103` `PageID`; Open approval form without a resolvable approval form `ProcKey`; unknown generated action types; unknown open modes; and invalid custom size objects. Compatibility/source-export mode should warn first for unknown variants.
+
+The aggregate import-readiness gate includes the Container/Button action inspector. Validator-backed checks are not runtime navigation proof; opening behavior still needs focused runtime testing.
+<!-- container-button-action-settings-learning:end -->

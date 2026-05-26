@@ -925,6 +925,14 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
   }
   const rootLayouts = asArray(data.Item && data.Item.Layouts);
   const rootPageLayouts = new Set(rootLayouts.filter((layout) => safeString(layout.Type) === "103").map((layout) => safeString(layout.LayoutID)).filter(Boolean));
+  const approvalFormsByKey = new Set(asArray(data.Forms).map((form) => safeString(form.Key || form.DefKey || form.ProcKey)).filter(Boolean));
+  const layoutsById = new Set();
+  for (const resource of [data.Item, ...asArray(data.Childs)]) {
+    for (const candidateLayout of asArray(resource && resource.Layouts)) {
+      const candidateLayoutId = safeString(candidateLayout.LayoutID);
+      if (candidateLayoutId) layoutsById.add(candidateLayoutId);
+    }
+  }
   const documentLibraryOnlyPackage = isDocumentLibraryOnlyPackage(data);
   if (!rootPageLayouts.size) {
     issue(
@@ -978,7 +986,7 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
         if (!Array.isArray(page.children) || !page.children.length) {
           issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_EMPTY_CHILDREN", "Root Type 103 app page Resource should contain at least one child component.", { title: layout.Title, layoutId, resourceId });
         }
-        validateDashboardPageResource(page, layout, resource, listsById, fieldsByList, rootPageLayouts, report, outerResource);
+        validateDashboardPageResource(page, layout, resource, listsById, fieldsByList, rootPageLayouts, approvalFormsByKey, layoutsById, report, outerResource);
       }
     }
   }
@@ -1142,7 +1150,7 @@ function validateRootNavigationMenuStructure(items, report, depth = 1, path = "$
   });
 }
 
-function validateDashboardPageResource(page, layout, resource, listsById, fieldsByList, rootPageLayouts, report, outerResource) {
+function validateDashboardPageResource(page, layout, resource, listsById, fieldsByList, rootPageLayouts, approvalFormsByKey, layoutsById, report, outerResource) {
   const severity = generatorFinalSeverity(report);
   const title = layout.Title;
   const layoutId = safeString(layout.LayoutID);
@@ -1217,6 +1225,7 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
     if (safeString(node.type) === "pivot-table") {
       pivotTableControls.push({ pointer, controlId, control: node });
     }
+    validateContainerButtonActionControl(node, title, layoutId, pointer, listsById, fieldsByList, rootPageLayouts, approvalFormsByKey, layoutsById, report);
     const dataForm = node.attrs && node.attrs.data && node.attrs.data.form;
     if (dataForm && safeString(dataForm.ListSetID) && safeString(dataForm.ListSetID) !== safeString(resource.ListSetID || (resource.Item && resource.Item.ListID)) && !listsById.has(safeString(dataForm.ListSetID))) {
       issue(report, report.mode === "generator" ? "error" : "dependency", "DASHBOARD_FORM_EXTERNAL_LISTSET_REFERENCE", "Dashboard action references a form/listset outside the package; generated dashboards should model or exclude external dependencies.", { title, layoutId, pointer, listSetId: safeString(dataForm.ListSetID), procKey: safeString(dataForm.ProcKey) });
@@ -1257,6 +1266,85 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
   validateDashboardPivotTableControls(title, layoutId, pivotTableControls, pivotExtByControlId, listsById, fieldsByList, filterVars, report);
   validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report);
   validateDashboardFunctionalQuality(page, title, layoutId, report);
+}
+
+function validateContainerButtonActionControl(node, title, layoutId, pointer, listsById, fieldsByList, rootPageLayouts, approvalFormsByKey, layoutsById, report) {
+  if (!node || !["container", "button", "action_button"].includes(safeString(node.type))) return;
+  const attrs = node.attrs;
+  if (!attrs || !Object.prototype.hasOwnProperty.call(attrs, "action-type")) return;
+  const severity = generatorFinalSeverity(report);
+  const controlType = safeString(node.type);
+  const actionType = safeString(attrs["action-type"]);
+  const knownActionTypes = new Set(["1", "2", "5", "6", "8"]);
+  const knownOpenModes = new Set(["", "modal", "slide", "target", "new"]);
+  const knownModalSizes = new Set(["0", "1", "2", "3", "9"]);
+  if (!knownActionTypes.has(actionType)) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "CONTAINER_BUTTON_ACTION_TYPE_UNKNOWN", "Container/Button action-type should be one of the export-proven action codes: 1 form action, 2 Link, 5 Add list item, 6 Open dashboard, 8 Open approval form.", { title, layoutId, pointer, controlType, actionType });
+  }
+  const op = safeString(attrs.op);
+  if (!knownOpenModes.has(op)) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "CONTAINER_BUTTON_ACTION_OPEN_MODE_UNKNOWN", "Container/Button open behavior should use an export-proven op value: empty/default, modal, slide, target, or new.", { title, layoutId, pointer, controlType, actionType, op });
+  }
+  if (attrs.modalsize !== undefined && !knownModalSizes.has(safeString(attrs.modalsize))) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "CONTAINER_BUTTON_ACTION_SIZE_UNKNOWN", "Container/Button modal size should use an export-proven value. Custom size uses modalsize 9 with cusize.", { title, layoutId, pointer, controlType, actionType, modalsize: attrs.modalsize });
+  }
+  if (safeString(attrs.modalsize) === "9" && attrs.cusize !== undefined && !isObject(attrs.cusize)) {
+    issue(report, severity, "CONTAINER_BUTTON_ACTION_CUSTOM_SIZE_INVALID", "Container/Button custom size should be an object such as { w } or { w, wu } when modalsize is 9.", { title, layoutId, pointer, controlType, actionType });
+  }
+
+  if (actionType === "2") {
+    const link = attrs.link;
+    const hasUrl = typeof link?.url === "string" && link.url.trim();
+    const hasVariable = Array.isArray(link?.variable) && link.variable.length > 0;
+    if (!isObject(link) || (!hasUrl && !hasVariable)) {
+      issue(report, severity, "CONTAINER_BUTTON_LINK_TARGET_MISSING", "Link actions should include attrs.link with a literal URL or a URL expression variable.", { title, layoutId, pointer, controlType });
+    }
+    return;
+  }
+
+  if (actionType === "5") {
+    const listId = safeString(attrs.data && attrs.data.list && attrs.data.list.ListID);
+    if (!listId) {
+      issue(report, severity, "CONTAINER_BUTTON_ADD_LIST_TARGET_MISSING", "Add list item actions should include attrs.data.list.ListID.", { title, layoutId, pointer, controlType });
+    } else if (!listsById.has(listId)) {
+      issue(report, severity, "CONTAINER_BUTTON_ADD_LIST_TARGET_UNRESOLVED", "Add list item actions must reference an included Data List or Document Library when generated for this app.", { title, layoutId, pointer, controlType, listId });
+    }
+    const actionLayoutId = safeString(attrs.layout);
+    if (actionLayoutId && !layoutsById.has(actionLayoutId)) {
+      issue(report, severity, "CONTAINER_BUTTON_ADD_LIST_LAYOUT_UNRESOLVED", "Add list item layout should resolve to a target list/document-library form layout when present.", { title, layoutId, pointer, controlType, actionLayoutId });
+    }
+    for (const [index, passvalue] of asArray(attrs.passvalues).entries()) {
+      const fieldName = safeString(passvalue && passvalue.Name);
+      if (fieldName && listId && fieldsByList.has(listId) && !fieldsByList.get(listId).has(fieldName)) {
+        issue(report, severity, "CONTAINER_BUTTON_PASSVALUE_FIELD_UNRESOLVED", "Container/Button Add list item passvalues must reference fields on the target list.", { title, layoutId, pointer: `${pointer}.attrs.passvalues[${index}]`, controlType, listId, fieldName });
+      }
+    }
+    return;
+  }
+
+  if (actionType === "6") {
+    const pageId = safeString(attrs.data && attrs.data.page && attrs.data.page.PageID);
+    if (!pageId) {
+      issue(report, severity, "CONTAINER_BUTTON_OPEN_DASHBOARD_TARGET_MISSING", "Open dashboard actions should include attrs.data.page.PageID.", { title, layoutId, pointer, controlType });
+    } else if (!rootPageLayouts.has(pageId)) {
+      issue(report, severity, "CONTAINER_BUTTON_OPEN_DASHBOARD_TARGET_UNRESOLVED", "Open dashboard actions must reference an included Type 103 dashboard when generated for this app.", { title, layoutId, pointer, controlType, pageId });
+    }
+    return;
+  }
+
+  if (actionType === "8") {
+    const procKey = safeString(attrs.data && attrs.data.form && attrs.data.form.ProcKey);
+    if (!procKey) {
+      issue(report, severity, "CONTAINER_BUTTON_OPEN_APPROVAL_FORM_TARGET_MISSING", "Open approval form actions should include attrs.data.form.ProcKey.", { title, layoutId, pointer, controlType });
+    } else if (!approvalFormsByKey.has(procKey)) {
+      issue(report, severity, "CONTAINER_BUTTON_OPEN_APPROVAL_FORM_TARGET_UNRESOLVED", "Open approval form actions must reference an included approval form when generated for this app.", { title, layoutId, pointer, controlType, procKey });
+    }
+    return;
+  }
+
+  if (actionType === "1" && !safeString(attrs.control_action || attrs.action || attrs["control_action"])) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "CONTAINER_BUTTON_FORM_ACTION_TARGET_MISSING", "Form action binding actions should include an action/control_action reference.", { title, layoutId, pointer, controlType });
+  }
 }
 
 function isDashboardDataFilterControlType(type) {

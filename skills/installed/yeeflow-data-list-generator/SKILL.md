@@ -451,3 +451,11 @@ For newly generated app-contained data lists, compatibility validation is not en
 
 Do not carry export-native view columns such as stale `ListDataID`, `CreatedBy`, `Created`, `ModifiedBy`, `Modified`, or copied field IDs into generated-final list views unless the current validator explicitly allows that context. Missing `ListType`, export-native unsafe Title metadata, and unresolved view columns are generated-final hard errors and must be fixed before a `.yap` is handed off.
 <!-- projects-center-import-failure-hardening:end -->
+
+<!-- container-button-action-settings-learning:start -->
+## Data List Quick-Create Actions
+
+Dashboard Container/Button `Add list item` actions are export-proven in `docs/studies/container-button-action-settings.md`. Use them for quick-create experiences such as Add task, Create item, Add vendor, New invoice, and Upload document when the target is a Data List or Document Library.
+
+Generated Add list item actions must reference a real target `ListID`, any chosen add/edit form `LayoutID` must resolve, `passvalues[].Name` must reference fields on the target list, and generated lists should remain add-ready. Prefer this structural action over a raw link when the target list/library is included in the package.
+<!-- container-button-action-settings-learning:end -->
