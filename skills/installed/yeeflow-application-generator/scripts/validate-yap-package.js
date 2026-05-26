@@ -1101,6 +1101,9 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
   const filterVars = new Set(asArray(page.filterVars).map((item) => safeString(item.id)).filter(Boolean));
   const reportIds = new Set(asArray(outerResource && outerResource.ReportIds).map(safeString).filter(Boolean));
   const controlIds = new Set();
+  const applyButtonIds = new Set();
+  const dataFilterControls = [];
+  const removeFilterControls = [];
   const seenTempVars = new Set();
   for (const item of asArray(page.tempVars)) {
     const id = safeString(item.id);
@@ -1113,6 +1116,15 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
     if (!isObject(node)) return;
     const controlId = safeString(node.id);
     if (controlId) controlIds.add(controlId);
+    const controlType = safeString(node.type);
+    if (controlType === "apply-button" && controlId) applyButtonIds.add(controlId);
+    if (isDashboardDataFilterControlType(controlType)) {
+      dataFilterControls.push({ pointer, controlId, controlType, binding: safeString(node.binding), attrs: node.attrs || {} });
+    } else if (controlType === "remove-filters" || controlType === "remove-filers") {
+      removeFilterControls.push({ pointer, controlId, controlType, attrs: node.attrs || {} });
+    } else if (controlType && /filter/i.test(controlType) && !isKnownNonDataFilterControlType(controlType)) {
+      issue(report, "warning", "DASHBOARD_DATA_FILTER_TYPE_UNKNOWN", "Dashboard contains an unknown filter-like control type. Treat this as unproven until an export maps the schema.", { title, layoutId, pointer, controlType });
+    }
     const binding = safeString(node.binding);
     if (binding && binding.startsWith("__filter_")) {
       const filterId = binding.replace(/^__filter_/, "");
@@ -1142,6 +1154,8 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
     }
   });
 
+  validateDashboardDataFilterControls(title, layoutId, filterVars, applyButtonIds, dataFilterControls, removeFilterControls, report);
+
   asArray(page.exts).forEach((ext, index) => {
     const attr = ext && ext.attr;
     const extId = safeString(ext && ext.i);
@@ -1165,6 +1179,82 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
   });
   validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report);
   validateDashboardFunctionalQuality(page, title, layoutId, report);
+}
+
+function isDashboardDataFilterControlType(type) {
+  return [
+    "search-filter",
+    "select-filter",
+    "check-filter",
+    "checkbox-filter",
+    "radio-filter",
+    "range-filter",
+    "check-range",
+    "date-filter",
+    "relative-period",
+    "hierarchy-filter",
+    "sorting-filter",
+  ].includes(safeString(type));
+}
+
+function isKnownNonDataFilterControlType(type) {
+  return [
+    "filter",
+    "data-list",
+    "document-library",
+    "collection",
+    "pivot-table",
+    "pie-chart",
+    "bar-chart",
+    "line-chart",
+  ].includes(safeString(type));
+}
+
+function collectFilterVariableRefs(value) {
+  const refs = [];
+  walk(value, (node, pointer) => {
+    if (!isObject(node)) return;
+    const id = safeString(node.id);
+    const name = safeString(node.name);
+    if (id.startsWith("__filter_") || (node.exprType === "variable" && name.startsWith("filter_"))) {
+      refs.push({ pointer, id, name: name || id.replace(/^__filter_/, "") });
+    }
+  });
+  return refs;
+}
+
+function validateDashboardDataFilterControls(title, layoutId, filterVars, applyButtonIds, dataFilterControls, removeFilterControls, report) {
+  const severity = generatorFinalSeverity(report);
+  for (const control of dataFilterControls) {
+    const filterVar = control.binding.startsWith("__filter_") ? control.binding.slice("__filter_".length) : "";
+    if (!filterVar) {
+      issue(report, severity, "DASHBOARD_DATA_FILTER_VARIABLE_MISSING", "Dashboard Data Filter controls should bind to a page filter variable with binding = __filter_<filterVarId>.", { title, layoutId, pointer: control.pointer, controlId: control.controlId, controlType: control.controlType });
+    } else if (!filterVars.has(filterVar)) {
+      issue(report, severity, "DASHBOARD_DATA_FILTER_VARIABLE_UNRESOLVED", "Dashboard Data Filter control binding must resolve to page.filterVars.", { title, layoutId, pointer: control.pointer, controlId: control.controlId, controlType: control.controlType, filterVar });
+    }
+    const applyType = safeString(control.attrs.apply_t || control.attrs.applyType);
+    const applyButton = safeString(control.attrs.apply_btn || control.attrs.applyButton);
+    if (applyType === "2") {
+      if (!applyButton) {
+        issue(report, severity, "DASHBOARD_DATA_FILTER_CLICK_APPLY_BUTTON_MISSING", "Click-on-apply Data Filter controls should reference an Apply button control.", { title, layoutId, pointer: control.pointer, controlId: control.controlId, filterVar });
+      } else if (!applyButtonIds.has(applyButton)) {
+        issue(report, severity, "DASHBOARD_DATA_FILTER_APPLY_BUTTON_UNRESOLVED", "Data Filter apply_btn should reference an existing apply-button control id.", { title, layoutId, pointer: control.pointer, controlId: control.controlId, filterVar, applyButton });
+      }
+    } else if (applyType && !["1", "2"].includes(applyType)) {
+      issue(report, "warning", "DASHBOARD_DATA_FILTER_APPLY_TYPE_UNKNOWN", "Data Filter apply type is not one of the export/documented values 1 or 2. Treat as unproven.", { title, layoutId, pointer: control.pointer, controlId: control.controlId, applyType });
+    }
+  }
+  for (const control of removeFilterControls) {
+    const refs = collectFilterVariableRefs(control.attrs);
+    for (const ref of refs) {
+      if (ref.name && !filterVars.has(ref.name)) {
+        issue(report, severity, "DASHBOARD_REMOVE_FILTERS_VARIABLE_UNRESOLVED", "Remove filters reset targets should resolve to page.filterVars when explicit targets are configured.", { title, layoutId, pointer: `${control.pointer}.attrs${ref.pointer.slice(1)}`, controlId: control.controlId, filterVar: ref.name });
+      }
+    }
+    if (!refs.length) {
+      issue(report, "warning", "DASHBOARD_REMOVE_FILTERS_TARGETS_UNSPECIFIED", "Remove filters control has no export-visible explicit reset targets; treat clear-all vs selected-reset behavior as runtime-sensitive.", { title, layoutId, pointer: control.pointer, controlId: control.controlId, controlType: control.controlType });
+    }
+  }
 }
 
 function dashboardTextValue(node) {
