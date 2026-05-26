@@ -4,13 +4,13 @@ import zlib from "node:zlib";
 
 const GZIP_PREFIX = "[______gizp______]";
 const SOURCE_PACKAGE = "/Users/Renger/Downloads/generated-dashboard-filter-controls-v5.yap";
-const OUT_PACKAGE = "pivot-table-control-runtime-proof.v1.yap";
-const DOWNLOADS_COPY = "/Users/Renger/Downloads/pivot-table-control-runtime-proof.v1.yap";
-const OUT_RESOURCE = ".tmp/pivot-table-control-runtime-proof.v1.resource.json";
-const OUT_DATA = ".tmp/pivot-table-control-runtime-proof.v1.app-def.json";
-const OUT_REPORT = ".tmp/pivot-table-control-runtime-proof.v1.generation-report.json";
-const TITLE = "Pivot Table Runtime Proof";
-const DESCRIPTION = "Focused generated dashboard package for Pivot Table import/open/render runtime proof with synthetic local rows only.";
+const OUT_PACKAGE = "pivot-table-control-runtime-proof-with-sample-data.v2.yap";
+const DOWNLOADS_COPY = "/Users/Renger/Downloads/pivot-table-control-runtime-proof-with-sample-data.v2.yap";
+const OUT_RESOURCE = ".tmp/pivot-table-control-runtime-proof-with-sample-data.v2.resource.json";
+const OUT_DATA = ".tmp/pivot-table-control-runtime-proof-with-sample-data.v2.app-def.json";
+const OUT_REPORT = ".tmp/pivot-table-control-runtime-proof-with-sample-data.v2.generation-report.json";
+const TITLE = "Pivot Table Runtime Proof with Sample Data";
+const DESCRIPTION = "Focused generated dashboard package for Pivot Table manual import testing with 20 safe synthetic list rows.";
 const FRESH_ID_BASE = 2060500000001000000n;
 
 function isObject(value) {
@@ -102,7 +102,12 @@ function configureSyntheticList(data) {
     { fieldName: "Text5", displayName: "Stage", internalName: "Stage", type: "input", fieldIndex: 5 },
     { fieldName: "Text6", displayName: "Status", internalName: "Status", type: "input", fieldIndex: 6 },
   ];
-  list.Defs = fields.map((field, index) => setField(clone(list.Defs[index]), field, listId, index));
+  const templateDefByFieldName = new Map(list.Defs.map((def) => [String(def.FieldName), def]));
+  list.Defs = fields.map((field, index) => {
+    const templateDef = templateDefByFieldName.get(field.fieldName);
+    if (!templateDef) throw new Error(`Template package does not contain a reusable field definition for ${field.fieldName}.`);
+    return setField(clone(templateDef), field, listId, index);
+  });
 
   const layout = list.Layouts?.[0];
   if (layout) {
@@ -135,6 +140,18 @@ function configureSyntheticList(data) {
     ["2060500000001000106", "Fjord Launch", "New Business", "Casey", "West", "Paid Search", "2025-01-18", "31000", "Proposal", "Open"],
     ["2060500000001000107", "Granite Cross Sell", "Existing Business", "Avery", "East", "Referral", "2025-03-11", "14000", "Qualified", "Open"],
     ["2060500000001000108", "Harbor Entry", "New Business", "Blake", "North", "Organic Social", "2025-05-06", "22000", "Negotiation", "Open"],
+    ["2060500000001000109", "Iris Renewal", "Existing Business", "Casey", "South", "Referral", "2025-06-19", "17500", "Won", "Closed"],
+    ["2060500000001000110", "Juniper Pilot", "New Business", "Avery", "West", "Direct Traffic", "2025-07-22", "9500", "Qualified", "Open"],
+    ["2060500000001000111", "Keystone Rollout", "New Business", "Blake", "East", "Paid Search", "2024-10-03", "42000", "Negotiation", "Open"],
+    ["2060500000001000112", "Lumen Services", "Existing Business", "Casey", "North", "Email Marketing", "2024-11-12", "26000", "Proposal", "Open"],
+    ["2060500000001000113", "Maple Renewal", "Existing Business", "Avery", "South", "Organic Social", "2025-02-04", "13400", "Won", "Closed"],
+    ["2060500000001000114", "Nimbus Entry", "New Business", "Blake", "West", "Referral", "2025-08-18", "28800", "Proposal", "Open"],
+    ["2060500000001000115", "Orchid Upgrade", "Existing Business", "Casey", "East", "Direct Traffic", "2024-12-06", "19800", "Qualified", "Open"],
+    ["2060500000001000116", "Pioneer Expansion", "New Business", "Avery", "North", "Paid Search", "2025-09-09", "36500", "Negotiation", "Open"],
+    ["2060500000001000117", "Quartz Renewal", "Existing Business", "Blake", "South", "Email Marketing", "2024-05-17", "11100", "Won", "Closed"],
+    ["2060500000001000118", "River Pilot", "New Business", "Casey", "West", "Organic Social", "2024-08-26", "16400", "Qualified", "Open"],
+    ["2060500000001000119", "Summit Services", "Existing Business", "Avery", "East", "Referral", "2025-10-14", "24500", "Proposal", "Open"],
+    ["2060500000001000120", "Timber Rollout", "New Business", "Blake", "North", "Direct Traffic", "2025-11-03", "33750", "Negotiation", "Open"],
   ];
   list.ListDatas = Object.fromEntries(rows.map(([id, title, type, owner, region, source, closeDate, amount, stage, status]) => [id, {
     ListDataID: id,

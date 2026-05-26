@@ -7,6 +7,8 @@ This is a focused runtime proof pass for Dashboard Pivot Table Data Analytics co
 - Branch: `codex/pivot-table-control-runtime-proof`
 - Generated package: `pivot-table-control-runtime-proof.v1.yap`
 - Downloads copy: `/Users/Renger/Downloads/pivot-table-control-runtime-proof.v1.yap`
+- Follow-up package: `pivot-table-control-runtime-proof-with-sample-data.v2.yap`
+- Follow-up Downloads copy: `/Users/Renger/Downloads/pivot-table-control-runtime-proof-with-sample-data.v2.yap`
 - Runtime site: `https://codex.yeeflow.com/`
 - App name: `Pivot Table Runtime Proof`
 - Dashboard page: `Dashboard`
@@ -17,8 +19,10 @@ This is a focused runtime proof pass for Dashboard Pivot Table Data Analytics co
 - Dashboard Pivot Table schema remains export-proven from `CRM - Customer relationship management (1).yap`.
 - The generated package is locally validator-backed for Pivot Table data source, row, column, value, aggregation, and date-grouping references.
 - Runtime import/open/empty-render behavior is runtime-proven for the generated representative Dashboard package.
-- Populated Pivot Table aggregation rendering, grand totals, and displayed numeric/date-grouped values are not runtime-proven in this pass.
-- Data List form Pivot Table behavior, alternate data source classes, Data Filter variable interaction, permissions, security, large-data performance, workflow behavior, and data mutation are not runtime-proven.
+- The v2 follow-up package is user-confirmed to work well after manual import, and adding new items in its data list is user-confirmed successful.
+- Populated Pivot Table rendering is user-confirmed at package level, but this pass does not separately prove exhaustive aggregation correctness or every individual value.
+- Data List form Pivot Table behavior, alternate data source classes, Data Filter variable interaction, permissions, security, large-data performance, and workflow behavior are not runtime-proven.
+- Data mutation proof is limited to adding new items in the v2 package's `Deals Analytics Runtime Test` data list; do not generalize it to other lists, workflows, permissions, or bulk operations.
 
 ## Generated Package
 
@@ -31,6 +35,8 @@ The generator script `generate-pivot-table-control-runtime-proof.mjs` creates a 
 | Average Amount by Stage and Deal Type | Stage | Deal Type | `AVG(Amount)` | additional numeric aggregation representative |
 
 The package uses synthetic fields and local-safe sample row definitions only. The source export and decoded payloads are not committed.
+
+The v2 follow-up package uses the same three Pivot Table controls and includes 20 safe synthetic sample rows in `Deals Analytics Runtime Test`. It also fixes the generated field definition alignment by cloning data-list field definitions by `FieldName`, so exported `FieldID` / `FieldName` / row-cell references stay aligned after import.
 
 ## Local Validation
 
@@ -75,6 +81,27 @@ As a result, this pass does not prove:
 - grand total row or column display with values
 - aggregation correctness
 
+## V2 Follow-Up Result
+
+After the v1 blocker, the generator produced `pivot-table-control-runtime-proof-with-sample-data.v2.yap` with 20 safe synthetic data-list rows and field definitions cloned by field name instead of by array position.
+
+Local validation for v2 passed with zero errors:
+
+- `node --check generate-pivot-table-control-runtime-proof.mjs`: pass
+- Pivot Table inspector: pass, 3 Pivot Tables, 0 findings
+- Aggregate import-readiness inspector: `pass_with_warnings`, 0 errors
+
+The v2 package was copied to `/Users/Renger/Downloads/pivot-table-control-runtime-proof-with-sample-data.v2.yap` for manual import testing.
+
+The user confirmed that the regenerated package works well and that new items can be added successfully in the data list. This resolves the v1 data-list sample/add blocker for the focused v2 package.
+
+The confirmation is intentionally narrow:
+
+- generated v2 package import/open/use is user-confirmed
+- data-list sample/add behavior is user-confirmed for this v2 app
+- Dashboard Pivot Table package behavior is user-confirmed at practical smoke-test level
+- exhaustive aggregation correctness, every aggregation function, every date grouping mode, alternate data source classes, Data Filter variable interaction, Data List form hosting, permissions, security, large-data performance, and workflow behavior remain unproven
+
 ## Runtime Observations
 
 Observed at runtime:
@@ -89,10 +116,13 @@ Observed at runtime:
 
 Not observed in this pass:
 
-- populated row/column/value grid cells
-- populated grand totals
-- count/SUM/date-grouped value output
+- exhaustive aggregation correctness
+- all supported aggregation functions
+- all supported date grouping modes
+- Data Filter variable interaction
+- alternate data source classes
+- Data List form Pivot Table hosting
 
 ## Next Step
 
-Run a narrow follow-up proof that starts from a package or API path known to seed safe synthetic data rows at import time, or first resolve the generated-list `Add failed` behavior with a data-list runtime baseline. Then re-run the same Dashboard Pivot Table proof targets for populated count, numeric sum, date grouping, and grand total rendering.
+If broader proof is needed, run a dedicated aggregation-correctness pass with known expected values, plus separate focused passes for Data List form hosting, Data Filter variable interaction, and alternate data sources such as Document Library, Form Report, and Data Report.
