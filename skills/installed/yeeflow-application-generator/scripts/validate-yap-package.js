@@ -1141,6 +1141,9 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
     if (dataList && safeString(dataList.ListID) && !listsById.has(safeString(dataList.ListID))) {
       issue(report, severity, "DASHBOARD_CONTROL_LIST_REFERENCE_UNRESOLVED", "Dashboard control data.list references a list not included in the package.", { title, layoutId, pointer, listId: safeString(dataList.ListID) });
     }
+    if (node.attrs && node.attrs.data) {
+      validateDashboardFilterConsumerRefs(title, layoutId, `${pointer}.attrs.data`, node.attrs.data, filterVars, report);
+    }
     if (safeString(node.type) === "document-library") {
       validateDashboardDocLibraryControl(node, title, layoutId, pointer, listsById, fieldsByList, report);
     }
@@ -1194,6 +1197,7 @@ function isDashboardDataFilterControlType(type) {
     "relative-period",
     "hierarchy-filter",
     "sorting-filter",
+    "sorting-filters",
   ].includes(safeString(type));
 }
 
@@ -1221,6 +1225,28 @@ function collectFilterVariableRefs(value) {
     }
   });
   return refs;
+}
+
+function validateDashboardFilterConsumerRefs(title, layoutId, pointer, data, filterVars, report) {
+  const severity = generatorFinalSeverity(report);
+  for (const [fulltextIndex, item] of asArray(data.fulltext).entries()) {
+    for (const ref of collectFilterVariableRefs(item.value)) {
+      if (ref.name && !filterVars.has(ref.name)) {
+        issue(report, severity, "DASHBOARD_FULLTEXT_FILTER_VARIABLE_UNRESOLVED", "Dashboard fulltext filter expression should reference a page filterVars id.", { title, layoutId, pointer: `${pointer}.fulltext[${fulltextIndex}].value${ref.pointer.slice(1)}`, filterVar: ref.name });
+      }
+      if (ref.name && ref.id && ref.id !== `__filter_${ref.name}`) {
+        issue(report, severity, "DASHBOARD_FULLTEXT_FILTER_VARIABLE_ID_MISMATCH", "Dashboard fulltext filter expression id should use the __filter_ prefix plus the filter variable name.", { title, layoutId, pointer: `${pointer}.fulltext[${fulltextIndex}].value${ref.pointer.slice(1)}`, id: ref.id, expected: `__filter_${ref.name}` });
+      }
+    }
+  }
+  for (const [sortIndex, ref] of collectFilterVariableRefs(data.sortingfilter).entries()) {
+    if (ref.name && !filterVars.has(ref.name)) {
+      issue(report, severity, "DASHBOARD_SORTING_FILTER_VARIABLE_UNRESOLVED", "Dashboard sortingfilter expression should reference a page filterVars id.", { title, layoutId, pointer: `${pointer}.sortingfilter[${sortIndex}]`, filterVar: ref.name });
+    }
+    if (ref.name && ref.id && ref.id !== `__filter_${ref.name}`) {
+      issue(report, severity, "DASHBOARD_SORTING_FILTER_VARIABLE_ID_MISMATCH", "Dashboard sortingfilter expression id should use the __filter_ prefix plus the filter variable name.", { title, layoutId, pointer: `${pointer}.sortingfilter[${sortIndex}]`, id: ref.id, expected: `__filter_${ref.name}` });
+    }
+  }
 }
 
 function validateDashboardDataFilterControls(title, layoutId, filterVars, applyButtonIds, dataFilterControls, removeFilterControls, report) {
