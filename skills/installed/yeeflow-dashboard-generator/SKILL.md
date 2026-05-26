@@ -39,6 +39,8 @@ When a dashboard/reporting control depends on a data-list, document-library, or 
 
 When a dashboard uses Data Filter controls, inspect `docs/studies/data-filter-controls.md`, `docs/studies/normalized/data-filter-controls/`, and `references/filter-controls-pattern.md` first. `Sales_Management_AD.yap` export-proves dashboard Checkbox, Select, Range, Check range, Date, Relative period, Apply button, and Remove filters shapes. `CRM - Customer relationship management.yap` export-proves Search, Radio, Hierarchy, and Sorting shapes. Filter variables live in embedded page `filterVars[]`, value-producing controls bind with `__filter_`, and downstream table/report/chart consumers use expression-token references in data filter conditions, fulltext filters, or sorting-filter entries. Use Apply button only for click-apply filters and treat Remove filters as a special reset control. Dashboard schema is export-proven; approval/data-list form hosts and interactive runtime behavior still need separate proof.
 
+When a dashboard uses Pivot Table controls, inspect `docs/studies/pivot-table-control.md`, `docs/studies/normalized/pivot-table-control/`, and `scripts/inspect-pivot-table-controls.mjs` first. `CRM - Customer relationship management (1).yap` export-proves the dashboard host schema: the page contains visible `type = "pivot-table"` controls and matching `page.exts[]` entries with `category = "___Pivot___"`, `key = "PivotTable"`, and `i` equal to the control id. Use Pivot Tables for multidimensional summaries with rows, columns, and values. Resolve every source and field before handoff, use count aggregations for counts and numeric aggregations only on numeric/currency fields, restrict date groupings to date/time fields, and style `header`, `body`, `subtotal`, and `grandtotal` sections for readable dashboard tables. Data Filter variable references in Pivot Table conditions must resolve to page `filterVars[]`; the CRM Pivot Tables did not themselves consume filter variables, so interactive filtering remains unproven until runtime-tested.
+
 ## Core Rule
 
 Do not start complex dashboard generation from a complex dashboard export.
@@ -284,6 +286,7 @@ Stop before final generation if:
 - dashboard `exts[].i` does not resolve to a page control id
 - dashboard `exts[].i` is missing from `Resource.ReportIds` when report ids are present
 - dashboard chart `exts[].settings.rows[]` or `values[]` field references do not resolve to the source list fields
+- dashboard Pivot Table source, row, column, value, date-grouping, aggregation, or filter-variable references do not resolve
 - dashboard filter control binding does not resolve to page `filterVars`
 - dashboard chart condition variable expression does not resolve to page `filterVars`
 - `save_var` references do not resolve to `tempVars`
