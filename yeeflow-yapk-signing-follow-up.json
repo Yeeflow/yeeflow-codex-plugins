@@ -1,0 +1,153 @@
+{
+  "studyDate": "2026-05-27",
+  "scope": "redacted follow-up on .yapk wrapper signing versus Resource generation",
+  "apiDocumentationObserved": {
+    "setSign": {
+      "method": "POST",
+      "path": "/utils/apppackage/setsign",
+      "purpose": "generate Sign for wrapper fields when Resource is valid"
+    },
+    "verifySign": {
+      "method": "POST",
+      "path": "/utils/apppackage/verifysign",
+      "purpose": "verify wrapper fields plus Sign"
+    },
+    "generateIds": {
+      "method": "GET",
+      "path": "/utils/generate/ids",
+      "purpose": "generate unique IDs"
+    }
+  },
+  "artifactAccess": [
+    {
+      "label": "source version package",
+      "pathClass": "Downloads",
+      "readableInThisRun": true
+    },
+    {
+      "label": "Yeeflow-generated follow-up version",
+      "pathClass": "Downloads",
+      "readableInThisRun": true
+    },
+    {
+      "label": "companion workspace signing markdown and scripts",
+      "pathClass": "other local workspace",
+      "existsInThisRun": true,
+      "readableInThisRun": false,
+      "note": "Direct reads hung in this environment; user-provided findings are recorded as imported/user-tested evidence."
+    },
+    {
+      "label": "companion workspace signed wrapper outputs",
+      "pathClass": "other local workspace",
+      "existsInThisRun": true,
+      "readableInThisRun": false,
+      "note": "Direct reads hung in this environment; raw package files were not copied."
+    }
+  ],
+  "safeLocalPackageStats": [
+    {
+      "label": "source version package",
+      "wrapperKeys": [
+        "PackageId",
+        "TenantID",
+        "AppID",
+        "ListID",
+        "Title",
+        "Description",
+        "IconUrl",
+        "Resource",
+        "Notes",
+        "Author",
+        "Date",
+        "Version",
+        "Sign"
+      ],
+      "hasBom": true,
+      "fileBytes": 8228,
+      "resourceBase64Length": 7628,
+      "resourceDecodedBytes": 5719,
+      "resourceEntropy": 7.9684,
+      "decodeAttempts": {
+        "gunzip": "fail",
+        "inflate": "fail",
+        "inflateRaw": "fail",
+        "brotli": "fail",
+        "unzip": "fail"
+      }
+    },
+    {
+      "label": "Yeeflow-generated follow-up version",
+      "wrapperKeys": [
+        "PackageId",
+        "TenantID",
+        "AppID",
+        "ListID",
+        "Title",
+        "Description",
+        "IconUrl",
+        "Resource",
+        "Notes",
+        "Author",
+        "Date",
+        "Version",
+        "Sign"
+      ],
+      "hasBom": true,
+      "fileBytes": 11698,
+      "resourceBase64Length": 11124,
+      "resourceDecodedBytes": 8342,
+      "resourceEntropy": 7.9763,
+      "decodeAttempts": {
+        "gunzip": "fail",
+        "inflate": "fail",
+        "inflateRaw": "fail",
+        "brotli": "fail",
+        "unzip": "fail"
+      }
+    }
+  ],
+  "safeResourceComparison": {
+    "resourceChanged": true,
+    "decodedByteLengths": [
+      5719,
+      8342
+    ],
+    "commonPrefixBytes": 0,
+    "commonSuffixBytes": 0,
+    "samePositionByteRatio": 0.0061,
+    "stableWrapperFields": [
+      "TenantID",
+      "AppID",
+      "ListID",
+      "Title",
+      "Description",
+      "IconUrl",
+      "Author"
+    ],
+    "changedWrapperFields": [
+      "PackageId",
+      "Version",
+      "Notes",
+      "Date",
+      "Sign",
+      "Resource"
+    ]
+  },
+  "importedUserTestedFindings": {
+    "setSignWorksForValidResource": true,
+    "verifySignConfirmsGeneratedSignature": true,
+    "wrapperOnlySignedPackageAccepted": true,
+    "wrapperOnlyContentChanged": false,
+    "normalYapResourceEncodingsRejected": true,
+    "singleByteResourceMutationRejected": true
+  },
+  "updatedConclusion": "Wrapper signing is evidence-backed for valid existing .yapk Resource payloads; app-content Resource generation remains unsolved and offline .yapk content mutation remains unsupported.",
+  "redactionPolicy": {
+    "rawYapkCommitted": false,
+    "rawResourceCommitted": false,
+    "rawSignCommitted": false,
+    "rawIdsCommitted": false,
+    "rawApiResponsesCommitted": false,
+    "secretsCommitted": false
+  }
+}

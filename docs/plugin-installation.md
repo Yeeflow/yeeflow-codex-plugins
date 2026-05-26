@@ -338,6 +338,6 @@ v0.4.0 install smoke prompts tested:
 - No OAuth.
 - No Yeeflow API integration.
 - No MCP server.
-- `.yapk` mutation is not supported.
+- `.yapk` app-content mutation is not supported. Wrapper signing for already-valid `.yapk Resource` payloads is study evidence only and does not solve Resource generation.
 - Runtime testing still requires Yeeflow access.
 - Public form custom code support is not claimed unless tested.

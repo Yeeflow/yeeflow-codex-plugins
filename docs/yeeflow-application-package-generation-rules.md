@@ -81,6 +81,8 @@ Runtime update: a metadata-only proof package that preserved `Resource`, `Sign`,
 
 Multi-version feasibility update: three Yeeflow-generated `.yapk` packages from the same app lineage showed stable `TenantID`, `AppID`, `ListID`, app title/description/icon, and author, while `PackageId`, `Version`, `Notes`, `Date`, `Sign`, and `Resource` changed. All resources stayed opaque/high-entropy, normal decompression failed, and searched app strings were not readable. Classification is **not locally generatable with current knowledge**. Use Yeeflow Version management to generate official `.yapk` upgrade packages.
 
+Signing follow-up: product `setsign`/`verifysign` utilities can sign and verify `.yapk` wrappers when `Resource` is already valid `.yapk` payload. This proves wrapper signing, not app-content generation. A wrapper-only signed package can be accepted while leaving app content unchanged if `Resource` is unchanged. Normal `.yap` Resource encodings and byte-flipped `.yapk` resources are rejected by the signing path. Until Yeeflow provides the Resource-generation API or encoding method used by Version management, `.yapk` app-content mutation remains unsupported.
+
 ## Required User Guidance
 
 When a user asks to modify a Yeeflow app, clarify the target package type:

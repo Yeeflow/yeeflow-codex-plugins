@@ -39,6 +39,7 @@ Search decoded package content for:
 - `.yap` can be generated for new application creation.
 - `.yapk` is treated as read-only/server-generated until Yeeflow signing and Resource mechanisms are proven.
 - Do not mutate `.yapk` contents for an upgrade claim. Export, inspect, and document findings instead.
+- Product signing utilities can sign and verify wrappers only when `Resource` is already valid `.yapk` opaque payload. Wrapper-sign success does not prove app-content mutation, and unchanged `Resource` means unchanged app content.
 
 ## Import Decision
 

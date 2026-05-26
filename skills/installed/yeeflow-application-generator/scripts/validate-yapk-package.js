@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 const fs = require("fs");
-const crypto = require("crypto");
 
 const REQUIRED_KEYS = [
   "PackageId",
@@ -40,6 +39,43 @@ function entropy(buffer) {
   return Number(out.toFixed(4));
 }
 
+function isBase64(value) {
+  if (typeof value !== "string" || !value) return false;
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(value) || value.length % 4 !== 0) return false;
+  return Buffer.from(value, "base64").toString("base64") === value;
+}
+
+function compareBuffers(left, right) {
+  const min = Math.min(left.length, right.length);
+  let commonPrefixBytes = 0;
+  while (commonPrefixBytes < min && left[commonPrefixBytes] === right[commonPrefixBytes]) commonPrefixBytes += 1;
+
+  let commonSuffixBytes = 0;
+  while (
+    commonSuffixBytes < min - commonPrefixBytes &&
+    left[left.length - 1 - commonSuffixBytes] === right[right.length - 1 - commonSuffixBytes]
+  ) {
+    commonSuffixBytes += 1;
+  }
+
+  let samePositionBytes = 0;
+  for (let i = 0; i < min; i += 1) {
+    if (left[i] === right[i]) samePositionBytes += 1;
+  }
+
+  return {
+    leftBytes: left.length,
+    rightBytes: right.length,
+    commonPrefixBytes,
+    commonSuffixBytes,
+    samePositionByteRatio: min ? Number((samePositionBytes / min).toFixed(4)) : 0,
+  };
+}
+
+function changedKeys(left, right, keys) {
+  return keys.filter((key) => JSON.stringify(left[key]) !== JSON.stringify(right[key]));
+}
+
 function validate(file, baselineFile = null) {
   const errors = [];
   const warnings = [];
@@ -56,11 +92,11 @@ function validate(file, baselineFile = null) {
 
   let resourceBytes = Buffer.alloc(0);
   if (typeof wrapper.Resource === "string") {
-    try {
+    if (!isBase64(wrapper.Resource)) {
+      errors.push({ code: "YAPK_RESOURCE_BASE64_INVALID", message: "Resource must be canonical base64 text." });
+    } else {
       resourceBytes = Buffer.from(wrapper.Resource, "base64");
       if (!resourceBytes.length) errors.push({ code: "YAPK_RESOURCE_EMPTY", message: "Decoded Resource payload is empty." });
-    } catch (error) {
-      errors.push({ code: "YAPK_RESOURCE_BASE64_INVALID", message: `Resource is not valid base64: ${error.message}` });
     }
   }
 
@@ -76,17 +112,19 @@ function validate(file, baselineFile = null) {
   }
 
   const metadata = {
-    PackageId: wrapper.PackageId,
-    TenantID: wrapper.TenantID,
-    AppID: wrapper.AppID,
-    ListID: wrapper.ListID,
-    Title: wrapper.Title,
-    Version: wrapper.Version,
-    Date: wrapper.Date,
-    Sign: wrapper.Sign,
+    redactedIdentityPresent: {
+      PackageId: Boolean(wrapper.PackageId),
+      TenantID: Boolean(wrapper.TenantID),
+      AppID: Boolean(wrapper.AppID),
+      ListID: Boolean(wrapper.ListID),
+    },
+    titlePresent: Boolean(wrapper.Title),
+    versionPresent: Boolean(wrapper.Version),
+    datePresent: Boolean(wrapper.Date),
+    signByteLength: Buffer.from(wrapper.Sign || "", "base64").length,
     resourceBytes: resourceBytes.length,
     resourceEntropy: entropy(resourceBytes),
-    resourceSha256: crypto.createHash("sha256").update(resourceBytes).digest("base64"),
+    resourceBase64Length: typeof wrapper.Resource === "string" ? wrapper.Resource.length : 0,
   };
 
   if (metadata.resourceEntropy > 7.5) {
@@ -96,6 +134,12 @@ function validate(file, baselineFile = null) {
     });
   }
 
+  warnings.push({
+    code: "YAPK_RESOURCE_VALIDATED_OPAQUE_PAYLOAD",
+    message: ".yapk Resource is a base64 outer encoding with an opaque validated inner payload. Wrapper signing alone does not prove app-content generation.",
+  });
+
+  let baselineComparison = null;
   if (baselineFile) {
     const baseline = readWrapper(baselineFile);
     for (const key of ["PackageId", "TenantID", "AppID", "ListID", "Resource", "Sign"]) {
@@ -107,6 +151,34 @@ function validate(file, baselineFile = null) {
         });
       }
     }
+
+    const baselineResourceBytes = isBase64(baseline.Resource) ? Buffer.from(baseline.Resource, "base64") : Buffer.alloc(0);
+    const wrapperKeys = Array.from(new Set([...Object.keys(baseline), ...Object.keys(wrapper)])).sort();
+    const wrapperChangedFields = changedKeys(baseline, wrapper, wrapperKeys);
+    const metadataChangedFields = changedKeys(baseline, wrapper, ["Title", "Description", "IconUrl", "Notes", "Author", "Date", "Version"]);
+    const resourceChanged = JSON.stringify(wrapper.Resource) !== JSON.stringify(baseline.Resource);
+    const signChanged = JSON.stringify(wrapper.Sign) !== JSON.stringify(baseline.Sign);
+    baselineComparison = {
+      wrapperChangedFields,
+      metadataChangedFields,
+      resourceChanged,
+      signChanged,
+      resourceStats: compareBuffers(baselineResourceBytes, resourceBytes),
+    };
+
+    if (!resourceChanged && metadataChangedFields.length) {
+      warnings.push({
+        code: "YAPK_METADATA_ONLY_NO_CONTENT_CHANGE",
+        message: "Metadata changed while Resource is unchanged. This is a metadata-only package; app content is unchanged.",
+      });
+    }
+
+    if (resourceChanged) {
+      warnings.push({
+        code: "YAPK_RESOURCE_CHANGED_UNSUPPORTED",
+        message: "Resource differs from baseline. Treat as Yeeflow-generated or unsupported unless the Resource-generation path is proven.",
+      });
+    }
   }
 
   return {
@@ -114,6 +186,7 @@ function validate(file, baselineFile = null) {
     file,
     baselineFile,
     metadata,
+    baselineComparison,
     errors,
     warnings,
   };
