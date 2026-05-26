@@ -207,7 +207,7 @@ The Projects Center fixed package import is user-proven only for import success.
 <!-- container-button-action-settings-learning:start -->
 ## Container/Button Action Runtime Boundary
 
-Container/Button Action settings from `AP Approval Demo v3.yap` are export-proven and validator-backed only until a focused runtime test clicks the generated controls. A runtime proof should separately verify Link opening, Add list item form opening, Open dashboard navigation, Open approval form start/open behavior, open modes such as modal/slide/full-page/new-window, target resolution, and absence of dashboard crashes.
+Container/Button Action settings from `AP Approval Demo v3.yap` are export-proven and validator-backed. `docs/studies/container-button-action-runtime-proof.md` adds user-confirmed focused generated-package proof for representative Link, Add list item, Open dashboard, and Open approval form navigation/open behavior with modal/pop-up, slide-in, and full-page/target modes.
 
-Do not treat local validation or Builder UI visibility as proof that the action executes correctly. If runtime proof is requested, use a safe generated package with disposable data and no private links, emails, credentials, or destructive updates.
+Keep the proof narrow: save/submit, workflow execution, approval routing, cross-app targets, form-action binding, permissions/security, external sensitive navigation, and every open-mode/size combination remain unproven. If an Open approval form action exposes `process request pageUrl is null`, inspect the target approval form request page shape before retesting.
 <!-- container-button-action-settings-learning:end -->

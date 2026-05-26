@@ -263,5 +263,7 @@ Use `scripts/inspect-container-button-actions.mjs` with dashboard packages that 
 
 Generated-final validation must fail unresolved Container/Button action targets: Link without URL/expression URL; Add list item without a resolvable `attrs.data.list.ListID`; passvalues that reference fields missing from the target list; selected `layout` IDs that do not resolve; Open dashboard without a resolvable Type `103` `PageID`; Open approval form without a resolvable approval form `ProcKey`; unknown generated action types; unknown open modes; and invalid custom size objects. Compatibility/source-export mode should warn first for unknown variants.
 
-The aggregate import-readiness gate includes the Container/Button action inspector. Validator-backed checks are not runtime navigation proof; opening behavior still needs focused runtime testing.
+The aggregate import-readiness gate includes the Container/Button action inspector. It should not fail unrelated non-Pivot packages solely because the optional Pivot Table inspector cannot find a literal page named `Dashboard`, but it must still fail generated-final unresolved Container/Button action targets.
+
+Focused runtime proof in `docs/studies/container-button-action-runtime-proof.md` confirms representative generated current-app action navigation after local validation. Validator-backed checks still do not prove save/submit/workflow execution, cross-app targets, form-action binding, permissions, or all open-mode/size combinations.
 <!-- container-button-action-settings-learning:end -->
