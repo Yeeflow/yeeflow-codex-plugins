@@ -102,6 +102,7 @@ function configureSyntheticList(data) {
     { fieldName: "Text5", displayName: "Stage", internalName: "Stage", type: "input", fieldIndex: 5 },
     { fieldName: "Text6", displayName: "Status", internalName: "Status", type: "input", fieldIndex: 6 },
   ];
+  // Clone by storage FieldName so FieldType/Type metadata stays aligned with seeded row keys.
   const templateDefByFieldName = new Map(list.Defs.map((def) => [String(def.FieldName), def]));
   list.Defs = fields.map((field, index) => {
     const templateDef = templateDefByFieldName.get(field.fieldName);

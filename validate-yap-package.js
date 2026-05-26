@@ -564,6 +564,38 @@ function normalizeType(field) {
   return "unknown";
 }
 
+function expectedFieldTypeForFieldName(fieldName) {
+  const name = safeString(fieldName);
+  if (name === "Title" || /^Text\d+$/i.test(name)) return { family: "text", allowed: ["text", "string"] };
+  if (/^Datetime\d+$/i.test(name)) return { family: "date", allowed: ["datetime", "date", "time"] };
+  if (/^Decimal\d+$/i.test(name)) return { family: "decimal", allowed: ["decimal", "currency", "number"] };
+  if (/^Bigint\d+$/i.test(name)) return { family: "integer", allowed: ["bigint", "int", "integer", "number"] };
+  if (/^Bit\d+$/i.test(name)) return { family: "boolean", allowed: ["bit", "bool", "boolean"] };
+  return null;
+}
+
+function validateFieldNameStorageTypeAlignment(field, listTitle, pathPrefix, report) {
+  const expected = expectedFieldTypeForFieldName(field && field.FieldName);
+  if (!expected) return;
+  const fieldType = safeString(field && field.FieldType).toLowerCase();
+  if (!fieldType) return;
+  if (!expected.allowed.some((token) => fieldType.includes(token))) {
+    issue(
+      report,
+      generatorFinalSeverity(report),
+      "FIELD_NAME_FIELDTYPE_MISMATCH",
+      "Generated data-list fields must keep FieldName storage prefix aligned with FieldType; cloned template fields must be selected by FieldName, not by array position, before seeded rows or add-new-item runtime tests.",
+      {
+        list: listTitle,
+        path: `${pathPrefix}.FieldType`,
+        fieldName: field && field.FieldName,
+        fieldType: field && field.FieldType,
+        expectedFamily: expected.family,
+      }
+    );
+  }
+}
+
 function classifyListResource(item, isRoot = false) {
   const list = item && item.ListModel ? item.ListModel : {};
   const type = Number(list.Type);
@@ -2037,6 +2069,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
       );
     }
     if (field.Rules && !tryParseJson(field.Rules)) issue(report, "warning", "FIELD_RULES_JSON_INVALID", "Field Rules is not valid JSON.", { list: title, field: displayName || fieldName });
+    validateFieldNameStorageTypeAlignment(field, title, fp, report);
     validateDataListFieldTypeSettings(field, title, fp, report);
     validateFieldAgainstSchema(field, report._controlFieldSchemas).forEach((schemaIssue) => {
       issue(report, "warning", `FIELD_SCHEMA_${schemaIssue.code}`, schemaIssue.message, {

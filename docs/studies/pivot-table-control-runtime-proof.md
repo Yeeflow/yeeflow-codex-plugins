@@ -102,6 +102,52 @@ The confirmation is intentionally narrow:
 - Dashboard Pivot Table package behavior is user-confirmed at practical smoke-test level
 - exhaustive aggregation correctness, every aggregation function, every date grouping mode, alternate data source classes, Data Filter variable interaction, Data List form hosting, permissions, security, large-data performance, and workflow behavior remain unproven
 
+## v1 to v2 Data List Seed/Add Readiness Root Cause
+
+The v1 failure is strongly indicated by the v1/v2 package and generator diff rather than by a Yeeflow server trace. The reusable issue is generic generated Data List seed/add readiness, not Pivot Table schema.
+
+What failed in v1:
+
+- the package imported and the Dashboard opened
+- Pivot Table controls rendered structurally
+- imported `ListDatas` rows did not appear in the runtime data list
+- manual add of a safe synthetic row returned `Add failed`
+
+What changed in v2:
+
+- the data-list field definitions are cloned by `FieldName` instead of by array position
+- the same list carries 20 safe synthetic rows
+- the user confirmed that rows appeared, Pivot Tables worked with sample data, and adding new list items succeeded
+
+Strongest identified cause:
+
+- v1 reused template `Defs[]` by array position after replacing the field names
+- this crossed storage metadata:
+  - `Text1` and `Text2` kept `FieldType: Datetime`
+  - `Datetime1` kept `FieldType: Text`
+  - `Decimal1` kept `FieldType: Text`
+- seeded rows used keys such as `Text1`, `Datetime1`, and `Decimal1`, but the field storage metadata no longer matched those keys
+- v2 selected the template field definition by `FieldName`, restoring `Text* -> Text`, `Datetime* -> Datetime`, and `Decimal* -> Decimal`
+
+Exact generator rule learned:
+
+- when generating or repurposing data-list fields, never clone field definition templates by array position
+- select the source/template field definition by the target `FieldName` storage family, then rewrite display metadata, internal name, ID, and list ownership
+- seeded `ListDatas` rows must use keys that resolve to fields whose `FieldName`, `FieldType`, and `Type` agree with the runtime value format
+- analytics/demo apps that depend on populated dashboard controls should validate seed rows and add-ready list metadata before handoff
+
+Validator/import-readiness rule added:
+
+- generated-final validation now hard-errors on `FIELD_NAME_FIELDTYPE_MISMATCH`
+- the app-creation rules inspector also hard-errors the same mismatch
+- the aggregate import-readiness gate inherits this check through package validation and app-creation rules
+
+Proof boundary:
+
+- v2 rows visible, Pivot Tables working with sample data, and add-new-item success are user-confirmed
+- the root cause is strongly indicated by the v1/v2 diff and by v2 recovery after field definition alignment, but no server-side import/add trace was captured
+- this is not exhaustive proof for all data-list field types, custom forms, permissions, lookup values, bulk imports, or all analytics aggregations
+
 ## Runtime Observations
 
 Observed at runtime:
