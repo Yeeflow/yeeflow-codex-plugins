@@ -11,11 +11,15 @@ Business Travel runtime-practice checkpoint: when a generated package imports, c
 
 Treat local package validation and Yeeflow runtime proof as separate gates. A package can be locally valid but still not accepted as a baseline until the runtime pass is documented.
 
+For `.yapk` runtime claims, separate wrapper acceptance from app-content proof. Follow-up evidence shows a wrapper-only signed `.yapk` can be accepted as a version package when `Resource` is already valid, but app content does not change if `Resource` is unchanged. Do not classify `.yapk` app-content mutation as runtime-proven unless the test uses a Yeeflow-generated or product-supported Resource rebuild and verifies the changed lists, fields, dashboards, forms, or workflows in the upgraded app.
+
 Never accept fake dashboards, static KPI mockups, or unbound placeholder charts as runtime-proven. Dashboard KPIs, charts, and tables must be data-bound and must render from actual Yeeflow data sources.
 
 For newly learned capabilities, runtime testing should usually be a focused baseline, not a broad full-app test. The runtime plan should prove only the new capability plus required host surfaces, with unrelated app complexity removed. If runtime proof is deferred, classify the branch as export-proven, validator-backed, planning-guidance, import-proven, configuration-visible, render-only, partial, or not tested. Do not recommend merging as runtime-proven until the focused runtime path passed and the tested host/scope is documented.
 
 Data Filter runtime boundary: `Sales_Management_AD.yap` and `CRM - Customer relationship management.yap` are export-proven for dashboard filter schema. `docs/studies/data-filter-controls-runtime-proof.md` proves a focused generated dashboard package imported, opened, rendered Search/Radio/Range/Sorting filters plus an Apply button, rendered data-bound table/chart surfaces, and stayed stable for one Search click-apply interaction and one Radio value-change selection. Keep this narrow: Range and Sorting are render-proven only, Remove filters reset behavior and Hierarchy interaction are not runtime-proven, approval-form and data-list-form Data Filter usage remain product-documented only, and exhaustive filter semantics/operators/performance are unproven.
+
+Pivot Table runtime boundary: `CRM - Customer relationship management (1).yap` is export-proven for Pivot Table controls on a Dashboard page only. `docs/studies/pivot-table-control.md`, `docs/studies/pivot-table-control-runtime-proof.md`, and `scripts/inspect-pivot-table-controls.mjs` document and validate the schema. The focused v2 generated package is user-confirmed to import/work well with 20 safe synthetic data-list rows, and adding a new data-list item is user-confirmed successful for that package. The v1 missing-row/Add failed issue is strongly indicated to be a generic data-list seed/add-readiness problem caused by crossed `FieldName`/`FieldType` metadata, so do not runtime-test packages with `FIELD_NAME_FIELDTYPE_MISMATCH`. Keep the Pivot Table claim narrow: exhaustive aggregation correctness, every aggregation/date-grouping mode, Data Filter interaction, sorting semantics, styling fidelity, alternate data source classes, and Data List form hosting are not runtime-proven. Before expanding runtime claims, use another focused generated package with safe local data and verify the specific behavior under test.
 
 ## Runtime Workflow
 
@@ -150,7 +154,7 @@ AP Approval demo publish-fix boundary: user-confirmed external publish success p
 <!-- app-creation-rules-learning:start -->
 ## App Creation Rule Runtime Boundary
 
-Before runtime import tests, run the app creation rule validators from `docs/studies/yeeflow-app-creation-rules.md`. A generated package with FieldIndex/FieldName suffix mismatch, duplicate list identifiers, invalid process keys, or malformed approval-form `NoRule` must not be imported. Product-rule-backed and validator-backed fixes are not runtime proof; only upgrade to import/open/designer/runtime labels after a focused regenerated package imports and opens in Yeeflow.
+Before runtime import tests, run the app creation rule validators from `docs/studies/yeeflow-app-creation-rules.md`. A generated package with FieldIndex/FieldName suffix mismatch, FieldName/FieldType storage mismatch, duplicate list identifiers, invalid process keys, or malformed approval-form `NoRule` must not be imported. Product-rule-backed and validator-backed fixes are not runtime proof; only upgrade to import/open/designer/runtime labels after a focused regenerated package imports and opens in Yeeflow.
 
 The focused proof in `docs/studies/yeeflow-app-creation-rules-runtime-proof.md` imported the repaired workflow field-rule package, opened the app/approval form/data list, opened the New Field panel, and saved a new single-line field without the duplicate-value error. Label this runtime-import-proven and data-list-field-creation-proven only; keep workflow routing, workflow execution, record mutation, and Form Report separate.
 <!-- app-creation-rules-learning:end -->
@@ -201,3 +205,11 @@ Before any runtime import attempt for a newly generated `.yap`, require strict g
 
 The Projects Center fixed package import is user-proven only for import success. It does not prove app open/use, data entry, document-library behavior, scheduled report execution, or workflow behavior. Keep those runtime scopes separate.
 <!-- projects-center-import-failure-hardening:end -->
+
+<!-- container-button-action-settings-learning:start -->
+## Container/Button Action Runtime Boundary
+
+Container/Button Action settings from `AP Approval Demo v3.yap` are export-proven and validator-backed. `docs/studies/container-button-action-runtime-proof.md` adds user-confirmed focused generated-package proof for representative Link, Add list item, Open dashboard, and Open approval form navigation/open behavior with modal/pop-up, slide-in, and full-page/target modes.
+
+Keep the proof narrow: save/submit, workflow execution, approval routing, cross-app targets, form-action binding, permissions/security, external sensitive navigation, and every open-mode/size combination remain unproven. If an Open approval form action exposes `process request pageUrl is null`, inspect the target approval form request page shape before retesting.
+<!-- container-button-action-settings-learning:end -->

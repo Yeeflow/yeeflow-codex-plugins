@@ -227,6 +227,7 @@ Run this checklist before sharing a Git branch, release tag, or ZIP archive:
 - No customer data is included.
 - No tenant-specific runtime data is included.
 - No raw Yeeflow exports are included unless explicitly approved for internal research packaging.
+- No raw `.yapk` `Resource`, `Sign`, tenant/app/list/package IDs, raw signing API responses, or decoded opaque payloads are included. Wrapper-signing study notes must stay redacted and must not claim `.yapk` app-content mutation support.
 
 ## Suggested Local Validation Commands
 

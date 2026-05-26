@@ -97,7 +97,7 @@ Custom code support must only be claimed for contexts that are runtime-proven. P
 
 New app creation outputs `.yap`.
 
-Existing app upgrade `.yapk` is read-only/server-generated until Yeeflow signing and `Resource` mechanics are proven. Do not claim externally edited `.yapk` packages are valid upgrades. Do not mutate generated `.yap` or `.yapk` files as part of plugin packaging.
+Existing app upgrade `.yapk` is read-only/server-generated for app-content changes until Yeeflow `Resource` generation mechanics are proven. Follow-up signing evidence shows wrapper signing/verification can work when `Resource` is already valid, but wrapper-only signed packages do not change app content if `Resource` is unchanged. Do not claim externally edited app-content `.yapk` packages are valid upgrades. Do not mutate generated `.yap` or `.yapk` files as part of plugin packaging.
 
 For existing app work, use `.yapk` exports for inspection, validation, and change planning only unless a proven Yeeflow-safe upgrade mechanism exists.
 

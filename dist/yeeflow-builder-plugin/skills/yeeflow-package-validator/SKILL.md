@@ -11,11 +11,15 @@ Business Travel runtime-practice update: `yap-v1-schema_v2.json` and the Busines
 
 Validate before import. Do not runtime-test a package with blocking structural, graph, wrapper, workflow, list, field, materialization, FlowKey, or unsafe `.yapk` issues.
 
-New application creation may output `.yap`. Existing app upgrade `.yapk` remains read-only and server-generated until Yeeflow signing and Resource mechanics are proven.
+New application creation may output `.yap`. Existing app upgrade `.yapk` remains read-only/server-generated for app-content changes. Follow-up signing evidence shows `setsign`/`verifysign` can sign and verify wrappers only when `Resource` is already a valid opaque `.yapk` payload; wrapper-only signed packages may be accepted but do not change app content if `Resource` is unchanged. Normal `.yap` Resource encodings and byte-flipped `.yapk` resources are rejected. Treat `.yapk` Resource generation as unsolved until Yeeflow provides the Version management Resource-generation API or encoding method.
 
 Validation is not runtime proof. When validating a newly learned capability, report whether the package is export-proven, validator-backed, import-proven, configuration-visible, render-only, partial, or runtime-proven. Use validator hard errors only for proven invalid generated shapes; otherwise prefer warnings/dependencies and require a focused runtime baseline before broad runtime claims.
 
 Data Filter validation: use `scripts/inspect-data-filter-controls.mjs` with dashboard packages and enforce the rules from `docs/studies/data-filter-controls.md`. Value-producing Data Filter bindings must resolve to `page.filterVars[]`; downstream `__filter_` expression tokens in `attrs.data.filter[]`, `attrs.data.fulltext[]`, `attrs.data.sortingfilter[]`, and `exts[].attr.settings.Conditions[]` must resolve; click-apply filters must reference an existing Apply button; explicit Remove filters targets must resolve when present; Search, Radio, Hierarchy, and Sorting variants are dashboard export-proven from the CRM sample; unknown filter control types and unsupported variable shapes should warn first unless export evidence proves them invalid. `docs/studies/data-filter-controls-runtime-proof.md` adds generated dashboard import/open/render proof for Search, Radio, Range, Sorting, Apply button, and downstream table/chart surfaces, but does not upgrade Remove filters reset, Hierarchy interaction, all operators, approval-form filters, or data-list-form filters to runtime-proven.
+
+Pivot Table validation: use `scripts/inspect-pivot-table-controls.mjs` with dashboard packages and enforce the rules from `docs/studies/pivot-table-control.md`. Pivot Table dashboard controls must have a matching `page.exts[]` `PivotTable` entry; the data source must resolve to a supported list-like source; row, column, and value fields must resolve to source fields; `SUM`, `AVG`, `MIN`, and `MAX` require compatible numeric/currency fields where detectable; date grouping must only be applied to date/time fields; and filter condition fields plus `__filter_<filterVarId>` variable references must resolve. Generated-final validation should fail unresolved Pivot Table references, unsupported Approval Form/Public Form hosts, and incompatible generated aggregations. Unknown schema variants should warn first in compatibility/source-export mode unless a focused export proves them invalid. This is export-proven and validator-backed, not runtime proof.
+
+Seed/add-readiness validation: `docs/studies/pivot-table-control-runtime-proof.md` strongly indicates that v1 missing seed rows and Add failed came from crossed data-list field storage metadata caused by cloning `Defs[]` by array position. Generated-final validation must hard-error `FIELD_NAME_FIELDTYPE_MISMATCH`: `Text*` fields need text storage, `Datetime*` fields need date/datetime storage, `Decimal*` fields need decimal/number storage, `Bigint*` fields need integer storage, and `Bit*` fields need boolean storage. Use the app-creation rules inspector and aggregate import-readiness gate before handing off analytics/demo packages with seed data.
 
 ## Validation Workflow
 
@@ -53,6 +57,7 @@ Load [yap-materialization-rules.md](references/yap-materialization-rules.md) whe
 - app-wide unique `FieldID`
 - `field.ListID` equals parent data list `ListID`
 - unique `FieldName`, `InternalName`, and `DisplayName` inside each list
+- `FieldName` storage prefixes aligned with `FieldType`, so generated seed rows and Add new item use runtime-compatible list field storage
 - no remapping of `TenantID`, `CreatedBy`, or `ModifiedBy`
 - no numeric-looking generated ID exceeds signed `System.Int64` range (`9223372036854775807`), especially `LayoutID`
 - generated app-contained AI Agent/Copilot resources use numeric `Publisher`, normally `0`, rather than `null`
@@ -191,7 +196,7 @@ For assignment-routing API coverage, `yeeflow-api-operator` can safely confirm d
 <!-- app-creation-rules-learning:start -->
 ## App Creation Rule Validation Addendum
 
-Use `docs/studies/yeeflow-app-creation-rules.md` and `scripts/inspect-app-creation-rules.mjs` for product-team app creation rules. In generated-final mode, hard-error duplicate `DisplayName`, `FieldName`, and `InternalName` within one list; identifier length above 255; invalid `InternalName` characters; generated non-system `FieldName` missing a numeric suffix; and any `FieldName` numeric suffix that does not equal `FieldIndex`.
+Use `docs/studies/yeeflow-app-creation-rules.md` and `scripts/inspect-app-creation-rules.mjs` for product-team app creation rules. In generated-final mode, hard-error duplicate `DisplayName`, `FieldName`, and `InternalName` within one list; identifier length above 255; invalid `InternalName` characters; generated non-system `FieldName` missing a numeric suffix; any `FieldName` numeric suffix that does not equal `FieldIndex`; and `FieldName`/`FieldType` storage-family mismatches that can break seeded rows and Add new item behavior.
 
 Hard-error invalid process keys (`Data.Forms[].Key`, `FlowKey`, and decoded `defkey`) when they contain anything outside `[a-zA-Z0-9_]` or exceed 255 characters. For approval forms, hard-error missing or malformed `NoRule`, missing `{index}` in `NoRule.Prefix`, and invalid `StartIndex`, `CustomLength`, or `AutoIncrement`. Unknown list field `Type` values remain warning-first unless a focused runtime/import failure proves a specific type invalid.
 
@@ -203,7 +208,7 @@ Runtime proof update: `docs/studies/yeeflow-app-creation-rules-runtime-proof.md`
 
 Use `docs/studies/data-list-document-library-field-types.md`, `docs/studies/normalized/data-list-fields/`, and `scripts/inspect-data-list-fields.mjs` before generating or validating broad Data List custom fields. `Data Lists (2).yap` export-proves the target Type `1` data lists `Data list with fields part A` and `Data list with fields part B` with 90 custom fields across `input`, `textarea`, `richtext`, `hyperlink`, `input_number`, `currency`, `percent`, `calculated-column`, `rate`, `switch`, `checkbox`, `radio`, `tag`, `datepicker`, `time`, `identity-picker`, `organization-picker`, `cost-center-picker`, `signer`, `file-upload`, `icon-upload`, `lookup`, `metadata`, `mutiple-metadata`, `location-picker`, `autonumber`, and `list`. `select` and `flowstatus` remain product-rule-backed/unproven in this export.
 
-Field generation must still pass the v0.5.12 app-creation gates: unique `DisplayName`, `FieldName`, and `InternalName`; `InternalName` matching `[A-Za-z0-9_]`; identifier length <= 255; and generated non-system `FieldName` suffix matching `FieldIndex`. Accept export-proven single metadata fields as `Type = "metadata"` with Bigint storage, even though the earlier product-team 28-type list only named `mutiple-metadata`.
+Field generation must still pass the app-creation gates: unique `DisplayName`, `FieldName`, and `InternalName`; `InternalName` matching `[A-Za-z0-9_]`; identifier length <= 255; generated non-system `FieldName` suffix matching `FieldIndex`; and generated seed/add-ready fields keeping `FieldName` storage prefix aligned with `FieldType`. Accept export-proven single metadata fields as `Type = "metadata"` with Bigint storage, even though the earlier product-team 28-type list only named `mutiple-metadata`.
 
 Use export-proven settings where relevant: choice `Rules.choices` and `color_choices`; numeric/currency/percent `displayThousandths`, `rounded-to`, `number_min`, `number_max`, `currencyCode`, `displayFormat`; picker `identity-maxselection`, `multiple`, `metadata-treeselect`, `parentId`; upload `maxsize`, `file_multiple`, `file_typeslimit`, `file_types`, `picture_size_limit`, `controlmultiple`; lookup `appid`, `listsetid`, `listid`, `listfield`, additions, filters, sorting, search, display style, and multiple; calculated columns `calculated_result` plus `calculated`; metadata `source` plus `categoryId`; tag `source`, `category`, `customTags`; autonumber `minDigits`, `startNum`, `prefix`, `suffix`; sub-list `list-variables[]`.
 
@@ -250,3 +255,15 @@ For newly generated `.yap` files, do not accept compatibility validation as the 
 
 Generated-final structural errors include missing/invalid Type `1` `ListModel.ListType`, unsafe native `Title` metadata, unresolved data-view columns or stale system pseudo-fields, mismatched `LayoutInResources` IDs, unresolved dashboard dynamic-display/filter references, unresolved collection `ListDataID` context filters, and `ReplaceIds` entries for `TenantID`, `CreatedBy`, or `ModifiedBy`. Warning-level results are acceptable only when classified as non-import-blocking runtime/export-derived warnings.
 <!-- projects-center-import-failure-hardening:end -->
+
+<!-- container-button-action-settings-learning:start -->
+## Container/Button Action Validation
+
+Use `scripts/inspect-container-button-actions.mjs` with dashboard packages that contain actionable Containers or Buttons. `AP Approval Demo v3.yap` export-proves shared action settings for dashboard `container` and `action_button` controls, with action codes `2` Link, `5` Add list item, `6` Open dashboard, and `8` Open approval form.
+
+Generated-final validation must fail unresolved Container/Button action targets: Link without URL/expression URL; Add list item without a resolvable `attrs.data.list.ListID`; passvalues that reference fields missing from the target list; selected `layout` IDs that do not resolve; Open dashboard without a resolvable Type `103` `PageID`; Open approval form without a resolvable approval form `ProcKey`; unknown generated action types; unknown open modes; and invalid custom size objects. Compatibility/source-export mode should warn first for unknown variants.
+
+The aggregate import-readiness gate includes the Container/Button action inspector. It should not fail unrelated non-Pivot packages solely because the optional Pivot Table inspector cannot find a literal page named `Dashboard`, but it must still fail generated-final unresolved Container/Button action targets.
+
+Focused runtime proof in `docs/studies/container-button-action-runtime-proof.md` confirms representative generated current-app action navigation after local validation. Validator-backed checks still do not prove save/submit/workflow execution, cross-app targets, form-action binding, permissions, or all open-mode/size combinations.
+<!-- container-button-action-settings-learning:end -->

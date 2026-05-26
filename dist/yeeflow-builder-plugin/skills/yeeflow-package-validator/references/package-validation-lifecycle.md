@@ -5,7 +5,7 @@ Run this lifecycle before Yeeflow import or runtime testing. Use available repo 
 ## 1. Identify Package Scope
 
 - Confirm whether the artifact is a generated `.yap`, decoded app folder, `.ydl`, `.ywf`, or `.yapk`.
-- Treat `.yapk` as read-only/server-generated unless Yeeflow signing and Resource behavior are proven.
+- Treat `.yapk` as read-only/server-generated for app-content changes unless Yeeflow Resource generation behavior is proven. Wrapper signing/verification for an already-valid opaque Resource is not app-content generation proof.
 - Do not modify raw generated packages unless the task explicitly asks for regeneration.
 
 ## 2. Run Structural Validators
