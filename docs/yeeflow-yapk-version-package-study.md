@@ -268,7 +268,7 @@ The product-provided utility endpoints establish three relevant operations:
 
 User-tested result:
 
-- `setsign` can produce a signature for an existing valid `.yapk` wrapper when the `Resource` is already in valid `.yapk` format.
+- `setsign` can produce a signature for an existing valid `.yapk` wrapper when the `Resource` is already valid for the signing path.
 - `verifysign` confirms the generated signature.
 - Yeeflow accepted a wrapper-only signed `.yapk` as a version package.
 - The accepted wrapper-only signed package did not change app content because `Resource` was unchanged.
@@ -277,7 +277,7 @@ This upgrades the earlier broad "signing unknown" conclusion: wrapper signing is
 
 ### Resource Encoding Experiments
 
-The companion study tried replacing the opaque `.yapk` `Resource` with normal `.yap`-style resource encodings and submitting the wrapper to `setsign`.
+The companion study tried replacing the `.yapk` `Resource` with normal `.yap`-style resource encodings and submitting the wrapper to `setsign`.
 
 Rejected encodings:
 
@@ -291,7 +291,7 @@ Observed rejection class:
 
 Implication:
 
-`setsign` is not merely a detached wrapper signing helper. It validates or decodes the `Resource` using Yeeflow's `.yapk` resource format. The outer `Resource` is base64 text, but the decoded bytes are an opaque validated inner binary format, not normal `.yap` gzip JSON.
+`setsign` is not merely a detached wrapper signing helper. It validates or decodes the `Resource` using Yeeflow's `.yapk` resource format. Normal `.yap` gzip Resource encoding is not valid for `.yapk`.
 
 ### Wrapper-only vs Yeeflow-generated Resource Comparison
 
@@ -330,7 +330,7 @@ Changed wrapper fields:
 - `Sign`
 - `Resource`
 
-This matches the earlier Employee Family Implant multi-version comparison: Yeeflow-generated app-content changes produce a different high-entropy `Resource`, while tenant/app/list identity stays stable.
+This matches the earlier multi-version comparison: Yeeflow-generated app-content changes produce a different high-entropy `Resource`, while tenant/app/list identity stays stable.
 
 ### Byte-flip Rejection
 
@@ -338,19 +338,15 @@ The companion study reported that flipping even one byte inside a valid Yeeflow-
 
 Implication:
 
-- The opaque inner payload has integrity, structure, encryption, compression, or checksum requirements that must be satisfied before signing.
+- The inner payload has integrity, structure, encryption, compression, checksum, or schema requirements that must be satisfied before signing.
 - Local byte-level mutation is not viable.
 - A valid `Sign` cannot rescue an invalid or manually corrupted `Resource`.
 
-### Updated Conclusion
-
-Updated classification:
-
-**C. Wrapper signing is evidence-backed for valid existing `.yapk` resources, but `.yapk` app-content generation remains not locally solved.**
+### Signing Follow-up Conclusion
 
 What is now supported:
 
-- Generate or verify `Sign` for a wrapper whose `Resource` is already valid `.yapk` payload.
+- Generate or verify `Sign` for a wrapper whose `Resource` is already valid for the `.yapk` signing path.
 - Validate `.yapk` wrapper structure and compare resources using redacted safe statistics.
 - Use wrapper-only signed packages for metadata/version-package experiments when the target proof boundary is explicitly wrapper-only.
 
@@ -362,36 +358,155 @@ What is still unsupported:
 - Treating wrapper-sign success as proof that app-content changes are packaged.
 - Claiming an externally edited app-content `.yapk` is a valid upgrade package.
 
-Strong current interpretation:
+Product question preserved from this follow-up:
 
-The missing piece is the internal Yeeflow path that generates or rebuilds the opaque `.yapk Resource` after app-content changes. That is likely the same server-side path used by Yeeflow Version management when creating a new version.
+> We can sign `.yapk` wrappers with `/utils/apppackage/setsign`, but how do we generate or rebuild the Resource after changing lists, fields, dashboards, or forms? Please provide the API or encoding method that turns modified app package JSON into a valid `.yapk Resource`.
 
-### Product Question
+## Product Schema Follow-up: Brotli Resource and AppPackageInfo
 
-Ask product:
+Follow-up date: 2026-05-27
 
-> We can sign `.yapk` wrappers with `/utils/apppackage/setsign`, but how do we generate or rebuild the encrypted/opaque `Resource` after changing lists, fields, dashboards, or forms? Please provide the API or encoding method that turns modified app package JSON into a valid `.yapk Resource`.
+Source schema:
 
-### Follow-up Safety Rule
+- Product-provided `yapk-schema.json`
+- JSON Schema draft: `https://json-schema.org/draft/2020-12/schema`
+- Schema title: `AppExportPackageInfo`
 
-For `.yapk` packages:
+The schema defines top-level `.yapk` as `AppExportPackageInfo` with these required wrapper fields:
 
-- Do not mutate `Resource` locally.
-- Do not mutate `Sign` locally except through a product-supported signing API and only when the `Resource` is already valid.
-- Do not treat wrapper metadata/signature changes as app-content changes.
-- Do not use `.yapk` for generated application content changes until the `Resource` generation path is product-supported or proven.
-- Continue generating `.yap` packages for new/cloned application work.
-- For existing app changes, produce a change plan or `.yap` clone unless Yeeflow Version management or a future product API generates the official `.yapk`.
+- `PackageId`
+- `TenantID`
+- `AppID`
+- `ListID`
+- `Title`
+- `Description`
+- `IconUrl`
+- `Resource`
+- `Notes`
+- `Author`
+- `Date`
+- `Version`
+- `Sign`
+
+Important schema rule:
+
+`Resource` is described as a Brotli compressed string. Decompressed JSON should match `#/$defs/AppPackageInfo`.
+
+This is a product-schema-backed path, but it must be verified against real packages before generation claims are upgraded.
+
+### AppPackageInfo Shape
+
+The decoded `AppPackageInfo` object requires:
+
+- `ListSet`
+- `Pages`
+- `Forms`
+- `FormReports`
+- `FormNewReports`
+- `DataReports`
+- `Groups`
+- `Tags`
+- `Metadatas`
+- `Agents`
+- `Connections`
+- `Knowledges`
+- `Themes`
+- `Components`
+- `PortalInfo`
+- `Childs`
+
+Important child schemas:
+
+- `ListPackageInfo`: requires `List`, `Fields`, `Layouts`, `RemindRules`, `PublicForms`, and `FlowMappings`.
+- `ListInfo`: includes `ListID`, `Title`, `Type`, `Flags`, permissions, layouts, and item data. `Type` enum is `1`, `16`, `32`, `64`, `128`, `1024`. `Flags` includes `Show = 1`.
+- `ListFieldInfo`: includes `FieldID`, `ListID`, `FieldName`, `FieldType`, `FieldIndex`, `DisplayName`, `InternalName`, and `Type`.
+- `ListLayoutInfo`: includes `ListID`, `LayoutID`, `Type`, `Title`, `LayoutView`, default/item-permission flags, permissions, and `LayoutInResources`.
+- `ProcessFormInfo`: includes process/form metadata, `DefResource`, `WorkflowType`, `Settings`, `Deployed`, `NoRule`, and permissions.
+- `FormNoRuleInfo`: requires `Prefix`, `StartIndex`, `CustomLength`, and `AutoIncrement`.
+- Permission objects cover portal, workflow, list, advanced list, and base permission entries with product enum values.
+- App-level modules include Agents, Connections, Knowledges, Themes, and Components.
+
+Schema rules to preserve:
+
+- `FieldName` must end with digits.
+- `FieldName` trailing digits must equal `FieldIndex`.
+- `InternalName` must match `^[a-zA-Z0-9_]+$`.
+- `NoRule.Prefix` must contain `{index}`.
+- `List.Type` uses product enum values.
+- `List.Flags` includes `Show = 1`.
+- `Date` should be UTC `yyyy-MM-ddTHH:mm:ssZ`.
+- `TenantID` and `ListID` are numeric strings.
+
+### Brotli Verification Against Local Artifacts
+
+Read-only artifacts checked:
+
+| Artifact label | Exists | Readable here | Resource string length | Base64 decoded bytes | Brotli result |
+| --- | --- | --- | ---: | ---: | --- |
+| Application Settings Runtime Baseline - onheader-Version test | yes | yes | 7628 | 5719 | failed |
+| Application Settings Runtime Baseline - signed wrapper test | yes | no, local reads hang | not inspected | not inspected | not inspected |
+| Application Settings Runtime Baseline - requested changes test | yes | no, local reads hang | not inspected | not inspected | not inspected |
+| Application Settings Runtime Baseline - onheader-Mena Test | yes | yes | 11124 | 8342 | failed |
+
+Decode variants tested for the two readable artifacts:
+
+- base64-decode `Resource`, then Brotli-decompress
+- raw `Resource` UTF-8 bytes, then Brotli-decompress
+- base64url-normalized decode, then Brotli-decompress
+
+All tested variants failed to produce decompressed JSON for the readable historical artifacts. The failures were safe decode failures; no raw `Resource`, `Sign`, IDs, private URLs, or decoded payloads were recorded.
+
+Current interpretation:
+
+- The product schema says `.yapk Resource` should be Brotli-compressed `AppPackageInfo`.
+- The currently readable historical artifacts do not verify that decode path.
+- Possible explanations include schema/version drift, an additional encoding/encryption layer, older package format, or a missing product-specific pre/post-processing step.
+- Do not discard the product schema; use it as the target standard for new tooling and future product clarification.
+
+### Updated `.yap` vs `.yapk` Comparison
+
+| Area | `.yap` New Application | `.yapk` Existing App Upgrade |
+| --- | --- | --- |
+| User action | Import/create new application | Upgrade current existing application |
+| Wrapper type | JSON | Product schema `AppExportPackageInfo` JSON |
+| Resource encoding | `[______gizp______]` + base64 gzip | Product schema says Brotli-compressed `AppPackageInfo`; current readable artifacts did not Brotli-decode |
+| Decoded shape | Resource wrapper with `Data`, `ReplaceIds`, package metadata | Target decoded shape is `AppPackageInfo` with `ListSet`, `Pages`, `Forms`, reports, modules, portal info, and `Childs` |
+| Safe Codex operation today | Generate, validate, build wrapper, import as new app | Inspect wrapper, validate schema rules, attempt Resource decode, compare safely, and preserve generation/runtime proof boundaries |
+| Content generation status | Proven for new/cloned app workflows | Not proven until edit -> Brotli encode -> sign -> verify -> runtime upgrade succeeds |
+
+### Signing Boundary
+
+The signing follow-up remains relevant:
+
+- Product `setsign` / `verifysign` utilities are evidence-backed for signing/verifying wrappers when `Resource` is already valid for the signing path.
+- Wrapper-only signed packages may be accepted but do not change app content when `Resource` is unchanged.
+- Normal `.yap` Resource encodings were rejected by the signing path.
+- Wrapper signing is not Resource generation proof.
+
+Product question:
+
+> Confirm whether `.yapk Resource` is exactly Brotli-compressed UTF-8 JSON of AppPackageInfo, and whether `/utils/apppackage/setsign` is the supported way to sign locally generated Resource.
+
+### Updated Classification
+
+Current classification:
+
+**C/B-partial. Product schema defines `.yapk Resource` as Brotli `AppPackageInfo`, but the Brotli decode path is not verified on the currently readable historical artifacts. `.yapk` content generation/runtime-upgrade remains unproven.**
+
+Do not upgrade to `B. Locally decodable and schema-validatable` until at least one real `.yapk` artifact decodes from `Resource` to `AppPackageInfo` with the product schema path.
+
+Do not upgrade beyond `B` until a focused edit -> Brotli encode -> sign -> verify -> runtime upgrade succeeds.
 
 ## Open Learning Items
 
 Before Codex can generate real app-content `.yapk` upgrades, Yeeflow needs a further export-backed study for:
 
-- whether `Resource` is encrypted, compressed with a nonstandard codec, or signed server-side
+- why currently readable historical artifacts do not Brotli-decode despite the product schema Resource description
+- whether `Resource` has an additional encoding, encryption, checksum, or package-version layer before/after Brotli
 - what `Sign` covers and whether it can be recomputed outside Yeeflow
 - whether wrapper metadata is included in server-side package integrity checks
 - whether app-content modifications must be made by generating a new Yeeflow version from the UI/API instead of editing `.yapk` offline
 - whether downloaded `.yapk` packages with included application data have additional payload markers
-- whether a Yeeflow API exists to generate the opaque `.yapk Resource` from updated app content
+- whether `/utils/apppackage/setsign` is the supported way to sign a locally Brotli-encoded `AppPackageInfo` Resource
 
 Until that learning is complete, do not claim a modified app-content `.yapk` is safe.

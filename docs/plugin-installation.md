@@ -322,6 +322,7 @@ v0.3.0 install smoke prompts tested:
 
 - Runtime-test-orchestrator lifecycle summary and result classifications.
 - Package-validator import-safety and `.yap` versus `.yapk` policy.
+- YAPK package generator schema-backed inspection and signing-boundary guidance.
 - Plugin-release-manager RC versus final tag workflow.
 - Existing application-builder lifecycle summary.
 
@@ -338,6 +339,7 @@ v0.4.0 install smoke prompts tested:
 - No OAuth.
 - No Yeeflow API integration.
 - No MCP server.
-- `.yapk` app-content mutation is not supported. Wrapper signing for already-valid `.yapk Resource` payloads is study evidence only and does not solve Resource generation.
+- `.yapk` mutation is not supported.
+- Next rebuild should include the new `yeeflow-yapk-package-generator` skill and may increase bundled skill count from `20` to `21`.
 - Runtime testing still requires Yeeflow access.
 - Public form custom code support is not claimed unless tested.

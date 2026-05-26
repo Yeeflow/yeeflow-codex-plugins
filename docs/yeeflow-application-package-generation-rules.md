@@ -81,7 +81,7 @@ Runtime update: a metadata-only proof package that preserved `Resource`, `Sign`,
 
 Multi-version feasibility update: three Yeeflow-generated `.yapk` packages from the same app lineage showed stable `TenantID`, `AppID`, `ListID`, app title/description/icon, and author, while `PackageId`, `Version`, `Notes`, `Date`, `Sign`, and `Resource` changed. All resources stayed opaque/high-entropy, normal decompression failed, and searched app strings were not readable. Classification is **not locally generatable with current knowledge**. Use Yeeflow Version management to generate official `.yapk` upgrade packages.
 
-Signing follow-up: product `setsign`/`verifysign` utilities can sign and verify `.yapk` wrappers when `Resource` is already valid `.yapk` payload. This proves wrapper signing, not app-content generation. A wrapper-only signed package can be accepted while leaving app content unchanged if `Resource` is unchanged. Normal `.yap` Resource encodings and byte-flipped `.yapk` resources are rejected by the signing path. Until Yeeflow provides the Resource-generation API or encoding method used by Version management, `.yapk` app-content mutation remains unsupported.
+Product schema follow-up: `yapk-schema.json` defines `.yapk` as `AppExportPackageInfo` and describes top-level `Resource` as a Brotli compressed string whose decompressed JSON should match `AppPackageInfo`. This is the target schema for `yeeflow-yapk-package-generator`, but readable historical artifacts did not verify the Brotli path in the current study. Continue treating app-content `.yapk` mutation as unsupported until a Resource decode/edit/Brotli encode/sign/verify/runtime-upgrade path is proven.
 
 ## Required User Guidance
 

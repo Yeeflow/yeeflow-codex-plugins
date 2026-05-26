@@ -11,7 +11,7 @@ Business Travel runtime-practice checkpoint: when a generated package imports, c
 
 Treat local package validation and Yeeflow runtime proof as separate gates. A package can be locally valid but still not accepted as a baseline until the runtime pass is documented.
 
-For `.yapk` runtime claims, separate wrapper acceptance from app-content proof. Follow-up evidence shows a wrapper-only signed `.yapk` can be accepted as a version package when `Resource` is already valid, but app content does not change if `Resource` is unchanged. Do not classify `.yapk` app-content mutation as runtime-proven unless the test uses a Yeeflow-generated or product-supported Resource rebuild and verifies the changed lists, fields, dashboards, forms, or workflows in the upgraded app.
+For `.yapk` runtime claims, use `yeeflow-yapk-package-generator` for preflight inspection and keep wrapper acceptance separate from app-content proof. Do not classify `.yapk` content mutation as runtime-proven unless the test uses a schema-valid Resource rebuild, product-supported signing/verification, and a Yeeflow upgrade that visibly verifies the intended changed lists, fields, dashboards, forms, or workflows.
 
 Never accept fake dashboards, static KPI mockups, or unbound placeholder charts as runtime-proven. Dashboard KPIs, charts, and tables must be data-bound and must render from actual Yeeflow data sources.
 

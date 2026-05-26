@@ -57,6 +57,7 @@ Smoke prompts tested:
 - Materialization validation behavior for generated `.yap` packages.
 - Runtime-test-orchestrator lifecycle summary and result classifications.
 - Package-validator import-safety and `.yap` versus `.yapk` policy.
+- YAPK package generator schema-backed inspection and signing-boundary guidance.
 - Plugin-release-manager RC versus final tag workflow.
 - Application-generator Document Library v2 generation and generated-folder guidance.
 - Package-validator materialization blocker handling for generated `.yap` packages.
@@ -100,6 +101,7 @@ Known limitations:
 - No Yeeflow API integration.
 - No MCP server.
 - `.yapk` mutation is not supported.
+- Next rebuild should include `yeeflow-yapk-package-generator`, `validate-yapk-package.js`, `scripts/inspect-yapk-schema-standard.mjs`, YAPK study docs, normalized refs, and safe summary JSON. Do not include raw `.yapk` files, raw Resource strings, raw Sign values, decoded full payloads, raw API responses, private IDs, or screenshots.
 - Runtime testing still requires Yeeflow access.
 - Public form custom code support is not claimed unless tested.
 - Partner-safe edition is planned but not released.

@@ -46,6 +46,8 @@ The plugin lives at `dist/yeeflow-builder-plugin/` and includes:
 
 `yeeflow-package-validator` standardizes package validation before import or runtime testing, including materialization rules, field/list integrity, workflow checks, and `.yap` versus `.yapk` safety policy.
 
+`yeeflow-yapk-package-generator` is planned for the next plugin release to inspect and validate `.yapk` existing-application upgrade packages with the product YAPK schema, redacted Resource decode attempts, signing-boundary guidance, and future edit/encode/sign/runtime proof workflow.
+
 `yeeflow-plugin-release-manager` standardizes Yeeflow Builder Plugin rebuilds, version decisions, release candidates, install smoke testing, and final tag creation.
 
 `yeeflow-api-operator` provides safe read-only Yeeflow REST API connectivity checks and organization/reference-data lookup when local credentials are available. Its v1 scope is users, departments, locations, and positions; it must not run write APIs or expose secrets/private records.
@@ -97,7 +99,7 @@ Custom code support must only be claimed for contexts that are runtime-proven. P
 
 New app creation outputs `.yap`.
 
-Existing app upgrade `.yapk` is read-only/server-generated for app-content changes until Yeeflow `Resource` generation mechanics are proven. Follow-up signing evidence shows wrapper signing/verification can work when `Resource` is already valid, but wrapper-only signed packages do not change app content if `Resource` is unchanged. Do not claim externally edited app-content `.yapk` packages are valid upgrades. Do not mutate generated `.yap` or `.yapk` files as part of plugin packaging.
+Existing app upgrade `.yapk` is schema-backed as `AppExportPackageInfo`, but content mutation remains unsupported until Resource decode/edit/Brotli encode/sign/verify/runtime-upgrade is proven. Do not claim externally edited `.yapk` packages are valid upgrades. Do not mutate generated `.yap` or `.yapk` files as part of plugin packaging.
 
 For existing app work, use `.yapk` exports for inspection, validation, and change planning only unless a proven Yeeflow-safe upgrade mechanism exists.
 
@@ -117,6 +119,7 @@ Local validation is not the same as Yeeflow runtime proof. Accepted baselines mu
 - Yeeflow API usage is limited to the `yeeflow-api-operator` read-only helper unless future API operations are separately studied, safety-reviewed, and runtime-proven.
 - No MCP servers are included.
 - `.yapk` mutation is not supported.
+- Next rebuild should include `yeeflow-yapk-package-generator`, `scripts/inspect-yapk-schema-standard.mjs`, YAPK normalized refs, and the safe YAPK schema summary. This may increase bundled skill count from `20` to `21`.
 - Public form custom code is not claimed unless explicitly runtime-tested.
 - Runtime proof still depends on Yeeflow import/testing access.
 - The plugin package mirrors current repo skills; behavior is unchanged except for packaging metadata.

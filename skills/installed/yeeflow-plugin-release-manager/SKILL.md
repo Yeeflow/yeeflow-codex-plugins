@@ -11,7 +11,7 @@ RC tag equals build ready for testing. Final tag equals install-tested and accep
 
 Never create a final non-RC release tag before the private marketplace install smoke test passes and the result is documented.
 
-When packaging or releasing Yeeflow Builder, keep `.yapk` study artifacts redacted: do not include raw `.yapk` packages, opaque `Resource` payloads, `Sign` values, tenant/app/list/package IDs, raw API responses, credentials, screenshots, or decoded binary payloads. `.yapk` wrapper signing evidence does not make app-content mutation supported; release notes should preserve that proof boundary.
+The next Yeeflow Builder plugin release should include the `yeeflow-yapk-package-generator` skill, `validate-yapk-package.js`, `scripts/inspect-yapk-schema-standard.mjs`, YAPK study docs, normalized YAPK schema refs, and the safe YAPK schema summary. Do not include raw `.yapk` packages, raw `Resource`, raw `Sign`, tenant/app/list/package IDs, decoded full payloads, raw API responses, screenshots, or secrets. Adding the YAPK skill may increase the bundled skill count by one.
 
 ## Release Workflow
 
