@@ -15,6 +15,8 @@ Never accept fake dashboards, static KPI mockups, or unbound placeholder charts 
 
 For newly learned capabilities, runtime testing should usually be a focused baseline, not a broad full-app test. The runtime plan should prove only the new capability plus required host surfaces, with unrelated app complexity removed. If runtime proof is deferred, classify the branch as export-proven, validator-backed, planning-guidance, import-proven, configuration-visible, render-only, partial, or not tested. Do not recommend merging as runtime-proven until the focused runtime path passed and the tested host/scope is documented.
 
+Data Filter runtime boundary: `Sales_Management_AD.yap` and `CRM - Customer relationship management.yap` are export-proven for dashboard filter schema. `docs/studies/data-filter-controls-runtime-proof.md` proves a focused generated dashboard package imported, opened, rendered Search/Radio/Range/Sorting filters plus an Apply button, rendered data-bound table/chart surfaces, and stayed stable for one Search click-apply interaction and one Radio value-change selection. Keep this narrow: Range and Sorting are render-proven only, Remove filters reset behavior and Hierarchy interaction are not runtime-proven, approval-form and data-list-form Data Filter usage remain product-documented only, and exhaustive filter semantics/operators/performance are unproven.
+
 ## Runtime Workflow
 
 1. Confirm local validation completed first. If package/materialization validation failed, classify runtime as blocked by package/materialization and do not import.
@@ -141,6 +143,8 @@ For Set data list, start with import/open/designer/publish proof only. A focused
 For Signal event, start with import/open/designer/publish proof only. A focused Signal event baseline should verify the approval workflow designer can render a `SignalEvent` with no incoming flow, event definitions for cancel/terminate and revoke/recall, and downstream compensation actions such as Set data list without executing recall, terminate, or cleanup mutation. Recall/terminate execution should be deferred until disposable requests, safe target records, and rollback expectations are explicitly scoped.
 
 The combined `Workflow Actions Batch Runtime Baseline` imported, opened, rendered, and published generated approval and data-list workflows containing Claim Task / `CandidateTask`, Set variable / `SetVariableTask`, Set data list / `ContentList`, and Signal event / `SignalEvent`. Treat this as import/open/designer/publish proof only. The baseline does not prove Claim Task claiming, pending-task routing, approve/reject/complete execution, Set variable mutation, Set data list add/edit/remove execution, sub-list row iteration, Signal event recall/terminate firing, downstream cleanup mutation, Products workflow triggering, or email delivery.
+
+AP Approval demo publish-fix boundary: user-confirmed external publish success proves only the task-page shape fix for that AP demo workflow. Before future runtime tests, run strict generated-app import/publish readiness and confirm Assignment Task / Claim Task nodes have `properties.pagetype = 1`, mirrored `taskurl`/`taskUrl`/`TaskUrl`, and referenced task pages with outer `pagetype = 1`. Do not claim routing, task operation execution, email delivery, or data mutation from this publish fix.
 <!-- workflow-assignment-task-assignee-learning:end -->
 
 <!-- app-creation-rules-learning:start -->

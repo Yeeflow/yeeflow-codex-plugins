@@ -147,6 +147,8 @@ Recommended grid:
 - column gap: `10px` or a token-equivalent if supported
 - display caption: off, represented as `displayLabel = [null, false]`
 
+Generated layout-only `Grid`/`flex_grid` controls must keep captions off by default. Only generate a visible grid caption when the user explicitly asks for a titled grid or a real export requires that title. Route summaries, KPI/status chips, and horizontal information blocks should use container/card blocks with spacing/gap rather than captioned grids.
+
 Long controls should be full row:
 
 - textarea
@@ -156,6 +158,8 @@ Long controls should be full row:
 - long helper text
 
 Until column-span behavior is export-proven, place long controls outside the two-column grid below the grid.
+
+Submission approval forms should focus on submitter inputs and business context. Do not show internal approval routing, budget owner, finance approver, decision notes, or reviewer-only routing details on the submit page unless the user requests them. Task pages may show reviewer decision sections and routing context.
 
 ## Runtime-Sensitive Controls
 

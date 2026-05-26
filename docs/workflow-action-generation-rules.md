@@ -19,6 +19,7 @@ Use this with `workflow-action-configurations.normalized.json` when generating o
 
 ## Specific Validation Rules
 
+- `MultiAssignmentTask` and `CandidateTask`: generated approval workflow task nodes must reference a real task form/page before handoff. Mirror the task page ID across `properties.taskurl`, `properties.taskUrl`, and `properties.TaskUrl`; set task-node `properties.pagetype = 1`; and ensure the referenced `Data.Forms[].DefResource.pageurls[]` task page uses outer `pagetype = 1`. Missing/null TaskUrl and a referenced task page with outer `pagetype = 2` are generated-final publish-readiness errors.
 - `ContentList`: require target metadata for selected-list operations; `add` and `edit` require `listdatas`; `edit` and `remove` require `wheres`; each mapping must name a target column/field and provide a source value/expression.
 - `QueryData`: require source list metadata when the action is used; `filters` must be an array of condition objects; `datasource` sort entries must include sort field and direction; `result.type` must be `single` or `multiple`; multi-result mappings must name a destination variable/list and field assignments when present.
 - `MailTask`: require a recipient, subject, and body before runtime execution. Fixed literal email recipients are runtime-sensitive and must be redacted in docs; do not execute generated tests unless the recipient is explicitly safe.

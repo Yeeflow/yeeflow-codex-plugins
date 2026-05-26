@@ -90,6 +90,8 @@ Generated approval forms should apply the design system by default: business con
 
 For higher-quality generated forms, also use the Runtime V2/V3 CAPEX form rules in `docs/yeeflow-form-design-quality-rules.md` when present. Put page background on `page.formdef.attrs.background`, keep `Main` structural, add `Form header` for request summaries, use inline text/icon widths, follow the Text Style Sample standard for native Text controls (`type: "heading"`, `attrs.heads.ty = [null, "h5-medium"]` or a custom typography object, `attrs.heads.color = "var(--c--text)"`, and inline `attrs.common.positioning`), avoid old generated Text shapes with pair-shaped colors, use square icon badge wrappers, two-column `flex_grid` field sections with `displayLabel = [null, false]`, and native calculated controls for formula fields such as `Subtotal = Quantity * Unit Price`.
 
+AP Approval demo hardening update: generated approval forms should be published by default unless the user explicitly requests draft mode. Set `Data.Forms[].Deployed = true`, `Data.Forms[].Status = 1`, and any present DefResource `deployed`, `status`, and `published` flags to published values. Submit pages should contain submitter inputs and business context only; do not show internal approval routing, budget owner, finance approver, reviewer decision notes, or approval routing details on submit pages unless requested. Task pages may show reviewer decision sections and routing context.
+
 Global page background rule: for every generated approval submission page and task page, put any full-page background on `page.formdef.attrs.background`. Do not set full-page background color on the `Main` container. Use backgrounds on `Form header`, cards, sections, summary panels, or field groups only when those specific containers should be visible surfaces.
 
 ## Approval Form Design Quality Gate
@@ -173,10 +175,15 @@ This skill can help generate or validate:
 
 `Workflow Actions Runtime Baseline (2)_Task forms.yap` export-proves that app-level approval forms can store a submission form and multiple task forms under `Data.Forms[].DefResource.pageurls[]`. The studied submission form uses `pageurls[].type = 1`; task forms use `pageurls[].type = 2`. Assignment Task nodes associate to task forms through `MultiAssignmentTask.properties.taskurl`.
 
+AP Approval demo publish fix: runtime practice confirmed that task pages used by Assignment Task publish correctly when the referenced task page has outer `pagetype = 1`, the task node also carries `properties.pagetype = 1`, and the task page reference is mirrored across `properties.taskurl`, `properties.taskUrl`, and `properties.TaskUrl`. Treat missing/null TaskUrl, unresolved task page IDs, and referenced task pages with outer `pagetype = 2` as generated-final hard errors. Apply the same rule to Claim Task / `CandidateTask` nodes.
+
 Generation guidance:
 
 - Distinguish submission forms from task forms. Task forms are separate pages used by Assignment Task and Claim Task actions.
 - Every generated Assignment Task should reference an existing task form through `properties.taskurl`; a task form may be reused by multiple task nodes when the task responsibilities match.
+- Every generated Assignment Task and Claim Task should mirror its task form reference across `properties.taskurl`, `properties.taskUrl`, and `properties.TaskUrl`.
+- Every generated Assignment Task and Claim Task node should carry `properties.pagetype = 1`.
+- Referenced task page entries should remain `type = 2` task forms while using outer `pagetype = 1`.
 - A copied submission-form task page can set all copied value-entry controls to `readonly=true` for approve/reject or complete-only review tasks.
 - Task-specific pages may keep copied request fields readonly and add editable task-owner controls for finance/admin updates, comments, reassignment users, or add-assignee users.
 - The standard Action Panel is `type = "workflowControlPanel"`; its displayed Approve/Reject/Complete/Reassign/Add assignee buttons are derived from the associated task type/options rather than serialized as explicit child buttons in the export.

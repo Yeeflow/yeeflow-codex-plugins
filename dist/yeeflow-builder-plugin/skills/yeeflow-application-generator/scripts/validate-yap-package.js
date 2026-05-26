@@ -263,6 +263,34 @@ function displayLabelDisabled(value) {
   return Array.isArray(value) && value[1] === false;
 }
 
+function displayLabelEnabled(value) {
+  if (value === true) return true;
+  return Array.isArray(value) && value[1] === true;
+}
+
+function pageUrlId(page) {
+  return safeString(page && (page.id || page.ID || page.pageid || page.pageId || page.key));
+}
+
+function isWorkflowTaskNodeType(type) {
+  return type === "MultiAssignmentTask" || type === "CandidateTask";
+}
+
+function taskNodeLabel(type) {
+  return type === "CandidateTask" ? "Claim Task" : "Assignment Task";
+}
+
+function collectTaskUrlAliases(props = {}) {
+  return ["taskurl", "taskUrl", "TaskUrl"].map((key) => ({ key, value: safeString(props[key]) }));
+}
+
+function primaryTaskUrl(props = {}) {
+  for (const { value } of collectTaskUrlAliases(props)) {
+    if (value) return value;
+  }
+  return "";
+}
+
 function zeroPadding(padding) {
   const value = Array.isArray(padding) ? padding[1] : padding;
   if (!isObject(value)) return false;
@@ -1101,6 +1129,9 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
   const filterVars = new Set(asArray(page.filterVars).map((item) => safeString(item.id)).filter(Boolean));
   const reportIds = new Set(asArray(outerResource && outerResource.ReportIds).map(safeString).filter(Boolean));
   const controlIds = new Set();
+  const applyButtonIds = new Set();
+  const dataFilterControls = [];
+  const removeFilterControls = [];
   const seenTempVars = new Set();
   for (const item of asArray(page.tempVars)) {
     const id = safeString(item.id);
@@ -1113,6 +1144,15 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
     if (!isObject(node)) return;
     const controlId = safeString(node.id);
     if (controlId) controlIds.add(controlId);
+    const controlType = safeString(node.type);
+    if (controlType === "apply-button" && controlId) applyButtonIds.add(controlId);
+    if (isDashboardDataFilterControlType(controlType)) {
+      dataFilterControls.push({ pointer, controlId, controlType, binding: safeString(node.binding), attrs: node.attrs || {} });
+    } else if (controlType === "remove-filters" || controlType === "remove-filers") {
+      removeFilterControls.push({ pointer, controlId, controlType, attrs: node.attrs || {} });
+    } else if (controlType && /filter/i.test(controlType) && !isKnownNonDataFilterControlType(controlType)) {
+      issue(report, "warning", "DASHBOARD_DATA_FILTER_TYPE_UNKNOWN", "Dashboard contains an unknown filter-like control type. Treat this as unproven until an export maps the schema.", { title, layoutId, pointer, controlType });
+    }
     const binding = safeString(node.binding);
     if (binding && binding.startsWith("__filter_")) {
       const filterId = binding.replace(/^__filter_/, "");
@@ -1129,6 +1169,9 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
     if (dataList && safeString(dataList.ListID) && !listsById.has(safeString(dataList.ListID))) {
       issue(report, severity, "DASHBOARD_CONTROL_LIST_REFERENCE_UNRESOLVED", "Dashboard control data.list references a list not included in the package.", { title, layoutId, pointer, listId: safeString(dataList.ListID) });
     }
+    if (node.attrs && node.attrs.data) {
+      validateDashboardFilterConsumerRefs(title, layoutId, `${pointer}.attrs.data`, node.attrs.data, filterVars, report);
+    }
     if (safeString(node.type) === "document-library") {
       validateDashboardDocLibraryControl(node, title, layoutId, pointer, listsById, fieldsByList, report);
     }
@@ -1141,6 +1184,8 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
       issue(report, severity, "DASHBOARD_ACTION_PAGE_REFERENCE_UNRESOLVED", "Dashboard opendashboard action references a missing Type 103 page.", { title, layoutId, pointer, pageId: safeString(pageRef.PageID) });
     }
   });
+
+  validateDashboardDataFilterControls(title, layoutId, filterVars, applyButtonIds, dataFilterControls, removeFilterControls, report);
 
   asArray(page.exts).forEach((ext, index) => {
     const attr = ext && ext.attr;
@@ -1165,6 +1210,105 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
   });
   validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report);
   validateDashboardFunctionalQuality(page, title, layoutId, report);
+}
+
+function isDashboardDataFilterControlType(type) {
+  return [
+    "search-filter",
+    "select-filter",
+    "check-filter",
+    "checkbox-filter",
+    "radio-filter",
+    "range-filter",
+    "check-range",
+    "date-filter",
+    "relative-period",
+    "hierarchy-filter",
+    "sorting-filter",
+    "sorting-filters",
+  ].includes(safeString(type));
+}
+
+function isKnownNonDataFilterControlType(type) {
+  return [
+    "filter",
+    "data-list",
+    "document-library",
+    "collection",
+    "pivot-table",
+    "pie-chart",
+    "bar-chart",
+    "line-chart",
+  ].includes(safeString(type));
+}
+
+function collectFilterVariableRefs(value) {
+  const refs = [];
+  walk(value, (node, pointer) => {
+    if (!isObject(node)) return;
+    const id = safeString(node.id);
+    const name = safeString(node.name);
+    if (id.startsWith("__filter_") || (node.exprType === "variable" && name.startsWith("filter_"))) {
+      refs.push({ pointer, id, name: name || id.replace(/^__filter_/, "") });
+    }
+  });
+  return refs;
+}
+
+function validateDashboardFilterConsumerRefs(title, layoutId, pointer, data, filterVars, report) {
+  const severity = generatorFinalSeverity(report);
+  for (const [fulltextIndex, item] of asArray(data.fulltext).entries()) {
+    for (const ref of collectFilterVariableRefs(item.value)) {
+      if (ref.name && !filterVars.has(ref.name)) {
+        issue(report, severity, "DASHBOARD_FULLTEXT_FILTER_VARIABLE_UNRESOLVED", "Dashboard fulltext filter expression should reference a page filterVars id.", { title, layoutId, pointer: `${pointer}.fulltext[${fulltextIndex}].value${ref.pointer.slice(1)}`, filterVar: ref.name });
+      }
+      if (ref.name && ref.id && ref.id !== `__filter_${ref.name}`) {
+        issue(report, severity, "DASHBOARD_FULLTEXT_FILTER_VARIABLE_ID_MISMATCH", "Dashboard fulltext filter expression id should use the __filter_ prefix plus the filter variable name.", { title, layoutId, pointer: `${pointer}.fulltext[${fulltextIndex}].value${ref.pointer.slice(1)}`, id: ref.id, expected: `__filter_${ref.name}` });
+      }
+    }
+  }
+  for (const [sortIndex, ref] of collectFilterVariableRefs(data.sortingfilter).entries()) {
+    if (ref.name && !filterVars.has(ref.name)) {
+      issue(report, severity, "DASHBOARD_SORTING_FILTER_VARIABLE_UNRESOLVED", "Dashboard sortingfilter expression should reference a page filterVars id.", { title, layoutId, pointer: `${pointer}.sortingfilter[${sortIndex}]`, filterVar: ref.name });
+    }
+    if (ref.name && ref.id && ref.id !== `__filter_${ref.name}`) {
+      issue(report, severity, "DASHBOARD_SORTING_FILTER_VARIABLE_ID_MISMATCH", "Dashboard sortingfilter expression id should use the __filter_ prefix plus the filter variable name.", { title, layoutId, pointer: `${pointer}.sortingfilter[${sortIndex}]`, id: ref.id, expected: `__filter_${ref.name}` });
+    }
+  }
+}
+
+function validateDashboardDataFilterControls(title, layoutId, filterVars, applyButtonIds, dataFilterControls, removeFilterControls, report) {
+  const severity = generatorFinalSeverity(report);
+  for (const control of dataFilterControls) {
+    const filterVar = control.binding.startsWith("__filter_") ? control.binding.slice("__filter_".length) : "";
+    if (!filterVar) {
+      issue(report, severity, "DASHBOARD_DATA_FILTER_VARIABLE_MISSING", "Dashboard Data Filter controls should bind to a page filter variable with binding = __filter_<filterVarId>.", { title, layoutId, pointer: control.pointer, controlId: control.controlId, controlType: control.controlType });
+    } else if (!filterVars.has(filterVar)) {
+      issue(report, severity, "DASHBOARD_DATA_FILTER_VARIABLE_UNRESOLVED", "Dashboard Data Filter control binding must resolve to page.filterVars.", { title, layoutId, pointer: control.pointer, controlId: control.controlId, controlType: control.controlType, filterVar });
+    }
+    const applyType = safeString(control.attrs.apply_t || control.attrs.applyType);
+    const applyButton = safeString(control.attrs.apply_btn || control.attrs.applyButton);
+    if (applyType === "2") {
+      if (!applyButton) {
+        issue(report, severity, "DASHBOARD_DATA_FILTER_CLICK_APPLY_BUTTON_MISSING", "Click-on-apply Data Filter controls should reference an Apply button control.", { title, layoutId, pointer: control.pointer, controlId: control.controlId, filterVar });
+      } else if (!applyButtonIds.has(applyButton)) {
+        issue(report, severity, "DASHBOARD_DATA_FILTER_APPLY_BUTTON_UNRESOLVED", "Data Filter apply_btn should reference an existing apply-button control id.", { title, layoutId, pointer: control.pointer, controlId: control.controlId, filterVar, applyButton });
+      }
+    } else if (applyType && !["1", "2"].includes(applyType)) {
+      issue(report, "warning", "DASHBOARD_DATA_FILTER_APPLY_TYPE_UNKNOWN", "Data Filter apply type is not one of the export/documented values 1 or 2. Treat as unproven.", { title, layoutId, pointer: control.pointer, controlId: control.controlId, applyType });
+    }
+  }
+  for (const control of removeFilterControls) {
+    const refs = collectFilterVariableRefs(control.attrs);
+    for (const ref of refs) {
+      if (ref.name && !filterVars.has(ref.name)) {
+        issue(report, severity, "DASHBOARD_REMOVE_FILTERS_VARIABLE_UNRESOLVED", "Remove filters reset targets should resolve to page.filterVars when explicit targets are configured.", { title, layoutId, pointer: `${control.pointer}.attrs${ref.pointer.slice(1)}`, controlId: control.controlId, filterVar: ref.name });
+      }
+    }
+    if (!refs.length) {
+      issue(report, "warning", "DASHBOARD_REMOVE_FILTERS_TARGETS_UNSPECIFIED", "Remove filters control has no export-visible explicit reset targets; treat clear-all vs selected-reset behavior as runtime-sensitive.", { title, layoutId, pointer: control.pointer, controlId: control.controlId, controlType: control.controlType });
+    }
+  }
 }
 
 function dashboardTextValue(node) {
@@ -2681,16 +2825,25 @@ function validateFormLookupControls(def, form, listsById, fieldsByList, report) 
 function validateApprovalDef(def, form, report, listsById = new Map(), fieldsByList = new Map()) {
   const pages = asArray(def.pageurls);
   if (!pages.length) issue(report, "error", "APPROVAL_PAGEURLS_MISSING", "Approval form must include pageurls.", { form: form.Name, key: form.Key });
-  const ids = new Set();
+  validateApprovalPublishFlags(def, form, report);
+  const pageById = new Map();
+  const taskPageIds = new Set();
+  const requestPageIds = new Set();
   pages.forEach((page, index) => {
-    if (!page.id) issue(report, "error", "PAGEURL_ID_MISSING", "pageurls entry missing id.", { form: form.Name, index });
-    if (page.id) ids.add(String(page.id));
+    const id = pageUrlId(page);
+    if (!id) issue(report, "error", "PAGEURL_ID_MISSING", "pageurls entry missing id.", { form: form.Name, index });
+    if (id) {
+      pageById.set(id, page);
+      if (page.type === 1) requestPageIds.add(id);
+      if (page.type === 2) taskPageIds.add(id);
+    }
     if (!page.formdef) issue(report, "error", "PAGEURL_FORMDEF_MISSING", "pageurls entry missing formdef.", { form: form.Name, page: page.title || page.name || page.id });
     const formdef = typeof page.formdef === "string" ? tryParseJson(page.formdef) : page.formdef;
     if (formdef && !Array.isArray(formdef.children)) issue(report, "error", "PAGEURL_FORMDEF_CHILDREN_NOT_ARRAY", "formdef.children must be an array.", { form: form.Name, page: page.title || page.id });
     if (isObject(formdef)) {
       validateUiStandardFormRoot(formdef, report, { surface: "approval form page", title: page.title || page.name || page.id, form: form.Name });
       validateUiStandardContainers(formdef, report, { surface: "approval form page", title: page.title || page.name || page.id, form: form.Name, requireFormBody: true });
+      validateApprovalFormLayoutQuality(formdef, page, form, report, index);
       asArray(formdef.children).forEach((child, childIndex) => {
         walkControls(child, (control, pointer) => {
           validateEmbeddedControlSchema(control, report, {
@@ -2705,11 +2858,94 @@ function validateApprovalDef(def, form, report, listsById = new Map(), fieldsByL
       });
     }
   });
-  collectShapes(def).forEach((shape) => {
-    if (shapeType(shape) !== "MultiAssignmentTask" && shapeType(shape) !== "StartNoneEvent") return;
-    const taskurl = shape.properties && shape.properties.taskurl;
-    if (taskurl && !ids.has(String(taskurl))) {
-      issue(report, "warning", "TASKURL_PAGE_NOT_FOUND", "Workflow taskurl does not match a pageurls id.", { form: form.Name, node: shape.properties && shape.properties.name, taskurl });
+  validateApprovalTaskPageReferences(def, form, report, pageById, taskPageIds, requestPageIds);
+}
+
+function validateApprovalPublishFlags(def, form, report) {
+  const severity = generatorFinalSeverity(report);
+  const context = { form: form.Name, key: form.Key };
+  if (form.Deployed !== true) {
+    issue(report, severity, "APPROVAL_FORM_DEPLOYED_NOT_TRUE", "Generated approval forms should be published by default: Data.Forms[].Deployed must be true unless draft mode was explicitly requested.", { ...context, path: "Data.Forms[].Deployed", value: form.Deployed });
+  }
+  if (form.Status !== 1) {
+    issue(report, severity, "APPROVAL_FORM_STATUS_NOT_PUBLISHED", "Generated approval forms should be published by default: Data.Forms[].Status must be 1 unless draft mode was explicitly requested.", { ...context, path: "Data.Forms[].Status", value: form.Status });
+  }
+  for (const [key, expected] of [["deployed", true], ["status", 1], ["published", true]]) {
+    if (!Object.prototype.hasOwnProperty.call(def || {}, key)) continue;
+    if (def[key] !== expected) {
+      issue(report, severity, "APPROVAL_DEFRESOURCE_PUBLISH_FLAG_INVALID", "Generated approval form DefResource publish/deploy flags must be set consistently when present.", { ...context, path: `Data.Forms[].DefResource.${key}`, expected, value: def[key] });
+    }
+  }
+}
+
+function validateApprovalTaskPageReferences(def, form, report, pageById, taskPageIds, requestPageIds) {
+  const severity = generatorFinalSeverity(report);
+  collectShapes(def).forEach((shape, index) => {
+    const type = shapeType(shape);
+    const props = shape.properties || {};
+    if (type === "StartNoneEvent") {
+      const taskurl = primaryTaskUrl(props);
+      if (taskurl && !requestPageIds.has(taskurl)) {
+        issue(report, "warning", "START_TASKURL_PAGE_NOT_FOUND", "StartNoneEvent task page reference should resolve to a submission page.", { form: form.Name, node: props.name || shapeId(shape), taskurl });
+      }
+      return;
+    }
+    if (!isWorkflowTaskNodeType(type)) return;
+    const nodeLabel = taskNodeLabel(type);
+    const node = props.name || shapeId(shape);
+    const aliases = collectTaskUrlAliases(props);
+    const presentAliases = aliases.filter((entry) => entry.value);
+    const taskurl = presentAliases.length ? presentAliases[0].value : "";
+    if (!taskurl) {
+      issue(report, severity, "TASKURL_MISSING_OR_NULL", `${nodeLabel} nodes must reference a task form/page; missing or null TaskUrl is a publish blocker for generated approval workflows.`, { form: form.Name, node, path: `Data.Forms[].DefResource.childshapes[${index}].properties.taskurl` });
+      return;
+    }
+    const mismatched = aliases.filter((entry) => entry.value !== taskurl);
+    if (mismatched.length || presentAliases.length !== aliases.length) {
+      issue(report, severity, "TASKURL_ALIASES_NOT_MIRRORED", `${nodeLabel} task form references must be mirrored across taskurl, taskUrl, and TaskUrl for publish readiness.`, {
+        form: form.Name,
+        node,
+        taskurl: props.taskurl || null,
+        taskUrl: props.taskUrl || null,
+        TaskUrl: props.TaskUrl || null,
+      });
+    }
+    const page = pageById.get(taskurl);
+    if (!page) {
+      issue(report, severity, "TASKURL_PAGE_NOT_FOUND", `${nodeLabel} task form reference does not resolve to a pageurls id.`, { form: form.Name, node, taskurl });
+      return;
+    }
+    if (!taskPageIds.has(taskurl)) {
+      issue(report, severity, "TASKURL_NOT_TASK_PAGE", `${nodeLabel} task form reference must resolve to a task page with pageurls[].type = 2.`, { form: form.Name, node, taskurl, pageType: page.type });
+    }
+    if (page.pagetype !== 1) {
+      issue(report, severity, "TASK_PAGE_OUTER_PAGETYPE_INVALID", `${nodeLabel} referenced task pages must use outer pageurls[].pagetype = 1; pagetype 2 can publish with TaskUrl null failures.`, { form: form.Name, node, taskurl, pagetype: page.pagetype });
+    }
+    if (props.pagetype !== 1) {
+      issue(report, severity, "TASK_NODE_PAGETYPE_INVALID", `${nodeLabel} workflow nodes should carry properties.pagetype = 1 for task-form publish readiness.`, { form: form.Name, node, pagetype: props.pagetype });
+    }
+  });
+}
+
+function validateApprovalFormLayoutQuality(formdef, page, form, report, pageIndex) {
+  const severity = generatorFinalSeverity(report);
+  const pageId = pageUrlId(page) || pageIndex;
+  const pageName = page.title || page.name || pageId;
+  const isSubmitPage = page.type === 1;
+  walkControls({ children: asArray(formdef.children) }, (control, pointer) => {
+    if (!control || control === formdef) return;
+    const type = safeString(control.type).toLowerCase();
+    const label = safeString(control.nv_label || control.label || control.title || control.binding || control.id);
+    const hasChildren = asArray(control.children).length > 0 || asArray(control.columns).length > 0;
+    const explicitlyTitled = control.attrs && (control.attrs.layoutRole === "titled-grid" || control.attrs.visibleGridCaption === true);
+    if (["grid", "flex_grid"].includes(type) && hasChildren && !explicitlyTitled && !displayLabelDisabled(control.displayLabel) && !displayLabelDisabled(control.attrs && control.attrs.displayLabel)) {
+      issue(report, severity, "LAYOUT_GRID_CAPTION_VISIBLE", "Grid/flex_grid controls used as layout containers should turn off Display caption with displayLabel [null,false] unless explicitly configured as a titled grid.", { form: form.Name, page: pageName, pageId, path: `Data.Forms[].DefResource.pageurls[${pageIndex}].formdef${pointer.slice(1)}`, control: label, controlType: control.type });
+    }
+    if (["grid", "flex_grid"].includes(type) && /(route|routing|status|summary|kpi|metric)/i.test(label) && (displayLabelEnabled(control.displayLabel) || !displayLabelDisabled(control.displayLabel))) {
+      issue(report, "warning", "ROUTE_SUMMARY_GRID_LAYOUT", "Route summaries, KPI blocks, and horizontal information blocks should use container/card blocks with spacing instead of captioned Grid/flex_grid controls.", { form: form.Name, page: pageName, pageId, path: `Data.Forms[].DefResource.pageurls[${pageIndex}].formdef${pointer.slice(1)}`, control: label, controlType: control.type });
+    }
+    if (isSubmitPage && /(internal routing|approval routing|routing details|budget owner|finance approver|decision notes|reviewer decision|approver notes)/i.test(label)) {
+      issue(report, severity, "SUBMIT_FORM_INTERNAL_ROUTING_DETAILS", "Submission forms should focus on submitter inputs and business context; internal routing, approver, and reviewer decision details belong on task pages unless explicitly requested.", { form: form.Name, page: pageName, pageId, path: `Data.Forms[].DefResource.pageurls[${pageIndex}].formdef${pointer.slice(1)}`, control: label, controlType: control.type });
     }
   });
 }

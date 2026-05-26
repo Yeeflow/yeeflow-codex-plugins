@@ -263,6 +263,34 @@ function displayLabelDisabled(value) {
   return Array.isArray(value) && value[1] === false;
 }
 
+function displayLabelEnabled(value) {
+  if (value === true) return true;
+  return Array.isArray(value) && value[1] === true;
+}
+
+function pageUrlId(page) {
+  return safeString(page && (page.id || page.ID || page.pageid || page.pageId || page.key));
+}
+
+function isWorkflowTaskNodeType(type) {
+  return type === "MultiAssignmentTask" || type === "CandidateTask";
+}
+
+function taskNodeLabel(type) {
+  return type === "CandidateTask" ? "Claim Task" : "Assignment Task";
+}
+
+function collectTaskUrlAliases(props = {}) {
+  return ["taskurl", "taskUrl", "TaskUrl"].map((key) => ({ key, value: safeString(props[key]) }));
+}
+
+function primaryTaskUrl(props = {}) {
+  for (const { value } of collectTaskUrlAliases(props)) {
+    if (value) return value;
+  }
+  return "";
+}
+
 function zeroPadding(padding) {
   const value = Array.isArray(padding) ? padding[1] : padding;
   if (!isObject(value)) return false;
@@ -2797,16 +2825,25 @@ function validateFormLookupControls(def, form, listsById, fieldsByList, report) 
 function validateApprovalDef(def, form, report, listsById = new Map(), fieldsByList = new Map()) {
   const pages = asArray(def.pageurls);
   if (!pages.length) issue(report, "error", "APPROVAL_PAGEURLS_MISSING", "Approval form must include pageurls.", { form: form.Name, key: form.Key });
-  const ids = new Set();
+  validateApprovalPublishFlags(def, form, report);
+  const pageById = new Map();
+  const taskPageIds = new Set();
+  const requestPageIds = new Set();
   pages.forEach((page, index) => {
-    if (!page.id) issue(report, "error", "PAGEURL_ID_MISSING", "pageurls entry missing id.", { form: form.Name, index });
-    if (page.id) ids.add(String(page.id));
+    const id = pageUrlId(page);
+    if (!id) issue(report, "error", "PAGEURL_ID_MISSING", "pageurls entry missing id.", { form: form.Name, index });
+    if (id) {
+      pageById.set(id, page);
+      if (page.type === 1) requestPageIds.add(id);
+      if (page.type === 2) taskPageIds.add(id);
+    }
     if (!page.formdef) issue(report, "error", "PAGEURL_FORMDEF_MISSING", "pageurls entry missing formdef.", { form: form.Name, page: page.title || page.name || page.id });
     const formdef = typeof page.formdef === "string" ? tryParseJson(page.formdef) : page.formdef;
     if (formdef && !Array.isArray(formdef.children)) issue(report, "error", "PAGEURL_FORMDEF_CHILDREN_NOT_ARRAY", "formdef.children must be an array.", { form: form.Name, page: page.title || page.id });
     if (isObject(formdef)) {
       validateUiStandardFormRoot(formdef, report, { surface: "approval form page", title: page.title || page.name || page.id, form: form.Name });
       validateUiStandardContainers(formdef, report, { surface: "approval form page", title: page.title || page.name || page.id, form: form.Name, requireFormBody: true });
+      validateApprovalFormLayoutQuality(formdef, page, form, report, index);
       asArray(formdef.children).forEach((child, childIndex) => {
         walkControls(child, (control, pointer) => {
           validateEmbeddedControlSchema(control, report, {
@@ -2821,11 +2858,94 @@ function validateApprovalDef(def, form, report, listsById = new Map(), fieldsByL
       });
     }
   });
-  collectShapes(def).forEach((shape) => {
-    if (shapeType(shape) !== "MultiAssignmentTask" && shapeType(shape) !== "StartNoneEvent") return;
-    const taskurl = shape.properties && shape.properties.taskurl;
-    if (taskurl && !ids.has(String(taskurl))) {
-      issue(report, "warning", "TASKURL_PAGE_NOT_FOUND", "Workflow taskurl does not match a pageurls id.", { form: form.Name, node: shape.properties && shape.properties.name, taskurl });
+  validateApprovalTaskPageReferences(def, form, report, pageById, taskPageIds, requestPageIds);
+}
+
+function validateApprovalPublishFlags(def, form, report) {
+  const severity = generatorFinalSeverity(report);
+  const context = { form: form.Name, key: form.Key };
+  if (form.Deployed !== true) {
+    issue(report, severity, "APPROVAL_FORM_DEPLOYED_NOT_TRUE", "Generated approval forms should be published by default: Data.Forms[].Deployed must be true unless draft mode was explicitly requested.", { ...context, path: "Data.Forms[].Deployed", value: form.Deployed });
+  }
+  if (form.Status !== 1) {
+    issue(report, severity, "APPROVAL_FORM_STATUS_NOT_PUBLISHED", "Generated approval forms should be published by default: Data.Forms[].Status must be 1 unless draft mode was explicitly requested.", { ...context, path: "Data.Forms[].Status", value: form.Status });
+  }
+  for (const [key, expected] of [["deployed", true], ["status", 1], ["published", true]]) {
+    if (!Object.prototype.hasOwnProperty.call(def || {}, key)) continue;
+    if (def[key] !== expected) {
+      issue(report, severity, "APPROVAL_DEFRESOURCE_PUBLISH_FLAG_INVALID", "Generated approval form DefResource publish/deploy flags must be set consistently when present.", { ...context, path: `Data.Forms[].DefResource.${key}`, expected, value: def[key] });
+    }
+  }
+}
+
+function validateApprovalTaskPageReferences(def, form, report, pageById, taskPageIds, requestPageIds) {
+  const severity = generatorFinalSeverity(report);
+  collectShapes(def).forEach((shape, index) => {
+    const type = shapeType(shape);
+    const props = shape.properties || {};
+    if (type === "StartNoneEvent") {
+      const taskurl = primaryTaskUrl(props);
+      if (taskurl && !requestPageIds.has(taskurl)) {
+        issue(report, "warning", "START_TASKURL_PAGE_NOT_FOUND", "StartNoneEvent task page reference should resolve to a submission page.", { form: form.Name, node: props.name || shapeId(shape), taskurl });
+      }
+      return;
+    }
+    if (!isWorkflowTaskNodeType(type)) return;
+    const nodeLabel = taskNodeLabel(type);
+    const node = props.name || shapeId(shape);
+    const aliases = collectTaskUrlAliases(props);
+    const presentAliases = aliases.filter((entry) => entry.value);
+    const taskurl = presentAliases.length ? presentAliases[0].value : "";
+    if (!taskurl) {
+      issue(report, severity, "TASKURL_MISSING_OR_NULL", `${nodeLabel} nodes must reference a task form/page; missing or null TaskUrl is a publish blocker for generated approval workflows.`, { form: form.Name, node, path: `Data.Forms[].DefResource.childshapes[${index}].properties.taskurl` });
+      return;
+    }
+    const mismatched = aliases.filter((entry) => entry.value !== taskurl);
+    if (mismatched.length || presentAliases.length !== aliases.length) {
+      issue(report, severity, "TASKURL_ALIASES_NOT_MIRRORED", `${nodeLabel} task form references must be mirrored across taskurl, taskUrl, and TaskUrl for publish readiness.`, {
+        form: form.Name,
+        node,
+        taskurl: props.taskurl || null,
+        taskUrl: props.taskUrl || null,
+        TaskUrl: props.TaskUrl || null,
+      });
+    }
+    const page = pageById.get(taskurl);
+    if (!page) {
+      issue(report, severity, "TASKURL_PAGE_NOT_FOUND", `${nodeLabel} task form reference does not resolve to a pageurls id.`, { form: form.Name, node, taskurl });
+      return;
+    }
+    if (!taskPageIds.has(taskurl)) {
+      issue(report, severity, "TASKURL_NOT_TASK_PAGE", `${nodeLabel} task form reference must resolve to a task page with pageurls[].type = 2.`, { form: form.Name, node, taskurl, pageType: page.type });
+    }
+    if (page.pagetype !== 1) {
+      issue(report, severity, "TASK_PAGE_OUTER_PAGETYPE_INVALID", `${nodeLabel} referenced task pages must use outer pageurls[].pagetype = 1; pagetype 2 can publish with TaskUrl null failures.`, { form: form.Name, node, taskurl, pagetype: page.pagetype });
+    }
+    if (props.pagetype !== 1) {
+      issue(report, severity, "TASK_NODE_PAGETYPE_INVALID", `${nodeLabel} workflow nodes should carry properties.pagetype = 1 for task-form publish readiness.`, { form: form.Name, node, pagetype: props.pagetype });
+    }
+  });
+}
+
+function validateApprovalFormLayoutQuality(formdef, page, form, report, pageIndex) {
+  const severity = generatorFinalSeverity(report);
+  const pageId = pageUrlId(page) || pageIndex;
+  const pageName = page.title || page.name || pageId;
+  const isSubmitPage = page.type === 1;
+  walkControls({ children: asArray(formdef.children) }, (control, pointer) => {
+    if (!control || control === formdef) return;
+    const type = safeString(control.type).toLowerCase();
+    const label = safeString(control.nv_label || control.label || control.title || control.binding || control.id);
+    const hasChildren = asArray(control.children).length > 0 || asArray(control.columns).length > 0;
+    const explicitlyTitled = control.attrs && (control.attrs.layoutRole === "titled-grid" || control.attrs.visibleGridCaption === true);
+    if (["grid", "flex_grid"].includes(type) && hasChildren && !explicitlyTitled && !displayLabelDisabled(control.displayLabel) && !displayLabelDisabled(control.attrs && control.attrs.displayLabel)) {
+      issue(report, severity, "LAYOUT_GRID_CAPTION_VISIBLE", "Grid/flex_grid controls used as layout containers should turn off Display caption with displayLabel [null,false] unless explicitly configured as a titled grid.", { form: form.Name, page: pageName, pageId, path: `Data.Forms[].DefResource.pageurls[${pageIndex}].formdef${pointer.slice(1)}`, control: label, controlType: control.type });
+    }
+    if (["grid", "flex_grid"].includes(type) && /(route|routing|status|summary|kpi|metric)/i.test(label) && (displayLabelEnabled(control.displayLabel) || !displayLabelDisabled(control.displayLabel))) {
+      issue(report, "warning", "ROUTE_SUMMARY_GRID_LAYOUT", "Route summaries, KPI blocks, and horizontal information blocks should use container/card blocks with spacing instead of captioned Grid/flex_grid controls.", { form: form.Name, page: pageName, pageId, path: `Data.Forms[].DefResource.pageurls[${pageIndex}].formdef${pointer.slice(1)}`, control: label, controlType: control.type });
+    }
+    if (isSubmitPage && /(internal routing|approval routing|routing details|budget owner|finance approver|decision notes|reviewer decision|approver notes)/i.test(label)) {
+      issue(report, severity, "SUBMIT_FORM_INTERNAL_ROUTING_DETAILS", "Submission forms should focus on submitter inputs and business context; internal routing, approver, and reviewer decision details belong on task pages unless explicitly requested.", { form: form.Name, page: pageName, pageId, path: `Data.Forms[].DefResource.pageurls[${pageIndex}].formdef${pointer.slice(1)}`, control: label, controlType: control.type });
     }
   });
 }

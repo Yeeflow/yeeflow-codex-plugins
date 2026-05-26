@@ -5,6 +5,8 @@ description: generate, inspect, validate, package, and improve yeeflow approval 
 
 # Yeeflow Approval Form Generator
 
+Business Travel workflow-publish practice: import success and approval workflow publish success are separate gates. The fixed Business Travel package is user-proven for import, app open, workflow open, and workflow publish. Before packaging new approval forms, ensure every variable referenced by form controls, sub-list summaries, sequence-flow `conditioninfo`, Set Variable `variablesetting[]`, and assignment `usertaskassignment[]` expressions exists in `DefResource.variables`. Sequence flows must not reference deleted variables. Set Variable targets must exist and use the target variable's `idx`, `id`, `name`, and `type`. Direct job-position assignments require numeric position IDs; placeholders like `__POSITION_ID_REQUIRED_*__` are blocking errors. If a real tenant position ID is unavailable, stop for mapping or document a user-approved fallback. Do not claim workflow execution, routing, request submission, data mutation, or true Finance Manager assignment from publish proof alone.
+
 ## Application Navigation References
 
 When an approval form is included in application navigation, reference it from the root app `Data.Item.ListModel.LayoutView.sort[]` using `Type = 105` and `ListID = Data.Forms[].Key`. App-level approval forms in generated packages keep `ListID = 0` on the form record; the navigation item points to the form key, not a child data-list ID.
@@ -12,6 +14,8 @@ When an approval form is included in application navigation, reference it from t
 Approval form menu items can be top-level resources or children inside a top-level `Type = "classes"` navigation group. Use optional `DisplayName` for custom menu text, omit it for title fallback, use `Icon: ""` for no-icon, and keep `IsHidden` boolean when present. Validate references before wrapper build.
 
 Use this skill when the user asks to generate, inspect, validate, package, troubleshoot, or improve Yeeflow approval form definitions, decoded `.ywf` Def JSON, `.ywf` wrappers, or `.yap` application exports.
+
+Data Filter controls can be used in approval forms at the product level, but the Sales and CRM exports only prove dashboard page usage. Until an approval-form export proves the exact host schema, treat approval-form Data Filter placement, lookup/lookup-list filtering, Apply button wiring, Remove filters reset behavior, and runtime refresh behavior as product-documented only. Reuse `docs/studies/data-filter-controls.md` for the shared concept: filter variables are the bridge between filters and downstream data-bound controls; Search, Radio, Hierarchy, and Sorting are dashboard export-proven from the CRM sample; every generated filter variable reference must resolve before handoff.
 
 When approval-form changes target an existing imported app, confirm whether the user wants a new cloned `.yap` or an upgrade `.yapk`. For `.yapk`, start from a Version management baseline and preserve existing form/workflow IDs; do not regenerate fresh IDs for existing objects. The first studied `.yapk` resource is opaque and signature-like, so offline app-content form mutation inside `.yapk` is not generation-safe until Yeeflow encoding/signing is proven.
 
@@ -85,6 +89,8 @@ Use `docs/yeeflow-root-style-token-reference.md` for approval-form token guidanc
 Generated approval forms should apply the design system by default: business content in `Form body`, Action Panel and Flow History in `Form bottom`, readonly task-page mirroring where useful, meaningful `nv_label`, and token-aligned colors and spacing without changing core workflow logic.
 
 For higher-quality generated forms, also use the Runtime V2/V3 CAPEX form rules in `docs/yeeflow-form-design-quality-rules.md` when present. Put page background on `page.formdef.attrs.background`, keep `Main` structural, add `Form header` for request summaries, use inline text/icon widths, follow the Text Style Sample standard for native Text controls (`type: "heading"`, `attrs.heads.ty = [null, "h5-medium"]` or a custom typography object, `attrs.heads.color = "var(--c--text)"`, and inline `attrs.common.positioning`), avoid old generated Text shapes with pair-shaped colors, use square icon badge wrappers, two-column `flex_grid` field sections with `displayLabel = [null, false]`, and native calculated controls for formula fields such as `Subtotal = Quantity * Unit Price`.
+
+AP Approval demo hardening update: generated approval forms should be published by default unless the user explicitly requests draft mode. Set `Data.Forms[].Deployed = true`, `Data.Forms[].Status = 1`, and any present DefResource `deployed`, `status`, and `published` flags to published values. Submit pages should contain submitter inputs and business context only; do not show internal approval routing, budget owner, finance approver, reviewer decision notes, or approval routing details on submit pages unless requested. Task pages may show reviewer decision sections and routing context.
 
 Global page background rule: for every generated approval submission page and task page, put any full-page background on `page.formdef.attrs.background`. Do not set full-page background color on the `Main` container. Use backgrounds on `Form header`, cards, sections, summary panels, or field groups only when those specific containers should be visible surfaces.
 
@@ -169,10 +175,15 @@ This skill can help generate or validate:
 
 `Workflow Actions Runtime Baseline (2)_Task forms.yap` export-proves that app-level approval forms can store a submission form and multiple task forms under `Data.Forms[].DefResource.pageurls[]`. The studied submission form uses `pageurls[].type = 1`; task forms use `pageurls[].type = 2`. Assignment Task nodes associate to task forms through `MultiAssignmentTask.properties.taskurl`.
 
+AP Approval demo publish fix: runtime practice confirmed that task pages used by Assignment Task publish correctly when the referenced task page has outer `pagetype = 1`, the task node also carries `properties.pagetype = 1`, and the task page reference is mirrored across `properties.taskurl`, `properties.taskUrl`, and `properties.TaskUrl`. Treat missing/null TaskUrl, unresolved task page IDs, and referenced task pages with outer `pagetype = 2` as generated-final hard errors. Apply the same rule to Claim Task / `CandidateTask` nodes.
+
 Generation guidance:
 
 - Distinguish submission forms from task forms. Task forms are separate pages used by Assignment Task and Claim Task actions.
 - Every generated Assignment Task should reference an existing task form through `properties.taskurl`; a task form may be reused by multiple task nodes when the task responsibilities match.
+- Every generated Assignment Task and Claim Task should mirror its task form reference across `properties.taskurl`, `properties.taskUrl`, and `properties.TaskUrl`.
+- Every generated Assignment Task and Claim Task node should carry `properties.pagetype = 1`.
+- Referenced task page entries should remain `type = 2` task forms while using outer `pagetype = 1`.
 - A copied submission-form task page can set all copied value-entry controls to `readonly=true` for approve/reject or complete-only review tasks.
 - Task-specific pages may keep copied request fields readonly and add editable task-owner controls for finance/admin updates, comments, reassignment users, or add-assignee users.
 - The standard Action Panel is `type = "workflowControlPanel"`; its displayed Approve/Reject/Complete/Reassign/Add assignee buttons are derived from the associated task type/options rather than serialized as explicit child buttons in the export.
@@ -403,3 +414,11 @@ Generated approval forms must use process keys containing only letters, numbers,
 
 Emit `Forms[].NoRule` as an object, not a boolean/string/array: `Prefix`, `StartIndex`, `CustomLength`, and `AutoIncrement` are required, and `Prefix` must include `{index}`. A malformed `NoRule` is product-team-confirmed import-breaking, so treat it as a generation-blocking validation error. Do not claim runtime import/open proof until a regenerated package with valid `NoRule` is imported successfully.
 <!-- app-creation-rules-learning:end -->
+
+<!-- yap-schema-standard-learning:start -->
+## YAP Schema Standard Guardrails
+
+Approval-form packages must also satisfy the YAP schema-standard wrapper and list-export rules in `docs/studies/yap-schema-standard.md`. The generated `.yap` wrapper must use a `[______gizp______]` `Resource`; decoded `Resource.Data` must contain `ListExportInfo.Item`; and every root/child `ListExportItem` must include `Defs` and `Layouts` arrays. Use `[]` for empty collections and never emit `Defs: null` or `Layouts: null`.
+
+Keep `NoRule` as the required process number format object with `{index}` in `Prefix`, and keep form/process keys alphanumeric/underscore only. Run `scripts/inspect-yap-schema-standard.mjs` plus package validation before import attempts.
+<!-- yap-schema-standard-learning:end -->

@@ -215,6 +215,7 @@ function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
   const props = shape.properties || {};
   const assignments = props.usertaskassignment;
   const severity = strictLevel(options, "warning");
+  validateTaskFormReferenceAliases(issues, shape, pointer, options, "ASSIGNMENT_TASK", "Assignment task");
   if (props.tasktype !== undefined && !ASSIGNMENT_TASK_TASKTYPES.has(safeString(props.tasktype))) {
     issue(issues, severity, "ASSIGNMENT_TASK_TASKTYPE_UNKNOWN", "Assignment task tasktype is not in the export-proven task-type list. Absence of tasktype is treated as approval/default in studied exports.", {
       path: `${pointer}.properties.tasktype`,
@@ -310,6 +311,14 @@ function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
         method,
       });
     }
+    if (type === "position" && method === "position" && !valueMissing(assignment.position) && !/^\d+$/.test(safeString(assignment.position))) {
+      issue(issues, severity, "ASSIGNMENT_TASK_POSITION_ID_INVALID", "Direct position assignment should use a numeric position ID; placeholders or labels can block workflow publish.", {
+        path: `${itemPath}.position`,
+        nodeId: shapeId(shape),
+        method,
+        value: safeString(assignment.position),
+      });
+    }
     if (["direct", "positionorg", "positionloc"].includes(method) && valueMissing(assignment.value)) {
       issue(issues, severity, "ASSIGNMENT_TASK_STATIC_REFERENCE_MISSING", "Static user, department, or location assignment should include a value reference.", {
         path: `${itemPath}.value`,
@@ -363,6 +372,7 @@ function validateCandidateTaskReceivers(issues, shape, pointer, options) {
   const props = shape.properties || {};
   const receivers = props.usertaskassignment;
   const severity = strictLevel(options, "warning");
+  validateTaskFormReferenceAliases(issues, shape, pointer, options, "CLAIM_TASK", "Claim Task");
   if (Object.prototype.hasOwnProperty.call(props, "tasktype ")) {
     issue(issues, "warning", "CLAIM_TASK_TASKTYPE_TRAILING_SPACE_PRESENT", "Claim Task config reference mentions properties.tasktype with a trailing space, but studied exports use properties.tasktype. Preserve export field names and warn on trailing-space variants.", {
       path: `${pointer}.properties.tasktype `,
@@ -490,6 +500,34 @@ function validateCandidateTaskReceivers(issues, shape, pointer, options) {
       });
     }
   });
+}
+
+function validateTaskFormReferenceAliases(issues, shape, pointer, options, codePrefix, label) {
+  const props = shape.properties || {};
+  const severity = strictLevel(options, "warning");
+  const aliases = ["taskurl", "taskUrl", "TaskUrl"].map((key) => ({ key, value: safeString(props[key]) }));
+  const first = aliases.find((entry) => entry.value);
+  if (!first) {
+    issue(issues, severity, `${codePrefix}_TASKURL_MISSING`, `${label} must reference a task form/page; missing or null TaskUrl blocks generated approval workflow publish readiness.`, {
+      path: `${pointer}.properties.taskurl`,
+      nodeId: shapeId(shape),
+    });
+  } else if (aliases.some((entry) => entry.value !== first.value)) {
+    issue(issues, severity, `${codePrefix}_TASKURL_ALIASES_NOT_MIRRORED`, `${label} task form references should be mirrored across properties.taskurl, properties.taskUrl, and properties.TaskUrl.`, {
+      path: `${pointer}.properties.taskurl`,
+      nodeId: shapeId(shape),
+      taskurl: props.taskurl || null,
+      taskUrl: props.taskUrl || null,
+      TaskUrl: props.TaskUrl || null,
+    });
+  }
+  if (props.pagetype !== 1) {
+    issue(issues, severity, `${codePrefix}_PAGETYPE_INVALID`, `${label} workflow nodes should carry properties.pagetype = 1 for task-form publish readiness.`, {
+      path: `${pointer}.properties.pagetype`,
+      nodeId: shapeId(shape),
+      pagetype: props.pagetype,
+    });
+  }
 }
 
 function validateAssignmentTaskDueDate(issues, props, pointer, severity, codePrefix = "ASSIGNMENT_TASK") {

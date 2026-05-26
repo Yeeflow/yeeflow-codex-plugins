@@ -181,7 +181,11 @@ This upgrades the package host surfaces to import/open/designer/publish-proven o
 
 - Preserve submission form and task forms as separate `pageurls[]` entries.
 - Use `type=1` for submission form pages and `type=2` for task form pages when following this export.
-- Every generated `MultiAssignmentTask` should have `properties.taskurl` resolving to a task form page.
+- Every generated `MultiAssignmentTask` and `CandidateTask` should have `properties.taskurl` resolving to a task form page.
+- Mirror generated task form references across `properties.taskurl`, `properties.taskUrl`, and `properties.TaskUrl`.
+- Set Assignment Task and Claim Task node `properties.pagetype = 1`.
+- Set referenced task page outer `pageurls[].pagetype = 1`, even when `pageurls[].type = 2` identifies the page as a task form.
+- Treat missing/null TaskUrl, unresolved task page IDs, and referenced task pages with outer `pagetype = 2` as generated-final publish-readiness errors.
 - One task form may be reused by multiple Assignment Task nodes when the form responsibilities match.
 - For simple approve/reject or complete-only tasks, a copied readonly task form with `workflowControlPanel` is export-proven.
 - For task-owner data entry, copied request controls should stay readonly unless intentionally editable, and task-only fields can be added.
