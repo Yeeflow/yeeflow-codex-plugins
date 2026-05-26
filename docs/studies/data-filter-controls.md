@@ -1,12 +1,15 @@
 # Data Filter Controls Export Study
 
-Proof boundary: dashboard Data Filter usage in `Sales_Management_AD.yap` is export-proven only. Help Center behavior is product-documented. Approval-form and data-list-form applicability is product-documented only in this pass. Runtime behavior is not runtime-proven.
+Proof boundary: dashboard Data Filter schema across `Sales_Management_AD.yap` and `CRM - Customer relationship management.yap` is export-proven only. Help Center behavior is product-documented. Approval-form and data-list-form applicability is product-documented only in this pass. Runtime behavior is not runtime-proven.
 
 ## Source
 
 - Export path: `/Users/Renger/Downloads/Sales_Management_AD.yap`
+- Follow-up export path: `/Users/Renger/Downloads/CRM - Customer relationship management.yap`
 - Repository branch: `codex/data-filter-controls-learning`
+- Follow-up branch: `codex/data-filter-controls-crm-learning`
 - Target dashboard pages: `Dashboard`, `Data Report`
+- CRM follow-up target dashboard page: `Dashboard`
 - Original export handling: decoded read-only into ignored `.tmp/` only; raw `.yap` and decoded payloads are not committed.
 - Privacy handling: normalized references use placeholders for app/list/page/control IDs, data sources, labels, and fields where needed.
 
@@ -43,12 +46,29 @@ Export-proven from this sample:
 - Apply button, exported as `apply-button`
 - Remove filters, exported in this sample as `remove-filers`
 
-Product-documented or previous/UI-reference-backed only in this sample:
+Not found in the Sales sample, then covered by the CRM follow-up:
 
-- Search filter: product-documented and previously dashboard-runtime-proven in `generated-dashboard-filter-controls-v5.yap`, but not present in this export.
-- Radio filter: product-documented and previously dashboard-runtime-proven in `generated-dashboard-filter-controls-v5.yap`, but not present in this export.
-- Hierarchy filter: product-documented only here.
-- Sorting filter: product-documented only here.
+- Search filter: export-proven from CRM Dashboard.
+- Radio filter: export-proven from CRM Dashboard.
+- Hierarchy filter: export-proven from CRM Dashboard.
+- Sorting filter: export-proven from CRM Dashboard.
+
+## 12-Control Coverage
+
+| Product control | Export status | Export evidence | Runtime boundary |
+| --- | --- | --- | --- |
+| Search filter | export-proven | CRM Dashboard | not runtime-proven |
+| Select filter | export-proven | Sales Dashboard | not runtime-proven |
+| Checkbox filter | export-proven | Sales Dashboard and Data Report | not runtime-proven |
+| Radio filter | export-proven | CRM Dashboard | not runtime-proven |
+| Range filter | export-proven | Sales Dashboard | not runtime-proven |
+| Check range | export-proven | Sales Dashboard | not runtime-proven |
+| Date filter | export-proven | Sales Dashboard and Data Report | not runtime-proven |
+| Relative period | export-proven | Sales Dashboard and CRM Dashboard | not runtime-proven |
+| Hierarchy filter | export-proven | CRM Dashboard | not runtime-proven |
+| Sorting filter | export-proven | CRM Dashboard, exported as `sorting-filters` | not runtime-proven |
+| Apply button | export-proven | Sales Dashboard and CRM Dashboard | not runtime-proven |
+| Remove filters | export-proven | Sales Dashboard, exported as `remove-filers` | not runtime-proven |
 
 ## Export Schema Pattern
 
@@ -216,7 +236,7 @@ Each dynamic filter condition uses `right` as an expression-token array whose `i
 - Use value-change/default mode for lightweight filters and click-apply mode when multiple or heavier filters should avoid repeated refreshes.
 - Wire downstream `attrs.data.filter[]` or `exts[].attr.settings.Conditions[]` to filter variables through expression-token arrays.
 - Validate the condition left field against the consumer data source.
-- Generate only export-proven filter control types and settings. Do not invent schema for Search, Radio, Hierarchy, or Sorting filters from this sample.
+- Generate only export-proven filter control types and settings. Sales proves Select, Checkbox, Range, Check range, Date, Relative period, Apply button, and Remove filters. CRM proves Search, Radio, Hierarchy, and Sorting. Keep any settings not seen in these exports as product-documented or unproven until later evidence.
 - Treat `remove-filers` as the observed export spelling for this sample, while product terminology remains Remove filters.
 
 ## Validation Rules
@@ -250,4 +270,136 @@ Created under `docs/studies/normalized/data-filter-controls/`:
 - `data-filter-click-apply-binding.normalized.json`
 - `data-filter-value-change-binding.normalized.json`
 
-No normalized refs were created for Search, Radio, Hierarchy, or Sorting filters because those controls were not found in this export.
+The Sales export did not provide normalized refs for Search, Radio, Hierarchy, or Sorting filters; the CRM follow-up refs below cover those product controls.
+
+## CRM Dashboard Follow-up: Search, Radio, Hierarchy, and Sorting Filters
+
+Source export: `/Users/Renger/Downloads/CRM - Customer relationship management.yap`
+
+Target page: `Dashboard`
+
+CRM Dashboard inventory:
+
+- Total controls inspected: 75
+- Data Filter controls found: 15
+- Filter variables found: 14
+- Search filters: 3
+- Radio filters: 5
+- Hierarchy filters: 4
+- Sorting filters: 1
+- Apply buttons: 1
+- Remove filters: 0
+- Downstream consumers using filter variables: 8
+- Unresolved filter references: none found in the CRM Dashboard target page
+
+The CRM Dashboard also includes one Relative period filter; that control was already export-proven from the Sales export, so the CRM pass primarily extends the missing Search, Radio, Hierarchy, and Sorting controls.
+
+### Search Filter
+
+- Product name: Search filter
+- Export type: `search-filter`
+- Settings path: `<control>.attrs`
+- Associated filter variable path: `$.filterVars[]`
+- Binding path: `<control>.binding = "__filter_" + filterVarId`
+- Settings found: `attrs.placeholder`, optional `attrs["minnumber-letters"]`, optional `attrs.apply_t`, optional `attrs.apply_btn`
+- Apply type found: default/unspecified and `Click on apply button` through `attrs.apply_t = "2"`
+- Option/source behavior: no option source list; the search text is stored in the filter variable
+- Downstream consumers: dashboard data-list control `attrs.data.fulltext[]` entries reference Search variables through expression-token arrays
+- Value shape: expression token in `fulltext[].value[]` with `id = "__filter_<filterVarId>"` and `name = "<filterVarId>"`
+- Generation rule: use Search filter for text/fulltext search across one or more fields; configure `minnumber-letters` only when a minimum input length is desired; use click-apply mode for heavier searches
+- Validation rule: Search filter binding must resolve to `page.filterVars[]`; every `fulltext[].value[]` filter variable must resolve and use the matching `__filter_` id
+- Proof level: export-proven dashboard schema, not runtime-proven
+
+### Radio Filter
+
+- Product name: Radio filter
+- Export type: `radio-filter`
+- Settings path: `<control>.attrs`
+- Associated filter variable path: `$.filterVars[]`
+- Binding path: `<control>.binding = "__filter_" + filterVarId`
+- Option/source behavior: `attrs.data.list` points to an option source list; `attrs.display_f` selects the displayed field; `attrs.value_f` selects the stored value field; `attrs.data.sort[]` can order options
+- Settings found: `attrs.ps`, `attrs.layout`, `attrs.search-enable`, `attrs.more-enable`, `attrs.more-text`, `attrs.less-text`, `attrs.search-placeholder`, `attrs.displayStyle`, optional click-apply settings
+- Apply type found: default/unspecified and `Click on apply button` through `attrs.apply_t = "2"`
+- Downstream consumers: no CRM downstream condition consumed a Radio variable in the data-list table, but dashboard report/chart extension conditions consume the existing `filter_period` and one radio-like condition was observed in CRM report extension conditions. Treat data-list consumer wiring for Radio as the same filter-variable expression bridge but keep exact operator choice field-specific.
+- Value shape: single selected option value from `attrs.value_f`
+- Generation rule: use Radio filter for single-choice filtering where choices come from a list or reference table; use `displayStyle: "dropdown"` only when a dropdown presentation is desired; use search/more settings for longer option lists
+- Validation rule: Radio binding, option source list, display field, value field, and any downstream variable expression must resolve
+- Proof level: export-proven dashboard schema, not runtime-proven
+
+### Hierarchy Filter
+
+- Product name: Hierarchy filter
+- Export type: `hierarchy-filter`
+- Settings path: `<control>.attrs`
+- Associated filter variable path: `$.filterVars[]`
+- Binding path: `<control>.binding = "__filter_" + filterVarId`
+- Hierarchy settings found: optional `attrs.parentId`, `attrs.multiple`, `attrs["hierarchical-select"]`, `attrs.type`, `attrs.categoryId`, `attrs.source`
+- List-backed hierarchy settings found: `attrs.data.list`, `attrs.data.sort[]`, `attrs.display_f`, `attrs.value_f`, `attrs.parent_f`, `attrs.child_f`
+- Apply type found: default/unspecified
+- Downstream consumers: dashboard data-list control `attrs.data.filter[]` references Hierarchy variables in expression-token arrays. One list-backed hierarchy uses a child/self field relationship through `child_f` and `parent_f`.
+- Value shape: selected hierarchy node value(s), with multiple selection visible through `attrs.multiple = true`
+- Generation rule: use Hierarchy filter only when the source data has a hierarchy relationship. For list-backed hierarchies, configure list, display/value fields, parent field, and child field together. Do not invent category/source modes beyond export-proven settings.
+- Validation rule: Hierarchy binding must resolve; list-backed source list and fields should resolve; downstream consumer expressions must resolve; unsupported hierarchy source modes should warn first
+- Proof level: export-proven dashboard schema, not runtime-proven
+
+### Sorting Filter
+
+- Product name: Sorting filter
+- Export type: `sorting-filters`
+- Settings path: `<control>.attrs`
+- Associated filter variable path: `$.filterVars[]`
+- Binding path: `<control>.binding = "__filter_" + filterVarId`
+- Source behavior: `attrs.data.list` points to the data source being sorted
+- Sorting options path: `attrs.sort_list[]`
+- Sorting option shape: each option includes `mapkey`, `title`, `orderby`, and `order`
+- Apply type found: default/unspecified
+- Downstream consumers: dashboard data-list control `attrs.data.sortingfilter[]` references the Sorting variable through an expression-token array
+- Value shape: selected sort option mapped to a field/order pair
+- Generation rule: use Sorting filter when users need to choose between preconfigured sort orders. Each generated option should point to a real field and use `asc` or `desc`.
+- Validation rule: Sorting filter binding must resolve; source list must resolve; every `sort_list[].orderby` should resolve to a source field when possible; every downstream `sortingfilter[]` expression must resolve to `page.filterVars[]`
+- Proof level: export-proven dashboard schema, not runtime-proven
+
+### CRM Apply Button
+
+The CRM Dashboard includes one `apply-button`. Two filters use click-apply wiring:
+
+- one Search filter with `attrs.apply_t = "2"` and `attrs.apply_btn`
+- one Radio filter with `attrs.apply_t = "2"` and `attrs.apply_btn`
+
+Generation and validation rule: one Apply button can be referenced by multiple click-apply filters. Every `attrs.apply_btn` must resolve to an existing `apply-button` control id.
+
+### CRM Downstream Consumers
+
+The CRM Dashboard proves additional consumer paths:
+
+- Search filters feed dashboard data-list `attrs.data.fulltext[]`.
+- Hierarchy filters feed dashboard data-list `attrs.data.filter[]`.
+- Sorting filter feeds dashboard data-list `attrs.data.sortingfilter[]`.
+- Report/chart extension conditions continue to use `exts[].attr.settings.Conditions[]`.
+
+The shared expression token rule remains:
+
+```json
+{
+  "exprType": "variable",
+  "id": "__filter_<filterVarId>",
+  "name": "<filterVarId>"
+}
+```
+
+### CRM Normalized References
+
+Added under `docs/studies/normalized/data-filter-controls/`:
+
+- `data-filter-search-control-crm.normalized.json`
+- `data-filter-search-variable-crm.normalized.json`
+- `data-filter-radio-control-crm.normalized.json`
+- `data-filter-radio-variable-crm.normalized.json`
+- `data-filter-hierarchy-control-crm.normalized.json`
+- `data-filter-hierarchy-variable-crm.normalized.json`
+- `data-filter-sorting-control-crm.normalized.json`
+- `data-filter-sorting-variable-crm.normalized.json`
+- `data-filter-crm-consumer-condition.normalized.json`
+- `data-filter-crm-apply-binding.normalized.json`
+
+These references use redacted list/control/page placeholders and do not include raw CRM data rows, customer names, emails, tenant IDs, or decoded payloads.

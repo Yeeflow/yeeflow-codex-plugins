@@ -2,7 +2,7 @@
 
 ## Data Filter Controls
 
-Use `docs/studies/data-filter-controls.md` before generating Data Filter controls. The `Sales_Management_AD.yap` learning pass is dashboard export-proven only: value-producing filters bind to embedded dashboard `page.filterVars[]` through `binding = "__filter_" + filterVarId`, and downstream data-bound controls consume those variables through expression-token arrays in data filter conditions.
+Use `docs/studies/data-filter-controls.md` before generating Data Filter controls. The Sales and CRM learning passes are dashboard export-proven only: value-producing filters bind to embedded dashboard `page.filterVars[]` through `binding = "__filter_" + filterVarId`, and downstream data-bound controls consume those variables through expression-token arrays in data filter conditions.
 
 Generation rules:
 
@@ -13,6 +13,10 @@ Generation rules:
 - Prefer value-change/default behavior for lightweight filters.
 - Use click-apply behavior for multiple or heavier filters, and include a valid Apply button whenever any filter requires it.
 - Include Remove filters only when a reset affordance is useful, and validate explicit reset targets when the export shape is known.
+- Use Search filters for text/fulltext search paths such as dashboard `attrs.data.fulltext[]`.
+- Use Radio filters for single-choice list-backed options with `attrs.data.list`, `attrs.display_f`, and `attrs.value_f`.
+- Use Hierarchy filters only when hierarchical source data is available; keep list/display/value/parent/child field wiring together.
+- Use Sorting filters for user-selected sort presets; CRM exports the control type as `sorting-filters`, with options in `attrs.sort_list[]` and consumers in `attrs.data.sortingfilter[]`.
 - Do not generate unsupported Data Filter control types without export/runtime schema proof.
 
 These rules apply to generated new-application `.yap` packages.

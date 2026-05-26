@@ -10,6 +10,20 @@ const EMAIL_RE = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
 const URL_RE = /\bhttps?:\/\/[^\s"')]+/gi;
 const UUID_RE = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
 const TARGET_PAGE_NAMES = new Set(["Dashboard", "Data Report"]);
+const PRODUCT_CONTROL_NAMES = [
+  "Search filter",
+  "Select filter",
+  "Checkbox filter",
+  "Radio filter",
+  "Range filter",
+  "Check range",
+  "Date filter",
+  "Relative period",
+  "Hierarchy filter",
+  "Sorting filter",
+  "Apply button",
+  "Remove filters",
+];
 const VALUE_FILTER_TYPES = new Set([
   "search-filter",
   "select-filter",
@@ -22,6 +36,7 @@ const VALUE_FILTER_TYPES = new Set([
   "relative-period",
   "hierarchy-filter",
   "sorting-filter",
+  "sorting-filters",
 ]);
 const SPECIAL_FILTER_TYPES = new Set(["apply-button", "remove-filters", "remove-filers"]);
 const PRODUCT_TYPE_NAMES = new Map([
@@ -36,6 +51,7 @@ const PRODUCT_TYPE_NAMES = new Map([
   ["relative-period", "Relative period"],
   ["hierarchy-filter", "Hierarchy filter"],
   ["sorting-filter", "Sorting filter"],
+  ["sorting-filters", "Sorting filter"],
   ["apply-button", "Apply button"],
   ["remove-filters", "Remove filters"],
   ["remove-filers", "Remove filters"],
@@ -48,7 +64,7 @@ const APPLY_TYPE_NAMES = new Map([
 function usage(exitCode = 1) {
   const text = [
     "Usage:",
-    "  node scripts/inspect-data-filter-controls.mjs <input.yap> [--out <report.json>] [--out-dir <normalized-dir>]",
+    "  node scripts/inspect-data-filter-controls.mjs <input.yap> [<input2.yap> ...] [--page <name>] [--out <report.json>] [--out-dir <normalized-dir>] [--coverage] [--list-known-controls]",
     "",
     "Decodes a Yeeflow .yap read-only, inventories dashboard Data Filter controls, and writes redacted normalized references when --out-dir is provided.",
   ].join("\n");
@@ -58,16 +74,22 @@ function usage(exitCode = 1) {
 
 function parseArgs(argv) {
   if (argv.includes("--help") || argv.includes("-h")) usage(0);
-  const args = { input: null, out: null, outDir: null, requireTargetPages: false };
+  const args = { inputs: [], pages: [], out: null, outDir: null, requireTargetPages: false, coverage: false, listKnownControls: false };
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--out") args.out = argv[++i];
     else if (arg === "--out-dir") args.outDir = argv[++i];
+    else if (arg === "--page") args.pages.push(argv[++i]);
     else if (arg === "--require-target-pages") args.requireTargetPages = true;
-    else if (!args.input) args.input = arg;
-    else usage();
+    else if (arg === "--coverage") args.coverage = true;
+    else if (arg === "--list-known-controls") args.listKnownControls = true;
+    else args.inputs.push(arg);
   }
-  if (!args.input) usage();
+  if (args.listKnownControls) {
+    console.log(JSON.stringify({ productControls: PRODUCT_CONTROL_NAMES, exportTypeMap: Object.fromEntries(PRODUCT_TYPE_NAMES) }, null, 2));
+    process.exit(0);
+  }
+  if (!args.inputs.length) usage();
   return args;
 }
 
@@ -187,10 +209,10 @@ function buildListIndex(data) {
   return byId;
 }
 
-function extractPages(data) {
+function extractPages(data, targetPageNames = TARGET_PAGE_NAMES) {
   const pages = [];
   for (const layout of asArray(data.Item && data.Item.Layouts)) {
-    if (Number(layout.Type) !== 103 || !TARGET_PAGE_NAMES.has(safeString(layout.Title))) continue;
+    if (Number(layout.Type) !== 103 || !targetPageNames.has(safeString(layout.Title))) continue;
     const layoutResource = asArray(layout.LayoutInResources)[0] || {};
     const page = tryParseJson(layoutResource.Resource);
     if (!isObject(page)) continue;
@@ -271,6 +293,42 @@ function collectConsumers(page, listIndex) {
         conditions: filter.map((condition, index) => summarizeCondition(condition, `${pointer}.attrs.data.filter[${index}]`, listId, listIndex)),
       });
     }
+    const fulltext = node.attrs && node.attrs.data && node.attrs.data.fulltext;
+    if (Array.isArray(fulltext) && expressionFilterVarRefs(fulltext).length) {
+      consumers.push({
+        path: pointer,
+        controlType: type || "<page-node>",
+        dataSource: redactListRef(node.attrs.data.list, listIndex),
+        conditionPath: `${pointer}.attrs.data.fulltext`,
+        consumerKind: "fulltext",
+        conditions: fulltext.map((item, index) => ({
+          path: `${pointer}.attrs.data.fulltext[${index}]`,
+          leftFields: asArray(item.fields).map((field) => redactFieldName(field, listId, listIndex)),
+          operator: "fulltext",
+          pre: "",
+          filterVariables: expressionFilterVarRefs(item.value).map((ref) => ref.name || filterVarFromBinding(ref.id)).filter(Boolean),
+          rightShape: Array.isArray(item.value) ? "expression-array" : typeof item.value,
+        })),
+      });
+    }
+    const sortingfilter = node.attrs && node.attrs.data && node.attrs.data.sortingfilter;
+    if (Array.isArray(sortingfilter) && expressionFilterVarRefs(sortingfilter).length) {
+      consumers.push({
+        path: pointer,
+        controlType: type || "<page-node>",
+        dataSource: redactListRef(node.attrs.data.list, listIndex),
+        conditionPath: `${pointer}.attrs.data.sortingfilter`,
+        consumerKind: "sortingfilter",
+        conditions: [{
+          path: `${pointer}.attrs.data.sortingfilter`,
+          leftField: "<sort>",
+          operator: "sortingfilter",
+          pre: "",
+          filterVariables: expressionFilterVarRefs(sortingfilter).map((ref) => ref.name || filterVarFromBinding(ref.id)).filter(Boolean),
+          rightShape: "expression-array",
+        }],
+      });
+    }
   });
   for (const [extIndex, ext] of asArray(page.exts).entries()) {
     const attr = ext && ext.attr;
@@ -329,6 +387,18 @@ function collectFilterControls(page, listIndex) {
         numberStep: attrs.number_step,
         options: attrs.options,
         choiceOptions: attrs["choice-options"],
+        minLetters: attrs["minnumber-letters"],
+        hierarchicalSelect: attrs["hierarchical-select"],
+        multiple: attrs.multiple,
+        source: attrs.source,
+        hierarchyType: attrs.type,
+        childField: attrs.child_f,
+        parentField: attrs.parent_f,
+        sortList: asArray(attrs.sort_list).map((item) => ({
+          orderby: item.orderby ? redactFieldName(item.orderby, listId, listIndex) : "",
+          order: item.order || "",
+          title: item.title ? "<sort-option-title>" : "",
+        })),
       }),
     });
   });
@@ -374,7 +444,7 @@ function validatePage(pageSummary, page, warnings, errors) {
   }
 }
 
-function inspectPage(entry, listIndex, warnings, errors) {
+function inspectPage(entry, listIndex, warnings, errors, sourceExport = "") {
   const { layout, page } = entry;
   const filterVariables = asArray(page.filterVars).map((item, index) => ({
     path: `$.filterVars[${index}]`,
@@ -385,6 +455,7 @@ function inspectPage(entry, listIndex, warnings, errors) {
   const controls = collectFilterControls(page, listIndex);
   const consumers = collectConsumers(page, listIndex);
   const summary = {
+    sourceExport,
     pageName: safeString(layout.Title),
     pageId: "<page-id>",
     totalControlsInspected: 0,
@@ -411,7 +482,9 @@ function inspectPage(entry, listIndex, warnings, errors) {
 
 function normalizedRefs(report) {
   const refs = new Map();
-  const firstVarPage = report.pages.find((page) => page.filterVariables.length);
+  const isCrmSource = (source) => String(source || "").toLowerCase().includes("crm");
+  const nonCrmPages = report.pages.filter((page) => !isCrmSource(page.sourceExport));
+  const firstVarPage = nonCrmPages.find((page) => page.filterVariables.length);
   if (firstVarPage) {
     refs.set("data-filter-variable-definition.normalized.json", {
       proofLevel: "export-proven",
@@ -423,7 +496,7 @@ function normalizedRefs(report) {
   const byType = new Map();
   for (const page of report.pages) {
     for (const control of page.filterControls) {
-      if (!byType.has(control.type)) byType.set(control.type, { page: page.pageName, control });
+      if (!byType.has(control.type)) byType.set(control.type, { source: page.sourceExport, page: page.pageName, control });
     }
   }
   const fileByType = new Map([
@@ -438,6 +511,7 @@ function normalizedRefs(report) {
     ["relative-period", "data-filter-relative-period-control.normalized.json"],
     ["hierarchy-filter", "data-filter-hierarchy-control.normalized.json"],
     ["sorting-filter", "data-filter-sorting-control.normalized.json"],
+    ["sorting-filters", "data-filter-sorting-control.normalized.json"],
     ["apply-button", "data-filter-apply-button.normalized.json"],
     ["remove-filters", "data-filter-remove-filters.normalized.json"],
     ["remove-filers", "data-filter-remove-filters.normalized.json"],
@@ -445,29 +519,52 @@ function normalizedRefs(report) {
   for (const [type, found] of byType) {
     const file = fileByType.get(type);
     if (!file) continue;
-    refs.set(file, {
+    const crm = isCrmSource(found.source);
+    const refFile = crm && file.startsWith("data-filter-") && file.includes("-control.")
+      ? file.replace("-control.", "-control-crm.")
+      : file;
+    if (crm && refFile === file) continue;
+    refs.set(refFile, {
       proofLevel: "export-proven",
+      sourceExport: found.source || "",
       page: found.page,
       productName: PRODUCT_TYPE_NAMES.get(type) || type,
       exportControlType: type,
       control: found.control,
     });
+    if (crm && found.control.filterVariable) {
+      const varFile = `data-filter-${String(PRODUCT_TYPE_NAMES.get(type) || type).toLowerCase().replace(/\s+/g, "-").replace(/-filter$/, "")}-variable-crm.normalized.json`;
+      refs.set(varFile, {
+        proofLevel: "export-proven",
+        sourceExport: found.source || "",
+        page: found.page,
+        productName: PRODUCT_TYPE_NAMES.get(type) || type,
+        filterVariable: found.control.filterVariable,
+        binding: found.control.binding,
+      });
+    }
   }
-  const firstConsumer = report.pages.flatMap((page) => page.consumers.map((consumer) => ({ page: page.pageName, consumer })))[0];
+  const nonCrmConsumerEntries = nonCrmPages.flatMap((page) => page.consumers.map((consumer) => ({ page: page.pageName, consumer })));
+  const firstConsumer = nonCrmConsumerEntries[0];
   if (firstConsumer) {
     refs.set("data-filter-consumer-condition.normalized.json", {
       proofLevel: "export-proven",
       page: firstConsumer.page,
       consumer: firstConsumer.consumer,
     });
-    const chart = report.pages.flatMap((page) => page.consumers.map((consumer) => ({ page: page.pageName, consumer }))).find((entry) => entry.consumer.controlType === "dashboard-report-ext");
+    const chart = nonCrmConsumerEntries.find((entry) => entry.consumer.controlType === "dashboard-report-ext");
     if (chart) refs.set("data-filter-consumer-chart.normalized.json", { proofLevel: "export-proven", page: chart.page, consumer: chart.consumer });
-    const table = report.pages.flatMap((page) => page.consumers.map((consumer) => ({ page: page.pageName, consumer }))).find((entry) => entry.consumer.controlType === "data-list");
+    const table = nonCrmConsumerEntries.find((entry) => entry.consumer.controlType === "data-list");
     if (table) refs.set("data-filter-consumer-table.normalized.json", { proofLevel: "export-proven", page: table.page, consumer: table.consumer });
   }
-  const clickApply = report.pages.flatMap((page) => page.filterControls.map((control) => ({ page: page.pageName, control }))).find((entry) => entry.control.applyType === "Click on apply button");
+  const crmConsumer = report.pages.flatMap((page) => page.consumers.map((consumer) => ({ page: page.pageName, source: page.sourceExport, consumer }))).find((entry) => String(entry.source).toLowerCase().includes("crm"));
+  if (crmConsumer) refs.set("data-filter-crm-consumer-condition.normalized.json", { proofLevel: "export-proven", sourceExport: crmConsumer.source, page: crmConsumer.page, consumer: crmConsumer.consumer });
+  const nonCrmControlEntries = nonCrmPages.flatMap((page) => page.filterControls.map((control) => ({ page: page.pageName, control })));
+  const clickApply = nonCrmControlEntries.find((entry) => entry.control.applyType === "Click on apply button");
   if (clickApply) refs.set("data-filter-click-apply-binding.normalized.json", { proofLevel: "export-proven", page: clickApply.page, control: clickApply.control });
-  const valueChange = report.pages.flatMap((page) => page.filterControls.map((control) => ({ page: page.pageName, control }))).find((entry) => entry.control.applyType !== "Click on apply button" && VALUE_FILTER_TYPES.has(entry.control.type));
+  const crmClickApply = report.pages.flatMap((page) => page.filterControls.map((control) => ({ page: page.pageName, source: page.sourceExport, control }))).find((entry) => String(entry.source).toLowerCase().includes("crm") && entry.control.applyType === "Click on apply button");
+  if (crmClickApply) refs.set("data-filter-crm-apply-binding.normalized.json", { proofLevel: "export-proven", sourceExport: crmClickApply.source, page: crmClickApply.page, control: crmClickApply.control });
+  const valueChange = nonCrmControlEntries.find((entry) => entry.control.applyType !== "Click on apply button" && VALUE_FILTER_TYPES.has(entry.control.type));
   if (valueChange) refs.set("data-filter-value-change-binding.normalized.json", { proofLevel: "export-proven-default-unspecified", page: valueChange.page, control: valueChange.control });
   return refs;
 }
@@ -490,33 +587,38 @@ function writeOutput(report, args) {
 
 function main() {
   const args = parseArgs(process.argv);
-  const inputPath = path.resolve(args.input);
   const warnings = [];
   const errors = [];
-  const decoded = decodeYap(inputPath);
-  const listIndex = buildListIndex(decoded.data);
-  const pageEntries = extractPages(decoded.data);
-  if (args.requireTargetPages && pageEntries.length !== TARGET_PAGE_NAMES.size) {
+  const targetPageNames = new Set(args.pages.length ? args.pages : [...TARGET_PAGE_NAMES]);
+  const decodedExports = args.inputs.map((input) => ({ inputPath: path.resolve(input), decoded: decodeYap(path.resolve(input)) }));
+  const pages = [];
+  for (const item of decodedExports) {
+    const listIndex = buildListIndex(item.decoded.data);
+    const pageEntries = extractPages(item.decoded.data, targetPageNames);
+    if (args.requireTargetPages && pageEntries.length !== targetPageNames.size) {
     const found = new Set(pageEntries.map((entry) => safeString(entry.layout.Title)));
-    for (const pageName of TARGET_PAGE_NAMES) {
-      if (!found.has(pageName)) errors.push({ code: "TARGET_PAGE_MISSING", page: pageName });
+      for (const pageName of targetPageNames) {
+        if (!found.has(pageName)) errors.push({ code: "TARGET_PAGE_MISSING", input: item.inputPath, page: pageName });
+      }
     }
+    pages.push(...pageEntries.map((entry) => inspectPage(entry, listIndex, warnings, errors, item.inputPath)));
   }
-  const pages = pageEntries.map((entry) => inspectPage(entry, listIndex, warnings, errors));
   const allControls = pages.flatMap((page) => page.filterControls);
+  const foundProductControls = new Set(allControls.map((control) => control.productName));
   const report = {
     status: errors.length ? "fail" : warnings.length ? "pass_with_warnings" : "pass",
-    input: inputPath,
-    targetPages: [...TARGET_PAGE_NAMES],
+    input: decodedExports.length === 1 ? decodedExports[0].inputPath : undefined,
+    inputs: decodedExports.map((item) => item.inputPath),
+    targetPages: [...targetPageNames],
     pages,
     exportProvenControlTypes: [...new Set(allControls.map((control) => control.productName))].sort(),
     exportProvenValueControlTypes: [...new Set(allControls.filter((control) => VALUE_FILTER_TYPES.has(control.type)).map((control) => control.productName))].sort(),
-    productDocumentedOnlyControlTypes: [
-      "Search filter",
-      "Radio filter",
-      "Hierarchy filter",
-      "Sorting filter",
-    ].filter((name) => !new Set(allControls.map((control) => control.productName)).has(name)),
+    productDocumentedOnlyControlTypes: PRODUCT_CONTROL_NAMES.filter((name) => !foundProductControls.has(name)),
+    coverage: args.coverage ? PRODUCT_CONTROL_NAMES.map((name) => ({
+      productName: name,
+      status: foundProductControls.has(name) ? "export-proven" : "pending",
+      sources: [...new Set(pages.filter((page) => page.filterControls.some((control) => control.productName === name)).map((page) => path.basename(page.sourceExport || "")))],
+    })) : undefined,
     warnings,
     errors,
     proofBoundary: {
