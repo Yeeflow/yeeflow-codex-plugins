@@ -424,3 +424,11 @@ Approval-form packages must also satisfy the YAP schema-standard wrapper and lis
 
 Keep `NoRule` as the required process number format object with `{index}` in `Prefix`, and keep form/process keys alphanumeric/underscore only. Run `scripts/inspect-yap-schema-standard.mjs` plus package validation before import attempts.
 <!-- yap-schema-standard-learning:end -->
+
+<!-- container-button-action-settings-learning:start -->
+## Open Approval Form Actions
+
+Dashboard Container/Button `Open approval form` actions are export-proven in `docs/studies/container-button-action-settings.md` with `attrs["action-type"] = "8"` and `attrs.data.form.ProcKey`. Use this action type when a dashboard should start a workflow/request such as AP approval, invoice/payment request, purchase request, leave request, or budget approval.
+
+Generated Open approval form actions must resolve to an included approval form key and should preserve approval-form publish/readiness rules for final packages. Optional `setVars` can initialize approval variables only when every referenced variable exists on the target form. Runtime start/open behavior is not proven by export learning alone.
+<!-- container-button-action-settings-learning:end -->

@@ -653,3 +653,13 @@ Generation-blocking import-readiness errors include missing or invalid `ListMode
 
 If strict validation fails, fix the package before handoff. `pass_with_warnings` is acceptable only after the remaining warnings are classified as non-import-blocking runtime/export-derived warnings.
 <!-- projects-center-import-failure-hardening:end -->
+
+<!-- container-button-action-settings-learning:start -->
+## Container/Button Action Handoff
+
+When generated dashboards, custom pages, or app shells include clickable Containers or Buttons, use the export-backed action-setting guidance in `docs/studies/container-button-action-settings.md` and validate with `scripts/inspect-container-button-actions.mjs`.
+
+For generated apps, do not leave action targets as placeholders. Link actions need a literal URL or expression URL. Add list item actions must point to a real Data List or Document Library and any selected form layout must resolve. Open dashboard actions must point to an included Type `103` dashboard. Open approval form actions must point to an included approval form `ProcKey`, and final approval forms should satisfy the publish/readiness checks. Generated-final unresolved Container/Button action targets are import-readiness errors.
+
+Choose structural Yeeflow actions instead of raw links when the target is a Yeeflow resource. Keep cross-application action targets runtime-sensitive unless a focused export/runtime proof includes the exact cross-app identity shape.
+<!-- container-button-action-settings-learning:end -->

@@ -346,3 +346,11 @@ For newly generated `.yap` packages, compatibility validation is not enough. Bef
 
 The Projects Center fixed package import is user-proven only for the repaired Projects Center package. Do not claim broad app open/use, data entry, document-library upload/folder behavior, report execution, or workflow proof from that incident. Missing `ListType`, unsafe native `Title` metadata, unresolved view columns, mismatched `LayoutInResources` IDs, unresolved dashboard dynamic-display/filter references, and tenant/user metadata in `ReplaceIds` must block generated-package handoff.
 <!-- projects-center-import-failure-hardening:end -->
+
+<!-- container-button-action-settings-learning:start -->
+## Actionable Dashboard Business Choices
+
+When translating requirements into dashboard actions, choose Container/Button action types by business intent: Link for URL destinations, Add list item for quick-create data/document flows, Open dashboard for navigation and drill-down, Open approval form for starting workflow requests, and form/page Action binding for local front-end logic when the host schema is proven.
+
+Use structural Yeeflow targets instead of raw links for resources included in the generated app. Generated applications must validate Container/Button action targets and open behavior before `.yap` handoff, and runtime navigation/open behavior remains unproven until clicked in a focused runtime test.
+<!-- container-button-action-settings-learning:end -->

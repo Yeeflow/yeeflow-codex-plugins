@@ -203,3 +203,11 @@ Before any runtime import attempt for a newly generated `.yap`, require strict g
 
 The Projects Center fixed package import is user-proven only for import success. It does not prove app open/use, data entry, document-library behavior, scheduled report execution, or workflow behavior. Keep those runtime scopes separate.
 <!-- projects-center-import-failure-hardening:end -->
+
+<!-- container-button-action-settings-learning:start -->
+## Container/Button Action Runtime Boundary
+
+Container/Button Action settings from `AP Approval Demo v3.yap` are export-proven and validator-backed only until a focused runtime test clicks the generated controls. A runtime proof should separately verify Link opening, Add list item form opening, Open dashboard navigation, Open approval form start/open behavior, open modes such as modal/slide/full-page/new-window, target resolution, and absence of dashboard crashes.
+
+Do not treat local validation or Builder UI visibility as proof that the action executes correctly. If runtime proof is requested, use a safe generated package with disposable data and no private links, emails, credentials, or destructive updates.
+<!-- container-button-action-settings-learning:end -->

@@ -109,6 +109,7 @@ function main() {
     steps.push(runJsonStep("data-view-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-data-views.mjs"), inputPath]));
     steps.push(runJsonStep("data-filter-controls-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-data-filter-controls.mjs"), inputPath]));
     steps.push(runJsonStep("pivot-table-controls-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-pivot-table-controls.mjs"), inputPath]));
+    steps.push(runJsonStep("container-button-actions-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-container-button-actions.mjs"), inputPath]));
 
     const decoded = decodeWrapper(inputPath);
     const placeholders = collectPlaceholders(decoded);

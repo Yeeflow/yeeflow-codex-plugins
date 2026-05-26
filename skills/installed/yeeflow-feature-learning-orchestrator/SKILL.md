@@ -329,3 +329,11 @@ When a generated package passes only compatibility validation, classify that as 
 
 Record and promote these import-blocking rules when seen: Type `1` child data lists need `ListModel.ListType = 1`; native `Title` metadata must be generator-safe; views must not reference unresolved pseudo/system/missing fields; `LayoutInResources` IDs must match owning layout IDs; dashboard dynamic-display/filter references must resolve; `ReplaceIds` must exclude tenant/user metadata IDs.
 <!-- projects-center-import-failure-hardening:end -->
+
+<!-- container-button-action-settings-learning:start -->
+## Container/Button Action Settings Learning
+
+For Container/Button action learning, study dashboard exports read-only before generation. `AP Approval Demo v3.yap` export-proves dashboard Container and Button action settings for Link, Add list item, Open dashboard, and Open approval form, plus open modes and modal-size settings. The screenshot only backs the Builder UI menu and is not runtime proof.
+
+Promote findings with clear labels: export-proven for decoded dashboard schema, UI-reference-backed for the Execute type menu, validator-backed after checks are implemented, and runtime-proven only after a focused import/open/click navigation test. Keep cross-application targets, literal external links, form-action binding on dashboards, and actual open/navigation behavior unproven until separately tested.
+<!-- container-button-action-settings-learning:end -->
