@@ -426,6 +426,8 @@ Do not generate default/system fields such as Id, Created By, Created Time, Modi
 
 For generated Public Form layout, use the export-proven grid shape from `Data Lists (4).yap`: `flex_grid` with `ver: 1`, structured `columns`/`rows`, `cgap`, and `cgapU`. Turn the grid caption off with `displayLabel: [null, false]` when the grid is only a layout wrapper. Put `submit-button` in a separate centered container and set inline width with `common.positioning.widthtype: [null, "2"]`.
 
+Shared form layout rule: Grid/flex_grid controls used only to place other controls should turn off captions with `displayLabel: [null, false]`. Use grids for structured field layout, but use container/card blocks with row direction and spacing for route summaries, status/KPI blocks, and horizontal information panels.
+
 Focused runtime proof in `docs/studies/data-list-public-form-runtime-proof.md` confirms a generated Public Form package imported, opened the app/list, displayed the Public Form inside the data list, opened the designer, rendered representative allowed list-bound controls, and passed after the grid/display-caption and centered inline submit-button fix. Public share URLs and share codes must be redacted in docs/logs/normalized refs. This proof is for Type `1` Data Lists only; anonymous submit behavior, public URL access outside the authenticated designer unless separately confirmed, save behavior, uploads, sub-list entry, and Document Library public forms are not runtime-proven.
 <!-- data-list-public-form-learning:end -->
 

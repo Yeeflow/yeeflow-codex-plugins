@@ -15,6 +15,8 @@ Data-list menu items can be top-level resources or children of a top-level custo
 
 Use this skill when the user asks to inspect, validate, generate, package, debug, or improve Yeeflow data-list `.ydl` exports or decoded data-list JSON.
 
+Data Filter controls can be used in data list forms at the product level, but the Sales and CRM exports only prove dashboard page usage. Until a data-list-form export proves the exact host schema, treat data-list-form Data Filter placement and runtime behavior as product-documented only. Reuse the shared rules from `docs/studies/data-filter-controls.md`: filter variables bridge value-producing filter controls and downstream data-bound consumers; Search, Radio, Hierarchy, and Sorting are dashboard export-proven from the CRM sample; Apply button and Remove filters are special controls; generated packages must validate every filter variable reference before handoff.
+
 For existing-app upgrades, data-list changes should be packaged as `.yapk` only from a Yeeflow Version management baseline and only when the upgrade package structure is safe. Preserve existing list IDs and app identity. Do not apply new-app `.yap` fresh-ID rules to existing list objects, and do not claim offline `.yapk` list mutation is safe while the studied `.yapk` `Resource` remains opaque/signed.
 
 ## Standard Workflow
@@ -423,6 +425,8 @@ Public Forms are anonymous/no-login collection forms, so use a restricted field/
 Do not generate default/system fields such as Id, Created By, Created Time, Modified By, or Modified Time into Public Forms. Do not generate login-dependent or UI-unavailable field types such as `identity-picker`, `organization-picker`, `location-picker`, `lookup`, `calculated-column`, `metadata`, `mutiple-metadata`, `cost-center-picker`, `tag`, or `autonumber` unless a future product/export/runtime proof expands the allowlist. Use only Public Form controls that are export-proven or UI-reference-backed, and include a `submit-button` for anonymous collection forms.
 
 For generated Public Form layout, use the export-proven grid shape from `Data Lists (4).yap`: `flex_grid` with `ver: 1`, structured `columns`/`rows`, `cgap`, and `cgapU`. Turn the grid caption off with `displayLabel: [null, false]` when the grid is only a layout wrapper. Put `submit-button` in a separate centered container and set inline width with `common.positioning.widthtype: [null, "2"]`.
+
+Shared form layout rule: Grid/flex_grid controls used only to place other controls should turn off captions with `displayLabel: [null, false]`. Use grids for structured field layout, but use container/card blocks with row direction and spacing for route summaries, status/KPI blocks, and horizontal information panels.
 
 Focused runtime proof in `docs/studies/data-list-public-form-runtime-proof.md` confirms a generated Public Form package imported, opened the app/list, displayed the Public Form inside the data list, opened the designer, rendered representative allowed list-bound controls, and passed after the grid/display-caption and centered inline submit-button fix. Public share URLs and share codes must be redacted in docs/logs/normalized refs. This proof is for Type `1` Data Lists only; anonymous submit behavior, public URL access outside the authenticated designer unless separately confirmed, save behavior, uploads, sub-list entry, and Document Library public forms are not runtime-proven.
 <!-- data-list-public-form-learning:end -->

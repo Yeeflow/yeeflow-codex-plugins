@@ -166,7 +166,10 @@ function validateKnownConditionalShapes(issues, action, shape, type, pointer, op
     validateUnsafeAction(issues, shape, type, pointer, options);
   }
   if (type === "MultiAssignmentTask") validateMultiAssignmentTaskAssignees(issues, shape, pointer, options);
+  if (type === "CandidateTask") validateCandidateTaskReceivers(issues, shape, pointer, options);
+  if (type === "SetVariableTask") validateSetVariableTask(issues, shape, pointer, options);
   if (type === "StartNoneEvent") validateStartActionSettings(issues, shape, pointer, options);
+  if (type === "SignalEvent") validateSignalEvent(issues, shape, pointer, options);
   if (type === "MailTask") validateMailTask(issues, shape, pointer, options);
   if (type === "AI") validateAiAction(issues, shape, pointer, options);
   if (type === "ContentList") validateContentList(issues, shape, pointer, options);
@@ -200,11 +203,19 @@ const ASSIGNMENT_TASK_DUE_DATE_TYPES = new Set(["hour", "day", "minute", "expres
 const ASSIGNMENT_TASK_NOTIFY_RELATIVES = new Set(["-1", "0", "1"]);
 const ASSIGNMENT_TASK_NOTIFY_UNITS = new Set(["day", "hour", "minute"]);
 const ASSIGNMENT_TASK_LIST_FIELD_RE = /listitem|List field|____customListFields/i;
+const CLAIM_TASK_TASKTYPES = new Set(["approve", "complete"]);
+const SET_VARIABLE_FORMTYPES = new Set(["current", "custom"]);
+const SET_VARIABLE_TYPES = new Set(["text", "number", "date", "user", "boolean"]);
+const CONTENTLIST_LISTTYPES = new Set(["current", "select"]);
+const CONTENTLIST_OPERATION_TYPES = new Set(["add", "edit", "remove"]);
+const CONTENTLIST_NUMERIC_OPERATION_CODES = new Set(["0", "1", "2", "3", "4"]);
+const SIGNAL_EVENT_DEFINITIONS = new Set(["CancelEventDefinition", "RevokeEventDefinition"]);
 
 function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
   const props = shape.properties || {};
   const assignments = props.usertaskassignment;
   const severity = strictLevel(options, "warning");
+  validateTaskFormReferenceAliases(issues, shape, pointer, options, "ASSIGNMENT_TASK", "Assignment task");
   if (props.tasktype !== undefined && !ASSIGNMENT_TASK_TASKTYPES.has(safeString(props.tasktype))) {
     issue(issues, severity, "ASSIGNMENT_TASK_TASKTYPE_UNKNOWN", "Assignment task tasktype is not in the export-proven task-type list. Absence of tasktype is treated as approval/default in studied exports.", {
       path: `${pointer}.properties.tasktype`,
@@ -300,6 +311,14 @@ function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
         method,
       });
     }
+    if (type === "position" && method === "position" && !valueMissing(assignment.position) && !/^\d+$/.test(safeString(assignment.position))) {
+      issue(issues, severity, "ASSIGNMENT_TASK_POSITION_ID_INVALID", "Direct position assignment should use a numeric position ID; placeholders or labels can block workflow publish.", {
+        path: `${itemPath}.position`,
+        nodeId: shapeId(shape),
+        method,
+        value: safeString(assignment.position),
+      });
+    }
     if (["direct", "positionorg", "positionloc"].includes(method) && valueMissing(assignment.value)) {
       issue(issues, severity, "ASSIGNMENT_TASK_STATIC_REFERENCE_MISSING", "Static user, department, or location assignment should include a value reference.", {
         path: `${itemPath}.value`,
@@ -349,40 +368,202 @@ function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
   });
 }
 
-function validateAssignmentTaskDueDate(issues, props, pointer, severity) {
+function validateCandidateTaskReceivers(issues, shape, pointer, options) {
+  const props = shape.properties || {};
+  const receivers = props.usertaskassignment;
+  const severity = strictLevel(options, "warning");
+  validateTaskFormReferenceAliases(issues, shape, pointer, options, "CLAIM_TASK", "Claim Task");
+  if (Object.prototype.hasOwnProperty.call(props, "tasktype ")) {
+    issue(issues, "warning", "CLAIM_TASK_TASKTYPE_TRAILING_SPACE_PRESENT", "Claim Task config reference mentions properties.tasktype with a trailing space, but studied exports use properties.tasktype. Preserve export field names and warn on trailing-space variants.", {
+      path: `${pointer}.properties.tasktype `,
+      nodeId: shapeId(shape),
+    });
+  }
+  if (props.tasktype !== undefined && !CLAIM_TASK_TASKTYPES.has(safeString(props.tasktype))) {
+    issue(issues, severity, "CLAIM_TASK_TASKTYPE_UNKNOWN", "Claim Task tasktype should be approve or complete when present in studied exports.", {
+      path: `${pointer}.properties.tasktype`,
+      nodeId: shapeId(shape),
+      tasktype: safeString(props.tasktype),
+      allowed: [...CLAIM_TASK_TASKTYPES],
+    });
+  }
+  validateAssignmentTaskDueDate(issues, props, pointer, severity, "CLAIM_TASK");
+  if (props.isenabledemail === true) {
+    for (const field of ["to", "subject", "html"]) {
+      if (valueMissing(props[field])) {
+        issue(issues, severity, "CLAIM_TASK_EMAIL_NOTIFICATION_FIELD_MISSING", "Email-enabled Claim Task should preserve notification recipient, subject, and body/html fields.", {
+          path: `${pointer}.properties.${field}`,
+          nodeId: shapeId(shape),
+          field,
+        });
+      }
+    }
+  }
+  validateAssignmentTaskNotifyRules(issues, props, pointer, severity, "CLAIM_TASK");
+  if (!Array.isArray(receivers)) {
+    issue(issues, severity, "CLAIM_TASK_RECEIVER_CONFIG_MISSING", "Claim Task should store receiver/candidate configuration as properties.usertaskassignment array.", {
+      path: `${pointer}.properties.usertaskassignment`,
+      nodeId: shapeId(shape),
+    });
+    return;
+  }
+  if (!receivers.length) {
+    issue(issues, severity, "CLAIM_TASK_RECEIVER_CONFIG_EMPTY", "Claim Task usertaskassignment receiver/candidate array is empty.", {
+      path: `${pointer}.properties.usertaskassignment`,
+      nodeId: shapeId(shape),
+    });
+    return;
+  }
+  receivers.forEach((receiver, index) => {
+    const itemPath = `${pointer}.properties.usertaskassignment[${index}]`;
+    if (!isObject(receiver)) {
+      issue(issues, severity, "CLAIM_TASK_RECEIVER_ENTRY_INVALID", "Claim Task receiver/candidate entries should be objects.", {
+        path: itemPath,
+        nodeId: shapeId(shape),
+      });
+      return;
+    }
+    const type = safeString(receiver.type);
+    const method = safeString(receiver.method);
+    if (!type) {
+      issue(issues, severity, "CLAIM_TASK_RECEIVER_TYPE_MISSING", "Claim Task receiver/candidate entry should include type.", {
+        path: `${itemPath}.type`,
+        nodeId: shapeId(shape),
+      });
+    }
+    if (!method) {
+      issue(issues, severity, "CLAIM_TASK_RECEIVER_METHOD_MISSING", "Claim Task receiver/candidate entry should include method.", {
+        path: `${itemPath}.method`,
+        nodeId: shapeId(shape),
+      });
+      return;
+    }
+    if (!ASSIGNMENT_TASK_ASSIGNEE_METHODS.has(method)) {
+      issue(issues, severity, "CLAIM_TASK_RECEIVER_METHOD_UNKNOWN", "Claim Task receiver/candidate method is not in the export/config-reference-backed method list.", {
+        path: `${itemPath}.method`,
+        nodeId: shapeId(shape),
+        receiverType: type,
+        method,
+      });
+    }
+    if (type === "position" && valueMissing(receiver.position)) {
+      issue(issues, severity, "CLAIM_TASK_POSITION_ID_MISSING", "Position-based Claim Task receiver should include a position reference.", {
+        path: `${itemPath}.position`,
+        nodeId: shapeId(shape),
+        method,
+      });
+    }
+    if (["direct", "positionorg", "positionloc"].includes(method) && valueMissing(receiver.value)) {
+      issue(issues, severity, "CLAIM_TASK_STATIC_REFERENCE_MISSING", "Static Claim Task receiver references should include a value.", {
+        path: `${itemPath}.value`,
+        nodeId: shapeId(shape),
+        receiverType: type,
+        method,
+      });
+    }
+    if (["expression", "positionorgexpr", "positionlocexpr"].includes(method)) {
+      if (valueMissing(receiver.value)) {
+        issue(issues, severity, "CLAIM_TASK_EXPRESSION_MISSING", "Expression-based Claim Task receiver should include a rich expression value.", {
+          path: `${itemPath}.value`,
+          nodeId: shapeId(shape),
+          receiverType: type,
+          method,
+        });
+      } else if (typeof receiver.value !== "string" || !receiver.value.includes("<input") || !receiver.value.includes("data=")) {
+        issue(issues, severity, "CLAIM_TASK_EXPRESSION_OPAQUE", "Expression-based Claim Task receiver value is not the export-proven expression-button shape.", {
+          path: `${itemPath}.value`,
+          nodeId: shapeId(shape),
+          receiverType: type,
+          method,
+        });
+      }
+    }
+    if (typeof receiver.value === "string" && ASSIGNMENT_TASK_LIST_FIELD_RE.test(receiver.value)) {
+      issue(issues, "warning", "CLAIM_TASK_LIST_FIELD_RECEIVER_RUNTIME_UNPROVEN", "Data-list Claim Task receiver expression references a list-item field value; preserve the expression shape and runtime-test with safe list records before claiming claim-routing behavior.", {
+        path: itemPath,
+        nodeId: shapeId(shape),
+        method,
+        fieldContext: receiver.value.includes("CreatedBy") ? "CreatedBy" : "listitem",
+      });
+    }
+    if (type === "user" && method === "expression" && typeof receiver.value === "string" && receiver.value.includes("type&quot;:&quot;usergroup")) {
+      issue(issues, "warning", "CLAIM_TASK_USER_GROUP_RUNTIME_UNPROVEN", "User group receiver shape is export-proven/config-reference-backed, but claim pool expansion and ownership behavior require focused runtime proof.", {
+        path: itemPath,
+        nodeId: shapeId(shape),
+      });
+    }
+    if (type === "user" && ["direct", "users"].includes(method)) {
+      issue(issues, "warning", "CLAIM_TASK_DIRECT_USER_TENANT_SENSITIVE", "Direct user receiver config is tenant-sensitive; use only with explicit authorized mapping or read-only directory lookup, and do not commit private user data.", {
+        path: itemPath,
+        nodeId: shapeId(shape),
+        method,
+      });
+    }
+  });
+}
+
+function validateTaskFormReferenceAliases(issues, shape, pointer, options, codePrefix, label) {
+  const props = shape.properties || {};
+  const severity = strictLevel(options, "warning");
+  const aliases = ["taskurl", "taskUrl", "TaskUrl"].map((key) => ({ key, value: safeString(props[key]) }));
+  const first = aliases.find((entry) => entry.value);
+  if (!first) {
+    issue(issues, severity, `${codePrefix}_TASKURL_MISSING`, `${label} must reference a task form/page; missing or null TaskUrl blocks generated approval workflow publish readiness.`, {
+      path: `${pointer}.properties.taskurl`,
+      nodeId: shapeId(shape),
+    });
+  } else if (aliases.some((entry) => entry.value !== first.value)) {
+    issue(issues, severity, `${codePrefix}_TASKURL_ALIASES_NOT_MIRRORED`, `${label} task form references should be mirrored across properties.taskurl, properties.taskUrl, and properties.TaskUrl.`, {
+      path: `${pointer}.properties.taskurl`,
+      nodeId: shapeId(shape),
+      taskurl: props.taskurl || null,
+      taskUrl: props.taskUrl || null,
+      TaskUrl: props.TaskUrl || null,
+    });
+  }
+  if (props.pagetype !== 1) {
+    issue(issues, severity, `${codePrefix}_PAGETYPE_INVALID`, `${label} workflow nodes should carry properties.pagetype = 1 for task-form publish readiness.`, {
+      path: `${pointer}.properties.pagetype`,
+      nodeId: shapeId(shape),
+      pagetype: props.pagetype,
+    });
+  }
+}
+
+function validateAssignmentTaskDueDate(issues, props, pointer, severity, codePrefix = "ASSIGNMENT_TASK") {
   if (props.duedatedefinition !== undefined && !valueMatchesType(props.duedatedefinition, "number")) {
-    issue(issues, severity, "ASSIGNMENT_TASK_DUE_DATE_VALUE_INVALID", "Assignment task due date definition should be numeric when present.", {
+    issue(issues, severity, `${codePrefix}_DUE_DATE_VALUE_INVALID`, "Workflow task due date definition should be numeric when present.", {
       path: `${pointer}.properties.duedatedefinition`,
     });
   }
   if (props.duedatetype !== undefined && !ASSIGNMENT_TASK_DUE_DATE_TYPES.has(safeString(props.duedatetype))) {
-    issue(issues, severity, "ASSIGNMENT_TASK_DUE_DATE_TYPE_UNKNOWN", "Assignment task due date type is not in the product-documented/export-studied due date unit list.", {
+    issue(issues, severity, `${codePrefix}_DUE_DATE_TYPE_UNKNOWN`, "Workflow task due date type is not in the product-documented/export-studied due date unit list.", {
       path: `${pointer}.properties.duedatetype`,
       duedatetype: safeString(props.duedatetype),
       allowed: [...ASSIGNMENT_TASK_DUE_DATE_TYPES],
     });
   }
   if (safeString(props.duedatetype) === "express" && valueMissing(props.duedateexpress)) {
-    issue(issues, severity, "ASSIGNMENT_TASK_DUE_DATE_EXPRESSION_MISSING", "Expression-based due date should preserve properties.duedateexpress.", {
+    issue(issues, severity, `${codePrefix}_DUE_DATE_EXPRESSION_MISSING`, "Expression-based due date should preserve properties.duedateexpress.", {
       path: `${pointer}.properties.duedateexpress`,
     });
   }
   if (props.duedateexpress !== undefined && (typeof props.duedateexpress !== "string" || !props.duedateexpress.includes("<input"))) {
-    issue(issues, severity, "ASSIGNMENT_TASK_DUE_DATE_EXPRESSION_OPAQUE", "Assignment task due date expression is not the export-proven expression-button shape.", {
+    issue(issues, severity, `${codePrefix}_DUE_DATE_EXPRESSION_OPAQUE`, "Workflow task due date expression is not the export-proven expression-button shape.", {
       path: `${pointer}.properties.duedateexpress`,
     });
   }
   if (props.isfromworkcalendar !== undefined && typeof props.isfromworkcalendar !== "boolean") {
-    issue(issues, severity, "ASSIGNMENT_TASK_WORK_CALENDAR_FLAG_INVALID", "Assignment task working-calendar due-date flag should be boolean when present.", {
+    issue(issues, severity, `${codePrefix}_WORK_CALENDAR_FLAG_INVALID`, "Workflow task working-calendar due-date flag should be boolean when present.", {
       path: `${pointer}.properties.isfromworkcalendar`,
     });
   }
 }
 
-function validateAssignmentTaskNotifyRules(issues, props, pointer, severity) {
+function validateAssignmentTaskNotifyRules(issues, props, pointer, severity, codePrefix = "ASSIGNMENT_TASK") {
   if (props.notifyrules === undefined) return;
   if (!Array.isArray(props.notifyrules)) {
-    issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_RULES_INVALID", "Assignment task due-date notification rules should be stored as an array when present.", {
+    issue(issues, severity, `${codePrefix}_NOTIFY_RULES_INVALID`, "Workflow task due-date notification rules should be stored as an array when present.", {
       path: `${pointer}.properties.notifyrules`,
     });
     return;
@@ -390,39 +571,39 @@ function validateAssignmentTaskNotifyRules(issues, props, pointer, severity) {
   props.notifyrules.forEach((rule, index) => {
     const rulePath = `${pointer}.properties.notifyrules[${index}]`;
     if (!isObject(rule)) {
-      issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_RULE_INVALID", "Assignment task due-date notification rule should be an object.", {
+      issue(issues, severity, `${codePrefix}_NOTIFY_RULE_INVALID`, "Workflow task due-date notification rule should be an object.", {
         path: rulePath,
       });
       return;
     }
     if (safeString(rule.actiontype) && safeString(rule.actiontype) !== "1") {
-      issue(issues, "warning", "ASSIGNMENT_TASK_NOTIFY_ACTIONTYPE_UNSTUDIED", "Assignment task due-date action type is not the reminder actiontype export-studied here.", {
+      issue(issues, "warning", `${codePrefix}_NOTIFY_ACTIONTYPE_UNSTUDIED`, "Workflow task due-date action type is not the reminder actiontype export-studied here.", {
         path: `${rulePath}.actiontype`,
         actiontype: safeString(rule.actiontype),
       });
     }
     const actiondate = rule.actiondate;
     if (!isObject(actiondate)) {
-      issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_ACTIONDATE_MISSING", "Assignment task due-date notification rule should include actiondate.", {
+      issue(issues, severity, `${codePrefix}_NOTIFY_ACTIONDATE_MISSING`, "Workflow task due-date notification rule should include actiondate.", {
         path: `${rulePath}.actiondate`,
       });
       return;
     }
     const relative = safeString(actiondate.relative);
     if (!ASSIGNMENT_TASK_NOTIFY_RELATIVES.has(relative)) {
-      issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_RELATIVE_UNKNOWN", "Assignment task due-date notification relative timing is not export-proven.", {
+      issue(issues, severity, `${codePrefix}_NOTIFY_RELATIVE_UNKNOWN`, "Workflow task due-date notification relative timing is not export-proven.", {
         path: `${rulePath}.actiondate.relative`,
         relative,
       });
     }
     if (relative !== "0") {
       if (valueMissing(actiondate.value) || !valueMatchesType(actiondate.value, "number")) {
-        issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_OFFSET_VALUE_INVALID", "Before/after due-date notification rules should include a numeric offset value.", {
+        issue(issues, severity, `${codePrefix}_NOTIFY_OFFSET_VALUE_INVALID`, "Before/after due-date notification rules should include a numeric offset value.", {
           path: `${rulePath}.actiondate.value`,
         });
       }
       if (!ASSIGNMENT_TASK_NOTIFY_UNITS.has(safeString(actiondate.type))) {
-        issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_OFFSET_UNIT_UNKNOWN", "Before/after due-date notification rules should use a studied time unit.", {
+        issue(issues, severity, `${codePrefix}_NOTIFY_OFFSET_UNIT_UNKNOWN`, "Before/after due-date notification rules should use a studied time unit.", {
           path: `${rulePath}.actiondate.type`,
           type: safeString(actiondate.type),
           allowed: [...ASSIGNMENT_TASK_NOTIFY_UNITS],
@@ -431,10 +612,123 @@ function validateAssignmentTaskNotifyRules(issues, props, pointer, severity) {
     }
     for (const field of ["subject", "content"]) {
       if (valueMissing(rule[field])) {
-        issue(issues, severity, "ASSIGNMENT_TASK_NOTIFY_CONTENT_FIELD_MISSING", "Reminder notification rules should preserve subject and content fields.", {
+        issue(issues, severity, `${codePrefix}_NOTIFY_CONTENT_FIELD_MISSING`, "Reminder notification rules should preserve subject and content fields.", {
           path: `${rulePath}.${field}`,
           field,
         });
+      }
+    }
+  });
+}
+
+function validateSetVariableTask(issues, shape, pointer, options) {
+  const props = shape.properties || {};
+  const severity = strictLevel(options, "warning");
+  const formtype = safeString(props.formtype);
+  if (!SET_VARIABLE_FORMTYPES.has(formtype)) {
+    issue(issues, severity, "SET_VARIABLE_FORMTYPE_UNKNOWN", "Set variable formtype should be current or custom in the studied exports.", {
+      path: `${pointer}.properties.formtype`,
+      nodeId: shapeId(shape),
+      formtype,
+      allowed: [...SET_VARIABLE_FORMTYPES],
+    });
+  }
+  if (formtype === "custom") {
+    const data = props.data;
+    if (!isObject(data)) {
+      issue(issues, severity, "SET_VARIABLE_CUSTOM_TARGET_DATA_MISSING", "Another-workflow Set variable should include target approval workflow metadata in properties.data.", {
+        path: `${pointer}.properties.data`,
+        nodeId: shapeId(shape),
+      });
+    } else {
+      for (const key of ["AppID", "ListSetID", "ProcKey"]) {
+        if (valueMissing(data[key])) {
+          issue(issues, severity, "SET_VARIABLE_CUSTOM_TARGET_FIELD_MISSING", "Another-workflow Set variable target metadata should include AppID, ListSetID, and ProcKey.", {
+            path: `${pointer}.properties.data.${key}`,
+            nodeId: shapeId(shape),
+            field: key,
+          });
+        }
+      }
+    }
+    if (valueMissing(props.formids)) {
+      issue(issues, severity, "SET_VARIABLE_CUSTOM_FORMIDS_MISSING", "Another-workflow Set variable should include formids for the target submitted approval request/workflow instance.", {
+        path: `${pointer}.properties.formids`,
+        nodeId: shapeId(shape),
+      });
+    }
+  }
+  if (formtype === "current" && props.data !== undefined && props.data !== null) {
+    issue(issues, "warning", "SET_VARIABLE_CURRENT_TARGET_DATA_PRESENT", "Current-workflow Set variable normally does not need target workflow metadata; preserve only if export-backed for the package.", {
+      path: `${pointer}.properties.data`,
+      nodeId: shapeId(shape),
+    });
+  }
+  const settings = props.variablesetting;
+  if (!Array.isArray(settings)) {
+    issue(issues, severity, "SET_VARIABLE_VARIABLESETTING_INVALID", "Set variable should store assignments as properties.variablesetting array.", {
+      path: `${pointer}.properties.variablesetting`,
+      nodeId: shapeId(shape),
+    });
+    return;
+  }
+  if (!settings.length) {
+    issue(issues, severity, "SET_VARIABLE_VARIABLESETTING_EMPTY", "Set variable variablesetting array should contain at least one variable assignment.", {
+      path: `${pointer}.properties.variablesetting`,
+      nodeId: shapeId(shape),
+    });
+    return;
+  }
+  settings.forEach((setting, index) => {
+    const itemPath = `${pointer}.properties.variablesetting[${index}]`;
+    if (!isObject(setting)) {
+      issue(issues, severity, "SET_VARIABLE_ASSIGNMENT_INVALID", "Set variable assignment entries should be objects.", {
+        path: itemPath,
+        nodeId: shapeId(shape),
+      });
+      return;
+    }
+    for (const field of ["idx", "id", "name", "type", "value"]) {
+      if (valueMissing(setting[field])) {
+        issue(issues, severity, "SET_VARIABLE_ASSIGNMENT_FIELD_MISSING", "Set variable assignment should include idx, id, name, type, and value.", {
+          path: `${itemPath}.${field}`,
+          nodeId: shapeId(shape),
+          field,
+        });
+      }
+    }
+    if (setting.type !== undefined && !SET_VARIABLE_TYPES.has(safeString(setting.type))) {
+      issue(issues, "warning", "SET_VARIABLE_TYPE_UNSTUDIED", "Set variable assignment type is not in the export-studied variable type set.", {
+        path: `${itemPath}.type`,
+        nodeId: shapeId(shape),
+        type: safeString(setting.type),
+        studied: [...SET_VARIABLE_TYPES],
+      });
+    }
+    if (setting.value !== undefined) {
+      if (!Array.isArray(setting.value)) {
+        issue(issues, severity, "SET_VARIABLE_VALUE_EXPRESSION_NOT_ARRAY", "Set variable assignment value should be an expression-token array.", {
+          path: `${itemPath}.value`,
+          nodeId: shapeId(shape),
+        });
+      } else {
+        const result = validateExpressionTokens(setting.value, { path: `${itemPath}.value` });
+        for (const exprIssue of result.issues || []) {
+          if (exprIssue.code === "EXPRESSION_TOKEN_UNKNOWN_SHAPE" && exprIssue.detail && exprIssue.detail.exprType === "list_field") continue;
+          const level = exprIssue.level === "error" ? severity : "warning";
+          issue(issues, level, `SET_VARIABLE_${exprIssue.code}`, "Set variable assignment value expression did not fully match the expression reference.", {
+            path: exprIssue.path,
+            nodeId: shapeId(shape),
+            detail: exprIssue.detail,
+          });
+        }
+        const text = JSON.stringify(setting.value);
+        if (text.includes("\"exprType\":\"list_field\"")) {
+          issue(issues, "warning", "SET_VARIABLE_LIST_FIELD_VALUE_RUNTIME_UNPROVEN", "Set variable value uses a data-list field expression. Preserve this right-side expression shape and runtime-test before claiming variable mutation.", {
+            path: `${itemPath}.value`,
+            nodeId: shapeId(shape),
+          });
+        }
       }
     }
   });
@@ -482,6 +776,46 @@ function validateStartActionSettings(issues, shape, pointer, options) {
       }
     }
   }
+}
+
+function validateSignalEvent(issues, shape, pointer, options) {
+  const props = shape.properties || {};
+  const severity = strictLevel(options, "warning");
+  if (asArray(shape.incoming).length > 0) {
+    issue(issues, severity, "SIGNAL_EVENT_INCOMING_FLOW_PRESENT", "Signal event is an event source and should not have incoming sequence flows in the studied export.", {
+      path: `${pointer}.incoming`,
+      nodeId: shapeId(shape),
+    });
+  }
+  if (asArray(shape.outgoing).length === 0) {
+    issue(issues, severity, "SIGNAL_EVENT_OUTGOING_FLOW_MISSING", "Signal event should have at least one outgoing sequence flow to a compensation or follow-up branch.", {
+      path: `${pointer}.outgoing`,
+      nodeId: shapeId(shape),
+    });
+  }
+  if (!Array.isArray(props.eventdefinitions)) {
+    issue(issues, severity, "SIGNAL_EVENT_DEFINITIONS_INVALID", "Signal event should store trigger events as properties.eventdefinitions array.", {
+      path: `${pointer}.properties.eventdefinitions`,
+      nodeId: shapeId(shape),
+    });
+    return;
+  }
+  if (!props.eventdefinitions.length) {
+    issue(issues, severity, "SIGNAL_EVENT_DEFINITIONS_EMPTY", "Signal event should listen for at least one configured event definition.", {
+      path: `${pointer}.properties.eventdefinitions`,
+      nodeId: shapeId(shape),
+    });
+  }
+  props.eventdefinitions.forEach((definition, index) => {
+    if (!SIGNAL_EVENT_DEFINITIONS.has(safeString(definition))) {
+      issue(issues, "warning", "SIGNAL_EVENT_DEFINITION_UNKNOWN", "Signal event uses an event definition outside the export/config-reference-backed set.", {
+        path: `${pointer}.properties.eventdefinitions[${index}]`,
+        nodeId: shapeId(shape),
+        definition: safeString(definition),
+        allowed: [...SIGNAL_EVENT_DEFINITIONS],
+      });
+    }
+  });
 }
 
 function validateMailTask(issues, shape, pointer, options) {
@@ -626,7 +960,26 @@ function validateContentList(issues, shape, pointer, options) {
   const props = shape.properties || {};
   const severity = strictLevel(options, "warning");
   const type = safeString(props.type);
-  if (safeString(props.listtype) === "select") {
+  const listtype = safeString(props.listtype);
+  if (!CONTENTLIST_LISTTYPES.has(listtype)) {
+    issue(issues, severity, "CONTENTLIST_LISTTYPE_UNKNOWN", "Set data list / ContentList listtype should be current or select in the studied exports.", {
+      path: `${pointer}.properties.listtype`,
+      nodeType: "ContentList",
+      nodeId: shapeId(shape),
+      listtype,
+      allowed: [...CONTENTLIST_LISTTYPES],
+    });
+  }
+  if (!CONTENTLIST_OPERATION_TYPES.has(type)) {
+    issue(issues, severity, "CONTENTLIST_OPERATION_TYPE_UNKNOWN", "Set data list / ContentList operation type should be add, edit, or remove in the studied exports.", {
+      path: `${pointer}.properties.type`,
+      nodeType: "ContentList",
+      nodeId: shapeId(shape),
+      type,
+      allowed: [...CONTENTLIST_OPERATION_TYPES],
+    });
+  }
+  if (listtype === "select") {
     for (const key of ["appid", "listsetid", "listid"]) {
       if (valueMissing(props[key])) issue(issues, severity, "CONTENTLIST_SELECTED_TARGET_PROPERTY_MISSING", "ContentList selected-list operation is missing target metadata.", {
         path: `${pointer}.properties.${key}`,
@@ -648,10 +1001,35 @@ function validateContentList(issues, shape, pointer, options) {
           path: `${pointer}.properties.listdatas[${index}]`,
           nodeId: shapeId(shape),
         });
+        if (entry && entry.Per !== undefined && !CONTENTLIST_NUMERIC_OPERATION_CODES.has(safeString(entry.Per))) {
+          issue(issues, "warning", "CONTENTLIST_MAPPING_OPERATION_CODE_UNKNOWN", "Set data list mapping uses an unstudied Per operation code. Preserve it and runtime-test before generation claims.", {
+            path: `${pointer}.properties.listdatas[${index}].Per`,
+            nodeId: shapeId(shape),
+            Per: safeString(entry.Per),
+            studied: [...CONTENTLIST_NUMERIC_OPERATION_CODES],
+          });
+        }
         if (!entry || !Object.prototype.hasOwnProperty.call(entry, "Data")) issue(issues, severity, "CONTENTLIST_MAPPING_VALUE_MISSING", "ContentList mapping is missing Data value/expression.", {
           path: `${pointer}.properties.listdatas[${index}].Data`,
           nodeId: shapeId(shape),
         });
+        else if (Array.isArray(entry.Data)) {
+          const result = validateExpressionTokens(entry.Data, { path: `${pointer}.properties.listdatas[${index}].Data` });
+          for (const exprIssue of result.issues || []) {
+            if (exprIssue.code === "EXPRESSION_TOKEN_UNKNOWN_SHAPE" && exprIssue.detail && exprIssue.detail.exprType === "list_field") continue;
+            const level = exprIssue.level === "error" ? severity : "warning";
+            issue(issues, level, `CONTENTLIST_${exprIssue.code}`, "Set data list mapping expression did not fully match the expression reference.", {
+              path: exprIssue.path,
+              nodeId: shapeId(shape),
+              detail: exprIssue.detail,
+            });
+          }
+        } else {
+          issue(issues, severity, "CONTENTLIST_MAPPING_VALUE_NOT_ARRAY", "Set data list mapping Data should be an expression-token array in the studied exports.", {
+            path: `${pointer}.properties.listdatas[${index}].Data`,
+            nodeId: shapeId(shape),
+          });
+        }
       });
     }
   }
@@ -659,6 +1037,13 @@ function validateContentList(issues, shape, pointer, options) {
     issue(issues, severity, "CONTENTLIST_WHERES_INVALID", "ContentList edit/remove operation requires properties.wheres array.", {
       path: `${pointer}.properties.wheres`,
       nodeId: shapeId(shape),
+    });
+  }
+  if (["edit", "remove"].includes(type) && Array.isArray(props.wheres) && props.wheres.length === 0) {
+    issue(issues, "warning", "CONTENTLIST_BROAD_MUTATION_FILTER_MISSING", "Set data list update/delete has no filter conditions. Product behavior can affect many records; require explicit safe intent before generation or runtime execution.", {
+      path: `${pointer}.properties.wheres`,
+      nodeId: shapeId(shape),
+      type,
     });
   }
   validateConditionArray(issues, props.wheres, `${pointer}.properties.wheres`, "CONTENTLIST_WHERE_CONDITION_INVALID", severity);

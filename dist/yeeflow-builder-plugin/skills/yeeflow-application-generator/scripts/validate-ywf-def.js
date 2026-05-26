@@ -14,6 +14,8 @@ const PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
 const NUMERIC_OPS = new Set(["n.>", "n.>=", "n.<", "n.<=", "n.=", "n.!=", ">", ">=", "<", "<="]);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const CORRUPTED_REPLACEMENT_KEY_RE = /^pr[0-9]+x$/;
+const PROCESS_KEY_RE = /^[A-Za-z0-9_]+$/;
+const PROCESS_KEY_MAX_LENGTH = 255;
 const FLOW_KEY_RESERVED_PROPERTY_NAMES = [
   "prefix",
   "suffix",
@@ -103,6 +105,11 @@ function zeroPadding(padding) {
 
 function configValue(value) {
   return Array.isArray(value) && value.length === 2 && value[0] === null ? value[1] : value;
+}
+
+function displayLabelDisabled(value) {
+  if (value === false) return true;
+  return Array.isArray(value) && value[1] === false;
 }
 
 function controlName(control) {
@@ -281,6 +288,12 @@ function validateDecodedDef(def, options = {}) {
           addIssue(errors, "GRAPHPOSITION_MISSING_DIMENSION", `graphposition.${key} must be a number for workflow designer layout`, `$.graphposition.${key}`);
         }
       }
+    }
+    if (typeof def.defkey === "string" && def.defkey.length > PROCESS_KEY_MAX_LENGTH) {
+      addIssue(errors, "PROCESS_KEY_TOO_LONG", "Process keys must not exceed 255 characters", "$.defkey", { keyLength: def.defkey.length });
+    }
+    if (typeof def.defkey === "string" && def.defkey && !PROCESS_KEY_RE.test(def.defkey)) {
+      addIssue(errors, "PROCESS_KEY_INVALID_CHARS", "Process keys may contain only letters, numbers, and underscores", "$.defkey", { flowKey: def.defkey });
     }
   }
 
@@ -856,7 +869,7 @@ function validateDecodedDef(def, options = {}) {
       }
       validateControlSchema(control, controlPath);
       validateApprovalFormUsabilityControl(control, controlPath, context.page);
-      validateFormDesignQualityControl(control, controlPath);
+      validateFormDesignQualityControl(control, controlPath, context.page);
 
       if (control.type === "list") {
         validateListControl(control, controlPath);
@@ -874,7 +887,7 @@ function validateDecodedDef(def, options = {}) {
             }
             validateControlSchema(field.control, `${fieldPath}.control`);
             validateApprovalFormUsabilityControl(field.control, `${fieldPath}.control`, context.page);
-            validateFormDesignQualityControl(field.control, `${fieldPath}.control`);
+            validateFormDesignQualityControl(field.control, `${fieldPath}.control`, context.page);
             validateCalculationExpressions(field.control.attrs && field.control.attrs.calculated, `${fieldPath}.control.attrs.calculated`, listContext);
           }
         });
@@ -893,7 +906,7 @@ function validateDecodedDef(def, options = {}) {
     });
   }
 
-  function validateFormDesignQualityControl(control, controlPath) {
+  function validateFormDesignQualityControl(control, controlPath, page) {
     if (!control || !control.type) return;
     const name = controlName(control);
     const attrs = control.attrs || {};
@@ -941,8 +954,15 @@ function validateDecodedDef(def, options = {}) {
     }
 
     if (control.type === "flex_grid") {
-      if (JSON.stringify(control.displayLabel) !== "[null,false]") {
-        addIssue(warnings, "FIELD_GRID_CAPTION_VISIBLE", "Generated flex_grid controls used for form field layout should set displayLabel = [null, false] so the grid caption is not displayed", `${controlPath}.displayLabel`, {
+      const target = mode === "final" ? errors : warnings;
+      const explicitlyTitled = control.attrs && (control.attrs.layoutRole === "titled-grid" || control.attrs.visibleGridCaption === true);
+      if (!explicitlyTitled && !displayLabelDisabled(control.displayLabel) && !displayLabelDisabled(attrs.displayLabel)) {
+        addIssue(target, "FIELD_GRID_CAPTION_VISIBLE", "Generated flex_grid controls used for form field layout should set displayLabel = [null, false] so the grid caption is not displayed", `${controlPath}.displayLabel`, {
+          control: name,
+        });
+      }
+      if (/(route|routing|status|summary|kpi|metric)/i.test(name) && !displayLabelDisabled(control.displayLabel)) {
+        addIssue(warnings, "ROUTE_SUMMARY_GRID_LAYOUT", "Route summaries, KPI blocks, and horizontal information blocks should use container/card blocks with spacing instead of captioned flex_grid controls", controlPath, {
           control: name,
         });
       }
@@ -950,6 +970,13 @@ function validateDecodedDef(def, options = {}) {
       if (!Array.isArray(desktopColumns) || desktopColumns.length !== 2) {
         addIssue(warnings, "FIELD_GRID_NOT_TWO_COLUMNS", "Standard generated form field grids should use two desktop columns unless a studied export proves another layout", `${controlPath}.attrs.columns`);
       }
+    }
+
+    if (page && page.type === 1 && /(internal routing|approval routing|routing details|budget owner|finance approver|decision notes|reviewer decision|approver notes)/i.test(name)) {
+      const target = mode === "final" ? errors : warnings;
+      addIssue(target, "SUBMIT_FORM_INTERNAL_ROUTING_DETAILS", "Submission forms should focus on submitter inputs and business context; internal routing, approver, and reviewer decision details belong on task pages unless explicitly requested", controlPath, {
+        control: name,
+      });
     }
 
     if ((control.type === "location-picker" || control.type === "cost-center-picker") && (attrs.placeholder !== undefined || attrs.required !== undefined)) {
@@ -1299,13 +1326,31 @@ function validateDecodedDef(def, options = {}) {
     childshapes.forEach((shape, index) => {
       if (!shape || !shape.stencil) return;
       const type = shape.stencil.id;
-      const taskurl = shape.properties && shape.properties.taskurl;
+      const props = shape.properties || {};
+      const aliases = ["taskurl", "taskUrl", "TaskUrl"].map((key) => ({ key, value: String(props[key] || "") }));
+      const first = aliases.find((entry) => entry.value);
+      const taskurl = first && first.value;
       const p = `$.childshapes[${index}].properties.taskurl`;
       if (type === "StartNoneEvent") {
         if (!requestPageIds.has(taskurl)) addIssue(errors, "START_TASKURL_BAD_PAGE", "StartNoneEvent.properties.taskurl must reference a request page id", p);
       }
-      if (type === "MultiAssignmentTask") {
-        if (!approvalPageIds.has(taskurl)) addIssue(errors, "APPROVAL_TASKURL_BAD_PAGE", "MultiAssignmentTask.properties.taskurl must reference an approval page id", p);
+      if (type === "MultiAssignmentTask" || type === "CandidateTask") {
+        const label = type === "CandidateTask" ? "Claim Task" : "MultiAssignmentTask";
+        if (!taskurl) {
+          addIssue(errors, "APPROVAL_TASKURL_MISSING", `${label} must reference a task form/page; missing or null TaskUrl blocks generated approval workflow publish readiness`, p);
+          return;
+        }
+        if (aliases.some((entry) => entry.value !== taskurl)) {
+          addIssue(errors, "APPROVAL_TASKURL_ALIASES_NOT_MIRRORED", `${label} task form references must be mirrored across properties.taskurl, properties.taskUrl, and properties.TaskUrl`, p, {
+            taskurl: props.taskurl || null,
+            taskUrl: props.taskUrl || null,
+            TaskUrl: props.TaskUrl || null,
+          });
+        }
+        const taskPage = pages.find((page) => page && page.id === taskurl);
+        if (!approvalPageIds.has(taskurl)) addIssue(errors, "APPROVAL_TASKURL_BAD_PAGE", `${label}.properties.taskurl must reference an approval task page id`, p);
+        if (taskPage && taskPage.pagetype !== 1) addIssue(errors, "APPROVAL_TASK_PAGE_OUTER_PAGETYPE_INVALID", `${label} referenced task page must use outer pagetype = 1`, `$.pageurls`, { taskurl, pagetype: taskPage.pagetype });
+        if (props.pagetype !== 1) addIssue(errors, "APPROVAL_TASK_NODE_PAGETYPE_INVALID", `${label} workflow node must carry properties.pagetype = 1`, `$.childshapes[${index}].properties.pagetype`, { pagetype: props.pagetype });
       }
     });
   }

@@ -826,9 +826,11 @@ function buildVariableKeySet(def) {
 
 function addPageEdges(context, formNodeId, formKey, formName, def) {
   const pageIds = new Set();
+  const pageById = new Map();
   asArray(def.pageurls).forEach((page, index) => {
     const pageId = safeString(page.id || page.pageid || page.pageId || page.key || `${formKey}-page-${index}`);
     pageIds.add(pageId);
+    pageById.set(pageId, page);
     const pageNodeId = `page:${formKey}:${pageId}`;
     addNode(context.graph, makeNode(pageNodeId, "formPage", page.title || page.name || pageId, { formKey, pageId, pageurl: page.pageurl || page.url || null }));
     addEdge(context.graph, { from: formNodeId, to: pageNodeId, type: "formPage", label: "uses page" });
@@ -837,9 +839,29 @@ function addPageEdges(context, formNodeId, formKey, formName, def) {
   const taskUrlRefs = new Set();
   collectShapes(def).forEach((shape) => {
     const props = shape.properties || {};
-    for (const key of ["taskurl", "taskUrl", "pageurl", "pageUrl"]) {
+    for (const key of ["taskurl", "taskUrl", "TaskUrl", "pageurl", "pageUrl"]) {
       const value = safeString(props[key]);
       if (value) taskUrlRefs.add(value);
+    }
+    const type = shapeType(shape);
+    if (type !== "MultiAssignmentTask" && type !== "CandidateTask") return;
+    const aliases = ["taskurl", "taskUrl", "TaskUrl"].map((key) => ({ key, value: safeString(props[key]) }));
+    const first = aliases.find((entry) => entry.value);
+    const node = props.name || shapeId(shape);
+    const severity = strictLevel(context.report);
+    if (!first) {
+      addIssue(context.report, severity, "TASK_PAGE_REFERENCE_MISSING", "Assignment Task / Claim Task nodes must reference a task page before generated import/publish readiness.", { form: formName, key: formKey, node, nodeType: type });
+      return;
+    }
+    if (aliases.some((entry) => entry.value !== first.value)) {
+      addIssue(context.report, severity, "TASK_PAGE_REFERENCE_ALIASES_NOT_MIRRORED", "Assignment Task / Claim Task task page references must be mirrored across taskurl, taskUrl, and TaskUrl.", { form: formName, key: formKey, node, nodeType: type, taskurl: props.taskurl || null, taskUrl: props.taskUrl || null, TaskUrl: props.TaskUrl || null });
+    }
+    const page = pageById.get(first.value);
+    if (page && page.pagetype !== 1) {
+      addIssue(context.report, severity, "TASK_PAGE_REFERENCE_PAGETYPE_INVALID", "Assignment Task / Claim Task task page references must resolve to a page with outer pagetype = 1.", { form: formName, key: formKey, node, nodeType: type, pageReference: first.value, pagetype: page.pagetype });
+    }
+    if (props.pagetype !== 1) {
+      addIssue(context.report, severity, "TASK_NODE_PAGETYPE_INVALID", "Assignment Task / Claim Task workflow nodes should carry properties.pagetype = 1.", { form: formName, key: formKey, node, nodeType: type, pagetype: props.pagetype });
     }
   });
   for (const ref of taskUrlRefs) {
