@@ -11,7 +11,7 @@ Business Travel runtime-practice update: `yap-v1-schema_v2.json` and the Busines
 
 Validate before import. Do not runtime-test a package with blocking structural, graph, wrapper, workflow, list, field, materialization, FlowKey, or unsafe `.yapk` issues.
 
-New application creation may output `.yap`. Existing app upgrade `.yapk` remains read-only and server-generated until Yeeflow signing and Resource mechanics are proven.
+New application creation may output `.yap`. Existing app upgrade `.yapk` validation should defer to `yeeflow-yapk-package-generator`. Product schema defines `.yapk` as `AppExportPackageInfo` with `Resource` described as Brotli-compressed `AppPackageInfo`, but readable historical artifacts did not verify that decode path in the current study. Treat `.yapk` content generation as unsupported until Resource decode/edit/encode/sign/verify/runtime-upgrade is proven.
 
 Validation is not runtime proof. When validating a newly learned capability, report whether the package is export-proven, validator-backed, import-proven, configuration-visible, render-only, partial, or runtime-proven. Use validator hard errors only for proven invalid generated shapes; otherwise prefer warnings/dependencies and require a focused runtime baseline before broad runtime claims.
 

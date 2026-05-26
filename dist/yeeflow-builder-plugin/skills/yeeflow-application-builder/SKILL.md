@@ -177,7 +177,7 @@ Materialization hard rules for new `.yap` packages:
 
 For existing application upgrades, request a baseline `.yapk` downloaded from Yeeflow Version management. Preserve `PackageId`, `TenantID`, `AppID`, `ListID`, stable object IDs, and other app identity fields required for upgrade. Do not generate a `.yap` when the user asked to modify the already-imported app unless they explicitly want a cloned app.
 
-Current `.yapk` limitation: studied Version management packages store `Resource` as opaque high-entropy base64 payloads with signature-like `Sign` values; they are not normal `[______gizp______]` `.yap` resources. A runtime test rejected a metadata-only wrapper edit even when `Resource` and `Sign` were preserved, and multi-version comparison showed `PackageId`, `Sign`, and `Resource` change across Yeeflow-generated versions. Until Yeeflow `.yapk` resource encoding/signing is proven, Codex must not output externally edited `.yapk` packages as valid upgrades; use Yeeflow Version management to generate official `.yapk` packages.
+Current `.yapk` limitation: product schema defines the wrapper as `AppExportPackageInfo` and describes `Resource` as Brotli-compressed `AppPackageInfo`, but readable historical artifacts did not verify that Brotli decode path in the current study. For `.yapk` work, use `yeeflow-yapk-package-generator`; the normal `.yap` application generator must not own `.yapk` content generation. Until Yeeflow Resource decode/edit/encode/sign/verify/runtime-upgrade is proven, Codex must not output externally edited app-content `.yapk` packages as valid upgrades; use Yeeflow Version management to generate official `.yapk` packages or produce a `.yap` clone/change plan.
 
 Also load `references/business-solution-design-principles.md` before designing the app structure.
 For generation-readiness reviews, also load `references/business-decision-gates.md`, `references/application-design-quality-gates.md`, and `references/application-planning-key-design-decisions.md`.
@@ -346,3 +346,11 @@ For newly generated `.yap` packages, compatibility validation is not enough. Bef
 
 The Projects Center fixed package import is user-proven only for the repaired Projects Center package. Do not claim broad app open/use, data entry, document-library upload/folder behavior, report execution, or workflow proof from that incident. Missing `ListType`, unsafe native `Title` metadata, unresolved view columns, mismatched `LayoutInResources` IDs, unresolved dashboard dynamic-display/filter references, and tenant/user metadata in `ReplaceIds` must block generated-package handoff.
 <!-- projects-center-import-failure-hardening:end -->
+
+<!-- container-button-action-settings-learning:start -->
+## Actionable Dashboard Business Choices
+
+When translating requirements into dashboard actions, choose Container/Button action types by business intent: Link for URL destinations, Add list item for quick-create data/document flows, Open dashboard for navigation and drill-down, Open approval form for starting workflow requests, and form/page Action binding for local front-end logic when the host schema is proven.
+
+Use structural Yeeflow targets instead of raw links for resources included in the generated app. Generated applications must validate Container/Button action targets and open behavior before `.yap` handoff, and runtime navigation/open behavior remains unproven until clicked in a focused runtime test.
+<!-- container-button-action-settings-learning:end -->

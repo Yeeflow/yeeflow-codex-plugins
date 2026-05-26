@@ -15,7 +15,7 @@ Approval task form hardening: generated approval workflow task pages used by Ass
 
 Generated approval forms are published by default unless the user explicitly asks for draft output: set `Data.Forms[].Deployed = true`, `Data.Forms[].Status = 1`, and any present DefResource publish flags (`deployed`, `status`, `published`) to published values. Submit pages should not expose internal routing details, budget owner, finance approver, or decision notes unless requested; task pages may show reviewer routing and decision sections.
 
-For existing-app upgrades, do not reuse `.yap` new-app generation rules blindly. Yeeflow Version management downloads `.yapk` packages for Upgrade application. Studied `.yapk` wrappers preserve app identity fields such as `TenantID`, `AppID`, and `ListID`, but `PackageId`, `Sign`, and opaque high-entropy `Resource` values change across Yeeflow-generated versions. A metadata-only wrapper edit was rejected at runtime even with `Resource` and `Sign` preserved. Until `.yapk` resource encoding/signing is proven, only inspect/validate wrappers and produce change plans or `.yap` clones; do not claim externally edited `.yapk` packages are valid upgrades.
+For existing-app upgrades, do not reuse `.yap` new-app generation rules blindly. Defer `.yapk` inspection, validation, comparison, signing-boundary guidance, and future generation planning to `yeeflow-yapk-package-generator`. Yeeflow Version management downloads `.yapk` packages for Upgrade application. Product schema defines the wrapper as `AppExportPackageInfo` and describes `Resource` as Brotli-compressed `AppPackageInfo`, but readable historical artifacts did not verify that Brotli path in the current study. Until edit -> encode -> sign -> verify -> runtime upgrade succeeds, only inspect/validate wrappers and produce change plans or `.yap` clones; do not generate or claim externally edited app-content `.yapk` packages as valid upgrades.
 
 For component details, also use the installed skills:
 
@@ -484,7 +484,7 @@ node scripts/validate-yap-graph.js "./Existing App.yap" --mode compatibility
 Load only the relevant reference:
 
 - `references/yap-structure-study.md`: `.yap` wrapper, root app, child resources, forms, reports/modules, ReplaceIds.
-- `docs/yeeflow-yapk-version-package-study.md` and `docs/yeeflow-application-package-generation-rules.md` when present: `.yapk` version package wrapper, package-type decision, and current opaque-resource limitations.
+- `yeeflow-yapk-package-generator` plus `docs/yeeflow-yapk-version-package-study.md` and `docs/yeeflow-application-package-generation-rules.md` when present: `.yapk` version package wrapper, product schema, package-type decision, Resource decode/signing boundary, and current content-generation limitations.
 - `references/first-test-plan.md`: first safe app-generation test strategy.
 - `references/baseline-department-access-management-v5.md`: successful v5 baseline and root app shell rules.
 - `references/baseline-visitor-access-management-v11.md`: Visitor Access v5-v11 generated baselines, including v11 multi-type proof.
