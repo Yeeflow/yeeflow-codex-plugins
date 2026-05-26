@@ -11,6 +11,8 @@ Use this skill when generating or validating Yeeflow expression editor output ac
 
 Data Filter variables appear in downstream data filter conditions as expression-token arrays with `exprType: "variable"`, `id: "__filter_<filterVarId>"`, and `name: "<filterVarId>"`. The Sales export proves this dashboard pattern in data table/list-like filters and report/chart extension `Conditions[]`; the CRM export additionally proves Search variables in `attrs.data.fulltext[]`, Hierarchy variables in `attrs.data.filter[]`, and Sorting variables in `attrs.data.sortingfilter[]`. Validate that `name` exists in the host page `filterVars[]` and that `id` matches the `__filter_` prefix. Do not invent expression shapes for unsupported host contexts; keep unknown filter variable shapes warning-first until an export proves them.
 
+Pivot Table filter conditions can use the same Data Filter variable expression-token convention in `exts[].attr.settings.Conditions[]` when the referenced `__filter_<filterVarId>` resolves to the host page `filterVars[]`. The CRM Pivot Table export proves the Pivot Table `Conditions[]` location and static field conditions, but its Pivot Tables do not themselves consume Data Filter variables; treat Pivot Table filter-variable execution as product-understanding-backed until a focused export or runtime proof observes it. Validate condition fields, variable names, and `__filter_` ids before generated handoff.
+
 <!-- scheduled-workflow-ai-assistant-learning:start -->
 ## Scheduled Workflow Expression Context
 

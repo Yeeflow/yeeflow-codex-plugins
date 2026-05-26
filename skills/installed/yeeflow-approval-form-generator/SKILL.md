@@ -17,6 +17,8 @@ Use this skill when the user asks to generate, inspect, validate, package, troub
 
 Data Filter controls can be used in approval forms at the product level, but the Sales and CRM exports only prove dashboard page usage. Until an approval-form export proves the exact host schema, treat approval-form Data Filter placement, lookup/lookup-list filtering, Apply button wiring, Remove filters reset behavior, and runtime refresh behavior as product-documented only. Reuse `docs/studies/data-filter-controls.md` for the shared concept: filter variables are the bridge between filters and downstream data-bound controls; Search, Radio, Hierarchy, and Sorting are dashboard export-proven from the CRM sample; every generated filter variable reference must resolve before handoff.
 
+Pivot Table is a Data Analytics control and is not supported on Approval Forms. Keep Pivot Table generation on Dashboard pages, and only use Data List forms when a product-backed design explicitly calls for it and validation can prove the host/source/field references. If a user asks for approval analytics, place the Pivot Table on a dashboard or supported reporting surface instead of the submission, task, or approval form page.
+
 When approval-form changes target an existing imported app, confirm whether the user wants a new cloned `.yap` or an upgrade `.yapk`. For `.yapk`, start from a Version management baseline and preserve existing form/workflow IDs; do not regenerate fresh IDs for existing objects. The first studied `.yapk` resource is opaque and signature-like, so offline app-content form mutation inside `.yapk` is not generation-safe until Yeeflow encoding/signing is proven.
 
 ## Core Workflow
