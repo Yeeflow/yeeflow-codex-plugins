@@ -434,3 +434,15 @@ Generated Open approval form actions must resolve to an included approval form k
 
 Focused runtime proof in `docs/studies/container-button-action-runtime-proof.md` fixed and user-confirmed a generated approval form target that initially failed publish with `process request pageUrl is null key:CBAR`. For generated app-level approval forms opened by dashboard actions, ensure the request page has outer `type = 1` and `pagetype = 1`, embedded `formdef.id` equal to the page ID, embedded `formdef.pagetype = 1`, populated form name/title, array `filterVars`/`tempVars`, and Start node `taskurl`/`taskUrl`/`TaskUrl` aliases pointing at that request page. This proves representative open/navigation only; submit, routing, task execution, and workflow mutation remain unproven.
 <!-- container-button-action-settings-learning:end -->
+
+<!-- sub-list-dynamic-content-learning:start -->
+## Sub List Dynamic Content And List Actions
+
+Use `docs/studies/sub-list-dynamic-content.md`, `docs/studies/normalized/sub-list-dynamic-content/`, and `scripts/inspect-sub-list-dynamic-controls.mjs` when generating or validating Approval Form Sub List controls with Dynamic content layout.
+
+Sub List controls are `type = "list"` controls bound to a `variables.basic[]` entry with `type = "list"` and a `value` that resolves to `variables.listref[]`. Dynamic content layout is selected with `attrs["list-display-preference"] = "dynamic"`. The item template lives under a `list-body` child; footer buttons and `list-summary` controls live under `list-footer`. Row field controls inside the template must set `attrs.list_field = true`, keep `attrs.list_field_binding` equal to the parent Sub List binding, and bind to a row field from the associated listref.
+
+Sub List list actions are stored on the Sub List itself at `attrs.actions[]`, not in `formdef.actions[]`. Export-proven list steps are `list_new`, `list_import`, `list_dup`, and `list_del`; Insert before/after current item uses `list_new` with `attrs.position = "0"` or `"1"`. Action buttons inside the item template/footer should resolve to those local Sub List action IDs. A table-style Dynamic Sub List can use an independent header `flex_grid` above the Sub List plus a matching row grid inside the item template. Preserve `.dynamic-list .list-footer` custom CSS only when the generated layout needs that fixed-footer behavior.
+
+This export proves Approval Form schema only. Do not claim runtime add/duplicate/delete/import/move/update execution, scrollbar behavior, current-object expression evaluation, or Data List custom form runtime support without a focused test/export.
+<!-- sub-list-dynamic-content-learning:end -->

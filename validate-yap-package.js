@@ -2656,9 +2656,11 @@ function validateCustomFormActions(form, fieldsByName, pathPrefix, report, title
 function validateCustomFormSubListControl(control, fieldsByName, report, context) {
   const variables = asArray(control.attrs && control.attrs["list-variables"]);
   const listFields = asArray(control.attrs && control.attrs["list-fields"]);
+  const layout = safeString(control.attrs && control.attrs["list-display-preference"]);
   if (!variables.length) issue(report, "warning", "CUSTOM_FORM_SUBLIST_VARIABLES_MISSING", "Sub-list custom form control should include attrs.list-variables.", context);
   if (!listFields.length) issue(report, "warning", "CUSTOM_FORM_SUBLIST_FIELDS_MISSING", "Sub-list custom form control should include attrs.list-fields.", context);
   const variableNames = new Set(variables.map((item) => safeString(item && item.name)).filter(Boolean));
+  const variableIds = new Set(variables.map((item) => safeString(item && item.id)).filter(Boolean));
   listFields.forEach((entry, index) => {
     const name = safeString(entry && entry.name);
     if (name && !variableNames.has(name)) issue(report, "warning", "CUSTOM_FORM_SUBLIST_FIELD_VARIABLE_NOT_FOUND", "Sub-list attrs.list-fields entry should resolve to attrs.list-variables by name.", { ...context, index, name });
@@ -2674,6 +2676,56 @@ function validateCustomFormSubListControl(control, fieldsByName, report, context
   if (boundField && ruleVariables.length && variables.length !== ruleVariables.length) {
     issue(report, "warning", "CUSTOM_FORM_SUBLIST_VARIABLE_COUNT_DIFFERS_FROM_FIELD_RULES", "Sub-list form control variable count differs from the parent field Rules.list-variables count.", { ...context, controlVariables: variables.length, fieldRuleVariables: ruleVariables.length });
   }
+  asArray(control.attrs && control.attrs["list-fields-summary"]).forEach((summary, index) => {
+    const fieldId = safeString(summary && summary.field);
+    if (fieldId && !variableIds.has(fieldId) && !variableNames.has(fieldId)) {
+      issue(report, "warning", "CUSTOM_FORM_SUBLIST_SUMMARY_FIELD_UNRESOLVED", "Sub-list summary field should resolve to the control's row variables. Data List custom-form Sub List summaries are product-understanding-backed unless separately export-proven.", { ...context, index, fieldId });
+    }
+  });
+  if (layout === "dynamic") {
+    const body = asArray(control.children).find((child) => child && child.type === "list-body");
+    if (!body) {
+      issue(report, "warning", "CUSTOM_FORM_SUBLIST_DYNAMIC_BODY_MISSING", "Dynamic content Sub List should include a list-body item template. Data List custom-form dynamic Sub List support is product-understanding-backed unless separately export-proven.", context);
+    } else {
+      let childCount = 0;
+      walkControls(body, (node) => {
+        if (node !== body && node.type) childCount += 1;
+        if (!node.attrs || node.attrs.list_field !== true) return;
+        const fieldBinding = safeString(node.binding);
+        if (fieldBinding && !variableIds.has(fieldBinding) && !variableNames.has(fieldBinding)) {
+          issue(report, "warning", "CUSTOM_FORM_SUBLIST_DYNAMIC_FIELD_UNRESOLVED", "Dynamic Sub List item-template field binding should resolve to a row variable.", { ...context, fieldBinding });
+        }
+        if (safeString(node.attrs.list_field_binding) !== safeString(control.binding)) {
+          issue(report, "warning", "CUSTOM_FORM_SUBLIST_DYNAMIC_PARENT_BINDING_MISMATCH", "Dynamic Sub List item-template field control should keep attrs.list_field_binding equal to the parent Sub List binding.", { ...context, fieldBinding });
+        }
+      });
+      if (!childCount) issue(report, "warning", "CUSTOM_FORM_SUBLIST_DYNAMIC_TEMPLATE_EMPTY", "Dynamic content Sub List should include child controls inside list-body.", context);
+    }
+  } else if (layout && !["default", "responsive", "table", "table-view", "card", "card-view", "dynamic"].includes(layout)) {
+    issue(report, "warning", "CUSTOM_FORM_SUBLIST_LAYOUT_MODE_UNSTUDIED", "Sub-list custom form layout mode is not covered by current export-backed validation.", { ...context, layout });
+  }
+  const actions = control.attrs && control.attrs.actions;
+  if (actions !== undefined && !Array.isArray(actions)) {
+    issue(report, "warning", "CUSTOM_FORM_SUBLIST_ACTIONS_NOT_ARRAY", "Sub List list actions should be stored as attrs.actions[] when configured.", context);
+  }
+  const allowedStepTypes = new Set(["list_new", "list_import", "list_dup", "list_del", "list_move", "list_update"]);
+  asArray(actions).forEach((action, actionIndex) => {
+    if (!action || typeof action !== "object") {
+      issue(report, "warning", "CUSTOM_FORM_SUBLIST_ACTION_BAD_SHAPE", "Sub List list action entries should be objects.", { ...context, actionIndex });
+      return;
+    }
+    if (safeString(action.type) && safeString(action.type) !== "list") {
+      issue(report, "warning", "CUSTOM_FORM_SUBLIST_ACTION_TYPE_UNEXPECTED", "Approval Form export-proven Sub List actions use type = \"list\"; verify Data List custom-form variants separately.", { ...context, actionIndex, type: safeString(action.type) });
+    }
+    asArray(action.steps).forEach((step, stepIndex) => {
+      const stepType = safeString(step && step.type);
+      if (!stepType) {
+        issue(report, "warning", "CUSTOM_FORM_SUBLIST_ACTION_STEP_TYPE_MISSING", "Sub List list action steps should include type.", { ...context, actionIndex, stepIndex });
+      } else if (!allowedStepTypes.has(stepType)) {
+        issue(report, "warning", "CUSTOM_FORM_SUBLIST_ACTION_STEP_TYPE_UNSTUDIED", "Sub List list action step type is not export-proven by the current study.", { ...context, actionIndex, stepIndex, stepType });
+      }
+    });
+  });
 }
 
 function validateCustomFormDocLibraryControls(data, listsById, fieldsByList, report) {
@@ -3088,6 +3140,7 @@ function validateApprovalDef(def, form, report, listsById = new Map(), fieldsByL
       validateUiStandardFormRoot(formdef, report, { surface: "approval form page", title: page.title || page.name || page.id, form: form.Name });
       validateUiStandardContainers(formdef, report, { surface: "approval form page", title: page.title || page.name || page.id, form: form.Name, requireFormBody: true });
       validateApprovalFormLayoutQuality(formdef, page, form, report, index);
+      validateApprovalSubListControls(def, formdef, page, form, report, index);
       asArray(formdef.children).forEach((child, childIndex) => {
         walkControls(child, (control, pointer) => {
           validateEmbeddedControlSchema(control, report, {
@@ -3103,6 +3156,131 @@ function validateApprovalDef(def, form, report, listsById = new Map(), fieldsByL
     }
   });
   validateApprovalTaskPageReferences(def, form, report, pageById, taskPageIds, requestPageIds);
+}
+
+function validateApprovalSubListControls(def, formdef, page, form, report, pageIndex) {
+  const severity = generatorFinalSeverity(report, "warning");
+  const formName = safeString(form.Name || form.Key);
+  const pageName = safeString(page.title || page.name || page.id || pageIndex);
+  const basicVars = new Map(asArray(def.variables && def.variables.basic).map((variable) => [safeString(variable && variable.id), variable]));
+  const listrefs = new Map(asArray(def.variables && def.variables.listref).map((listref) => [safeString(listref && listref.id), listref]));
+
+  asArray(formdef.children).forEach((child, childIndex) => {
+    walkControls(child, (control, pointer) => {
+      if (control.type !== "list" || !control.attrs) return;
+      const path = `Data.Forms[${formName}].pageurls[${pageIndex}].formdef.children[${childIndex}]${pointer.slice(1)}`;
+      const binding = safeString(control.binding);
+      const listVar = basicVars.get(binding);
+      const listref = listVar ? listrefs.get(safeString(listVar.value)) : null;
+      if (!binding || !listVar || listVar.type !== "list" || !listref) {
+        issue(report, severity, "SUBLIST_ASSOCIATED_VARIABLE_UNRESOLVED", "Sub List control must bind to a variables.basic list variable whose value resolves to variables.listref.", { form: formName, page: pageName, path, binding });
+        return;
+      }
+
+      const fields = new Set(asArray(listref.fields).map((field) => safeString(field && field.id)).filter(Boolean));
+      const listFields = asArray(control.attrs["list-fields"]);
+      const listVariables = asArray(control.attrs["list-variables"]);
+      if (!listFields.length) issue(report, severity, "SUBLIST_FIELDS_MISSING", "Sub List should include attrs[\"list-fields\"] entries for the displayed row fields.", { form: formName, page: pageName, path });
+      if (!listVariables.length) issue(report, severity, "SUBLIST_VARIABLES_MISSING", "Sub List should include attrs[\"list-variables\"] entries for the row schema.", { form: formName, page: pageName, path });
+
+      for (const field of listFields) {
+        const fieldId = safeString(field && field.id);
+        if (fieldId && !fields.has(fieldId)) issue(report, severity, "SUBLIST_FIELD_UNRESOLVED", "Sub List displayed field does not resolve to the associated listref field set.", { form: formName, page: pageName, path, fieldId });
+      }
+
+      validateApprovalSubListSummaries(control, fields, formName, pageName, path, report);
+      validateApprovalSubListDynamicTemplate(control, fields, binding, formName, pageName, path, report, severity);
+      validateApprovalSubListActions(control, formName, pageName, path, report, severity);
+    });
+  });
+}
+
+function validateApprovalSubListSummaries(control, fields, formName, pageName, path, report) {
+  asArray(control.attrs && control.attrs["list-fields-summary"]).forEach((summary, index) => {
+    const fieldId = safeString(summary && summary.field);
+    if (!fieldId || !fields.has(fieldId)) {
+      issue(report, generatorFinalSeverity(report, "warning"), "SUBLIST_SUMMARY_FIELD_UNRESOLVED", "Sub List summary field must resolve to a row field in the associated listref.", { form: formName, page: pageName, path: `${path}.attrs.list-fields-summary[${index}]`, fieldId });
+    }
+  });
+}
+
+function validateApprovalSubListDynamicTemplate(control, fields, binding, formName, pageName, path, report, severity) {
+  const layout = safeString(control.attrs && control.attrs["list-display-preference"]);
+  if (layout && !["default", "responsive", "table", "table-view", "card", "card-view", "dynamic"].includes(layout)) {
+    issue(report, "warning", "SUBLIST_LAYOUT_MODE_UNSTUDIED", "Sub List layout mode is not covered by current export-backed validation.", { form: formName, page: pageName, path: `${path}.attrs.list-display-preference`, layout });
+  }
+  if (layout !== "dynamic") return;
+
+  const body = asArray(control.children).find((child) => child && child.type === "list-body");
+  if (!body) {
+    issue(report, severity, "SUBLIST_DYNAMIC_BODY_MISSING", "Dynamic content Sub List must include a list-body template container.", { form: formName, page: pageName, path: `${path}.children` });
+    return;
+  }
+  let childControlCount = 0;
+  walkControls(body, (node, pointer) => {
+    if (node !== body && node.type) childControlCount += 1;
+    if (!node.attrs || node.attrs.list_field !== true) return;
+    const nodePath = `${path}.children[list-body]${pointer.slice(1)}`;
+    if (safeString(node.attrs.list_field_binding) !== binding) {
+      issue(report, severity, "SUBLIST_DYNAMIC_FIELD_BINDING_MISMATCH", "Dynamic Sub List field controls must keep attrs.list_field_binding equal to the parent Sub List binding.", { form: formName, page: pageName, path: `${nodePath}.attrs.list_field_binding`, expected: binding, actual: safeString(node.attrs.list_field_binding) });
+    }
+    const fieldBinding = safeString(node.binding);
+    if (fieldBinding && !fields.has(fieldBinding)) {
+      issue(report, severity, "SUBLIST_DYNAMIC_FIELD_UNRESOLVED", "Dynamic Sub List item template field binding does not resolve to the associated listref fields.", { form: formName, page: pageName, path: `${nodePath}.binding`, fieldBinding });
+    }
+  });
+  if (!childControlCount) issue(report, severity, "SUBLIST_DYNAMIC_TEMPLATE_EMPTY", "Dynamic content Sub List should include child controls inside list-body.", { form: formName, page: pageName, path: `${path}.children` });
+
+  const css = safeString(control.attrs && control.attrs.common && control.attrs.common.css);
+  if (css.includes(".dynamic-list .list-footer") && !css.includes("position: absolute")) {
+    issue(report, "warning", "SUBLIST_DYNAMIC_FOOTER_CSS_UNEXPECTED", "A .dynamic-list .list-footer custom CSS rule is present but differs from the export-proven fixed-footer pattern; preserve intentionally but verify layout.", { form: formName, page: pageName, path: `${path}.attrs.common.css` });
+  }
+}
+
+function validateApprovalSubListActions(control, formName, pageName, path, report, severity) {
+  const actions = control.attrs && control.attrs.actions;
+  if (actions === undefined) return;
+  if (!Array.isArray(actions)) {
+    issue(report, severity, "SUBLIST_ACTIONS_NOT_ARRAY", "Sub List attrs.actions must be an array when list actions are configured.", { form: formName, page: pageName, path: `${path}.attrs.actions` });
+    return;
+  }
+  const allowedStepTypes = new Set(["list_new", "list_import", "list_dup", "list_del", "list_move", "list_update"]);
+  const actionIds = new Set(actions.map((action) => safeString(action && action.id)).filter(Boolean));
+  actions.forEach((action, actionIndex) => {
+    const actionPath = `${path}.attrs.actions[${actionIndex}]`;
+    if (!isObject(action)) {
+      issue(report, severity, "SUBLIST_ACTION_BAD_SHAPE", "Sub List action entries must be objects.", { form: formName, page: pageName, path: actionPath });
+      return;
+    }
+    if (safeString(action.type) !== "list") issue(report, "warning", "SUBLIST_ACTION_TYPE_UNEXPECTED", "Export-proven Sub List actions use type = \"list\".", { form: formName, page: pageName, path: `${actionPath}.type`, type: safeString(action.type) });
+    if (!safeString(action.id)) issue(report, "warning", "SUBLIST_ACTION_ID_MISSING", "Sub List action should include an id so action_button.attrs.control_action can resolve.", { form: formName, page: pageName, path: `${actionPath}.id` });
+    if (!safeString(action.name)) issue(report, "warning", "SUBLIST_ACTION_NAME_MISSING", "Sub List action should include a readable name.", { form: formName, page: pageName, path: `${actionPath}.name` });
+    const steps = asArray(action.steps);
+    if (!steps.length) {
+      issue(report, severity, "SUBLIST_ACTION_STEPS_EMPTY", "Sub List action must include at least one step definition.", { form: formName, page: pageName, path: `${actionPath}.steps` });
+      return;
+    }
+    steps.forEach((step, stepIndex) => {
+      const stepPath = `${actionPath}.steps[${stepIndex}]`;
+      if (!isObject(step)) {
+        issue(report, severity, "SUBLIST_ACTION_STEP_BAD_SHAPE", "Sub List action steps must be objects.", { form: formName, page: pageName, path: stepPath });
+        return;
+      }
+      const stepType = safeString(step.type);
+      if (!stepType) issue(report, severity, "SUBLIST_ACTION_STEP_TYPE_MISSING", "Sub List action steps must include type.", { form: formName, page: pageName, path: `${stepPath}.type` });
+      else if (!allowedStepTypes.has(stepType)) issue(report, "warning", "SUBLIST_ACTION_STEP_TYPE_UNSTUDIED", "Sub List action step type is not export-proven by the current study.", { form: formName, page: pageName, path: `${stepPath}.type`, stepType });
+      if (stepType === "list_new" && step.attrs && step.attrs.position !== undefined && !["0", "1"].includes(String(step.attrs.position))) {
+        issue(report, "warning", "SUBLIST_ACTION_INSERT_POSITION_UNEXPECTED", "Insert-before/after Sub List actions use list_new with attrs.position \"0\" or \"1\" in the studied export.", { form: formName, page: pageName, path: `${stepPath}.attrs.position`, position: step.attrs.position });
+      }
+    });
+  });
+
+  walkControls(control, (node, pointer) => {
+    const ref = safeString(node.attrs && node.attrs.control_action);
+    if (ref && !actionIds.has(ref)) {
+      issue(report, severity, "SUBLIST_ACTION_BUTTON_TARGET_UNRESOLVED", "Action buttons inside a Sub List item/footer template should resolve to attrs.actions[].id on the same Sub List.", { form: formName, page: pageName, path: `${path}${pointer.slice(1)}.attrs.control_action` });
+    }
+  });
 }
 
 function validateApprovalPublishFlags(def, form, report) {

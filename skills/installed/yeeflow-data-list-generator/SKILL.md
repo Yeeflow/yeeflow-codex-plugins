@@ -462,3 +462,11 @@ Dashboard Container/Button `Add list item` actions are export-proven in `docs/st
 
 Generated Add list item actions must reference a real target `ListID`, any chosen add/edit form `LayoutID` must resolve, `passvalues[].Name` must reference fields on the target list, and generated lists should remain add-ready. Prefer this structural action over a raw link when the target list/library is included in the package.
 <!-- container-button-action-settings-learning:end -->
+
+<!-- sub-list-dynamic-content-learning:start -->
+## Sub List Dynamic Content On Custom Forms
+
+Product understanding says Sub List fields/controls can also be used on Data List custom forms, but `Sub list Dynamic.yap` is Approval Form evidence only. Reuse the export-proven Sub List control pattern only when the custom form host schema already supports the same `type = "list"` control shape: a list variable/listref association, `attrs["list-fields"]`, `attrs["list-variables"]`, optional `attrs["list-fields-summary"]`, and, for Dynamic content, `attrs["list-display-preference"] = "dynamic"` plus `list-body` and `list-footer` children.
+
+Dynamic item template field controls must bind to row fields and keep `attrs.list_field_binding` aligned with the parent Sub List binding. Sub List list actions are scoped to the current list/current object through `attrs.actions[]`, not page-level form actions. Export-proven steps are `list_new`, `list_import`, `list_dup`, and `list_del`; treat Move item, Update fields, and current-object expression access as unproven until a Data List custom form export or runtime proof is available.
+<!-- sub-list-dynamic-content-learning:end -->

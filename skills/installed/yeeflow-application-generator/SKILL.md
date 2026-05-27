@@ -654,6 +654,14 @@ Generation-blocking import-readiness errors include missing or invalid `ListMode
 If strict validation fails, fix the package before handoff. `pass_with_warnings` is acceptable only after the remaining warnings are classified as non-import-blocking runtime/export-derived warnings.
 <!-- projects-center-import-failure-hardening:end -->
 
+<!-- sub-list-dynamic-content-learning:start -->
+## Sub List Dynamic Content Generation
+
+When an application requirement needs editable repeating rows with a custom visual item layout, use the Sub List Dynamic content guidance in `docs/studies/sub-list-dynamic-content.md`. Generate the Sub List as a `type = "list"` control backed by a list variable and listref row schema. For Dynamic content, emit `attrs["list-display-preference"] = "dynamic"`, a `list-body` item template with row-field controls, and a `list-footer` with add/import buttons and summaries as needed.
+
+For table-style Dynamic Sub Lists, create a sibling header `flex_grid` above the Sub List and a matching grid inside the item template. Configure Sub List list actions locally under `attrs.actions[]`; do not place those actions in `formdef.actions[]`. Run `scripts/inspect-sub-list-dynamic-controls.mjs` and package validation before handing off generated packages. This is export-proven for Approval Forms only; Data List custom form support remains product/user-understanding-backed until separately studied.
+<!-- sub-list-dynamic-content-learning:end -->
+
 <!-- container-button-action-settings-learning:start -->
 ## Container/Button Action Handoff
 

@@ -216,3 +216,11 @@ Container/Button Action settings from `AP Approval Demo v3.yap` are export-prove
 
 Keep the proof narrow: save/submit, workflow execution, approval routing, cross-app targets, form-action binding, permissions/security, external sensitive navigation, and every open-mode/size combination remain unproven. If an Open approval form action exposes `process request pageUrl is null`, inspect the target approval form request page shape before retesting.
 <!-- container-button-action-settings-learning:end -->
+
+<!-- sub-list-dynamic-content-learning:start -->
+## Sub List Runtime Proof Boundary
+
+Sub List Dynamic content schema from `docs/studies/sub-list-dynamic-content.md` is export-proven, not runtime-proven. A focused runtime proof should import a disposable package, open the Approval Form, render a Dynamic Sub List with its sibling header grid, click Add another item, Duplicate item, Delete item, Import items, Insert before, and Insert after where safe, and verify whether current-object expressions and summaries update after row edits.
+
+Keep each claim narrow: rendering a Dynamic Sub List does not prove row mutation; clicking Add does not prove Duplicate/Delete/Import; Approval Form proof does not prove Data List custom form behavior. Avoid destructive or private data during list-action tests.
+<!-- sub-list-dynamic-content-learning:end -->

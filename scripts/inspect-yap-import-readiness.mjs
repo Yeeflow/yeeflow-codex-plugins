@@ -117,6 +117,7 @@ function main() {
       ignoredFindingCodes: ["TARGET_DASHBOARD_PAGE_NOT_FOUND"],
     }));
     steps.push(runJsonStep("container-button-actions-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-container-button-actions.mjs"), inputPath]));
+    steps.push(runJsonStep("sub-list-dynamic-controls-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-sub-list-dynamic-controls.mjs"), inputPath]));
 
     const decoded = decodeWrapper(inputPath);
     const placeholders = collectPlaceholders(decoded);
