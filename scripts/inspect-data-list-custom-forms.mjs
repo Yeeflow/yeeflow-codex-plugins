@@ -17,6 +17,8 @@ const SIZE_LABELS = { 0: "Medium", 1: "Small", 2: "Large", 3: "Full screen" };
 const EXPLICIT_OPEN_MODE_LABELS = {
   modal: "Pop-up window",
   slide: "Slide in",
+  target: "Current page",
+  new: "New page",
   page: "Full page",
   fullpage: "Full page",
   fullPage: "Full page",
@@ -245,6 +247,9 @@ function inspectDisplaySettings(item, formsByLayoutId, listName, findings) {
     const selectedForm = usesDefaultLayout ? null : formsByLayoutId.get(refKey);
     const openMode = normalizeOpenMode(value.opentype && value.opentype[usage], usage);
     const size = normalizeSize(value.modalsize && value.modalsize[usage]);
+    if (usage === "add" && usesDefaultLayout) {
+      addFinding(findings, "error", "LAYOUTVIEW_ADD_LAYOUT_MISSING", "Data List display settings must assign New item to a concrete custom form layout; opentype/modalsize alone can leave the Add modal loading forever.", { list: listName, usage });
+    }
     if (!usesDefaultLayout && !selectedForm) {
       addFinding(findings, "error", "CUSTOM_FORM_DISPLAY_FORM_REF_NOT_FOUND", "Custom list form display setting references a form layout that does not exist.", { list: listName, usage, formRef: "__LAYOUT_ID_REDACTED__" });
     }
@@ -267,6 +272,17 @@ function inspectDisplaySettings(item, formsByLayoutId, listName, findings) {
       size,
       proofLevel: "export-proven for Data Lists (3).yap; UI label mapping uses provided screenshots as visual reference",
     });
+  }
+  if (value.sort !== undefined) {
+    if (!Array.isArray(value.sort)) {
+      addFinding(findings, "error", "LAYOUTVIEW_SORT_SHAPE_UNSUPPORTED", "Data List display-settings sort must be omitted or use an export-supported array shape.", { list: listName, shape: typeof value.sort });
+    } else {
+      value.sort.forEach((entry, index) => {
+        if (isObject(entry)) {
+          addFinding(findings, "error", "LAYOUTVIEW_SORT_OBJECT_UNSUPPORTED", "Data List display-settings sort object entries are not supported for runtime-safe New item behavior.", { list: listName, index });
+        }
+      });
+    }
   }
   return settings;
 }

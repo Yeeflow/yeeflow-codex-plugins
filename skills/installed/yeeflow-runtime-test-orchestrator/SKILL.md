@@ -21,6 +21,8 @@ Data Filter runtime boundary: `Sales_Management_AD.yap` and `CRM - Customer rela
 
 Pivot Table runtime boundary: `CRM - Customer relationship management (1).yap` is export-proven for Pivot Table controls on a Dashboard page only. `docs/studies/pivot-table-control.md`, `docs/studies/pivot-table-control-runtime-proof.md`, and `scripts/inspect-pivot-table-controls.mjs` document and validate the schema. The focused v2 generated package is user-confirmed to import/work well with 20 safe synthetic data-list rows, and adding a new data-list item is user-confirmed successful for that package. The v1 missing-row/Add failed issue is strongly indicated to be a generic data-list seed/add-readiness problem caused by crossed `FieldName`/`FieldType` metadata, so do not runtime-test packages with `FIELD_NAME_FIELDTYPE_MISMATCH`. Keep the Pivot Table claim narrow: exhaustive aggregation correctness, every aggregation/date-grouping mode, Data Filter interaction, sorting semantics, styling fidelity, alternate data source classes, and Data List form hosting are not runtime-proven. Before expanding runtime claims, use another focused generated package with safe local data and verify the specific behavior under test.
 
+Data List LayoutView runtime boundary: `docs/studies/data-list-layoutview-add-form-runtime-fix.md` documents a generated package where the Data List opened but the default `+ New item` Add modal loaded forever because `ListModel.LayoutView.add` was missing and only `opentype.add` / `modalsize.add` existed. Before runtime import, generated packages with Data Lists must pass the LayoutView add-form checks: `LayoutView.add` resolves to a local Type `1` form layout, `view` resolves when present, `edit` is either `default` or resolvable, and display-settings `sort` is omitted or export-shaped. The local fix is validator-backed until a user confirms the regenerated package renders the Add modal.
+
 ## Runtime Workflow
 
 1. Confirm local validation completed first. If package/materialization validation failed, classify runtime as blocked by package/materialization and do not import.
@@ -40,6 +42,7 @@ Include app-level checks when relevant:
 - app imports and opens
 - navigation renders, including custom labels, resource-title fallback, icons/no-icons, groups, child items, selected layout, header height, and title visibility
 - data lists open, fields/views/forms materialize, lookup/sample dependencies resolve, and follow-up/task lists serve a real workflow purpose
+- for Data Lists, default `+ New item` opens and renders the selected Add form rather than staying in a loading state
 - approval forms open, publish when required, submit, route, show task pages, and write `ContentList` records when scoped
 - dashboards render with data-bound KPIs, queues, charts, Doc library controls, or empty states from the expected source lists
 - document libraries open, generated folders render, custom fields/views/forms are inspectable, and upload behavior is tested only with disposable files

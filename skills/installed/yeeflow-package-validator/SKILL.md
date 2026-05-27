@@ -21,6 +21,8 @@ Pivot Table validation: use `scripts/inspect-pivot-table-controls.mjs` with dash
 
 Seed/add-readiness validation: `docs/studies/pivot-table-control-runtime-proof.md` strongly indicates that v1 missing seed rows and Add failed came from crossed data-list field storage metadata caused by cloning `Defs[]` by array position. Generated-final validation must hard-error `FIELD_NAME_FIELDTYPE_MISMATCH`: `Text*` fields need text storage, `Datetime*` fields need date/datetime storage, `Decimal*` fields need decimal/number storage, `Bigint*` fields need integer storage, and `Bit*` fields need boolean storage. Use the app-creation rules inspector and aggregate import-readiness gate before handing off analytics/demo packages with seed data.
 
+LayoutView add-form readiness: `docs/studies/data-list-layoutview-add-form-runtime-fix.md` proves a generated Data List can import/open but leave the default `+ New item` modal loading forever when `ListModel.LayoutView` contains only `opentype.add` / `modalsize.add` and no concrete `add` layout reference. Generated-final validation must hard-error `LAYOUTVIEW_ADD_LAYOUT_MISSING` when a generated Data List lacks a resolvable `LayoutView.add` custom form target, and hard-error unsupported display-settings sort object entries such as `{ SortName, SortByDesc }`. Type `0` view layout sort objects are separate and remain valid only inside `Layouts[].LayoutView`, not `ListModel.LayoutView`.
+
 ## Validation Workflow
 
 1. Identify the package type and source of truth. Preserve generated `.yap` files unless the task explicitly asks to regenerate them.

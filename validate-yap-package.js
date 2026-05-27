@@ -103,6 +103,8 @@ const PIVOT_TABLE_DATE_FIELD_TYPES = new Set(["datepicker", "time", "Datetime", 
 const CUSTOM_FORM_OPEN_MODE_LABELS = {
   modal: "Pop-up window",
   slide: "Slide in",
+  target: "Current page",
+  new: "New page",
   page: "Full page",
   fullpage: "Full page",
   fullPage: "Full page",
@@ -2305,9 +2307,13 @@ function validateCustomFormDisplaySettings(layoutView, layouts, report, context)
   const customFormLayoutIds = new Set(asArray(layouts).filter((layout) => Number(layout.Type) === 1).map((layout) => safeString(layout.LayoutID)).filter(Boolean));
   const opentype = isObject(layoutView.opentype) ? layoutView.opentype : {};
   const modalsize = isObject(layoutView.modalsize) ? layoutView.modalsize : {};
+  const finalGenerated = report.mode === "generator" && report.stage === "final";
   for (const usage of CUSTOM_FORM_DISPLAY_USAGES) {
     const formRef = safeString(layoutView[usage] === undefined ? "default" : layoutView[usage]);
     const usesDefault = formRef === "" || formRef === "default";
+    if (usage === "add" && usesDefault && finalGenerated) {
+      issue(report, "error", "LAYOUTVIEW_ADD_LAYOUT_MISSING", "Generated data lists must assign ListModel.LayoutView.add to a real custom form layout. A display setting with only opentype/modalsize can make the default New item modal load forever.", { ...context, usage, formRef });
+    }
     if (!usesDefault && !customFormLayoutIds.has(formRef)) {
       issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_DISPLAY_FORM_REF_NOT_FOUND", "New/Edit/View display setting references a custom list form layout that does not exist.", { ...context, usage, formRef });
     }
@@ -2318,6 +2324,19 @@ function validateCustomFormDisplaySettings(layoutView, layouts, report, context)
     const hasSize = rawSize !== undefined && rawSize !== null && rawSize !== "";
     if (hasSize && !CUSTOM_FORM_SIZE_LABELS.has(Number(rawSize))) issue(report, "warning", "CUSTOM_FORM_DISPLAY_SIZE_UNKNOWN", "Custom list form display setting uses an unknown size code.", { ...context, usage, size: rawSize });
     if (openMode === "Full page" && hasSize) issue(report, "warning", "CUSTOM_FORM_DISPLAY_FULL_PAGE_SIZE_SET", "Full page display settings should not rely on pop-up/slide size behavior unless a future export proves it.", { ...context, usage, size: rawSize });
+  }
+  if (layoutView.sort !== undefined) {
+    if (!Array.isArray(layoutView.sort)) {
+      issue(report, finalGenerated ? "error" : "warning", "LAYOUTVIEW_SORT_SHAPE_UNSUPPORTED", "Data-list ListModel.LayoutView.sort must be omitted or use an export-supported array shape.", { ...context, shape: typeof layoutView.sort });
+    } else {
+      layoutView.sort.forEach((entry, index) => {
+        if (isObject(entry)) {
+          issue(report, finalGenerated ? "error" : "warning", "LAYOUTVIEW_SORT_OBJECT_UNSUPPORTED", "Data-list ListModel.LayoutView.sort object entries such as SortName/SortByDesc are not runtime-supported for display settings; omit sort or use an export-shaped field-id array.", { ...context, index });
+        } else if (Array.isArray(entry) && !entry.every((fieldId) => typeof fieldId === "string" || typeof fieldId === "number")) {
+          issue(report, finalGenerated ? "error" : "warning", "LAYOUTVIEW_SORT_FIELD_ARRAY_INVALID", "Data-list ListModel.LayoutView.sort field-id arrays must contain field IDs only.", { ...context, index });
+        }
+      });
+    }
   }
 }
 

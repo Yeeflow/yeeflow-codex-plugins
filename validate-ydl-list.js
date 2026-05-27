@@ -32,6 +32,8 @@ const CUSTOM_FORM_DISPLAY_USAGES = ["add", "edit", "view"];
 const CUSTOM_FORM_OPEN_MODE_LABELS = {
   modal: "Pop-up window",
   slide: "Slide in",
+  target: "Current page",
+  new: "New page",
   page: "Full page",
   fullpage: "Full page",
   fullPage: "Full page",
@@ -1283,10 +1285,18 @@ function validateCustomFormDisplaySettings(item, report) {
     .filter(Boolean));
   const opentype = isObject(layoutView.opentype) ? layoutView.opentype : {};
   const modalsize = isObject(layoutView.modalsize) ? layoutView.modalsize : {};
+  const finalGenerated = report.mode === "generator" && report.stage === "final";
 
   CUSTOM_FORM_DISPLAY_USAGES.forEach((usage) => {
     const formRef = safeString(layoutView[usage] === undefined ? "default" : layoutView[usage]);
     const usesDefault = formRef === "" || formRef === "default";
+    if (usage === "add" && usesDefault && finalGenerated) {
+      issue(report, "error", "LAYOUTVIEW_ADD_LAYOUT_MISSING", "Generated data lists must assign ListModel.LayoutView.add to a real custom form layout. A display setting with only opentype/modalsize can make the default New item modal load forever.", {
+        location: `Item.ListModel.LayoutView.${usage}`,
+        usage,
+        formRef,
+      });
+    }
     if (!usesDefault && !customFormLayoutIds.has(formRef)) {
       issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_DISPLAY_FORM_REF_NOT_FOUND", "New/Edit/View display setting references a custom list form layout that does not exist.", {
         location: `Item.ListModel.LayoutView.${usage}`,
@@ -1322,6 +1332,26 @@ function validateCustomFormDisplaySettings(item, report) {
       });
     }
   });
+  if (layoutView.sort !== undefined) {
+    if (!Array.isArray(layoutView.sort)) {
+      issue(report, finalGenerated ? "error" : "warning", "LAYOUTVIEW_SORT_SHAPE_UNSUPPORTED", "Data-list ListModel.LayoutView.sort must be omitted or use an export-supported array shape.", {
+        location: "Item.ListModel.LayoutView.sort",
+        shape: typeof layoutView.sort,
+      });
+    } else {
+      layoutView.sort.forEach((entry, index) => {
+        if (isObject(entry)) {
+          issue(report, finalGenerated ? "error" : "warning", "LAYOUTVIEW_SORT_OBJECT_UNSUPPORTED", "Data-list ListModel.LayoutView.sort object entries such as SortName/SortByDesc are not runtime-supported for display settings; omit sort or use an export-shaped field-id array.", {
+            location: `Item.ListModel.LayoutView.sort[${index}]`,
+          });
+        } else if (Array.isArray(entry) && !entry.every((fieldId) => typeof fieldId === "string" || typeof fieldId === "number")) {
+          issue(report, finalGenerated ? "error" : "warning", "LAYOUTVIEW_SORT_FIELD_ARRAY_INVALID", "Data-list ListModel.LayoutView.sort field-id arrays must contain field IDs only.", {
+            location: `Item.ListModel.LayoutView.sort[${index}]`,
+          });
+        }
+      });
+    }
+  }
 }
 
 function customFormTempVarAliases(tempVar) {

@@ -7,6 +7,10 @@ description: generate, inspect, validate, package, debug, and improve yeeflow da
 
 Business Travel schema-practice carry-forward: generated data-list and document-library child resources must include `ListModel.Flags = 1`, keep `ListModel.Type` within the schema-v2 enum, and use `ListModel.Status = 1` when Status is emitted. `Defs` and `Layouts` must be arrays, not `null`. FieldIndex/FieldName suffix synchronization, unique identifiers, and valid InternalName rules remain hard gates before import.
 
+Pivot Table runtime-proof carry-forward: the v1 generated package imported but its seeded `ListDatas` rows did not appear and manual Add failed because data-list field definitions were cloned by array position, crossing `FieldName` and `FieldType` storage metadata. The v2 package cloned definitions by `FieldName`, included 20 safe rows, and the user confirmed rows, Pivot Tables, and Add new item worked. Future generated data lists, especially analytics/demo lists, must keep storage families aligned (`Text* -> Text`, `Datetime* -> Datetime/date`, `Decimal* -> Decimal/number`, `Bigint* -> Bigint/integer`, `Bit* -> Bit/boolean`) and validate seed-row keys against those fields before handoff.
+
+LayoutView add-form hardening: generated Data Lists that expose the default `+ New item` action must include runtime-safe `ListModel.LayoutView` display settings. `LayoutView.add` must point to a real Type `1` New/Edit custom form layout in the same list; `opentype.add` and `modalsize.add` alone are not enough and can leave the Add modal loading forever. `LayoutView.view` must resolve when present, `LayoutView.edit` may be `default` only when intentionally using Yeeflow default edit behavior, and display-settings `sort` should be omitted unless using an export-supported field-ID array shape. Do not put Type `0` view sort objects such as `{ SortName, SortByDesc }` in `ListModel.LayoutView.sort`.
+
 ## Application Navigation References
 
 When a generated application exposes data lists through the app navigation menu, reference each list from the root app `Data.Item.ListModel.LayoutView.sort[]` using `Type = 1`, the list `ListID`, root `ListSetID`, `Title`, optional `DisplayName`, optional `Icon`, and boolean `IsHidden` when needed. Omit `DisplayName` to allow Yeeflow to use the data list title as the menu label. Use `Icon: ""` for no-icon.
@@ -16,6 +20,8 @@ Data-list menu items can be top-level resources or children of a top-level custo
 Use this skill when the user asks to inspect, validate, generate, package, debug, or improve Yeeflow data-list `.ydl` exports or decoded data-list JSON.
 
 Data Filter controls can be used in data list forms at the product level, but the Sales and CRM exports only prove dashboard page usage. Until a data-list-form export proves the exact host schema, treat data-list-form Data Filter placement and runtime behavior as product-documented only. Reuse the shared rules from `docs/studies/data-filter-controls.md`: filter variables bridge value-producing filter controls and downstream data-bound consumers; Search, Radio, Hierarchy, and Sorting are dashboard export-proven from the CRM sample; Apply button and Remove filters are special controls; generated packages must validate every filter variable reference before handoff.
+
+Pivot Table controls can be used in Data List forms at the product level, but the CRM sample currently export-proves only Type `103` dashboard usage. Until a data-list-form export proves the exact host schema, treat Data List form Pivot Table placement as product-understanding-backed and keep runtime behavior unproven. Reuse `docs/studies/pivot-table-control.md`: Pivot Tables are Data Analytics controls with rows, columns, values, supported list-like data sources, compatible aggregations, optional date grouping, optional data filter conditions, and readable header/body/grand-total styling. Do not generate Pivot Tables on Data List Public Forms. Validate every source, field, aggregation, date-grouping, and filter-variable reference before handoff.
 
 For existing-app upgrades, data-list changes should be packaged as `.yapk` only from a Yeeflow Version management baseline and only when the upgrade package structure is safe. Preserve existing list IDs and app identity. Do not apply new-app `.yap` fresh-ID rules to existing list objects, and do not claim offline `.yapk` list mutation is safe while the studied `.yapk` `Resource` remains opaque/signed.
 
@@ -58,6 +64,7 @@ Do not build a final `.ydl` when:
 - placeholders remain
 - `validate-ydl-list.js --mode generator --stage final` fails
 - required app/list/field metadata is missing
+- generated field storage metadata is crossed, such as `Text*` with `FieldType: Datetime`, `Datetime*` with `FieldType: Text`, or `Decimal*` with `FieldType: Text`
 - generated main/list metadata is missing `MainListType` or `ListModel.ListType`
 - duplicate `FieldName` or `InternalName` values exist
 - lookup targets or target display fields are unresolved
@@ -150,12 +157,14 @@ Load only the relevant reference:
   - `LayoutInResources[0].RefId = LayoutID`
   - `LayoutInResources[0].Resource` is a JSON string with `children`, `attrs`, `title`, `filterVars`, `ver`, `tempVars`
   - `Item.ListModel.LayoutView.add/edit/view` points to the custom form `LayoutID`
+  - for generated lists with default New item enabled, `Item.ListModel.LayoutView.add` is mandatory and must resolve before handoff
 - Single lookup sample values are plain target record `ListDataID` strings.
 - For staged standalone related lists, import/export the reference list first, patch the dependent lookup to real metadata, and exclude external lookup IDs from `Resource.ReplaceIds`.
 - For app-level `.yap` internal lookup samples, target sample record IDs are local IDs, should be included in `ReplaceIds`, and dependent lookup sample values may reference those local IDs.
 - Lookup dependencies must resolve to a target list and display/search field. Standalone generated lists need a dependency map for external lookups; app-level internal lookups should resolve inside the package.
 - Sample lookup values must map to actual referenced target rows. If the master/reference list is local, include sample/reference rows; if it is external, provide a dependency map or omit unsafe sample lookup values.
 - Master/reference lists referenced by generated forms, dashboards, or workflows must be usable runtime lists, not placeholders. Include sample data where needed for local validation and runtime smoke testing.
+- For generated `ListDatas` seed rows, clone field definition templates by target `FieldName`, not by `Defs[]` array position. Seed row keys must resolve to fields whose `FieldName`, `FieldType`, and `Type` agree with the runtime value format. Do not claim analytics runtime proof from empty/unpopulated controls.
 - For generated lists intended as approval-form storage targets, build/import/export the `.ydl` first, then use exported-back list and field metadata to patch the approval form `ContentList` target.
 
 ## Document Library Carry-Forward
@@ -445,3 +454,11 @@ For newly generated app-contained data lists, compatibility validation is not en
 
 Do not carry export-native view columns such as stale `ListDataID`, `CreatedBy`, `Created`, `ModifiedBy`, `Modified`, or copied field IDs into generated-final list views unless the current validator explicitly allows that context. Missing `ListType`, export-native unsafe Title metadata, and unresolved view columns are generated-final hard errors and must be fixed before a `.yap` is handed off.
 <!-- projects-center-import-failure-hardening:end -->
+
+<!-- container-button-action-settings-learning:start -->
+## Data List Quick-Create Actions
+
+Dashboard Container/Button `Add list item` actions are export-proven in `docs/studies/container-button-action-settings.md`. Use them for quick-create experiences such as Add task, Create item, Add vendor, New invoice, and Upload document when the target is a Data List or Document Library.
+
+Generated Add list item actions must reference a real target `ListID`, any chosen add/edit form `LayoutID` must resolve, `passvalues[].Name` must reference fields on the target list, and generated lists should remain add-ready. Prefer this structural action over a raw link when the target list/library is included in the package.
+<!-- container-button-action-settings-learning:end -->
