@@ -356,3 +356,11 @@ When translating requirements into dashboard actions, choose Container/Button ac
 
 Use structural Yeeflow targets instead of raw links for resources included in the generated app. Generated applications must validate Container/Button action targets and open behavior before `.yap` handoff, and runtime navigation/open behavior remains unproven until clicked in a focused runtime test.
 <!-- container-button-action-settings-learning:end -->
+
+<!-- sub-list-dynamic-content-learning:start -->
+## Sub List Dynamic Content Planning
+
+For business requirements that need repeated line items with a custom row/card/table layout, consider a Sub List with Dynamic content layout before custom code. Approval Form evidence from `docs/studies/sub-list-dynamic-content.md` proves that Dynamic Sub Lists can place visual/layout controls inside each item template, including containers, grids, text/input controls, icons, dropbars, and action buttons.
+
+Plan list actions as Sub List scoped actions: Add sub item and Import items act on the current list; Duplicate item and Delete item act on the current object; Insert before/after current item uses positioned `list_new` steps. Do not promise runtime execution, save/mutation behavior, current-object expression evaluation, or Data List custom form behavior unless a focused runtime proof covers that exact host and operation.
+<!-- sub-list-dynamic-content-learning:end -->

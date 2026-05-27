@@ -269,3 +269,11 @@ The aggregate import-readiness gate includes the Container/Button action inspect
 
 Focused runtime proof in `docs/studies/container-button-action-runtime-proof.md` confirms representative generated current-app action navigation after local validation. Validator-backed checks still do not prove save/submit/workflow execution, cross-app targets, form-action binding, permissions, or all open-mode/size combinations.
 <!-- container-button-action-settings-learning:end -->
+
+<!-- sub-list-dynamic-content-learning:start -->
+## Sub List Dynamic Content Validation
+
+Use `scripts/inspect-sub-list-dynamic-controls.mjs` for packages that contain Approval Form or custom-form Sub List controls. Validate that `type = "list"` controls bind to a list variable whose value resolves to a listref, displayed fields and summaries resolve to row fields, Dynamic content layout has a `list-body` template, and row field controls inside the template keep `attrs.list_field_binding` equal to the parent Sub List binding.
+
+Validate Sub List list actions separately from normal form actions. `attrs.actions[]` on the Sub List is the local action store; action buttons inside `list-body` or `list-footer` should resolve to those local action IDs. Export-proven step types are `list_new`, `list_import`, `list_dup`, and `list_del`; allow `list_move` and `list_update` warning-first until their serialized attrs are export-proven. Preserve `.dynamic-list .list-footer` CSS when present, but do not require it globally.
+<!-- sub-list-dynamic-content-learning:end -->

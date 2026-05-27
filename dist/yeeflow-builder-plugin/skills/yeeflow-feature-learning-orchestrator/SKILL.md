@@ -341,3 +341,11 @@ For Container/Button action learning, study dashboard exports read-only before g
 
 Promote findings with clear labels: export-proven for decoded dashboard schema, UI-reference-backed for the Execute type menu, validator-backed after checks are implemented, and runtime-proven only for the representative generated-package actions that were manually tested. Keep cross-application targets, literal external links, form-action binding on dashboards, save/submit/workflow behavior, and exhaustive open/navigation variants unproven until separately tested.
 <!-- container-button-action-settings-learning:end -->
+
+<!-- sub-list-dynamic-content-learning:start -->
+## Sub List Dynamic Content Learning
+
+For Sub List Dynamic content layout and list actions, use `docs/studies/sub-list-dynamic-content.md`, `docs/studies/normalized/sub-list-dynamic-content/`, and `scripts/inspect-sub-list-dynamic-controls.mjs`. `Sub list Dynamic.yap` export-proves Approval Form Sub List controls with `attrs["list-display-preference"] = "dynamic"`, `list-body` item templates, `list-footer` buttons/summaries, list-scoped `attrs.actions[]`, and the sibling header Grid pattern for table-style Dynamic Sub Lists.
+
+Keep the proof boundary explicit. Approval Form schema and the observed list action steps are export-proven. Data List custom form support is product/user-understanding-backed unless a custom form export is studied. Runtime add/duplicate/delete/import/move/update execution, scrollbar behavior, and current-object expression evaluation need a focused runtime baseline before promotion.
+<!-- sub-list-dynamic-content-learning:end -->
