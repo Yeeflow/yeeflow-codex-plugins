@@ -16,6 +16,10 @@ Generated V1.2 output:
 
 `/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.2-grid-fixed.yapk`
 
+Generated V1.3 purchase-request output:
+
+`/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.3-purchase-request.yapk`
+
 Local source package used as schema evidence:
 
 `/Users/Renger/Downloads/Sub list Dynamic.yap`
@@ -90,6 +94,23 @@ V1.2 follow-up:
 - The stale standalone V1 header Grid was removed from V1.2 before signing.
 - The body grid field controls were wrapped in column containers before signing.
 
+V1.3 purchase-request follow-up:
+
+- V1.2 grid-fixed YAPK was used as the baseline.
+- A second Approval Form named `Purchase Request Form` was added with form key `PRF`.
+- The new form includes a Dynamic Sub List for `PurchaseItems`.
+- The purchase item fields are `Item Description`, `Quantity`, and `Notes`.
+- The Sub List caption remains off.
+- The Dynamic Sub List keeps the corrected table-style body pattern: Sublist body -> Grid -> Container per column -> controls.
+- The generated package preserves Add/Import footer buttons and action steps `list_new`, `list_dup`, `list_del`, and `list_import`.
+- `setsign` returned a 32-byte signature.
+- `verifysign` returned HTTP 200.
+- V1.3 wrapper parse and standard Brotli decode passed.
+- V1.3 package validation passed with zero errors.
+- V1.3 schema-standard inspection passed.
+- V1.3 Sub List inspection passed: two Approval Forms, two Dynamic Sub Lists, caption off, body grid present, column containers present, Add/Import footer buttons, and action steps `list_new`, `list_dup`, `list_del`, and `list_import`.
+- Both decoded Approval Form definitions passed final validation with zero errors.
+
 Skipped due to local tool hangs:
 
 - `validate-yap-graph.js`
@@ -103,6 +124,10 @@ Import:
 
 `/Users/Renger/Downloads/sub-list-dynamic-actions-runtime-proof.v1.yap`
 
+For the purchase-request follow-up, import or upgrade with:
+
+`/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.3-purchase-request.yapk`
+
 Then verify:
 
 - The app imports successfully.
@@ -113,6 +138,10 @@ Then verify:
 - Duplicate item works.
 - Delete item works.
 - Import items opens or behaves correctly.
+- The `Purchase Request Form` opens.
+- The `Purchase Items` Dynamic Sub List renders with hidden caption.
+- The purchase header/body columns align in the corrected table-style layout.
+- Grid Appearance settings open in Designer.
 
 Record the exact runtime result before promoting any action from pending to runtime-proven.
 
@@ -123,3 +152,5 @@ This package is generated from export-proven Approval Form Dynamic Sub List sche
 Runtime proof, once confirmed, applies only to this generated package, the Approval Form host, and the exact tested actions. It must not be generalized to all Sub List actions, Data List custom forms, workflow execution, current-object expression evaluation, scrollbar behavior, or row persistence.
 
 For the V1.2 YAPK follow-up, the user-corrected V1.1 YAPK is the source of truth for the grid/header/body layout. V1.2 is generated/signed/verified, but remains runtime-pending until it is imported/upgraded and manually tested.
+
+For the V1.3 purchase-request follow-up, the V1.2 grid-fixed YAPK is the source of truth. V1.3 is generated/signed/verified and adds a second Approval Form for purchase-item Sub List testing, but remains runtime-pending until it is imported/upgraded and manually tested.
