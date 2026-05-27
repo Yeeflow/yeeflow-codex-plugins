@@ -2,14 +2,28 @@
 
 ## Status
 
-- Runtime status: pending user manual test
+- Runtime status: user-confirmed runtime pass
 - Generated package: `/Users/Renger/Downloads/kanban-collection-timeline-runtime-proof.v1.yap`
 - Generator: `generate-kanban-collection-timeline-runtime-proof.mjs`
 - App name: `Kanban Collection Timeline Runtime Proof`
 - Dashboard: `Dynamic Controls Runtime Dashboard`
 - Data List: `Dynamic Control Runtime Items`
 
-This package is a focused generated runtime candidate for the Kanban, Collection, Vertical Timeline, Horizontal Timeline, and Dynamic control patterns learned from `Company Overview.yap` and `Company Overview (1).yap`.
+This package is a focused generated runtime proof for the Kanban, Collection, Vertical Timeline, Horizontal Timeline, and Dynamic control patterns learned from `Company Overview.yap` and `Company Overview (1).yap`.
+
+## User-Confirmed Runtime Result
+
+The user imported `/Users/Renger/Downloads/kanban-collection-timeline-runtime-proof.v1.yap` and confirmed:
+
+- app imported successfully
+- dashboard `Dynamic Controls Runtime Dashboard` opened
+- Kanban rendered
+- Collection rendered
+- Vertical Timeline rendered
+- Horizontal Timeline rendered
+- Dynamic field values rendered
+- Dynamic user/image/file controls did not crash with empty values
+- no missing binding/render error appeared
 
 ## Package Scope
 
@@ -109,10 +123,10 @@ Import `/Users/Renger/Downloads/kanban-collection-timeline-runtime-proof.v1.yap`
 
 ## Proof Boundary
 
-- This package is locally generated and validator-backed, not runtime-proven until user import/testing is complete.
-- Runtime proof, once completed, applies only to this generated package and the tested controls/fields.
-- Do not claim all Kanban, Collection, Vertical Timeline, or Horizontal Timeline options.
-- Do not claim Kanban drag/drop.
-- Do not claim click/open behavior unless tested.
-- Do not claim image/file preview or download unless tested with safe uploaded runtime values.
-- Do not claim Data List form runtime behavior unless separately included and tested.
+- Runtime proof is limited to this generated package.
+- Runtime proof confirms import/open/render stability for Kanban, Collection, Vertical Timeline, Horizontal Timeline, and Dynamic field values.
+- Dynamic user/image/file controls were included and did not crash with empty values.
+- Non-empty user/image/file display, preview, and download behavior are not proven unless separately tested.
+- Drag/drop is not proven.
+- Click/open behavior is not proven unless separately tested.
+- Data List form runtime behavior is not proven.
