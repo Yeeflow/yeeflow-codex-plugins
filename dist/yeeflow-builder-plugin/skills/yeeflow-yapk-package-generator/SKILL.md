@@ -13,6 +13,7 @@ Current proof boundary:
 - Product schema describes `Resource` as a Brotli compressed string whose decompressed JSON should match `AppPackageInfo`.
 - In the current local study, readable historical `.yapk` artifacts did not Brotli-decode through tested variants, so Resource decode is not yet artifact-proven for those files.
 - A focused runtime-generation attempt against `Projects Center_1-v1..0.yapk` also failed at the decode gate: wrapper parse and Resource base64 decode succeeded, but base64-bytes, raw-UTF8, and base64url Brotli attempts did not produce `AppPackageInfo` JSON. Follow-up diagnostics ruled out BOM handling, non-strict base64, padding, URL-safe alphabet handling, whitespace, and local Brotli decoder support as the cause.
+- After `.env.local` credentials were added, the signing service accepted the same original `Projects Center_1-v1..0.yapk` wrapper when `/v1` was appended to the configured base URL: `setsign` returned a 32-byte sign and `verifysign` passed for both regenerated and original signs. This proves server-side signing/verification for the original valid Resource, not local Resource decoding or content mutation.
 - `setsign` / `verifysign` are evidence-backed for wrappers with already-valid existing Resource payloads.
 - Wrapper-only signed packages can be accepted but do not change app content when `Resource` is unchanged.
 - `.yap` gzip Resource encoding is not valid `.yapk` Resource encoding.
@@ -113,6 +114,14 @@ For `Projects Center_1-v1..0.yapk`, do not proceed to edit, encode, sign, or run
 - generated package: none
 
 Ask product whether packages like this use an additional Resource encoding, encryption, checksum, package-version layer, or non-standard Brotli processing before/after the schema-described `AppPackageInfo`.
+
+When using the signing APIs:
+
+- load `.env.local` without printing values
+- require `YEEFLOW_API_KEY`
+- use `YEEFLOW_BASE_URL` with the same candidate logic as the Yeeflow API scripts: try the configured base and append `/v1` when needed
+- never print or persist raw API responses, `Resource`, or `Sign`
+- treat a successful `setsign`/`verifysign` on an unchanged Resource as wrapper/signing proof only
 
 If product states the format is exactly `base64(Brotli(AppPackageInfo JSON))`, ask for one of:
 

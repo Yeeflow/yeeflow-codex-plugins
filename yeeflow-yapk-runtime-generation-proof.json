@@ -55,6 +55,49 @@
     "localApiKeyAvailableForVerifySign": false,
     "interpretation": "The blocker is not BOM handling, base64 normalization, padding, URL-safe alphabet handling, whitespace, or local Brotli support. The decoded bytes are stable but are not accepted by standard Brotli decoders for this package."
   },
+  "signingApiCheck": {
+    "envLocalLoaded": true,
+    "envVariablesPresent": [
+      "YEEFLOW_API_KEY",
+      "YEEFLOW_BASE_URL",
+      "YEEFLOW_TENANT_ID"
+    ],
+    "rawResponsesCommitted": false,
+    "signValuesCommitted": false,
+    "resourceValuesCommitted": false,
+    "baseVariants": [
+      {
+        "variant": "env",
+        "setsign": {
+          "ok": false,
+          "status": 404,
+          "responseClass": "html"
+        },
+        "verifysignOriginal": {
+          "ok": false,
+          "status": 404,
+          "responseClass": "html"
+        }
+      },
+      {
+        "variant": "env-plus-v1",
+        "setsign": {
+          "ok": true,
+          "status": 200,
+          "responseSignByteLength": 32
+        },
+        "verifysignRegeneratedSign": {
+          "ok": true,
+          "status": 200
+        },
+        "verifysignOriginal": {
+          "ok": true,
+          "status": 200
+        }
+      }
+    ],
+    "interpretation": "The server signing API accepts and verifies the original package when /v1 is appended to the configured base URL. This proves wrapper signing/verification for the original valid Resource, but does not prove local Resource decode or content mutation."
+  },
   "requestedEdit": {
     "description": "Add one minimal data list named YAPK Runtime Test List",
     "attempted": false,
