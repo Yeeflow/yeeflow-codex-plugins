@@ -101,10 +101,23 @@ function collectControlTypes(root) {
 
 function summarizeChildTemplate(control) {
   const body = asArray(control.children).find((child) => child.type === "list-body");
-  if (!body) return { present: false, childControlTypes: [], fieldBindings: [], actionButtons: [] };
+  if (!body) return { present: false, childControlTypes: [], fieldBindings: [], actionButtons: [], bodyGrids: [], gridColumnContainers: 0 };
   const fieldBindings = [];
   const actionButtons = [];
+  const bodyGrids = [];
+  let gridColumnContainers = 0;
   walkControls(body, (node) => {
+    if (node.type === "flex_grid" || node.type === "grid") {
+      const columns = node.attrs?.columns;
+      bodyGrids.push({
+        type: node.type,
+        label: controlLabel(node),
+        displayLabel: node.displayLabel ?? node.attrs?.displayLabel ?? null,
+        columnTracks: isObject(columns) ? Math.max(...Object.keys(columns).map((key) => Number(key)).filter(Number.isFinite), 0) : asArray(columns).length,
+        childCount: asArray(node.children).length,
+      });
+      gridColumnContainers += asArray(node.children).filter((child) => child?.type === "container").length;
+    }
     if (node.attrs?.list_field) {
       fieldBindings.push({
         controlType: safeString(node.type),
@@ -125,6 +138,9 @@ function summarizeChildTemplate(control) {
     childControlTypes: collectControlTypes(body),
     fieldBindings,
     actionButtons,
+    bodyGrids,
+    gridColumnContainers,
+    tableStyleBodyGrid: bodyGrids.length > 0,
   };
 }
 
@@ -205,6 +221,8 @@ function inspectListControl(control, pointer, formdef, variables) {
     pointer,
     label: controlLabel(control),
     binding: safeString(control.binding),
+    displayLabel: control.displayLabel ?? control.attrs?.displayLabel ?? null,
+    displayCaptionOff: JSON.stringify(control.displayLabel ?? control.attrs?.displayLabel ?? null) === JSON.stringify([null, false]),
     associatedListRef: listref ? safeString(listref.id) : null,
     layoutMode: safeString(control.attrs?.["list-display-preference"] || "default"),
     fields,

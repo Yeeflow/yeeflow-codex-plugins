@@ -162,10 +162,13 @@ Ask product to confirm whether the provided `BrotliHelper.Compress(byte[])` shou
 When using the signing APIs:
 
 - load `.env.local` without printing values
+- if `.env.local` is marked macOS `dataless`, stop before reading it and ask the user to hydrate the file; read attempts may hang indefinitely
 - require `YEEFLOW_API_KEY`
 - use `YEEFLOW_BASE_URL` with the same candidate logic as the Yeeflow API scripts: try the configured base and append `/v1` when needed
 - never print or persist raw API responses, `Resource`, or `Sign`
 - treat a successful `setsign`/`verifysign` on an unchanged Resource as wrapper/signing proof only
+
+Sub List Dynamic Runtime Proof V1.2 note: the user-corrected `Sub List Dynamic Runtime Proof-V1.1.yapk` is the baseline for grid/header fixes. Generate V1.2 from that YAPK rather than the older `.yap`: tolerant-decode the V1.1 Resource, preserve the corrected table-style AppPackageInfo content, re-encode with finalized standard Brotli, update wrapper PackageId/Version/Date/Notes, then run `setsign` and `verifysign`. Do not claim runtime proof until the signed V1.2 package is upgraded/imported and manually tested.
 
 If product states the format is exactly `base64(Brotli(AppPackageInfo JSON))`, ask for one of:
 

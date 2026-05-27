@@ -2,9 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
 import crypto from "node:crypto";
+import { execFileSync } from "node:child_process";
 
 const GZIP_PREFIX = "[______gizp______]";
+const BROTLI_PREFIX = "::brotli::";
 const SOURCE_PACKAGE = process.env.YEEFLOW_SOURCE_PACKAGE || "/Users/Renger/Downloads/Sub list Dynamic.yap";
+const SOURCE_YAPK = process.env.YEEFLOW_SOURCE_YAPK || "/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.1.yapk";
 const OUT_DIR = ".tmp/sub-list-dynamic-actions-runtime-proof";
 const OUT_PACKAGE = `${OUT_DIR}/sub-list-dynamic-actions-runtime-proof.v1.yap`;
 const OUT_RESOURCE = `${OUT_DIR}/sub-list-dynamic-actions-runtime-proof.v1.resource.json`;
@@ -12,6 +15,8 @@ const OUT_DATA = `${OUT_DIR}/sub-list-dynamic-actions-runtime-proof.v1.app-def.j
 const OUT_FORM_DEF = `${OUT_DIR}/sub-list-dynamic-actions-runtime-proof.v1.approval-form-def.json`;
 const OUT_REPORT = `${OUT_DIR}/sub-list-dynamic-actions-runtime-proof.v1.generation-report.json`;
 const DOWNLOADS_COPY = "/Users/Renger/Downloads/sub-list-dynamic-actions-runtime-proof.v1.yap";
+const OUT_YAPK = "/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.2-grid-fixed.yapk";
+const OUT_YAPK_REPORT = `${OUT_DIR}/sub-list-dynamic-actions-runtime-proof.v1.2-yapk-report.json`;
 const TITLE = "Sub List Dynamic Runtime Proof";
 const FORM_NAME = "Dynamic Sub List Runtime Form";
 const FORM_KEY = "SLDR";
@@ -40,6 +45,166 @@ function parseJson(text, label) {
   } catch (error) {
     throw new Error(`${label} is not valid JSON: ${error.message}`);
   }
+}
+
+function loadDotenv(filePath = ".env.local") {
+  if (!fs.existsSync(filePath)) return;
+  const flags = execFileSync("ls", ["-lO", filePath], { encoding: "utf8" });
+  if (/\bdataless\b/.test(flags)) {
+    throw new Error(`${filePath} is marked dataless and cannot be read for YEEFLOW_API_KEY; hydrate it before signing.`);
+  }
+  for (const rawLine of fs.readFileSync(filePath, "utf8").split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+    if (!match || process.env[match[1]] !== undefined) continue;
+    let value = match[2].trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    process.env[match[1]] = value;
+  }
+}
+
+function normalizeBaseUrl(value) {
+  return String(value || "").replace(/\/+$/, "");
+}
+
+function candidateBaseUrls(value) {
+  const normalized = normalizeBaseUrl(value);
+  const candidates = normalized ? [{ url: normalized, variant: "env" }] : [];
+  if (normalized && !/\/v1$/i.test(normalized)) candidates.push({ url: `${normalized}/v1`, variant: "env-plus-v1" });
+  candidates.push({ url: "https://api.yeeflow.com/v1", variant: "documented-default" });
+  return candidates.filter((candidate, index, all) => all.findIndex((item) => item.url === candidate.url) === index);
+}
+
+function utcNowNoMillis() {
+  return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
+function readJsonFile(filePath) {
+  return parseJson(fs.readFileSync(filePath, "utf8").replace(/^\uFEFF/, ""), filePath);
+}
+
+function extractTolerantBrotliText(resource, label) {
+  const bytes = Buffer.from(resource, "base64");
+  const chunks = [];
+  const stream = zlib.createBrotliDecompress();
+  return new Promise((resolve, reject) => {
+    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("end", () => resolve(Buffer.concat(chunks)));
+    stream.on("error", (error) => {
+      const emitted = Buffer.concat(chunks);
+      if (!emitted.length) reject(new Error(`${label} Brotli decode produced no readable bytes: ${error.code || error.message}`));
+      else resolve(emitted);
+    });
+    stream.end(bytes);
+  });
+}
+
+async function signYapkWrapper(wrapper) {
+  loadDotenv();
+  const apiKey = process.env.YEEFLOW_API_KEY;
+  if (!apiKey) throw new Error("YEEFLOW_API_KEY is required for YAPK setsign/verifysign.");
+  const baseUrls = candidateBaseUrls(process.env.YEEFLOW_BASE_URL);
+  const unsigned = { ...wrapper };
+  delete unsigned.Sign;
+  let lastStatus = null;
+  let selectedBase = null;
+  let sign = null;
+  for (const candidate of baseUrls) {
+    try {
+      const result = postJsonWithCurl(`${candidate.url}/utils/apppackage/setsign`, apiKey, unsigned);
+      lastStatus = result.status;
+      if (result.status < 200 || result.status > 299) continue;
+      const json = parseJson(result.body, "setsign response");
+      sign = json?.Data ?? json?.data ?? json?.Sign ?? json?.sign ?? (typeof json === "string" ? json : null);
+    } catch {
+      continue;
+    }
+    if (typeof sign !== "string" || Buffer.from(sign, "base64").length !== 32) {
+      throw new Error("setsign response did not contain a 32-byte base64 signature.");
+    }
+    selectedBase = candidate;
+    break;
+  }
+  if (!sign || !selectedBase) throw new Error(`setsign failed for all configured base URL variants; last HTTP status ${lastStatus ?? "none"}.`);
+
+  const signed = { ...wrapper, Sign: sign };
+  const verifyResult = postJsonWithCurl(`${selectedBase.url}/utils/apppackage/verifysign`, apiKey, signed);
+  const verifyStatus = verifyResult.status;
+  if (verifyStatus < 200 || verifyStatus > 299) {
+    throw new Error(`verifysign failed with HTTP ${verifyStatus}.`);
+  }
+  return { signed, signBytes: Buffer.from(sign, "base64").length, baseVariant: selectedBase.variant, verifyStatus };
+}
+
+function postJsonWithCurl(url, apiKey, body) {
+  const stdout = execFileSync("curl", [
+    "--silent",
+    "--show-error",
+    "--max-time",
+    "20",
+    "--request",
+    "POST",
+    "--header",
+    `apiKey: ${apiKey}`,
+    "--header",
+    "Accept: application/json",
+    "--header",
+    "Content-Type: application/json",
+    "--data-binary",
+    "@-",
+    "--write-out",
+    "\n%{http_code}",
+    url,
+  ], {
+    input: JSON.stringify(body),
+    maxBuffer: 1024 * 1024,
+  }).toString("utf8");
+  const splitAt = stdout.lastIndexOf("\n");
+  return {
+    body: splitAt >= 0 ? stdout.slice(0, splitAt) : "",
+    status: Number(splitAt >= 0 ? stdout.slice(splitAt + 1) : "0"),
+  };
+}
+
+async function generateYapkFromCorrectedBaseline() {
+  const baseline = readJsonFile(SOURCE_YAPK);
+  const appPackageBytes = await extractTolerantBrotliText(baseline.Resource, "YAPK Resource");
+  parseJson(appPackageBytes.toString("utf8"), "YAPK AppPackageInfo");
+  const finalizedResource = zlib.brotliCompressSync(appPackageBytes).toString("base64");
+  const wrapper = {
+    ...baseline,
+    PackageId: uuid(),
+    Version: "V1.2",
+    Date: utcNowNoMillis(),
+    Notes: "Dynamic Sub List grid/header fix: preserves corrected table-style header/body layout, caption-off Sub List, and local list actions.",
+    Resource: finalizedResource,
+  };
+  const { signed, signBytes, baseVariant, verifyStatus } = await signYapkWrapper(wrapper);
+  fs.mkdirSync(OUT_DIR, { recursive: true });
+  fs.writeFileSync(OUT_YAPK, `\uFEFF${JSON.stringify(signed)}\n`);
+  fs.writeFileSync(OUT_YAPK_REPORT, `${JSON.stringify({
+    status: "pass",
+    sourceYapk: SOURCE_YAPK,
+    outputYapk: OUT_YAPK,
+    version: signed.Version,
+    date: signed.Date,
+    resourceBytes: Buffer.from(signed.Resource, "base64").length,
+    appPackageBytes: appPackageBytes.length,
+    signBytes,
+    signBaseVariant: baseVariant,
+    verifyStatus,
+    proofBoundary: "Generated from user-corrected V1.1 YAPK baseline; V1.2 manual runtime upgrade test is pending.",
+  }, null, 2)}\n`);
+  console.log(JSON.stringify({
+    status: "pass",
+    package: OUT_YAPK,
+    version: signed.Version,
+    signBytes,
+    verifyStatus,
+  }, null, 2));
 }
 
 function decodePackage(inputPath) {
@@ -401,7 +566,7 @@ function updateReplaceIds(resource, data) {
   resource.ReplaceIds = [...ids].filter((id) => !preserve.has(id));
 }
 
-function main() {
+function mainYap() {
   const decoded = decodePackage(SOURCE_PACKAGE);
   const { wrapper, resource, data } = decoded;
   const form = data.Forms?.[0];
@@ -558,4 +723,11 @@ function main() {
   }, null, 2));
 }
 
-main();
+if (process.argv.includes("--legacy-yap")) {
+  mainYap();
+} else {
+  generateYapkFromCorrectedBaseline().catch((error) => {
+    console.error(error.message);
+    process.exit(1);
+  });
+}

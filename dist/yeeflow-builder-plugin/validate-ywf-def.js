@@ -614,16 +614,25 @@ function validateDecodedDef(def, options = {}) {
     if (!formdef) return;
     const actions = asArray(formdef.actions);
     const actionIds = new Set(actions.map((action) => action && action.id).filter(Boolean));
+    const listActionIds = new Set();
     const buttonActionRefs = new Map();
     const triggeredActionRefs = new Map();
 
     deepWalk(formdef.children, (node, pointer) => {
       if (!isObject(node)) return;
+      if (node.type === "list") {
+        asArray(node.attrs && node.attrs.actions).forEach((action) => {
+          if (action && action.id) listActionIds.add(action.id);
+        });
+      }
       if (node.type === "action_button") {
         const actionRef = node.attrs && node.attrs.control_action;
         const controlPath = `${pagePath}.formdef.children${pointer.slice(1)}`;
         if (actionRef) {
           buttonActionRefs.set(actionRef, controlPath);
+          if (listActionIds.has(actionRef)) {
+            return;
+          }
           triggeredActionRefs.set(actionRef, controlPath);
           if (!actionIds.has(actionRef)) {
             addIssue(warnings, "FORM_ACTION_BUTTON_TARGET_MISSING", `Action button references missing form action ${actionRef}`, `${controlPath}.attrs.control_action`);
@@ -899,7 +908,7 @@ function validateDecodedDef(def, options = {}) {
         walkControls(child.children, {
           page: context.page,
           pagePath: context.pagePath,
-          listContext: context.listContext,
+          listContext: control.type === "list" ? control.binding : context.listContext,
           suffix: `${context.suffix || ""}[${index}].${child.suffixKey}`,
         });
       }
@@ -1237,6 +1246,109 @@ function validateDecodedDef(def, options = {}) {
       if (!expected.has(id)) addIssue(errors, "LIST_FIELD_EXTRA", `List control ${control.binding} has row field not in listref: ${id}`, `${controlPath}.attrs["list-fields"]`);
     });
     validateListSummaries(control, controlPath, listref);
+    validateSubListDynamicLayout(control, controlPath, listref);
+    validateSubListActions(control, controlPath);
+  }
+
+  function validateSubListDynamicLayout(control, controlPath, listref) {
+    const attrs = control.attrs || {};
+    const layout = attrs["list-display-preference"];
+    if (layout && !["default", "responsive", "table", "table-view", "card", "card-view", "dynamic"].includes(String(layout))) {
+      addIssue(warnings, "SUBLIST_LAYOUT_MODE_UNSTUDIED", "Sub List layout mode is not covered by current export-backed validation.", `${controlPath}.attrs["list-display-preference"]`, { layout });
+    }
+    if (layout !== "dynamic") return;
+
+    const body = asArray(control.children).find((child) => child && child.type === "list-body");
+    if (!body) {
+      addIssue(errors, "SUBLIST_DYNAMIC_BODY_MISSING", "Dynamic content Sub List must include a list-body template container.", `${controlPath}.children`);
+      return;
+    }
+    const templateControls = [];
+    deepWalk(body.children, (node, pointer) => {
+      if (isObject(node) && node.type) templateControls.push({ node, pointer });
+    });
+    if (!templateControls.length) {
+      addIssue(errors, "SUBLIST_DYNAMIC_TEMPLATE_EMPTY", "Dynamic content Sub List must include child controls inside list-body.", `${controlPath}.children`);
+    }
+    if (!displayLabelDisabled(control.displayLabel) && !displayLabelDisabled(attrs.displayLabel)) {
+      addIssue(warnings, "SUBLIST_DYNAMIC_CAPTION_VISIBLE", "Generated table-style Dynamic Sub Lists should turn off Display caption with displayLabel = [null,false].", `${controlPath}.displayLabel`);
+    }
+    const bodyGrids = templateControls.filter(({ node }) => node.type === "flex_grid" || node.type === "grid");
+    if (asArray(attrs["list-fields"]).length >= 3 && !bodyGrids.length) {
+      addIssue(warnings, "SUBLIST_DYNAMIC_TABLE_BODY_GRID_MISSING", "Generated table-style Dynamic Sub Lists should use a grid/flex_grid as the first list-body layout control so header and row columns align.", `${controlPath}.children[list-body]`);
+    }
+    for (const { node, pointer } of bodyGrids) {
+      if (!displayLabelDisabled(node.displayLabel) && !displayLabelDisabled(node.attrs && node.attrs.displayLabel)) {
+        addIssue(warnings, "SUBLIST_DYNAMIC_BODY_GRID_CAPTION_VISIBLE", "Grid/flex_grid controls inside Dynamic Sub List bodies should turn off Display caption unless a visible grid title is intentional.", `${controlPath}.children[list-body]${pointer.slice(1)}.displayLabel`);
+      }
+      const columns = node.attrs && node.attrs.columns;
+      const columnCount = isObject(columns)
+        ? Math.max(0, ...Object.keys(columns).map((key) => Number(key)).filter(Number.isFinite))
+        : asArray(columns).length;
+      if (columnCount && asArray(node.children).length && asArray(node.children).length < columnCount) {
+        addIssue(warnings, "SUBLIST_DYNAMIC_BODY_GRID_COLUMN_CHILDREN_MISMATCH", "Dynamic Sub List body grid has fewer child controls than configured column tracks; Designer/render alignment may be fragile.", `${controlPath}.children[list-body]${pointer.slice(1)}.children`);
+      }
+    }
+    const rowFields = new Set(asArray(listref && listref.fields).map((field) => field && field.id).filter(Boolean));
+    templateControls.forEach(({ node, pointer }) => {
+      const nodePath = `${controlPath}.children[list-body]${pointer.slice(1)}`;
+      if (!node.attrs || node.attrs.list_field !== true) return;
+      if (node.attrs.list_field_binding !== control.binding) {
+        addIssue(errors, "SUBLIST_DYNAMIC_FIELD_BINDING_MISMATCH", "Sub List field controls inside a dynamic item template must keep attrs.list_field_binding equal to the parent Sub List binding.", `${nodePath}.attrs.list_field_binding`, {
+          expected: control.binding,
+          actual: node.attrs.list_field_binding,
+        });
+      }
+      if (node.binding && !rowFields.has(node.binding)) {
+        addIssue(errors, "SUBLIST_DYNAMIC_FIELD_UNRESOLVED", `Dynamic item template field binding ${node.binding} is not declared in the Sub List listref fields.`, `${nodePath}.binding`);
+      }
+    });
+
+    const css = attrs.common && attrs.common.css;
+    if (typeof css === "string" && css.includes(".dynamic-list .list-footer") && !css.includes("position: absolute")) {
+      addIssue(warnings, "SUBLIST_DYNAMIC_FOOTER_CSS_UNEXPECTED", "A .dynamic-list .list-footer custom CSS rule is present but differs from the export-proven fixed-footer pattern; preserve intentionally but verify layout.", `${controlPath}.attrs.common.css`);
+    }
+  }
+
+  function validateSubListActions(control, controlPath) {
+    const actions = control.attrs && control.attrs.actions;
+    if (actions === undefined) return;
+    if (!Array.isArray(actions)) {
+      addIssue(errors, "SUBLIST_ACTIONS_NOT_ARRAY", "Sub List attrs.actions must be an array when list actions are configured.", `${controlPath}.attrs.actions`);
+      return;
+    }
+    const allowedStepTypes = new Set(["list_new", "list_import", "list_dup", "list_del", "list_move", "list_update"]);
+    actions.forEach((action, actionIndex) => {
+      const actionPath = `${controlPath}.attrs.actions[${actionIndex}]`;
+      if (!isObject(action)) {
+        addIssue(errors, "SUBLIST_ACTION_BAD_SHAPE", "Sub List action entries must be objects.", actionPath);
+        return;
+      }
+      if (action.type !== "list") {
+        addIssue(warnings, "SUBLIST_ACTION_TYPE_UNEXPECTED", "Export-proven Sub List actions use type = \"list\".", `${actionPath}.type`, { type: action.type });
+      }
+      if (!action.id) addIssue(warnings, "SUBLIST_ACTION_ID_MISSING", "Sub List action should include an id so action_button.attrs.control_action can resolve.", `${actionPath}.id`);
+      if (!action.name) addIssue(warnings, "SUBLIST_ACTION_NAME_MISSING", "Sub List action should include a readable name.", `${actionPath}.name`);
+      if (!Array.isArray(action.steps) || action.steps.length === 0) {
+        addIssue(errors, "SUBLIST_ACTION_STEPS_EMPTY", "Sub List action must include at least one step definition.", `${actionPath}.steps`);
+        return;
+      }
+      action.steps.forEach((step, stepIndex) => {
+        const stepPath = `${actionPath}.steps[${stepIndex}]`;
+        if (!isObject(step)) {
+          addIssue(errors, "SUBLIST_ACTION_STEP_BAD_SHAPE", "Sub List action steps must be objects.", stepPath);
+          return;
+        }
+        if (!step.type) {
+          addIssue(errors, "SUBLIST_ACTION_STEP_TYPE_MISSING", "Sub List action steps must include type.", `${stepPath}.type`);
+        } else if (!allowedStepTypes.has(step.type)) {
+          addIssue(warnings, "SUBLIST_ACTION_STEP_TYPE_UNSTUDIED", "Sub List action step type is not export-proven by the current study.", `${stepPath}.type`, { type: step.type });
+        }
+        if (step.type === "list_new" && step.attrs && step.attrs.position !== undefined && !["0", "1"].includes(String(step.attrs.position))) {
+          addIssue(warnings, "SUBLIST_ACTION_INSERT_POSITION_UNEXPECTED", "Insert-before/after Sub List actions use list_new with attrs.position \"0\" or \"1\" in the studied export.", `${stepPath}.attrs.position`, { position: step.attrs.position });
+        }
+      });
+    });
   }
 
   function validateListSummaries(control, controlPath, listref) {

@@ -3217,8 +3217,10 @@ function validateApprovalSubListDynamicTemplate(control, fields, binding, formNa
     return;
   }
   let childControlCount = 0;
+  const bodyGrids = [];
   walkControls(body, (node, pointer) => {
     if (node !== body && node.type) childControlCount += 1;
+    if (node.type === "flex_grid" || node.type === "grid") bodyGrids.push({ node, pointer });
     if (!node.attrs || node.attrs.list_field !== true) return;
     const nodePath = `${path}.children[list-body]${pointer.slice(1)}`;
     if (safeString(node.attrs.list_field_binding) !== binding) {
@@ -3230,6 +3232,24 @@ function validateApprovalSubListDynamicTemplate(control, fields, binding, formNa
     }
   });
   if (!childControlCount) issue(report, severity, "SUBLIST_DYNAMIC_TEMPLATE_EMPTY", "Dynamic content Sub List should include child controls inside list-body.", { form: formName, page: pageName, path: `${path}.children` });
+  if (!displayLabelDisabled(control.displayLabel) && !displayLabelDisabled(control.attrs && control.attrs.displayLabel)) {
+    issue(report, "warning", "SUBLIST_DYNAMIC_CAPTION_VISIBLE", "Generated table-style Dynamic Sub Lists should turn off Display caption with displayLabel = [null,false].", { form: formName, page: pageName, path: `${path}.displayLabel` });
+  }
+  if (asArray(control.attrs && control.attrs["list-fields"]).length >= 3 && !bodyGrids.length) {
+    issue(report, "warning", "SUBLIST_DYNAMIC_TABLE_BODY_GRID_MISSING", "Generated table-style Dynamic Sub Lists should use a grid/flex_grid as the first list-body layout control so header and row columns align.", { form: formName, page: pageName, path: `${path}.children[list-body]` });
+  }
+  for (const { node, pointer } of bodyGrids) {
+    if (!displayLabelDisabled(node.displayLabel) && !displayLabelDisabled(node.attrs && node.attrs.displayLabel)) {
+      issue(report, "warning", "SUBLIST_DYNAMIC_BODY_GRID_CAPTION_VISIBLE", "Grid/flex_grid controls inside Dynamic Sub List bodies should turn off Display caption unless a visible grid title is intentional.", { form: formName, page: pageName, path: `${path}.children[list-body]${pointer.slice(1)}.displayLabel` });
+    }
+    const columns = node.attrs && node.attrs.columns;
+    const columnCount = isObject(columns)
+      ? Math.max(0, ...Object.keys(columns).map((key) => Number(key)).filter(Number.isFinite))
+      : asArray(columns).length;
+    if (columnCount && asArray(node.children).length && asArray(node.children).length < columnCount) {
+      issue(report, "warning", "SUBLIST_DYNAMIC_BODY_GRID_COLUMN_CHILDREN_MISMATCH", "Dynamic Sub List body grid has fewer child controls than configured column tracks; Designer/render alignment may be fragile.", { form: formName, page: pageName, path: `${path}.children[list-body]${pointer.slice(1)}.children` });
+    }
+  }
 
   const css = safeString(control.attrs && control.attrs.common && control.attrs.common.css);
   if (css.includes(".dynamic-list .list-footer") && !css.includes("position: absolute")) {

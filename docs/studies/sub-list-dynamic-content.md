@@ -61,6 +61,24 @@ The second Sub List includes an independent `flex_grid` directly above the Sub L
 
 Generation guidance: build table-style Dynamic Sub Lists as a sibling header grid plus a Dynamic content Sub List whose item template uses a matching grid/column layout. Do not assume the header grid is semantically attached to the Sub List beyond layout proximity.
 
+## Corrected Table-Style Runtime Pattern
+
+The follow-up runtime test found that the first generated package used a malformed header `flex_grid`: it rendered as one column and the Designer Appearance settings could not expand. The user-corrected V1.1 YAPK fixes the pattern.
+
+Corrected structure:
+
+- A containing section holds the header `flex_grid` and the Dynamic Sub List together.
+- The Sub List sets `displayLabel = [null,false]`.
+- The header `flex_grid` uses export-shaped responsive `attrs.columns` with breakpoint keys, `list` track entries, and `last` track entries.
+- The header grid includes one child per visual column, normally containers with header text.
+- The Sub List `list-body` starts with a matching `flex_grid`.
+- The body grid uses the same column-track pattern as the header grid.
+- Layout/header grids should set display caption off unless the user explicitly wants a visible grid caption.
+
+For generated table-style Dynamic Sub Lists, do not place loose field controls directly under `list-body` as the whole row layout. Use a body grid so header and content columns align. Prefer container wrappers for layout/header grid columns and preserve the corrected V1.1 shape when generating YAPK version packages.
+
+The V1.1 corrected package is the current source of truth for Designer-expandable grid settings. Runtime confirmation of the generated V1.2 YAPK remains pending.
+
 ## List Actions
 
 Sub List list actions are stored under the parent Sub List control at `attrs.actions[]`. They use `type = "list"` and step definitions under `steps[]`. Action buttons inside the dynamic item template and footer bind to those Sub List action IDs through `attrs.control_action`. These are list-scoped actions, not page-level `formdef.actions[]`.

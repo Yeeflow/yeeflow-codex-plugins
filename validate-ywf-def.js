@@ -1270,6 +1270,25 @@ function validateDecodedDef(def, options = {}) {
     if (!templateControls.length) {
       addIssue(errors, "SUBLIST_DYNAMIC_TEMPLATE_EMPTY", "Dynamic content Sub List must include child controls inside list-body.", `${controlPath}.children`);
     }
+    if (!displayLabelDisabled(control.displayLabel) && !displayLabelDisabled(attrs.displayLabel)) {
+      addIssue(warnings, "SUBLIST_DYNAMIC_CAPTION_VISIBLE", "Generated table-style Dynamic Sub Lists should turn off Display caption with displayLabel = [null,false].", `${controlPath}.displayLabel`);
+    }
+    const bodyGrids = templateControls.filter(({ node }) => node.type === "flex_grid" || node.type === "grid");
+    if (asArray(attrs["list-fields"]).length >= 3 && !bodyGrids.length) {
+      addIssue(warnings, "SUBLIST_DYNAMIC_TABLE_BODY_GRID_MISSING", "Generated table-style Dynamic Sub Lists should use a grid/flex_grid as the first list-body layout control so header and row columns align.", `${controlPath}.children[list-body]`);
+    }
+    for (const { node, pointer } of bodyGrids) {
+      if (!displayLabelDisabled(node.displayLabel) && !displayLabelDisabled(node.attrs && node.attrs.displayLabel)) {
+        addIssue(warnings, "SUBLIST_DYNAMIC_BODY_GRID_CAPTION_VISIBLE", "Grid/flex_grid controls inside Dynamic Sub List bodies should turn off Display caption unless a visible grid title is intentional.", `${controlPath}.children[list-body]${pointer.slice(1)}.displayLabel`);
+      }
+      const columns = node.attrs && node.attrs.columns;
+      const columnCount = isObject(columns)
+        ? Math.max(0, ...Object.keys(columns).map((key) => Number(key)).filter(Number.isFinite))
+        : asArray(columns).length;
+      if (columnCount && asArray(node.children).length && asArray(node.children).length < columnCount) {
+        addIssue(warnings, "SUBLIST_DYNAMIC_BODY_GRID_COLUMN_CHILDREN_MISMATCH", "Dynamic Sub List body grid has fewer child controls than configured column tracks; Designer/render alignment may be fragile.", `${controlPath}.children[list-body]${pointer.slice(1)}.children`);
+      }
+    }
     const rowFields = new Set(asArray(listref && listref.fields).map((field) => field && field.id).filter(Boolean));
     templateControls.forEach(({ node, pointer }) => {
       const nodePath = `${controlPath}.children[list-body]${pointer.slice(1)}`;
