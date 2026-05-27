@@ -111,6 +111,26 @@ The product UI also shows Current object actions such as Update fields. `list_up
 
 This export proves list action scoping and row-field bindings inside the dynamic item template. It does not contain a focused expression example that reads current object properties inside a list action expression. Treat current-object expression access as product-understanding-backed until a dedicated export or runtime test proves exact expression tokens.
 
+## Data List Custom Form Print Page Pattern
+
+`Sales Quotation.yap` adds Data List custom form evidence. The `Quotation` Data List has a `Products & Services` Sub List field (`Text5`) and three custom list forms: `New Quotation`, `View Quotation`, and `Print Page`.
+
+The `Print Page` custom form contains a read-only/display-oriented Dynamic Sub List:
+
+- Sub List control type is `list`.
+- Binding is the Data List Sub List field `Text5`.
+- Dynamic layout uses `attrs["list-display-preference"] = "dynamic"`.
+- Caption is hidden with `displayLabel = [null,false]`.
+- Dynamic item template lives under `list-body`.
+- Row controls bind to `NAME`, `Description`, `UNITPRICE`, `QTY`, and `SUBTOTAL`.
+- Row controls set `attrs.list_field = true` and `attrs.list_field_binding = "Text5"`.
+- Header/body table layout uses `flex_grid`.
+- No Add/Import buttons or row operation actions are exposed on the print form.
+
+The `View Quotation` form calls this print form through a form action step `type = "print"` with `attrs.printtype = "select"`, `attrs.layout` pointing to the `Print Page` layout, and `attrs.listdataid` passing the current `ListDataID`.
+
+Data List custom form Dynamic Sub List usage in this Print Page is export-proven. Runtime print execution is not proven. Dashboard/Approval Form Print page action availability remains product/user-understanding-backed unless separately export-proven.
+
 ## Validator Guidance
 
 Validators should check Sub Lists without confusing their list-scoped actions with normal form actions:
@@ -122,6 +142,9 @@ Validators should check Sub Lists without confusing their list-scoped actions wi
 - `attrs.actions[]` should be an array; actions should include step objects; export-proven step types are `list_new`, `list_import`, `list_dup`, `list_del`, and `list_move`.
 - Action buttons inside `list-body` or `list-footer` should resolve to `attrs.actions[].id` on the same Sub List rather than `formdef.actions[]`.
 - Row operation menu buttons inside `dropbar` should resolve to local Sub List actions. Duplicate labels or unbound menu items should warn. Delete both in-menu and visible-column should warn only.
+- Data List custom form Dynamic Sub Lists should resolve to a Data List Sub List field and its row schema from field `Rules["list-variables"]`.
+- Print Page read-only Dynamic Sub Lists should warn if Add/Import/Edit row actions are exposed unexpectedly.
+- Print page form action steps should resolve their target `attrs.layout` to an existing custom form and pass current record context through `attrs.listdataid`.
 - The sibling header Grid plus Dynamic Sub List pattern should be allowed.
 - The `.dynamic-list .list-footer` CSS pattern should be preserved when required by layout, but it is not globally required.
 

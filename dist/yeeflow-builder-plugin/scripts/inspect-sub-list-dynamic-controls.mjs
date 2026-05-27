@@ -11,7 +11,7 @@ const LONG_ID_RE = /^\d{10,}$/;
 function usage(exitCode = 1) {
   const text = [
     "Usage:",
-    "  node scripts/inspect-sub-list-dynamic-controls.mjs <input.yap|decoded.json> [--form <name>] [--target-form <name>] [--json-out <path>]",
+    "  node scripts/inspect-sub-list-dynamic-controls.mjs <input.yap|decoded.json> [--form <name>] [--target-form <name>] [--list <name>] [--include-actions] [--json-out <path>]",
     "",
     "Inspects approval-form and custom-form Sub List controls and emits a redacted summary.",
   ].join("\n");
@@ -20,11 +20,13 @@ function usage(exitCode = 1) {
 }
 
 function parseArgs(argv) {
-  const args = { input: null, form: null, jsonOut: null };
+  const args = { input: null, form: null, list: null, includeActions: false, jsonOut: null };
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--help" || arg === "-h") usage(0);
     if (arg === "--form" || arg === "--target-form") args.form = argv[++i];
+    else if (arg === "--list" || arg === "--target-list") args.list = argv[++i];
+    else if (arg === "--include-actions") args.includeActions = true;
     else if (arg === "--json-out" || arg === "--out") args.jsonOut = argv[++i];
     else if (!args.input) args.input = arg;
     else usage();
@@ -65,6 +67,12 @@ function decodeInput(inputPath) {
   }
   if (parsed?.Data) return { wrapper: null, resource: parsed, data: typeof parsed.Data === "string" ? JSON.parse(parsed.Data) : parsed.Data };
   return { wrapper: null, resource: null, data: parsed };
+}
+
+function maybeRedact(value) {
+  const text = safeString(value);
+  if (!text) return null;
+  return redactId(text) || text;
 }
 
 function redactId(value) {
@@ -218,6 +226,38 @@ function summarizeActions(control) {
   }));
 }
 
+function summarizeFormActions(formdef, layoutsById = new Map()) {
+  return asArray(formdef?.actions).map((action) => ({
+    id: action?.id ? "<action-id>" : null,
+    name: safeString(action?.name),
+    steps: asArray(action?.steps).map((step) => {
+      const layout = safeString(step?.attrs?.layout);
+      const data = step?.attrs?.data || {};
+      const listDataId = asArray(step?.attrs?.listdataid).map((expr) => ({
+        exprType: safeString(expr?.exprType),
+        prop: safeString(expr?.prop),
+        id: safeString(expr?.id),
+      }));
+      return {
+        type: safeString(step?.type),
+        printType: safeString(step?.attrs?.printtype),
+        targetLayout: layout ? {
+          id: "<layout-id>",
+          name: safeString(layoutsById.get(layout)?.Title || layoutsById.get(layout)?.Name || layoutsById.get(layout)?.LayoutName),
+          resolved: layoutsById.has(layout),
+        } : null,
+        targetData: step?.type === "print" ? {
+          type: safeString(data.Type),
+          source: data.SourceID ? "<source-list-id>" : null,
+          app: data.AppID ? "<app-id>" : null,
+          listSet: data.ListSetID ? "<listset-id>" : null,
+        } : null,
+        listDataId,
+      };
+    }),
+  }));
+}
+
 function nearbyHeaderGrids(formdef, listPointer) {
   const localListPointer = listPointer.replace(/^Data\.Forms\[\d+\]\.DefResource\.pageurls\[\d+\]\.formdef/, "$");
   const prefix = localListPointer.replace(/\.children\[\d+\]$/, "");
@@ -335,17 +375,20 @@ function inspectApprovalForms(data, targetForm) {
   return forms;
 }
 
-function inspectDataListCustomForms(data, targetForm) {
+function inspectDataListCustomForms(data, targetForm, targetList) {
   const forms = [];
   const resources = [data?.Item, ...asArray(data?.Childs)];
   resources.forEach((item, itemIndex) => {
     const listName = safeString(item?.ListModel?.Title || item?.Title || `resource-${itemIndex}`);
+    if (targetList && listName !== targetList) return;
+    const layoutsById = new Map(asArray(item?.Layouts).map((layout) => [safeString(layout.LayoutID || layout.ID), layout]).filter(([id]) => Boolean(id)));
     asArray(item?.Layouts).forEach((layout, layoutIndex) => {
       if (Number(layout?.Type) !== 1) return;
       const formName = safeString(layout.Title || layout.Name || layout.LayoutName || `${listName} custom form ${layoutIndex + 1}`);
       if (targetForm && formName !== targetForm && listName !== targetForm) return;
       const formdef = parseLayoutResource(layout);
       if (!isObject(formdef)) return;
+      const formActions = summarizeFormActions(formdef, layoutsById);
       const subLists = [];
       walkControls({ children: asArray(formdef.children) }, (control, pointer) => {
         if (control.type === "list" && control.attrs?.["list-fields"]) {
@@ -362,7 +405,11 @@ function inspectDataListCustomForms(data, targetForm) {
           kind: "data-list-custom-form",
           list: listName,
           name: formName,
+          id: "<layout-id>",
           layoutType: Number(layout.Type),
+          isPrintPage: /print/i.test(formName),
+          formActions,
+          printActions: formActions.filter((action) => action.steps.some((step) => step.type === "print")),
           subLists,
         });
       }
@@ -376,7 +423,7 @@ function main() {
   const inputPath = path.resolve(args.input);
   const decoded = decodeInput(inputPath);
   const approvalForms = inspectApprovalForms(decoded.data, args.form);
-  const dataListCustomForms = inspectDataListCustomForms(decoded.data, args.form);
+  const dataListCustomForms = inspectDataListCustomForms(decoded.data, args.form, args.list);
   const subLists = [
     ...approvalForms.flatMap((form) => form.subLists),
     ...dataListCustomForms.flatMap((form) => form.subLists),
@@ -389,7 +436,7 @@ function main() {
     proofBoundary: [
       "Approval Form Sub List schema is export-proven for this input package.",
       "Runtime behavior of add/duplicate/delete/import/move/update steps is not proven by this inspector.",
-      "Data List custom form Sub List support is not export-proven unless the input contains custom list forms.",
+      "Data List custom form Sub List support is export-proven when the input contains custom list forms with Sub List controls.",
     ],
     summary: {
       approvalForms: approvalForms.length,
@@ -398,6 +445,7 @@ function main() {
       dynamicSubLists: dynamicSubLists.length,
       listActionControls: subLists.filter((control) => control.actions.length > 0).length,
       dynamicListFooterCssControls: subLists.filter((control) => control.customCss?.hasDynamicListFooterRule).length,
+      printPageActions: dataListCustomForms.reduce((total, form) => total + asArray(form.printActions).length, 0),
     },
     approvalForms,
     dataListCustomForms,

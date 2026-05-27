@@ -337,6 +337,8 @@ Dashboard Data Filter runtime proof: `docs/studies/data-filter-controls-runtime-
 ## Shared Form Action Concepts
 
 Form actions are front-end page/form logic, distinct from backend workflow graph actions. Phase 1 approval-form runtime proof covers action buttons, button click triggers, page-load triggers, temp variables, `setvar`, and `confirm`; the same concepts may apply to dashboards only after a dashboard-specific export/runtime proof. Do not promote dashboard form actions from approval-form evidence alone.
+
+`Sales Quotation.yap` export-proves a Data List custom View form action step `type = "print"` that opens a Print Page custom form with current `ListDataID` context. Treat Print page as a shared form-action concept only where the host schema supports form actions; Dashboard and Approval Form availability remains product/schema-understanding-backed unless a dashboard or approval-form export/runtime proof contains the same step.
 <!-- projects-center-import-failure-hardening:start -->
 ## Dashboard/Page Import-Readiness
 

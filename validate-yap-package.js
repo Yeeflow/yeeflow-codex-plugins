@@ -2235,7 +2235,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
       if (viewUrl) viewUrls.add(viewUrl);
       validateDataListViewLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report, resourceType);
     }
-    if (Number(layout.Type) === 1) validateCustomFormLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report);
+    if (Number(layout.Type) === 1) validateCustomFormLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report, new Map(layouts.map((item) => [safeString(item.LayoutID), item]).filter(([id]) => Boolean(id))));
     if (Number(layout.Type) === 103 && isRoot) report.summary.dashboards += 1;
   });
   if (!isRoot && resourceType === "data list") validatePublicForms(item, fieldsByName, pathPrefix, report);
@@ -2465,7 +2465,7 @@ function validateViewExtField(ext, key, fieldsByName, layout, report, severity) 
   }
 }
 
-function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
+function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report, layoutsById = new Map()) {
   if (layout.LayoutView !== null && layout.LayoutView !== undefined) {
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "CUSTOM_FORM_LAYOUTVIEW_NOT_NULL", "Custom form LayoutView should be null.", { path: `${pathPrefix}.LayoutView`, title: layout.Title });
   }
@@ -2487,7 +2487,7 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
   for (const key of ["children", "attrs", "title", "filterVars", "ver", "tempVars"]) {
     if (form[key] === undefined) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_REQUIRED_KEY_MISSING", `Custom form Resource missing ${key}.`, { title: layout.Title, key });
   }
-  validateCustomFormActions(form, fieldsByName, pathPrefix, report, layout.Title);
+  validateCustomFormActions(form, fieldsByName, pathPrefix, report, layout.Title, layoutsById);
   validateUiStandardFormRoot(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix });
   validateUiStandardContainers(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix, requireFormBody: false });
   if (!asArray(form.children).length) {
@@ -2594,7 +2594,7 @@ function collectCustomFormActionRefs(value) {
   return refs;
 }
 
-function validateCustomFormActions(form, fieldsByName, pathPrefix, report, title) {
+function validateCustomFormActions(form, fieldsByName, pathPrefix, report, title, layoutsById = new Map()) {
   if (form.tempVars !== undefined && !Array.isArray(form.tempVars)) {
     issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_TEMPVARS_NOT_ARRAY", "Custom form tempVars must be an array.", { title, path: `${pathPrefix}.LayoutInResources[0].Resource.tempVars` });
   }
@@ -2628,8 +2628,23 @@ function validateCustomFormActions(form, fieldsByName, pathPrefix, report, title
     }
     asArray(action && action.steps).forEach((step, stepIndex) => {
       if (!step || !step.type) issue(report, "warning", "CUSTOM_FORM_ACTION_STEP_TYPE_MISSING", "Custom form action step should include type.", { title, actionName: action.name || null, stepIndex });
-      if (step && step.type && !["setvar", "submit", "submit_form", "save", "close", "open", "message"].includes(String(step.type))) {
+      if (step && step.type && !["setvar", "submit", "submit_form", "save", "close", "open", "message", "print"].includes(String(step.type))) {
         issue(report, "warning", "CUSTOM_FORM_ACTION_STEP_UNKNOWN", "Custom form action step type is not yet export-learned.", { title, actionName: action.name || null, stepIndex, stepType: step.type });
+      }
+      if (safeString(step && step.type) === "print") {
+        const attrs = step.attrs || {};
+        const layoutId = safeString(attrs.layout);
+        if (!layoutId) {
+          issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_PRINT_ACTION_LAYOUT_MISSING", "Print page action step should include attrs.layout pointing to the target Print Page custom form.", { title, actionName: action.name || null, stepIndex });
+        } else if (!layoutsById.has(layoutId)) {
+          issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_PRINT_ACTION_LAYOUT_UNRESOLVED", "Print page action target layout must resolve to an existing custom form on the current list.", { title, actionName: action.name || null, stepIndex, layoutId });
+        } else {
+          const target = layoutsById.get(layoutId);
+          const targetName = safeString(target.Title || target.Name || target.LayoutName);
+          if (!/print/i.test(targetName)) issue(report, "warning", "CUSTOM_FORM_PRINT_ACTION_TARGET_NOT_PRINT_NAMED", "Print page action target resolves, but target form name does not indicate a print page; verify this is intentional.", { title, actionName: action.name || null, stepIndex, targetName });
+        }
+        if (safeString(attrs.printtype) && safeString(attrs.printtype) !== "select") issue(report, "warning", "CUSTOM_FORM_PRINT_ACTION_PRINTTYPE_UNSTUDIED", "The studied Print page action uses attrs.printtype = \"select\".", { title, actionName: action.name || null, stepIndex, printtype: attrs.printtype });
+        if (!asArray(attrs.listdataid).length) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_PRINT_ACTION_LISTDATAID_MISSING", "Print page action should pass current record context through attrs.listdataid.", { title, actionName: action.name || null, stepIndex });
       }
       const refs = collectCustomFormActionRefs(step);
       refs.fields.forEach((fieldRef) => {
@@ -2700,6 +2715,13 @@ function validateCustomFormSubListControl(control, fieldsByName, report, context
         }
       });
       if (!childCount) issue(report, "warning", "CUSTOM_FORM_SUBLIST_DYNAMIC_TEMPLATE_EMPTY", "Dynamic content Sub List should include child controls inside list-body.", context);
+    }
+    const actionLabels = [];
+    walkControls(control, (node) => {
+      if (node.type === "action_button") actionLabels.push(safeString(node.label || node.nv_label));
+    });
+    if (/print/i.test(safeString(context.title)) && actionLabels.some((label) => /add|import|delete|duplicate|insert|move/i.test(label))) {
+      issue(report, "warning", "CUSTOM_FORM_PRINT_SUBLIST_ACTIONS_PRESENT", "Print Page read-only Dynamic Sub Lists usually should not expose Add/Import/Edit row actions unless intentionally configured.", { ...context, buttons: actionLabels.filter(Boolean) });
     }
   } else if (layout && !["default", "responsive", "table", "table-view", "card", "card-view", "dynamic"].includes(layout)) {
     issue(report, "warning", "CUSTOM_FORM_SUBLIST_LAYOUT_MODE_UNSTUDIED", "Sub-list custom form layout mode is not covered by current export-backed validation.", { ...context, layout });
