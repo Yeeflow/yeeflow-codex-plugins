@@ -1,0 +1,277 @@
+{
+  "study": "yapk-runtime-generation-proof",
+  "date": "2026-05-27",
+  "inputLabel": "Projects Center_1-v1..0.yapk",
+  "redaction": {
+    "rawPackageCommitted": false,
+    "rawResourceCommitted": false,
+    "signCommitted": false,
+    "decodedFullPayloadCommitted": false,
+    "privateIdsCommitted": false,
+    "rawApiResponsesCommitted": false
+  },
+  "decode": {
+    "wrapperParse": true,
+    "hasBom": true,
+    "wrapperKeyCount": 13,
+    "requiredWrapperKeysPresent": true,
+    "resourceBase64Decode": true,
+    "resourceStringLength": 65688,
+    "resourceDecodedBytes": 49264,
+    "resourceEntropyEstimate": 7.993,
+    "brotliDecode": false,
+    "brotliDecodeAttempts": [
+      {
+        "name": "base64Bytes",
+        "result": "failed",
+        "errorClass": "Z_BUF_ERROR"
+      },
+      {
+        "name": "rawResourceUtf8Bytes",
+        "result": "failed",
+        "errorClass": "ERR__ERROR_FORMAT_CL_SPACE"
+      },
+      {
+        "name": "base64urlBytes",
+        "result": "failed",
+        "errorClass": "Z_BUF_ERROR"
+      }
+    ],
+    "decodedAppPackageInfo": false
+  },
+  "decodeDebugFollowUp": {
+    "productConfirmedFormat": "base64(Brotli(AppPackageInfo JSON))",
+    "strictBase64": true,
+    "resourceLengthMod4": 0,
+    "base64RoundTripSame": true,
+    "jsonWrapperComplete": true,
+    "localBrotliControlStream": true,
+    "nodeBrotliFullResource": "failed: unexpected end of file",
+    "nodeBrotliLargeWindow": "failed: unexpected end of file",
+    "homebrewBrotliCli": "failed: corrupt input",
+    "smallHeaderSkipAttempts": "no JSON output",
+    "trailerTrimOffsets0To16": "no JSON output",
+    "gzipZlibRawInflateUnzipZstd": "failed",
+    "localApiKeyAvailableForVerifySign": false,
+    "interpretation": "The blocker is not BOM handling, base64 normalization, padding, URL-safe alphabet handling, whitespace, or local Brotli support. The decoded bytes are stable but are not accepted by standard Brotli decoders for this package.",
+    "productProvidedBrotliHelperFinding": "C# Compress returns MemoryStream.ToArray after Flush and before BrotliStream disposal; local streaming decode emits complete parseable JSON then reports unexpected end of file.",
+    "streamingDecode": {
+      "streamError": "Z_BUF_ERROR unexpected end of file",
+      "partialDecodedUtf8Bytes": 498287,
+      "parsesAsJson": true,
+      "decodedTopLevelKeyCount": 16,
+      "existingChildCount": 7,
+      "existingPageCount": 2,
+      "existingDataReportCount": 1,
+      "existingThemeCount": 1
+    }
+  },
+  "signingApiCheck": {
+    "envLocalLoaded": true,
+    "envVariablesPresent": [
+      "YEEFLOW_API_KEY",
+      "YEEFLOW_BASE_URL",
+      "YEEFLOW_TENANT_ID"
+    ],
+    "rawResponsesCommitted": false,
+    "signValuesCommitted": false,
+    "resourceValuesCommitted": false,
+    "baseVariants": [
+      {
+        "variant": "env",
+        "setsign": {
+          "ok": false,
+          "status": 404,
+          "responseClass": "html"
+        },
+        "verifysignOriginal": {
+          "ok": false,
+          "status": 404,
+          "responseClass": "html"
+        }
+      },
+      {
+        "variant": "env-plus-v1",
+        "setsign": {
+          "ok": true,
+          "status": 200,
+          "responseSignByteLength": 32
+        },
+        "verifysignRegeneratedSign": {
+          "ok": true,
+          "status": 200
+        },
+        "verifysignOriginal": {
+          "ok": true,
+          "status": 200
+        }
+      }
+    ],
+    "interpretation": "The server signing API accepts and verifies the original package when /v1 is appended to the configured base URL. This proves wrapper signing/verification for the original valid Resource, but does not prove local Resource decode or content mutation."
+  },
+  "requestedEdit": {
+    "description": "Add one minimal data list named YAPK Runtime Test List",
+    "attempted": true,
+    "reason": "Streaming decode emitted complete parseable AppPackageInfo JSON; edit used Python JSON handling to preserve 64-bit numeric IDs.",
+    "result": {
+      "addedListTitle": "YAPK Runtime Test List",
+      "addedFields": [
+        {
+          "displayName": "Name",
+          "fieldName": "Title",
+          "fieldType": "Text",
+          "type": "input"
+        },
+        {
+          "displayName": "Test Status",
+          "fieldName": "Text2",
+          "fieldType": "Text",
+          "type": "input"
+        },
+        {
+          "displayName": "Test Notes",
+          "fieldName": "Text3",
+          "fieldType": "Text",
+          "type": "textarea"
+        },
+        {
+          "displayName": "Test Date",
+          "fieldName": "DateTime4",
+          "fieldType": "DateTime",
+          "type": "datepicker"
+        }
+      ],
+      "addedLayoutCount": 1
+    }
+  },
+  "encodeSignVerify": {
+    "reencodedResource": true,
+    "encoding": "finalized standard Brotli over edited UTF-8 AppPackageInfo JSON, then base64",
+    "editedJsonBytes": 504154,
+    "generatedResourceBase64Length": 49580,
+    "generatedResourceDecodedBytes": 37185,
+    "setsignAttempted": true,
+    "setsignOk": true,
+    "setsignStatus": 200,
+    "signByteLength": 32,
+    "verifysignAttempted": true,
+    "verifysignOk": true,
+    "verifysignStatus": 200,
+    "generatedPackage": true,
+    "generatedPackagePath": "/Users/Renger/Downloads/Projects Center_1-v1.1-yapk-runtime-test.yapk"
+  },
+  "validation": {
+    "originalInspectorStatus": "requires tolerant streaming decode due unfinished Brotli end marker",
+    "generatedInspectorStatus": "pass",
+    "generatedValidatorStatus": "pass",
+    "generatedDecodedChildCount": 8,
+    "generatedDecodedFieldCount": 56,
+    "generatedDecodedLayoutCount": 24,
+    "generatedListExists": true,
+    "resourceChanged": true,
+    "signChanged": true,
+    "runtimeUpgradeStatus": "v1.4 user-proven for minimal text-only data list"
+  },
+  "proofBoundary": {
+    "wrapperInspection": "proven for this package",
+    "resourceBase64Decode": "proven for this package",
+    "resourceAppPackageInfoRecovery": "proven for this package via tolerant streaming decode with complete parseable JSON",
+    "resourceEdit": "completed for one minimal data-list add",
+    "reencode": "completed with finalized standard Brotli",
+    "signing": "setsign/verifysign passed",
+    "runtimeUpgrade": "v1.1 upgrade/list/form materialization proven; v1.1 record creation failed; v1.2 upgrade failed due invalid date casing; v1.3 upgrade succeeded but record creation still failed; v1.4 text-only isolation upgrade and record creation succeeded",
+    "offlineContentMutation": "proven only for this focused minimal text-only data-list-add path; not generally supported beyond this focused proof",
+    "recordCreation": "v1.4 user-proven for minimal text-only data list"
+  },
+  "nextStep": "Use a fresh Yeeflow-generated baseline or version pair before broadening support beyond the proven minimal text-only data-list-add path. DateTime field generation remains unproven.",
+  "runtimeUserResultV11": {
+    "packageLabel": "Projects Center_1-v1.1-yapk-runtime-test.yapk",
+    "upgradeSucceeded": true,
+    "versionManagementStatus": "succeed",
+    "listVisibleInApplicationSettings": true,
+    "listVisibleInApplicationNavigation": true,
+    "addFormRenders": true,
+    "addItemSaveSucceeded": false,
+    "addItemFailureMessage": "Add failed",
+    "proofBoundary": "Runtime upgrade/list/form materialization proven; record creation not proven."
+  },
+  "v12AddFixPackage": {
+    "generatedPackagePath": "/Users/Renger/Downloads/Projects Center_1-v1.2-yapk-runtime-add-fix.yapk",
+    "rawPackageCommitted": false,
+    "changesFromV11": [
+      "Set generated list TableCode to flowcraft",
+      "Change Test Date FieldName from DateTime4 to Datetime4",
+      "Change Test Date FieldType from DateTime to Datetime",
+      "Update layout query/layout references to Datetime4"
+    ],
+    "setsignOk": true,
+    "verifysignOk": true,
+    "inspectorStatus": "pass",
+    "validatorStatus": "pass",
+    "resourceChangedFromV11": true,
+    "signChangedFromV11": true,
+    "runtimeRetestStatus": "pending user manual test"
+  },
+  "runtimeUserResultV12": {
+    "packageLabel": "Projects Center_1-v1.2-yapk-runtime-add-fix.yapk",
+    "upgradeSucceeded": false,
+    "error": "Data list: YAPK Runtime Test List (field invalid 'Test Date Datetime4!=DateTime4')",
+    "conclusion": "Date field casing change was invalid for Yeeflow upgrade validation; preserve DateTime4/DateTime for this package path."
+  },
+  "v13TableCodeOnlyFixPackage": {
+    "generatedPackagePath": "/Users/Renger/Downloads/Projects Center_1-v1.3-yapk-runtime-tablecode-fix.yapk",
+    "rawPackageCommitted": false,
+    "changesFromV11": [
+      "Set generated list TableCode to flowcraft",
+      "Preserve Test Date FieldName as DateTime4",
+      "Preserve Test Date FieldType as DateTime",
+      "Preserve layout query/layout references as DateTime4"
+    ],
+    "setsignOk": true,
+    "verifysignOk": true,
+    "inspectorStatus": "pass",
+    "validatorStatus": "pass",
+    "resourceChangedFromV11": true,
+    "signChangedFromV11": true,
+    "runtimeRetestStatus": "pending user manual test"
+  },
+  "runtimeUserResultV13": {
+    "packageLabel": "Projects Center_1-v1.3-yapk-runtime-tablecode-fix.yapk",
+    "upgradeSucceeded": true,
+    "listVisible": true,
+    "addFormRenders": true,
+    "addItemSaveSucceeded": false,
+    "addItemFailureMessage": "Add failed",
+    "conclusion": "TableCode was not the missing save-path piece."
+  },
+  "v14TextOnlyIsolationPackage": {
+    "generatedPackagePath": "/Users/Renger/Downloads/Projects Center_1-v1.4-yapk-runtime-text-only.yapk",
+    "rawPackageCommitted": false,
+    "changesFromV11": [
+      "Remove Test Date field",
+      "Remove DateTime4 from layout query/layout references",
+      "Keep Name, Test Status, and Test Notes text fields"
+    ],
+    "setsignOk": true,
+    "verifysignOk": true,
+    "inspectorStatus": "pass",
+    "validatorStatus": "pass",
+    "resourceChangedFromV11": true,
+    "signChangedFromV11": true,
+    "runtimeRetestStatus": "user-proven success"
+  },
+  "runtimeUserResultV14": {
+    "packageLabel": "Projects Center_1-v1.4-yapk-runtime-text-only.yapk",
+    "upgradeSucceeded": true,
+    "listVisible": true,
+    "addFormRenders": true,
+    "addItemSaveSucceeded": true,
+    "savedRowVisible": true,
+    "fieldsConfirmed": [
+      "Name",
+      "Test Status",
+      "Test Notes"
+    ],
+    "conclusion": "First complete runtime proof for decode -> edit -> encode -> sign -> verify -> upgrade -> add-item-save, scoped to a minimal text-only data list in this package."
+  }
+}

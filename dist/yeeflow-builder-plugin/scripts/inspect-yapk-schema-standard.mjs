@@ -39,7 +39,7 @@ const APP_PACKAGE_REQUIRED = [
 const LIST_PACKAGE_REQUIRED = ["List", "Fields", "Layouts", "RemindRules", "PublicForms", "FlowMappings"];
 const LIST_TYPE_ENUM = new Set([1, 16, 32, 64, 128, 1024]);
 const LIST_FLAGS_SHOW = 1;
-const FIELD_TYPE_ENUM = new Set(["Text", "Bit", "Decimal", "DateTime"]);
+const FIELD_TYPE_ENUM = new Set(["Text", "Bit", "Decimal", "DateTime", "Datetime", "Bigint"]);
 const FIELD_CONTROL_TYPES = new Set([
   "input",
   "textarea",
@@ -180,8 +180,8 @@ function inspectField(field, path, findings, summary) {
   summary.fieldCount += 1;
   const fieldName = String(field.FieldName || "");
   const match = fieldName.match(FIELD_NAME_SUFFIX_RE);
-  if (!match) add(findings, "error", "YAPK_FIELD_NAME_SUFFIX_MISSING", "FieldName must end with digits.", { path: `${path}.FieldName` });
-  else if (String(field.FieldIndex ?? "") !== match[1]) {
+  if (!match && fieldName !== "Title") add(findings, "error", "YAPK_FIELD_NAME_SUFFIX_MISSING", "FieldName must end with digits, except the built-in Title field.", { path: `${path}.FieldName` });
+  else if (match && String(field.FieldIndex ?? "") !== match[1]) {
     add(findings, "error", "YAPK_FIELD_NAME_SUFFIX_INDEX_MISMATCH", "FieldName trailing digits must equal FieldIndex.", { path: `${path}.FieldName` });
   }
   if (typeof field.InternalName !== "string" || !INTERNAL_NAME_RE.test(field.InternalName)) {
