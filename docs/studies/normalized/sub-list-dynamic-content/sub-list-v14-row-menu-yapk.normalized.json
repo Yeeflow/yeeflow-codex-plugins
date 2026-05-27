@@ -1,0 +1,27 @@
+{
+  "sourceBaseline": "Sub List Dynamic Runtime Proof-V1.3-purchase-request.yapk",
+  "output": "Sub List Dynamic Runtime Proof-V1.4-row-menu-actions.yapk",
+  "proof": "generated-signed-verified",
+  "runtimeStatus": "pending user manual test",
+  "mutatedForm": "Purchase Request Form",
+  "mutatedSubList": "PurchaseItems",
+  "preserved": [
+    "hidden sub list caption",
+    "table-style header/body alignment",
+    "body grid -> containers -> controls pattern",
+    "visible last-column Delete action",
+    "Add another item footer button",
+    "Import items footer button"
+  ],
+  "rowOperationMenu": [
+    "Duplicate",
+    "Insert before",
+    "Insert after",
+    "Move up",
+    "Move down"
+  ],
+  "signing": {
+    "setsign": "passed",
+    "verifysign": "passed"
+  }
+}

@@ -93,8 +93,19 @@ Export-proven action names and step types:
 | Delete item | `list_del` | Current object |
 | Insert before current item | `list_new` with `attrs.position = "0"` | Current list, positioned relative to current object |
 | Insert after current item | `list_new` with `attrs.position = "1"` | Current list, positioned relative to current object |
+| Move up | `list_move` without attrs | Current object/current row |
+| Move down | `list_move` with `attrs.moveMode = "2"` | Current object/current row |
 
-The product UI also shows Current object actions such as Move item and Update fields. Those step names are product-observed from screenshots, but the studied export only contains `list_new`, `list_import`, `list_dup`, and `list_del`. Keep `list_move` and `list_update` warning-first until an export proves their exact serialized attrs.
+`Sub list Dynamic (1).yap` adds export evidence for the row-order menu actions. The row operation menu is a `dropbar` inside the dynamic item template. Its menu `action_button` children bind through `attrs.control_action` to local Sub List `attrs.actions[].id` values. The export-proven menu contains Duplicate, Insert before, Insert after, Move up, and Move down. Delete can remain available as a visible last-column row action while being omitted from the menu.
+
+Recommended generated pattern for table-style Dynamic Sub Lists:
+
+- Keep Delete as a visible last-column row action when a delete column is present.
+- Use the row operation menu for Duplicate, Insert before, Insert after, Move up, and Move down.
+- Bind all row-menu buttons to local Sub List actions, not page-level form actions.
+- Treat Insert and Move behavior as current-row scoped even though Insert before/after uses `list_new` with a position attr.
+
+The product UI also shows Current object actions such as Update fields. `list_update` remains warning-first until a focused export proves its exact serialized attrs.
 
 ## Expression Notes
 
@@ -108,8 +119,9 @@ Validators should check Sub Lists without confusing their list-scoped actions wi
 - Dynamic content layout should include a `list-body` with child controls.
 - Dynamic item field controls should resolve to row fields and keep `attrs.list_field_binding` equal to the parent Sub List binding.
 - Summary fields should resolve to row fields. Numeric summary compatibility should remain warning-first where exact runtime support is not proven.
-- `attrs.actions[]` should be an array; actions should include step objects; export-proven step types are `list_new`, `list_import`, `list_dup`, and `list_del`.
+- `attrs.actions[]` should be an array; actions should include step objects; export-proven step types are `list_new`, `list_import`, `list_dup`, `list_del`, and `list_move`.
 - Action buttons inside `list-body` or `list-footer` should resolve to `attrs.actions[].id` on the same Sub List rather than `formdef.actions[]`.
+- Row operation menu buttons inside `dropbar` should resolve to local Sub List actions. Duplicate labels or unbound menu items should warn. Delete both in-menu and visible-column should warn only.
 - The sibling header Grid plus Dynamic Sub List pattern should be allowed.
 - The `.dynamic-list .list-footer` CSS pattern should be preserved when required by layout, but it is not globally required.
 
@@ -117,7 +129,7 @@ Validators should check Sub Lists without confusing their list-scoped actions wi
 
 Approval Form Sub List dynamic content layout in this export is export-proven.
 
-Sub List list actions in this export are export-proven for Add sub item, Duplicate item, Delete item, Import items, Insert before current item, and Insert after current item, with step types `list_new`, `list_dup`, `list_del`, and `list_import`.
+Sub List list actions in the studied exports are export-proven for Add sub item, Duplicate item, Delete item, Import items, Insert before current item, Insert after current item, Move up, and Move down, with step types `list_new`, `list_dup`, `list_del`, `list_import`, and `list_move`.
 
 Data List custom form Sub List support is product/user-understanding-backed only in this pass because this export contains Approval Form evidence, not a Data List custom form.
 

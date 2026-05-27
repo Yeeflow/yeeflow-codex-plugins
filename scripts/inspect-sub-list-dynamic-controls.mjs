@@ -99,14 +99,33 @@ function collectControlTypes(root) {
   return [...counts.entries()].map(([type, count]) => ({ type, count })).sort((a, b) => a.type.localeCompare(b.type));
 }
 
-function summarizeChildTemplate(control) {
+function annotateParents(root, parent = null) {
+  if (!isObject(root)) return;
+  Object.defineProperty(root, "__inspectParent", {
+    value: parent,
+    enumerable: false,
+    configurable: true,
+    writable: true,
+  });
+  asArray(root.children).forEach((child) => annotateParents(child, root));
+  asArray(root.controls).forEach((child) => annotateParents(child, root));
+  asArray(root.items).forEach((child) => annotateParents(child, root));
+  asArray(root.cells).forEach((child) => annotateParents(child, root));
+  asArray(root.columns).forEach((child) => annotateParents(child, root));
+  asArray(root.rows).forEach((child) => annotateParents(child, root));
+}
+
+function summarizeChildTemplate(control, actions = []) {
   const body = asArray(control.children).find((child) => child.type === "list-body");
-  if (!body) return { present: false, childControlTypes: [], fieldBindings: [], actionButtons: [], bodyGrids: [], gridColumnContainers: 0 };
+  if (!body) return { present: false, childControlTypes: [], fieldBindings: [], actionButtons: [], rowOperationMenu: [], bodyGrids: [], gridColumnContainers: 0 };
   const fieldBindings = [];
   const actionButtons = [];
+  const rowOperationMenu = [];
   const bodyGrids = [];
   let gridColumnContainers = 0;
-  walkControls(body, (node) => {
+  const actionById = new Map(actions.map((action) => [action.id, action]));
+  annotateParents(body);
+  walkControls(body, (node, _pointer, parent) => {
     if (node.type === "flex_grid" || node.type === "grid") {
       const columns = node.attrs?.columns;
       bodyGrids.push({
@@ -127,10 +146,24 @@ function summarizeChildTemplate(control) {
       });
     }
     if (node.type === "action_button" && node.attrs?.control_action) {
-      actionButtons.push({
+      const summary = {
         label: controlLabel(node),
         actionRef: "<action-id>",
-      });
+        actionName: actionById.get(node.attrs.control_action)?.name || null,
+        stepTypes: asArray(actionById.get(node.attrs.control_action)?.steps).map((step) => safeString(step?.type)).filter(Boolean),
+        stepAttrs: asArray(actionById.get(node.attrs.control_action)?.steps).map((step) => step?.attrs || null).filter(Boolean),
+      };
+      actionButtons.push(summary);
+      let current = parent;
+      let insideDropbar = false;
+      while (current) {
+        if (current.type === "dropbar") {
+          insideDropbar = true;
+          break;
+        }
+        current = current.__inspectParent || null;
+      }
+      if (insideDropbar) rowOperationMenu.push(summary);
     }
   });
   return {
@@ -138,6 +171,7 @@ function summarizeChildTemplate(control) {
     childControlTypes: collectControlTypes(body),
     fieldBindings,
     actionButtons,
+    rowOperationMenu,
     bodyGrids,
     gridColumnContainers,
     tableStyleBodyGrid: bodyGrids.length > 0,
@@ -239,7 +273,7 @@ function inspectListControl(control, pointer, formdef, variables) {
       hasDynamicListFooterRule: commonCss.includes(".dynamic-list .list-footer"),
       safeExcerpt: commonCss.includes(".dynamic-list .list-footer") ? "selector .dynamic-list .list-footer { position: absolute; left: 0; right: 0; bottom: -60px; }" : "<custom-css-present>",
     } : null,
-    dynamicItemTemplate: summarizeChildTemplate(control),
+    dynamicItemTemplate: summarizeChildTemplate(control, asArray(control.attrs?.actions)),
     footer: summarizeFooter(control),
     actions,
     actionStepTypes: [...new Set(actions.flatMap((action) => action.steps.map((step) => step.type)).filter(Boolean))],

@@ -3217,8 +3217,10 @@ function validateApprovalSubListDynamicTemplate(control, fields, binding, formNa
     return;
   }
   let childControlCount = 0;
+  const bodyGrids = [];
   walkControls(body, (node, pointer) => {
     if (node !== body && node.type) childControlCount += 1;
+    if (node.type === "flex_grid" || node.type === "grid") bodyGrids.push({ node, pointer });
     if (!node.attrs || node.attrs.list_field !== true) return;
     const nodePath = `${path}.children[list-body]${pointer.slice(1)}`;
     if (safeString(node.attrs.list_field_binding) !== binding) {
@@ -3230,6 +3232,24 @@ function validateApprovalSubListDynamicTemplate(control, fields, binding, formNa
     }
   });
   if (!childControlCount) issue(report, severity, "SUBLIST_DYNAMIC_TEMPLATE_EMPTY", "Dynamic content Sub List should include child controls inside list-body.", { form: formName, page: pageName, path: `${path}.children` });
+  if (!displayLabelDisabled(control.displayLabel) && !displayLabelDisabled(control.attrs && control.attrs.displayLabel)) {
+    issue(report, "warning", "SUBLIST_DYNAMIC_CAPTION_VISIBLE", "Generated table-style Dynamic Sub Lists should turn off Display caption with displayLabel = [null,false].", { form: formName, page: pageName, path: `${path}.displayLabel` });
+  }
+  if (asArray(control.attrs && control.attrs["list-fields"]).length >= 3 && !bodyGrids.length) {
+    issue(report, "warning", "SUBLIST_DYNAMIC_TABLE_BODY_GRID_MISSING", "Generated table-style Dynamic Sub Lists should use a grid/flex_grid as the first list-body layout control so header and row columns align.", { form: formName, page: pageName, path: `${path}.children[list-body]` });
+  }
+  for (const { node, pointer } of bodyGrids) {
+    if (!displayLabelDisabled(node.displayLabel) && !displayLabelDisabled(node.attrs && node.attrs.displayLabel)) {
+      issue(report, "warning", "SUBLIST_DYNAMIC_BODY_GRID_CAPTION_VISIBLE", "Grid/flex_grid controls inside Dynamic Sub List bodies should turn off Display caption unless a visible grid title is intentional.", { form: formName, page: pageName, path: `${path}.children[list-body]${pointer.slice(1)}.displayLabel` });
+    }
+    const columns = node.attrs && node.attrs.columns;
+    const columnCount = isObject(columns)
+      ? Math.max(0, ...Object.keys(columns).map((key) => Number(key)).filter(Number.isFinite))
+      : asArray(columns).length;
+    if (columnCount && asArray(node.children).length && asArray(node.children).length < columnCount) {
+      issue(report, "warning", "SUBLIST_DYNAMIC_BODY_GRID_COLUMN_CHILDREN_MISMATCH", "Dynamic Sub List body grid has fewer child controls than configured column tracks; Designer/render alignment may be fragile.", { form: formName, page: pageName, path: `${path}.children[list-body]${pointer.slice(1)}.children` });
+    }
+  }
 
   const css = safeString(control.attrs && control.attrs.common && control.attrs.common.css);
   if (css.includes(".dynamic-list .list-footer") && !css.includes("position: absolute")) {
@@ -3246,6 +3266,7 @@ function validateApprovalSubListActions(control, formName, pageName, path, repor
   }
   const allowedStepTypes = new Set(["list_new", "list_import", "list_dup", "list_del", "list_move", "list_update"]);
   const actionIds = new Set(actions.map((action) => safeString(action && action.id)).filter(Boolean));
+  const actionById = new Map(actions.map((action) => [safeString(action && action.id), action]).filter(([id]) => Boolean(id)));
   actions.forEach((action, actionIndex) => {
     const actionPath = `${path}.attrs.actions[${actionIndex}]`;
     if (!isObject(action)) {
@@ -3272,6 +3293,9 @@ function validateApprovalSubListActions(control, formName, pageName, path, repor
       if (stepType === "list_new" && step.attrs && step.attrs.position !== undefined && !["0", "1"].includes(String(step.attrs.position))) {
         issue(report, "warning", "SUBLIST_ACTION_INSERT_POSITION_UNEXPECTED", "Insert-before/after Sub List actions use list_new with attrs.position \"0\" or \"1\" in the studied export.", { form: formName, page: pageName, path: `${stepPath}.attrs.position`, position: step.attrs.position });
       }
+      if (stepType === "list_move" && step.attrs && step.attrs.moveMode !== undefined && String(step.attrs.moveMode) !== "2") {
+        issue(report, "warning", "SUBLIST_ACTION_MOVE_MODE_UNEXPECTED", "Move-down Sub List actions use list_move with attrs.moveMode \"2\" in the studied export; move-up uses list_move without attrs.", { form: formName, page: pageName, path: `${stepPath}.attrs.moveMode`, moveMode: step.attrs.moveMode });
+      }
     });
   });
 
@@ -3279,6 +3303,44 @@ function validateApprovalSubListActions(control, formName, pageName, path, repor
     const ref = safeString(node.attrs && node.attrs.control_action);
     if (ref && !actionIds.has(ref)) {
       issue(report, severity, "SUBLIST_ACTION_BUTTON_TARGET_UNRESOLVED", "Action buttons inside a Sub List item/footer template should resolve to attrs.actions[].id on the same Sub List.", { form: formName, page: pageName, path: `${path}${pointer.slice(1)}.attrs.control_action` });
+    }
+  });
+
+  const dropbars = [];
+  walkControls(control, (node, pointer) => {
+    if (node.type === "dropbar") dropbars.push({ node, pointer });
+  });
+  dropbars.forEach(({ node: dropbar, pointer: dropbarPointer }) => {
+    const menuLabels = [];
+    const menuStepTypes = [];
+    walkControls(dropbar, (node, pointer) => {
+      if (node.type !== "action_button") return;
+      const label = safeString(node.label || node.nv_label);
+      const action = actionById.get(safeString(node.attrs && node.attrs.control_action));
+      const stepTypes = asArray(action && action.steps).map((step) => safeString(step && step.type)).filter(Boolean);
+      menuLabels.push(label);
+      menuStepTypes.push(...stepTypes);
+      if (!action) {
+        issue(report, severity, "SUBLIST_ROW_MENU_ACTION_TARGET_UNRESOLVED", "Row operation menu action buttons should bind to local Sub List attrs.actions[] entries.", { form: formName, page: pageName, path: `${path}${dropbarPointer.slice(1)}${pointer.slice(1)}.attrs.control_action`, label });
+      }
+    });
+    const duplicated = menuLabels.filter((label, index) => label && menuLabels.indexOf(label) !== index);
+    if (duplicated.length) {
+      issue(report, "warning", "SUBLIST_ROW_MENU_DUPLICATE_LABELS", "Row operation menu contains duplicate labels; verify the intended menu action list.", { form: formName, page: pageName, path: `${path}${dropbarPointer.slice(1)}`, labels: [...new Set(duplicated)] });
+    }
+    if (menuLabels.includes("Delete")) {
+      const visibleDeleteOutsideMenu = [];
+      walkControls(control, (node, pointer) => {
+        if (pointer.startsWith(dropbarPointer)) return;
+        if (node.type === "action_button" && safeString(node.label || node.nv_label) === "Delete") visibleDeleteOutsideMenu.push(pointer);
+        if (node.attrs && actionById.get(safeString(node.attrs.control_action))?.name === "Delete item" && !pointer.startsWith(dropbarPointer)) visibleDeleteOutsideMenu.push(pointer);
+      });
+      if (visibleDeleteOutsideMenu.length) {
+        issue(report, "warning", "SUBLIST_ROW_MENU_DELETE_DUPLICATES_VISIBLE_DELETE", "Delete is available both in the row operation menu and as a visible row action; the generated table pattern usually keeps Delete visible and omits it from the menu.", { form: formName, page: pageName, path: `${path}${dropbarPointer.slice(1)}` });
+      }
+    }
+    if (menuLabels.some((label) => /^Insert |^Move /i.test(label)) && !menuStepTypes.some((type) => type === "list_new" || type === "list_move")) {
+      issue(report, "warning", "SUBLIST_ROW_MENU_ORDER_ACTION_STEPS_MISSING", "Insert/move row operation menu labels should resolve to list_new position or list_move action steps.", { form: formName, page: pageName, path: `${path}${dropbarPointer.slice(1)}`, labels: menuLabels });
     }
   });
 }

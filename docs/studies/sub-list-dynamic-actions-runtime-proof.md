@@ -20,9 +20,17 @@ Generated V1.3 purchase-request output:
 
 `/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.3-purchase-request.yapk`
 
+Generated V1.4 row-menu output:
+
+`/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.4-row-menu-actions.yapk`
+
 Local source package used as schema evidence:
 
 `/Users/Renger/Downloads/Sub list Dynamic.yap`
+
+Additional row-menu source export:
+
+`/Users/Renger/Downloads/Sub list Dynamic (1).yap`
 
 ## Package Scope
 
@@ -111,6 +119,37 @@ V1.3 purchase-request follow-up:
 - V1.3 Sub List inspection passed: two Approval Forms, two Dynamic Sub Lists, caption off, body grid present, column containers present, Add/Import footer buttons, and action steps `list_new`, `list_dup`, `list_del`, and `list_import`.
 - Both decoded Approval Form definitions passed final validation with zero errors.
 
+V1.3 user runtime result:
+
+- The Purchase Request form opens.
+- The Purchase Items Dynamic Sub List renders correctly.
+- The Sub List caption is hidden.
+- Header/body columns align.
+- The row operation menu opens.
+- The V1.3 row menu contains only Duplicate and Delete.
+- Delete is also available as a visible last-column row action, so the menu should omit Delete and focus on row-order actions.
+
+V1.4 row-menu follow-up:
+
+- `Sub list Dynamic (1).yap` was studied for additional row operation menu schema.
+- Insert before current item uses `list_new` with `attrs.position = "0"`.
+- Insert after current item uses `list_new` with `attrs.position = "1"`.
+- Move up uses `list_move` without attrs.
+- Move down uses `list_move` with `attrs.moveMode = "2"`.
+- Row menu buttons bind through `attrs.control_action` to local Sub List `attrs.actions[].id`.
+- V1.3 YAPK was used as the baseline.
+- Only the Purchase Request Form was mutated.
+- The visible Delete last-column action was preserved.
+- Delete was removed from the Purchase Request row menu.
+- The Purchase Request row menu now contains Duplicate, Insert before, Insert after, Move up, and Move down.
+- `setsign` returned a 32-byte signature.
+- `verifysign` returned HTTP 200.
+- V1.4 wrapper parse and standard Brotli decode passed.
+- V1.4 package validation passed with zero errors.
+- V1.4 schema-standard inspection passed.
+- V1.4 Sub List inspection passed: two Approval Forms, two Dynamic Sub Lists, Purchase Request row menu actions resolved to `list_dup`, `list_new`, and `list_move` steps.
+- Both decoded Approval Form definitions passed final validation with zero errors.
+
 Skipped due to local tool hangs:
 
 - `validate-yap-graph.js`
@@ -128,6 +167,10 @@ For the purchase-request follow-up, import or upgrade with:
 
 `/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.3-purchase-request.yapk`
 
+For the row-menu follow-up, import or upgrade with:
+
+`/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.4-row-menu-actions.yapk`
+
 Then verify:
 
 - The app imports successfully.
@@ -142,6 +185,13 @@ Then verify:
 - The `Purchase Items` Dynamic Sub List renders with hidden caption.
 - The purchase header/body columns align in the corrected table-style layout.
 - Grid Appearance settings open in Designer.
+- In `Purchase Request Form`, the row menu shows Duplicate, Insert before, Insert after, Move up, and Move down.
+- Delete remains available in the last column if intended.
+- Duplicate works.
+- Insert before works.
+- Insert after works.
+- Move up works.
+- Move down works.
 
 Record the exact runtime result before promoting any action from pending to runtime-proven.
 
@@ -154,3 +204,5 @@ Runtime proof, once confirmed, applies only to this generated package, the Appro
 For the V1.2 YAPK follow-up, the user-corrected V1.1 YAPK is the source of truth for the grid/header/body layout. V1.2 is generated/signed/verified, but remains runtime-pending until it is imported/upgraded and manually tested.
 
 For the V1.3 purchase-request follow-up, the V1.2 grid-fixed YAPK is the source of truth. V1.3 is generated/signed/verified and adds a second Approval Form for purchase-item Sub List testing, but remains runtime-pending until it is imported/upgraded and manually tested.
+
+For the V1.4 row-menu follow-up, V1.3 runtime rendering is user-confirmed. V1.4 is generated/signed/verified and updates the Purchase Request row operation menu, but Insert before, Insert after, Move up, and Move down behavior remains runtime-pending until manually tested.

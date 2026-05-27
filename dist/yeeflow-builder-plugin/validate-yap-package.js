@@ -3266,6 +3266,7 @@ function validateApprovalSubListActions(control, formName, pageName, path, repor
   }
   const allowedStepTypes = new Set(["list_new", "list_import", "list_dup", "list_del", "list_move", "list_update"]);
   const actionIds = new Set(actions.map((action) => safeString(action && action.id)).filter(Boolean));
+  const actionById = new Map(actions.map((action) => [safeString(action && action.id), action]).filter(([id]) => Boolean(id)));
   actions.forEach((action, actionIndex) => {
     const actionPath = `${path}.attrs.actions[${actionIndex}]`;
     if (!isObject(action)) {
@@ -3292,6 +3293,9 @@ function validateApprovalSubListActions(control, formName, pageName, path, repor
       if (stepType === "list_new" && step.attrs && step.attrs.position !== undefined && !["0", "1"].includes(String(step.attrs.position))) {
         issue(report, "warning", "SUBLIST_ACTION_INSERT_POSITION_UNEXPECTED", "Insert-before/after Sub List actions use list_new with attrs.position \"0\" or \"1\" in the studied export.", { form: formName, page: pageName, path: `${stepPath}.attrs.position`, position: step.attrs.position });
       }
+      if (stepType === "list_move" && step.attrs && step.attrs.moveMode !== undefined && String(step.attrs.moveMode) !== "2") {
+        issue(report, "warning", "SUBLIST_ACTION_MOVE_MODE_UNEXPECTED", "Move-down Sub List actions use list_move with attrs.moveMode \"2\" in the studied export; move-up uses list_move without attrs.", { form: formName, page: pageName, path: `${stepPath}.attrs.moveMode`, moveMode: step.attrs.moveMode });
+      }
     });
   });
 
@@ -3299,6 +3303,44 @@ function validateApprovalSubListActions(control, formName, pageName, path, repor
     const ref = safeString(node.attrs && node.attrs.control_action);
     if (ref && !actionIds.has(ref)) {
       issue(report, severity, "SUBLIST_ACTION_BUTTON_TARGET_UNRESOLVED", "Action buttons inside a Sub List item/footer template should resolve to attrs.actions[].id on the same Sub List.", { form: formName, page: pageName, path: `${path}${pointer.slice(1)}.attrs.control_action` });
+    }
+  });
+
+  const dropbars = [];
+  walkControls(control, (node, pointer) => {
+    if (node.type === "dropbar") dropbars.push({ node, pointer });
+  });
+  dropbars.forEach(({ node: dropbar, pointer: dropbarPointer }) => {
+    const menuLabels = [];
+    const menuStepTypes = [];
+    walkControls(dropbar, (node, pointer) => {
+      if (node.type !== "action_button") return;
+      const label = safeString(node.label || node.nv_label);
+      const action = actionById.get(safeString(node.attrs && node.attrs.control_action));
+      const stepTypes = asArray(action && action.steps).map((step) => safeString(step && step.type)).filter(Boolean);
+      menuLabels.push(label);
+      menuStepTypes.push(...stepTypes);
+      if (!action) {
+        issue(report, severity, "SUBLIST_ROW_MENU_ACTION_TARGET_UNRESOLVED", "Row operation menu action buttons should bind to local Sub List attrs.actions[] entries.", { form: formName, page: pageName, path: `${path}${dropbarPointer.slice(1)}${pointer.slice(1)}.attrs.control_action`, label });
+      }
+    });
+    const duplicated = menuLabels.filter((label, index) => label && menuLabels.indexOf(label) !== index);
+    if (duplicated.length) {
+      issue(report, "warning", "SUBLIST_ROW_MENU_DUPLICATE_LABELS", "Row operation menu contains duplicate labels; verify the intended menu action list.", { form: formName, page: pageName, path: `${path}${dropbarPointer.slice(1)}`, labels: [...new Set(duplicated)] });
+    }
+    if (menuLabels.includes("Delete")) {
+      const visibleDeleteOutsideMenu = [];
+      walkControls(control, (node, pointer) => {
+        if (pointer.startsWith(dropbarPointer)) return;
+        if (node.type === "action_button" && safeString(node.label || node.nv_label) === "Delete") visibleDeleteOutsideMenu.push(pointer);
+        if (node.attrs && actionById.get(safeString(node.attrs.control_action))?.name === "Delete item" && !pointer.startsWith(dropbarPointer)) visibleDeleteOutsideMenu.push(pointer);
+      });
+      if (visibleDeleteOutsideMenu.length) {
+        issue(report, "warning", "SUBLIST_ROW_MENU_DELETE_DUPLICATES_VISIBLE_DELETE", "Delete is available both in the row operation menu and as a visible row action; the generated table pattern usually keeps Delete visible and omits it from the menu.", { form: formName, page: pageName, path: `${path}${dropbarPointer.slice(1)}` });
+      }
+    }
+    if (menuLabels.some((label) => /^Insert |^Move /i.test(label)) && !menuStepTypes.some((type) => type === "list_new" || type === "list_move")) {
+      issue(report, "warning", "SUBLIST_ROW_MENU_ORDER_ACTION_STEPS_MISSING", "Insert/move row operation menu labels should resolve to list_new position or list_move action steps.", { form: formName, page: pageName, path: `${path}${dropbarPointer.slice(1)}`, labels: menuLabels });
     }
   });
 }
