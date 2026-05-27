@@ -5,8 +5,8 @@ Use this reference after `service-desk-pro-stage-c-pattern.md` when resuming the
 ## Proven Package
 
 - workspace package: `service-desk-pro-dashboard-stage-d.generated.yap`
-- Downloads copy: `/Users/Renger/Downloads/service-desk-pro-dashboard-stage-d.generated.yap`
-- source export studied: `/Users/Renger/Downloads/Service Desk Pro (1).yap`
+- Downloads copy: `<downloads>/service-desk-pro-dashboard-stage-d.generated.yap`
+- source export studied: `<downloads>/Service Desk Pro (1).yap`
 - runtime result: imported into `https://codex.yeeflow.com/`, appeared in Shared Workspace, opened, rendered the static Executive Dashboard, and opened the local `Support Tickets` list with six rows and no visible `datas/query` failure
 
 ## Scope

@@ -2,7 +2,7 @@
 
 Use this reference after the data-bound and Service Desk Pro Stage M/N patterns when generating or validating dashboard Collection controls.
 
-Source studied: `/Users/Renger/Downloads/Service Desk Pro Dashboard Stage M.yap`
+Source studied: `<downloads>/Service Desk Pro Dashboard Stage M.yap`
 
 Dashboard studied: `Tickets with Collection`
 

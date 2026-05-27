@@ -9,6 +9,7 @@ const LARGE_INTEGER_RE = /^-?\d{16,}$/;
 const INTERNAL_NAME_RE = /^[A-Za-z0-9_]+$/;
 const PROCESS_KEY_RE = /^[A-Za-z0-9_]+$/;
 const IDENTIFIER_MAX_LENGTH = 255;
+const CUSTOM_LIST_MODEL_TYPES = new Set([1, 16, 32, 64, 128, 1024]);
 const SUPPORTED_TYPES = new Set([
   "input", "textarea", "richtext", "hyperlink",
   "input_number", "currency", "percent", "calculated-column", "rate",
@@ -16,14 +17,14 @@ const SUPPORTED_TYPES = new Set([
   "datepicker", "time",
   "identity-picker", "organization-picker", "cost-center-picker", "signer",
   "file-upload", "icon-upload",
-  "lookup", "mutiple-metadata", "location-picker", "flowstatus", "autonumber", "list",
+  "lookup", "metadata", "mutiple-metadata", "location-picker", "flowstatus", "autonumber", "list",
 ]);
 const SYSTEM_FIELDS = new Set(["ListDataID", "Title", "Created", "CreatedBy", "CreatedByName", "Modified", "ModifiedBy", "ModifiedByName", "Author", "Editor", "Status", "TenantID", "AppID", "ListID", "ListSetID"]);
 
 function usage(exitCode = 1) {
   const text = [
     "Usage:",
-    "  node scripts/inspect-app-creation-rules.mjs <app.yap|list.ydl|decoded.json>",
+    "  node scripts/inspect-app-creation-rules.mjs <app.yap|list.ydl|decoded.json> [--list <name>]",
     "",
     "Checks product-team app creation rules without printing raw package payloads.",
   ].join("\n");
@@ -86,8 +87,31 @@ function decodeInput(inputPath) {
   return wrapper.Data && wrapper.Item ? wrapper.Data : wrapper;
 }
 
+function parseArgs(argv) {
+  if (argv.includes("--help") || argv.includes("-h")) usage(0);
+  const args = { input: null, lists: [] };
+  for (let i = 2; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === "--list") args.lists.push(argv[++i]);
+    else if (!args.input) args.input = arg;
+    else usage();
+  }
+  if (!args.input) usage();
+  return args;
+}
+
 function safeString(value) {
   return value === undefined || value === null ? "" : String(value);
+}
+
+function expectedFieldTypeForFieldName(fieldName) {
+  const name = safeString(fieldName);
+  if (name === "Title" || /^Text\d+$/i.test(name)) return { family: "text", allowed: ["text", "string"] };
+  if (/^Datetime\d+$/i.test(name)) return { family: "date", allowed: ["datetime", "date", "time"] };
+  if (/^Decimal\d+$/i.test(name)) return { family: "decimal", allowed: ["decimal", "currency", "number"] };
+  if (/^Bigint\d+$/i.test(name)) return { family: "integer", allowed: ["bigint", "int", "integer", "number"] };
+  if (/^Bit\d+$/i.test(name)) return { family: "boolean", allowed: ["bit", "bool", "boolean"] };
+  return null;
 }
 
 function label(value, fallback) {
@@ -102,6 +126,24 @@ function addFinding(findings, level, code, message, detail = {}) {
 
 function inspectList(list, index, findings) {
   const title = label(list?.ListModel?.Title, `<list-${index + 1}>`);
+  for (const key of ["Defs", "Layouts"]) {
+    if (!Object.prototype.hasOwnProperty.call(list || {}, key)) addFinding(findings, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_MISSING`, `ListExportItem.${key} is required; use [] when empty.`, { list: title });
+    else if (list?.[key] === null) addFinding(findings, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_NULL`, `ListExportItem.${key} cannot be null; use [] when empty.`, { list: title });
+    else if (!Array.isArray(list?.[key])) addFinding(findings, "error", `LIST_EXPORT_ITEM_${key.toUpperCase()}_NOT_ARRAY`, `ListExportItem.${key} must be an array.`, { list: title, actualType: typeof list?.[key] });
+  }
+  if (!list?.ListModel || typeof list.ListModel !== "object") {
+    addFinding(findings, "error", "LIST_EXPORT_ITEM_LISTMODEL_MISSING", "ListExportItem.ListModel is required for generated app/list resources.", { list: title });
+  } else {
+    if (list.ListModel.Flags !== 1) {
+      addFinding(findings, "error", "LISTMODEL_FLAGS_INVALID", "Product schema v2 requires CustomListModel.Flags = 1; missing or different values can fail import.", { list: title, value: list.ListModel.Flags });
+    }
+    if (list.ListModel.Status !== undefined && list.ListModel.Status !== 1) {
+      addFinding(findings, "error", "LISTMODEL_STATUS_INVALID", "Product schema v2 fixes CustomListModel.Status to 1 when present.", { list: title, value: list.ListModel.Status });
+    }
+    if (list.ListModel.Type !== undefined && !CUSTOM_LIST_MODEL_TYPES.has(Number(list.ListModel.Type))) {
+      addFinding(findings, "error", "LISTMODEL_TYPE_INVALID", "Product schema v2 allows CustomListModel.Type values 1, 16, 32, 64, 128, or 1024.", { list: title, value: list.ListModel.Type });
+    }
+  }
   const seen = {
     DisplayName: new Map(),
     FieldName: new Map(),
@@ -121,6 +163,16 @@ function inspectList(list, index, findings) {
     const type = safeString(field?.Type).toLowerCase();
     if (type && !SUPPORTED_TYPES.has(type)) addFinding(findings, "warning", "LIST_FIELD_TYPE_UNSUPPORTED", "List field Type is not in the product-team supported Type list.", { location, type });
     const fieldName = safeString(field?.FieldName);
+    const fieldType = safeString(field?.FieldType).toLowerCase();
+    const expectedFieldType = expectedFieldTypeForFieldName(fieldName);
+    if (expectedFieldType && fieldType && !expectedFieldType.allowed.some((token) => fieldType.includes(token))) {
+      addFinding(findings, "error", "FIELD_NAME_FIELDTYPE_MISMATCH", "FieldName storage prefix must align with FieldType; generated fields cloned by array position can import but fail seed/add runtime behavior.", {
+        location,
+        fieldName,
+        fieldType: field?.FieldType,
+        expectedFamily: expectedFieldType.family,
+      });
+    }
     const numericIndex = Number(field?.FieldIndex);
     if (fieldName && !SYSTEM_FIELDS.has(fieldName) && Number.isInteger(numericIndex) && numericIndex > 0) {
       const match = fieldName.match(/(\d+)$/);
@@ -165,11 +217,19 @@ function inspectProcessKey(form, index, findings) {
 }
 
 function main() {
-  const input = process.argv[2];
-  if (!input || process.argv.includes("--help") || process.argv.includes("-h")) usage(input ? 0 : 1);
+  const args = parseArgs(process.argv);
+  const input = args.input;
   const data = decodeInput(input);
-  const lists = [data.Item, ...(data.Childs || [])].filter(Boolean);
+  const targetListNames = new Set(args.lists);
+  const lists = [data.Item, ...(data.Childs || [])]
+    .filter(Boolean)
+    .filter((list) => !targetListNames.size || targetListNames.has(safeString(list?.ListModel?.Title)));
   const findings = [];
+  for (const listName of targetListNames) {
+    if (!lists.some((list) => safeString(list?.ListModel?.Title) === listName)) {
+      addFinding(findings, "error", "TARGET_LIST_NOT_FOUND", "Requested target list was not found.", { list: listName });
+    }
+  }
   lists.forEach((list, index) => inspectList(list, index, findings));
   (data.Forms || []).forEach((form, index) => {
     inspectProcessKey(form, index, findings);

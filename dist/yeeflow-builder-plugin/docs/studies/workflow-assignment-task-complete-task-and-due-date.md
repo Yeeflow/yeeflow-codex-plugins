@@ -18,14 +18,14 @@ No approval requests were submitted and no email delivery was tested.
 Source export:
 
 ```text
-/Users/Renger/Downloads/Test ABC (2).yap
+<downloads>/Test ABC (2).yap
 ```
 
 Comparison exports:
 
 ```text
-/Users/Renger/Downloads/Test ABC.yap
-/Users/Renger/Downloads/Test ABC (1).yap
+<downloads>/Test ABC.yap
+<downloads>/Test ABC (1).yap
 ```
 
 References:

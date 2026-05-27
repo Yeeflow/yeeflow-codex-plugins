@@ -20,9 +20,9 @@ This branch does not generate a runtime baseline, does not submit approval reque
 Source export:
 
 ```text
-/Users/Renger/Downloads/Test ABC.yap
-/Users/Renger/Downloads/Test ABC (1).yap
-/Users/Renger/Downloads/Test ABC (2).yap
+<downloads>/Test ABC.yap
+<downloads>/Test ABC (1).yap
+<downloads>/Test ABC (2).yap
 ```
 
 Reference:
@@ -186,7 +186,7 @@ API lookup confirms org object categories, not runtime workflow routing. A refer
 
 `Test ABC (1).yap` decoded successfully as a read-only export and contains the same approval form/workflow shell:
 
-- source path: `/Users/Renger/Downloads/Test ABC (1).yap`
+- source path: `<downloads>/Test ABC (1).yap`
 - approval workflow forms found: `1`
 - assignment task nodes found: `9`
 - assignment task node type: `MultiAssignmentTask`

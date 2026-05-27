@@ -54,7 +54,7 @@ The OpenAPI document is the source of truth for endpoint paths and methods. Help
 Added:
 
 ```bash
-node scripts/yeeflow-assignment-routing-api-coverage-test.mjs "/Users/Renger/Downloads/Test ABC (1).yap"
+node scripts/yeeflow-assignment-routing-api-coverage-test.mjs "<downloads>/Test ABC (1).yap"
 ```
 
 The helper:

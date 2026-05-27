@@ -1,6 +1,6 @@
 # Knowledge Base List Pattern
 
-Source studied: `/Users/Renger/Downloads/Knowledge Base_1.yap`
+Source studied: `<downloads>/Knowledge Base_1.yap`
 
 Use this reference for Knowledge Base-style generated child lists inside app-level `.yap` packages.
 

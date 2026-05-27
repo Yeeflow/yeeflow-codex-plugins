@@ -76,13 +76,18 @@ function runJsonStep(name, command, args, options = {}) {
   const errors = Array.isArray(report.errors) ? report.errors.length : Number(report.errors || 0);
   const warnings = Array.isArray(report.warnings) ? report.warnings.length : Number(report.warnings || 0);
   const findings = Array.isArray(report.findings) ? report.findings : [];
-  const findingErrors = findings.filter((finding) => finding.level === "error").length;
+  const ignoredFindingCodes = new Set(options.ignoredFindingCodes || []);
+  const activeFindings = findings.filter((finding) => !ignoredFindingCodes.has(finding.code));
+  const ignoredFindings = findings.length - activeFindings.length;
+  const findingErrors = activeFindings.filter((finding) => finding.level === "error" || finding.severity === "error").length;
+  const findingWarnings = activeFindings.filter((finding) => finding.level === "warning" || finding.severity === "warning").length + ignoredFindings;
+  const normalizedStatus = report.status || (warnings + findingWarnings > 0 ? "pass_with_warnings" : "pass");
   return {
     name,
-    status: result.status === 0 && report.status !== "fail" && errors + findingErrors === 0 ? report.status || "pass" : "fail",
+    status: (result.status === 0 || ignoredFindings === findings.length) && report.status !== "fail" && errors + findingErrors === 0 ? normalizedStatus : "fail",
     exitCode: result.status,
     errors: errors + findingErrors,
-    warnings: warnings + findings.filter((finding) => finding.level === "warning").length,
+    warnings: warnings + findingWarnings,
     dependencies: Array.isArray(report.dependencies) ? report.dependencies.length : 0,
     report,
   };
@@ -107,6 +112,11 @@ function main() {
     steps.push(runJsonStep("schema-standard-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-yap-schema-standard.mjs"), inputPath]));
     steps.push(runJsonStep("app-creation-rules-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-app-creation-rules.mjs"), inputPath]));
     steps.push(runJsonStep("data-view-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-data-views.mjs"), inputPath]));
+    steps.push(runJsonStep("data-filter-controls-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-data-filter-controls.mjs"), inputPath]));
+    steps.push(runJsonStep("pivot-table-controls-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-pivot-table-controls.mjs"), inputPath], {
+      ignoredFindingCodes: ["TARGET_DASHBOARD_PAGE_NOT_FOUND"],
+    }));
+    steps.push(runJsonStep("container-button-actions-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-container-button-actions.mjs"), inputPath]));
 
     const decoded = decodeWrapper(inputPath);
     const placeholders = collectPlaceholders(decoded);

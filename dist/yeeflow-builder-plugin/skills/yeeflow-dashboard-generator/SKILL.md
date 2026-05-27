@@ -37,6 +37,10 @@ For unproven dashboard areas, use this with `yeeflow-feature-learning-orchestrat
 
 When a dashboard/reporting control depends on a data-list, document-library, or Form Report view, inspect `docs/studies/data-view-resource-settings.md` first. Data views are `Layouts[]` entries with URL/default/filter/sort/user-filter settings; do not treat a dashboard data source as runtime-proven just because a view exists in the package. Confirm the target list-like resource and selected view fields/filters resolve before generation, and keep view-driven dashboard behavior runtime-sensitive until focused proof observes it.
 
+When a dashboard uses Data Filter controls, inspect `docs/studies/data-filter-controls.md`, `docs/studies/normalized/data-filter-controls/`, and `references/filter-controls-pattern.md` first. `Sales_Management_AD.yap` export-proves dashboard Checkbox, Select, Range, Check range, Date, Relative period, Apply button, and Remove filters shapes. `CRM - Customer relationship management.yap` export-proves Search, Radio, Hierarchy, and Sorting shapes. Filter variables live in embedded page `filterVars[]`, value-producing controls bind with `__filter_`, and downstream table/report/chart consumers use expression-token references in data filter conditions, fulltext filters, or sorting-filter entries. Use Apply button only for click-apply filters and treat Remove filters as a special reset control. Dashboard schema is export-proven; approval/data-list form hosts and interactive runtime behavior still need separate proof.
+
+When a dashboard uses Pivot Table controls, inspect `docs/studies/pivot-table-control.md`, `docs/studies/normalized/pivot-table-control/`, `docs/studies/pivot-table-control-runtime-proof.md`, and `scripts/inspect-pivot-table-controls.mjs` first. `CRM - Customer relationship management (1).yap` export-proves the dashboard host schema: the page contains visible `type = "pivot-table"` controls and matching `page.exts[]` entries with `category = "___Pivot___"`, `key = "PivotTable"`, and `i` equal to the control id. The focused v2 generated package proves a representative Dashboard Pivot Table app can be manually imported and used with 20 safe synthetic data-list rows, and the user confirmed new items can be added in that package's data list. The v1/v2 diff strongly indicates the seed/add fix was field storage alignment: clone data-list field definitions by `FieldName`, not array position, so `FieldID`, `FieldName`, `FieldType`, `Type`, and row-cell references stay aligned. Use Pivot Tables for multidimensional summaries with rows, columns, and values. Resolve every source and field before handoff, use count aggregations for counts and numeric aggregations only on numeric/currency fields, restrict date groupings to date/time fields, and style `header`, `body`, `subtotal`, and `grandtotal` sections for readable dashboard tables. Data Filter variable references in Pivot Table conditions must resolve to page `filterVars[]`; the CRM Pivot Tables did not themselves consume filter variables, so interactive filtering remains unproven until runtime-tested.
+
 ## Core Rule
 
 Do not start complex dashboard generation from a complex dashboard export.
@@ -282,6 +286,7 @@ Stop before final generation if:
 - dashboard `exts[].i` does not resolve to a page control id
 - dashboard `exts[].i` is missing from `Resource.ReportIds` when report ids are present
 - dashboard chart `exts[].settings.rows[]` or `values[]` field references do not resolve to the source list fields
+- dashboard Pivot Table source, row, column, value, date-grouping, aggregation, or filter-variable references do not resolve
 - dashboard filter control binding does not resolve to page `filterVars`
 - dashboard chart condition variable expression does not resolve to page `filterVars`
 - `save_var` references do not resolve to `tempVars`
@@ -327,6 +332,8 @@ For the current dashboard learning loop, the user has authorized import testing 
 
 If runtime fails, create a smaller isolation package with fresh IDs instead of guessing.
 
+Dashboard Data Filter runtime proof: `docs/studies/data-filter-controls-runtime-proof.md` proves a focused generated dashboard package imported, opened, rendered a data table/list-like control, summaries, chart/report controls, Search/Radio/Range/Sorting Data Filter controls, and an Apply button. It also proves one Search click-apply interaction and one Radio value-change selection stayed stable with no visible missing-filter-variable, missing-binding, or dashboard-crash errors. Treat Range and Sorting as render-proven only in that pass, and keep Remove filters, Hierarchy, exhaustive operator semantics, approval-form usage, and data-list-form usage unproven at runtime.
+
 ## Shared Form Action Concepts
 
 Form actions are front-end page/form logic, distinct from backend workflow graph actions. Phase 1 approval-form runtime proof covers action buttons, button click triggers, page-load triggers, temp variables, `setvar`, and `confirm`; the same concepts may apply to dashboards only after a dashboard-specific export/runtime proof. Do not promote dashboard form actions from approval-form evidence alone.
@@ -337,3 +344,17 @@ Generated dashboards, root pages, and custom page resources must pass strict ref
 
 Do not ship dashboard collection filters that reference unresolved `__ctx_coll` fields such as `ListDataID` when that field is not present on the collection source list. Treat stale copied `controlId` values, unresolved field filters, and unresolved data source/list references as generated-final errors, not cosmetic warnings.
 <!-- projects-center-import-failure-hardening:end -->
+
+<!-- container-button-action-settings-learning:start -->
+## Container And Button Action Settings
+
+Use `docs/studies/container-button-action-settings.md`, `docs/studies/normalized/container-button-actions/`, and `scripts/inspect-container-button-actions.mjs` when dashboards use actionable Containers or Buttons. `AP Approval Demo v3.yap` export-proves that dashboard `container` controls and `action_button` controls share the same `attrs` action-setting model.
+
+Export-proven action codes are `2` Link, `5` Add list item, `6` Open dashboard, and `8` Open approval form. The Builder UI also shows `Action` for form/page action binding, but the target dashboard did not include action code `1`; keep dashboard-specific form-action binding warning-first until a dashboard export proves the exact target field.
+
+Choose the action type from business intent: Link for URL destinations; Add list item for quick-create list/document flows; Open dashboard for navigation, drill-down, reports, and workspaces; Open approval form for starting workflow/request forms. Prefer structural Yeeflow references over raw links for Yeeflow resources.
+
+Validate every generated action before handoff. `attrs.data.list.ListID` must resolve for Add list item; `attrs.data.page.PageID` must resolve to a Type `103` dashboard for Open dashboard; `attrs.data.form.ProcKey` must resolve to an included approval form for Open approval form; Link needs a literal URL or expression URL. Export-proven `op` values are empty/default, `modal`, `slide`, `target`, and `new`; export-proven `modalsize` values are `0`, `1`, `2`, `3`, and `9`, with `cusize` for custom sizing.
+
+Focused runtime proof in `docs/studies/container-button-action-runtime-proof.md` confirms a generated dashboard package imported/opened and representative Link, Add list item, Open dashboard, and Open approval form actions worked after the approval request-page fix. Treat this as generated-package proof for current-app navigation/open behavior only; keep save/submit/workflow, cross-app targets, form-action binding, external sensitive navigation, and all open-mode/size combinations unproven.
+<!-- container-button-action-settings-learning:end -->

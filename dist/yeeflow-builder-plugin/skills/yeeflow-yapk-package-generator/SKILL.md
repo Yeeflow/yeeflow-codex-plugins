@@ -117,7 +117,7 @@ For `Projects Center_1-v1..0.yapk`, the safe result is:
 - requested data-list add: completed locally
 - finalized standard Brotli re-encode: completed
 - `setsign`/`verifysign`: passed
-- generated package: `/Users/Renger/Downloads/Projects Center_1-v1.1-yapk-runtime-test.yapk`
+- generated package: `<downloads>/Projects Center_1-v1.1-yapk-runtime-test.yapk`
 - runtime upgrade/list/form materialization: user-proven
 - record creation: failed with `Add failed`
 
@@ -127,7 +127,7 @@ The v1.2 add-fix package adjusted save-path-sensitive list metadata:
 - date field `FieldName`: `Datetime4`
 - date field `FieldType`: `Datetime`
 - layout references updated to `Datetime4`
-- generated package: `/Users/Renger/Downloads/Projects Center_1-v1.2-yapk-runtime-add-fix.yapk`
+- generated package: `<downloads>/Projects Center_1-v1.2-yapk-runtime-add-fix.yapk`
 - `setsign`/`verifysign`: passed
 - runtime add-item retest: pending
 
@@ -140,7 +140,7 @@ User runtime result for v1.2:
 The v1.3 table-code-only package keeps the upgrade-valid date field shape and changes only:
 
 - generated list `TableCode`: `flowcraft`
-- generated package: `/Users/Renger/Downloads/Projects Center_1-v1.3-yapk-runtime-tablecode-fix.yapk`
+- generated package: `<downloads>/Projects Center_1-v1.3-yapk-runtime-tablecode-fix.yapk`
 - `setsign`/`verifysign`: passed
 - inspector/validator: passed
 - runtime result: upgrade succeeded, but add-item save still failed
@@ -148,7 +148,7 @@ The v1.3 table-code-only package keeps the upgrade-valid date field shape and ch
 
 The v1.4 text-only isolation package removes the `Test Date` field to test whether the save failure is caused by DateTime control materialization:
 
-- generated package: `/Users/Renger/Downloads/Projects Center_1-v1.4-yapk-runtime-text-only.yapk`
+- generated package: `<downloads>/Projects Center_1-v1.4-yapk-runtime-text-only.yapk`
 - fields: `Name`, `Test Status`, `Test Notes`
 - `setsign`/`verifysign`: passed
 - inspector/validator: passed

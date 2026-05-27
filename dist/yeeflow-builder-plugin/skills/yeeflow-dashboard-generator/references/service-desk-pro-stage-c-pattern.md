@@ -2,7 +2,7 @@
 
 Use this pattern when resuming Service Desk Pro-style dashboard generation after the generic dashboard baselines have passed.
 
-Source export studied: `/Users/Renger/Downloads/Service Desk Pro (1).yap`
+Source export studied: `<downloads>/Service Desk Pro (1).yap`
 
 Proven generated package: `service-desk-pro-dashboard-stage-b-or-c.generated.yap`
 

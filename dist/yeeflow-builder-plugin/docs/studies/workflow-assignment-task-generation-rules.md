@@ -95,6 +95,18 @@ Use these rules for generated packages:
 - Data-list workflow task forms can mix normal task-form controls and list-bound controls. Preserve `isListControl`, list field `identifier`, `InternalName`, `fieldID`, and `____customListFields_` binding.
 - Custom list fields can be marked `readonly=true` when the task should not update source list data. Default/native fields such as Created By appear read-only in the studied export; keep broader native-field behavior runtime-pending.
 - Lay out generated workflow nodes with non-overlapping coordinates and keep `SequenceFlow` source/target plus node incoming/outgoing references consistent.
+- For combined workflow-action baselines, include approval-form and data-list workflows in one package only when each workflow keeps its own Start-action rules, process/list IDs, `FlowMappings[]`, task forms, and sequence-flow references. Remap `Data.Forms[].ProcModelID` and data-list workflow `ListID`/`ProcModelID` completely.
+- Scheduled Workflow Assignment Task from `Workflow Actions Runtime Baseline (1).yap` uses the same `MultiAssignmentTask.properties.usertaskassignment[]` family with `WorkflowType = 3`, `ListID = 0`, absent `tasktype`, `approveway="allapprove"`, `approvepercentage=100`, absent `issequential`, `duedatedefinition=120`, and one applicant-line-manager expression assignee. Preserve this as export-proven for Scheduled Workflow only; do not infer Scheduled Workflow support for direct users, positions, groups, Complete task, reminder rules, enabled task email, or data-list field assignee expressions until a scheduled export proves them.
+- Scheduled Workflow Start from the same export has email fields but no approval-form terminate/recall fields. Keep Scheduled Workflow Start generation aligned with the data-list-style absence of terminate/recall unless another scheduled export proves those fields.
+- Approval workflow task forms from `Workflow Actions Runtime Baseline (2)_Task forms.yap` are stored in `Data.Forms[].DefResource.pageurls[]` beside the submission form. Preserve `pageurls[].type=1` for submission forms and `pageurls[].type=2` for task forms when using this export family.
+- Every generated `MultiAssignmentTask` should set `properties.taskurl` to an existing task form page ID. Reusing one task form for multiple Assignment Tasks is export-proven when the task-owner responsibilities match.
+- Copied task forms for approve/reject or complete-only review can set copied value-entry controls to `readonly=true`; `WARTB Task` export-proves all copied value controls readonly.
+- Task-specific task forms can keep copied request fields readonly and add editable task-owner fields. `WARTB Task2`, `WARTB Task3`, and `WARTB Task4` prove extra editable inputs, number, textarea, and user-picker-style controls on task forms.
+- The Action Panel control is `type="workflowControlPanel"` with button behavior derived from the associated Assignment Task type and options. The export does not store explicit Approve/Reject/Complete/Reassign/Add assignee child buttons under the panel.
+- Custom task buttons use `type="action_button"` and bind through `attrs.control_action` to a `formdef.actions[].id`. Keep that binding consistent with the button label and Submit form operation.
+- Submit form operation shapes found in task forms are: no `submitType` for approval/default submit on Approval tasks, `submitType="2"` for reject, `submitType="4"` for reassign with `forword` and `remark`, `submitType="5"` for add assignee with `forword`, `remark`, and `assignee`, and no `submitType` for complete on Complete tasks. Preserve the export spelling `forword`.
+- `Workflow Actions Runtime Baseline (2)_Task forms.yap` contains a custom-button binding mismatch: the visible `Add others to this task` button points to the reject action ID while a separate `Add assignee button clicked` action contains `submitType="5"`. The follow-up `Workflow Action Approval Test.ywf` corrects this binding so the Add others button resolves to the add-assignee action. Use the corrected `.ywf` shape as the positive export-proven reference, and keep validators warning-first when label, bound action, and Submit form operation disagree.
+- `generate-workflow-task-form-runtime-baseline.mjs` applies the corrected `.ywf` definition to the studied task-form package family. The resulting package imported, opened, rendered the form designer and workflow designer, showed all four task forms in the selector, showed `WARTB Task3` custom buttons, and published successfully. Treat this as import/open/designer/publish proof only; custom button execution, reassign/add-assignee runtime behavior, Complete task execution, task-owner field persistence, Claim Task task-form behavior, and email delivery remain unproven.
 
 ## Runtime-Proof Requirements
 
@@ -120,6 +132,19 @@ The V2 runtime package fixed the duplicate-import/process-ID problem by using fr
 
 Treat V2 as import/open/designer/publish proof only. Do not promote Assignment Task routing, group expansion, position expansion, appointed-order behavior, custom-percentage completion, or email delivery to runtime-proven until a safe request is submitted and observed.
 
+`generate-workflow-actions-combined-runtime-baseline.mjs` extends the publish-proven V2 approach with one data-list workflow and additional Complete task, due-date, reminder, and Start settings. Use it for designer/open/publish proof first. Its `minute` due-date task is exploratory/product-documented because the studied exports proved `hour`, `day`, and `express` but did not prove the minute serialization.
+
+The combined workflow-actions package imported, opened, rendered approval and data-list workflow designers, and published both workflows successfully. This upgrades the covered shapes to import/open/designer/publish-proven for the generated host package:
+
+- approval Start terminate/recall/condition/email configuration
+- representative Assignment Task assignee editor, appointed-order, task-type, and completion-condition panels
+- generated Complete task, due-date, reminder, `approveway`, and notification configuration family at package/publish level
+- data-list Start email configuration without terminate/recall controls
+- data-list Assignment Task mixed direct/expression/list-item assignee configuration including the Created By/list-field expression family
+- data-list form/list-field rendering in the imported app
+
+Do not treat this as routing proof. No approval request or data-list item was submitted, no task was completed, no group/position/list-field expansion was observed, no due-date scheduler behavior was observed, and no notification email was sent.
+
 ## Product-Documented But Not Export-Proven Here
 
 These were not found in the current exports or remain insufficiently proven:
@@ -140,6 +165,14 @@ These were not found in the current exports or remain insufficiently proven:
 - Start email delivery
 - data-list workflow Created By/list-field assignee routing
 - data-list workflow task form save/edit behavior for list-bound controls
+- scheduled workflow Assignment Task routing and task creation
+- scheduled workflow Start email delivery
+- scheduled workflow terminate/recall support
+- Claim Task task-form association
+- custom task-form button runtime execution for approve/reject/reassign/add-assignee/complete
+- Action Panel explicit button child schema, because buttons appear derived rather than serialized as child controls in the studied export
+- Add-assignee custom button runtime execution, even though the corrected `.ywf` now proves the intended button-to-action binding shape
+- task-owner field save/persistence from custom task forms, even though the generated task-form baseline rendered and published
 
 Do not generate these as schema-safe until an export proves their package shape. Do not claim routing-safe until runtime proof exists.
 
@@ -158,6 +191,13 @@ Validators should remain warning-first for this feature in compatibility mode:
 - warn when `tasktype` uses an unknown explicit value
 - warn when due-date type, expression, working-calendar, or reminder rule shapes are malformed
 - warn when Start action terminate/recall condition or email-notification fields are malformed
+- warn when Scheduled Workflow Start action includes approval-only terminate/recall fields unless a scheduled export proves them
+- warn when Scheduled Workflow Assignment Task uses list-field/Created By expression sources unless a scheduled export proves a list context for that workflow
+- warn when `MultiAssignmentTask.properties.taskurl` is missing or does not resolve to a task form page
+- warn when a custom task-form `action_button.attrs.control_action` is missing or does not resolve to `formdef.actions[]`
+- warn when a custom button label implies approve/reject/reassign/add-assignee/complete but the resolved Submit form operation differs
+- warn when reassign/add-assignee Submit form steps lack user-valued expression sources
+- warn when Complete task pages rely only on approval/reject custom operations, or approval/default task pages rely only on complete custom operations
 
 Hard errors should wait until generated-final invalid shapes are proven to fail import/publish/runtime safely and consistently.
 
@@ -174,3 +214,65 @@ Study doc:
 ```text
 docs/studies/workflow-assignment-task-assignee-settings.md
 ```
+
+## Claim Task Addendum
+
+`Workflow Actions Runtime Baseline (3)_Claim task.yap` export-proves that front-end Claim Task maps to internal `CandidateTask` in approval-form and data-list workflows. See `docs/studies/workflow-claim-task-action.md` and normalized refs under `docs/studies/normalized/workflow-claim-task/`.
+
+Generation rules:
+
+- Use `CandidateTask` for Claim Task and `MultiAssignmentTask` for Assignment Task.
+- Treat `CandidateTask.properties.usertaskassignment[]` as receiver/candidate pool configuration, not direct final assignee ownership.
+- Preserve `CandidateTask.properties.taskurl` and validate it resolves to a task-form page.
+- Preserve `tasktype="approve"` and `tasktype="complete"` when present.
+- Do not generate the config-reference typo `properties.tasktype ` with a trailing space; the export uses `properties.tasktype`.
+- Preserve user group, applicant/context, and data-list Created By/list-item receiver expressions as expression-button strings.
+- Do not claim claim-pool behavior, claim locking, Pending Tasks ownership after claim, quick completion, or email delivery until focused runtime proof exists.
+
+Claim Task should be recommended when a team/pool can voluntarily claim ownership. Assignment Task should be recommended when known users must take direct action.
+
+## Set Variable Addendum
+
+`Workflow Actions Runtime Baseline (4)_Set variable.yap` export-proves that front-end Set variable maps to internal `SetVariableTask` in approval-form and data-list workflows. See `docs/studies/workflow-set-variable-action.md` and normalized refs under `docs/studies/normalized/workflow-set-variable/`.
+
+Generation rules:
+
+- Use `SetVariableTask` for Set variable and `ContentList` for Set data list.
+- Treat `properties.variablesetting[]` as workflow-variable assignments. Each row's `id` is the left-side target workflow variable and `value` is the right-side expression-token array.
+- `formtype="current"` targets the current workflow's variables.
+- `formtype="custom"` targets another approval form workflow instance and should preserve `properties.data.AppID`, `properties.data.ListSetID`, `properties.data.ProcKey`, and `properties.formids`.
+- One Set variable node may set one or multiple workflow variables.
+- In data-list workflows, list fields may appear as right-side `exprType="list_field"` values, but Set variable should still target workflow variables.
+- Do not use Set variable to write data-list fields; use Set data list / `ContentList` for list record or field mutation.
+- Do not claim runtime variable mutation, another-workflow updates, or form-id targeting behavior until focused runtime proof exists.
+
+## Set Data List Addendum
+
+`Workflow Actions Runtime Baseline (5)_Set data list.yap` export-proves that front-end Set data list maps to internal `ContentList` in approval-form and data-list workflows. See `docs/studies/workflow-set-data-list-action.md` and normalized refs under `docs/studies/normalized/workflow-set-data-list/`.
+
+Generation rules:
+
+- Use `ContentList` for Set data list and `SetVariableTask` for Set variable.
+- Use Set data list for data-source item/field mutation; do not use Set variable to write data-list fields.
+- Preserve `properties.listtype`: `select` for selected data sources, `current` for data-list current-list context.
+- Preserve selected target metadata: `properties.appid`, `properties.listsetid`, and `properties.listid`.
+- Preserve `properties.type` as `add`, `edit`, or `remove`.
+- For add/edit, generate `properties.listdatas[]` entries with `Columns`, `Per`, and expression-token-array `Data`.
+- For edit/remove, require explicit safe `properties.wheres[]` filters unless the user deliberately accepts a broad operation. Missing or empty filters should warn strongly.
+- Treat `remove` as destructive and require explicit user intent plus disposable or tightly filtered target data before runtime execution.
+- Preserve numeric operation codes `Per="0".."4"` from the export. Use codes `1..4` only for number fields when target field metadata is known.
+- Preserve approval-form and data-list sub-list/detail-row value expressions when the source and target fields are export-backed.
+- Do not claim add/update/delete, current-list mutation, document-library mutation, numeric operation execution, or sub-list row iteration without focused runtime proof.
+
+## Signal Event Addendum
+
+`Workflow Actions Runtime Baseline (6)_Signal event.yap` export-proves that front-end Signal event maps to internal `SignalEvent` in approval-form workflows. See `docs/studies/workflow-signal-event-action.md` and normalized refs under `docs/studies/normalized/workflow-signal-event/`.
+
+Generation rules:
+
+- Use `SignalEvent` only for approval-form Signal event branches unless another workflow host is export-proven.
+- Treat Signal event as a special event source with no incoming flow and one or more outgoing flows.
+- Preserve `properties.eventdefinitions[]` with `CancelEventDefinition` and/or `RevokeEventDefinition`.
+- Use Signal event for recall/terminate compensation logic, often followed by Set data list / `ContentList` cleanup.
+- Keep downstream edit/remove filters explicit and safe.
+- Do not claim recall/terminate triggering or cleanup mutation without focused runtime proof.

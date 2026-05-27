@@ -18,15 +18,15 @@ No workflow was submitted, no request was recalled or terminated, and no email d
 Source export:
 
 ```text
-/Users/Renger/Downloads/Test ABC (3).yap
+<downloads>/Test ABC (3).yap
 ```
 
 Comparison exports:
 
 ```text
-/Users/Renger/Downloads/Test ABC.yap
-/Users/Renger/Downloads/Test ABC (1).yap
-/Users/Renger/Downloads/Test ABC (2).yap
+<downloads>/Test ABC.yap
+<downloads>/Test ABC (1).yap
+<downloads>/Test ABC (2).yap
 ```
 
 Reference:
@@ -167,6 +167,28 @@ Validators should warn, not hard-error in compatibility mode, for:
 - Start condition runtime gating was not tested.
 - Start email delivery was not tested.
 
+## Signal Event Relationship
+
+`Workflow Actions Runtime Baseline (6)_Signal event.yap` adds a Signal event comparison point for approval-form workflows.
+
+| Concept | Approval Start action | Signal event | Proof |
+|---|---|---|---|
+| Internal type | `StartNoneEvent` | `SignalEvent` | export-proven |
+| Incoming flow | none | none | export-proven |
+| Outgoing flow | normal workflow branch | event compensation branch | export-proven |
+| Terminate/recall storage | `terminate`, `terminate-conditions`, `revoke-conditions` | `properties.eventdefinitions[]` | export-proven |
+| Cancel/terminate event | Start controls whether terminate is available | Signal listens with `CancelEventDefinition` | product-documented + export-proven config |
+| Recall/revoke event | Start controls recall conditions | Signal listens with `RevokeEventDefinition` | product-documented + export-proven config |
+| Downstream cleanup | not a Start concern | may connect to `ContentList`, Set Variable, task, email, or HTTP branches | product-documented; `ContentList` edit export-proven |
+
+Generation rule: use Start action settings to control submitter-facing terminate/recall availability, and use Signal event only as a separate event source branch for recall/terminate follow-up logic. Warn if a Signal event listens for an event that the Start settings appear to make unavailable. Do not claim recall/terminate execution or downstream cleanup execution without focused runtime proof.
+
+Normalized references:
+
+- `docs/studies/normalized/workflow-signal-event/signal-event-basic.normalized.json`
+- `docs/studies/normalized/workflow-signal-event/signal-event-cancel-and-revoke-definition.normalized.json`
+- `docs/studies/normalized/workflow-signal-event/signal-event-downstream-cleanup-flow.normalized.json`
+
 ## Data-List Workflow Start Action
 
 `Purchase Requests.ydl` adds a data-list workflow Start action comparison point.
@@ -187,3 +209,24 @@ Normalized references:
 
 - `docs/studies/normalized/workflow-start-action/start-action-data-list-workflow.normalized.json`
 - `docs/studies/normalized/workflow-start-action/start-action-data-list-email-notification.normalized.json`
+
+## Scheduled Workflow Start Action
+
+`Workflow Actions Runtime Baseline (1).yap` adds a Scheduled Workflow Start action comparison point.
+
+| Concept | Approval form workflow from `Test ABC (3).yap` | Data-list workflow from `Purchase Requests.ydl` | Scheduled Workflow from `Workflow Actions Runtime Baseline (1).yap` | Proof |
+|---|---|---|---|---|
+| Workflow type | `WorkflowType = 2` | `WorkflowType = 1` | `WorkflowType = 3`, `ListID = 0` | export-proven |
+| Start stencil | `StartNoneEvent` | `StartNoneEvent` | `StartNoneEvent` | export-proven |
+| Incoming flow | none | none | none | export-proven |
+| Outgoing flow | one or more | one | one | export-proven |
+| Allow terminate | `terminate` and `terminate-conditions` fields found | fields absent | fields absent | export-proven difference |
+| Allow recall | `revoke-conditions` field found | field absent | field absent | export-proven difference |
+| Email notification | `isenabledemail`, `to`, `subject`, `html` | same field family present | same field family present | product-documented + export-proven |
+| Expression context | applicant/request context | list-item context can appear elsewhere in data-list workflow | applicant/application-style expressions in Start email | export-proven |
+
+Generation rule: for Scheduled Workflow Start actions, preserve `StartNoneEvent` graph behavior and email fields when present, but do not add approval-form terminate/recall fields unless another Scheduled Workflow export proves them. Do not execute or trigger Scheduled Workflows during export-learning passes.
+
+Normalized reference:
+
+- `docs/studies/normalized/workflow-start-action/start-action-scheduled-workflow.normalized.json`
