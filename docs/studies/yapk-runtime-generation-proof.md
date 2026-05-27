@@ -186,11 +186,11 @@ Safe validator result:
 
 ## Proof Boundary
 
-This experiment proves local decode/edit/encode/sign/verify for one focused package and user-confirmed Yeeflow upgrade/list/form materialization. Item creation is not fully proven yet because the first generated package showed `Add failed` when saving a new record.
+This experiment proves local decode/edit/encode/sign/verify for one focused package and user-confirmed Yeeflow upgrade/list/form materialization. The v1.4 text-only isolation package also proves record creation for a minimal generated text-only data list.
 
 Current result:
 
-**Local decode/edit/encode/sign/verify is proven for this focused package, but Yeeflow runtime upgrade is not proven until the user manually upgrades/imports the generated package and confirms the new list appears.**
+**Local decode/edit/encode/sign/verify/runtime-upgrade/record-creation is proven for this focused package's minimal text-only data-list-add path.**
 
 Preserved boundaries:
 
@@ -199,8 +199,8 @@ Preserved boundaries:
 - Resource `AppPackageInfo` recovery is possible for this package by accepting streaming output that parses as complete JSON despite a final Brotli `unexpected end of file` error.
 - The generated package uses finalized standard Brotli Resource encoding and passes local decode/validation.
 - `setsign` and `verifysign` accepted the generated package.
-- Manual Yeeflow runtime upgrade is still pending.
-- The result proves only this focused data-list-add path for one package if runtime upgrade succeeds.
+- Manual Yeeflow runtime upgrade and record creation are user-proven for v1.4.
+- The result proves only this focused text-only data-list-add path for one package.
 - Offline `.yapk` content mutation is not generally supported beyond this focused proof.
 
 ## User Runtime Result for v1.1
@@ -364,6 +364,20 @@ Manual runtime retest needed:
 4. Add a new item with values for `Name`, `Test Status`, and `Test Notes`.
 5. Confirm whether save succeeds.
 
+User runtime result for v1.4:
+
+- Upgrade/import succeeded.
+- `YAPK Runtime Test List` appears in the application navigation.
+- Add form renders the expected text fields.
+- Saving a new item succeeds.
+- The saved row appears in the list with values for `Name`, `Test Status`, and `Test Notes`.
+
+Conclusion:
+
+- The first complete runtime proof is now established for decode -> edit -> encode -> sign -> verify -> upgrade -> add-item-save on this focused package.
+- The proven scope is a minimal generated text-only data list.
+- The earlier save failure was isolated away by removing the DateTime field, so DateTime field generation remains unproven.
+
 ## Product Question
 
 Ask product to confirm whether the provided `BrotliHelper.Compress(byte[])` intentionally returns the memory stream before disposing `BrotliStream`. If not intentional, the helper should dispose/close the Brotli stream before `ToArray()` so generated Resources are complete standard Brotli streams.
@@ -377,11 +391,8 @@ Also ask product for a fresh schema-standard `.yapk` pair known to satisfy:
 
 ## Next Step
 
-Manual runtime test:
+Follow-up proof target:
 
-1. Upgrade/import `/Users/Renger/Downloads/Projects Center_1-v1.1-yapk-runtime-test.yapk` in Yeeflow.
-2. Confirm whether the upgrade/import succeeds.
-3. Confirm whether `YAPK Runtime Test List` appears.
-4. Confirm whether the fields `Name`, `Test Status`, `Test Notes`, and `Test Date` are present.
-
-Only after user confirmation should this be labeled runtime-upgrade-proven.
+1. Generate one more small package from a fresh Yeeflow-generated baseline or version pair.
+2. Add a minimal non-text field only after matching native field metadata exactly.
+3. Runtime-test upgrade and add-item-save before broadening the supported `.yapk` generation claim.

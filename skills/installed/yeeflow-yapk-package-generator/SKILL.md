@@ -13,12 +13,12 @@ Current proof boundary:
 - Product schema describes `Resource` as a Brotli compressed string whose decompressed JSON should match `AppPackageInfo`.
 - In the current local study, readable historical `.yapk` artifacts did not Brotli-decode through tested variants, so Resource decode is not yet artifact-proven for those files.
 - A focused runtime-generation attempt against `Projects Center_1-v1..0.yapk` found that the original Resource emits complete parseable `AppPackageInfo` JSON from a streaming Brotli decoder before ending with `Z_BUF_ERROR`. Product's provided C# compression helper returns `MemoryStream.ToArray()` after `BrotliStream.Flush()` but before disposing the `BrotliStream`, which explains an unfinished Brotli stream. Treat this as a tolerant decode path, not as a general permission to ignore decompression errors.
-- The same focused experiment added one minimal data list, re-encoded Resource with finalized standard Brotli, called `setsign`, and passed `verifysign`. User confirmed v1.1 upgraded successfully, the generated list appeared, and the add form rendered, but saving a record failed with `Add failed`. Treat runtime upgrade/list/form materialization as proven and record creation as not proven.
+- The same focused experiment added one minimal data list, re-encoded Resource with finalized standard Brotli, called `setsign`, and passed `verifysign`. User confirmed v1.4 upgraded successfully, the generated text-only list appeared, the add form rendered, and saving a record succeeded. Treat only this minimal text-only data-list-add path as runtime-proven.
 - After `.env.local` credentials were added, the signing service accepted the same original `Projects Center_1-v1..0.yapk` wrapper when `/v1` was appended to the configured base URL: `setsign` returned a 32-byte sign and `verifysign` passed for both regenerated and original signs. This proves server-side signing/verification for the original valid Resource, not local Resource decoding or content mutation.
 - `setsign` / `verifysign` are evidence-backed for wrappers with already-valid existing Resource payloads.
 - Wrapper-only signed packages can be accepted but do not change app content when `Resource` is unchanged.
 - `.yap` gzip Resource encoding is not valid `.yapk` Resource encoding.
-- Offline `.yapk` content generation is not production-supported until edit -> Brotli encode -> sign -> verify -> runtime upgrade succeeds.
+- Offline `.yapk` content generation is proven only for the focused minimal text-only data-list-add path tested in `Projects Center_1-v1..0.yapk`; broader field types and richer app mutations remain experimental until separately runtime-proven.
 
 ## Default Workflow
 
@@ -76,7 +76,7 @@ Future generation requires all of:
 6. Verify the signature.
 7. Runtime upgrade in Yeeflow and confirm the intended content changed.
 
-Until step 7 succeeds, classify output as schema study, planning guidance, or experimental validation only. Continue using `.yap` for generated new/cloned application creation.
+Until step 7 succeeds for the exact mutation type, classify output as schema study, planning guidance, or experimental validation only. Continue using `.yap` for generated new/cloned application creation. For `.yapk`, the current proven generation scope is a minimal text-only data list.
 
 When editing decoded `AppPackageInfo`, preserve 64-bit numeric IDs. Plain JavaScript `JSON.parse` rounds large IDs and must not be used for app-content mutation unless a lossless JSON parser is used. The first focused edit used Python JSON handling for the app payload and Node only for byte-level compression/API calls.
 
@@ -152,7 +152,10 @@ The v1.4 text-only isolation package removes the `Test Date` field to test wheth
 - fields: `Name`, `Test Status`, `Test Notes`
 - `setsign`/`verifysign`: passed
 - inspector/validator: passed
-- runtime add-item retest: pending
+- runtime result: upgrade succeeded, list rendered, add form rendered, and saving a new item succeeded
+- conclusion: first complete runtime proof for decode -> edit -> encode -> sign -> verify -> upgrade -> add-item-save, scoped to a minimal text-only data list
+
+Do not generalize this to DateTime fields yet. v1.1 and v1.3 both failed record creation while including the generated DateTime field, and v1.2 failed upgrade when the DateTime field casing was changed.
 
 Ask product to confirm whether the provided `BrotliHelper.Compress(byte[])` should dispose/close `BrotliStream` before reading `MemoryStream.ToArray()`.
 
