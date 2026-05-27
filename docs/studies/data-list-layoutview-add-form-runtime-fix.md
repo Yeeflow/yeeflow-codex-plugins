@@ -100,6 +100,38 @@ Local validation passed with zero errors:
 
 Existing warnings are proof-boundary warnings for unproven field/control behavior and the intentionally minimal approval workflow, not LayoutView failures.
 
+## User-Confirmed Runtime Proof
+
+Runtime test date: 2026-05-27
+
+Generated package tested:
+
+`/Users/Renger/Downloads/container-button-action-runtime-proof.layoutview-fixed.v1.yap`
+
+User-confirmed runtime result:
+
+- the fixed package imported and was tested in Yeeflow
+- the Data List `Action Runtime Requests` opened
+- the default `+ New item` button was clicked
+- the Add modal rendered successfully
+- the previous infinite loading issue is fixed for this generated package
+
+Runtime-proven for this focused generated package:
+
+- `ListModel.LayoutView.add` resolving to a concrete Type `1` form layout fixes the default Data List New Item modal loading failure
+- concrete generated Type `1` `New Item`, `Edit Item`, and `View Item` layouts are accepted for this list
+- omitting object-shaped display-settings `sort` avoids the broken `ListModel.LayoutView` shape observed in the failing package
+
+Not proven by this test:
+
+- Add form save or record data mutation
+- exhaustive behavior for every field/control in the form
+- other open modes or modal sizes
+- public forms
+- Document Library layouts
+- Form Report layouts
+- arbitrary generated application patterns outside this focused Container/Button action runtime package
+
 ## Proof Boundary
 
-This fix is local validator-backed and package-generated. Runtime rendering of the default `+ New item` Add modal remains pending until the fixed package is imported into Yeeflow and manually tested.
+Runtime Add modal rendering is user-confirmed for this generated fixed Container/Button action runtime package. Add form save/data mutation and broader Data List, Public Form, Document Library, Form Report, and unrelated generated-app layout behavior remain unproven unless separately tested.
