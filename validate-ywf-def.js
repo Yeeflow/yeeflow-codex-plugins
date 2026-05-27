@@ -908,7 +908,7 @@ function validateDecodedDef(def, options = {}) {
         walkControls(child.children, {
           page: context.page,
           pagePath: context.pagePath,
-          listContext: context.listContext,
+          listContext: control.type === "list" ? control.binding : context.listContext,
           suffix: `${context.suffix || ""}[${index}].${child.suffixKey}`,
         });
       }
