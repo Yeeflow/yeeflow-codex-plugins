@@ -1,0 +1,67 @@
+{
+  "study": "yapk-runtime-generation-proof",
+  "date": "2026-05-27",
+  "inputLabel": "Projects Center_1-v1..0.yapk",
+  "redaction": {
+    "rawPackageCommitted": false,
+    "rawResourceCommitted": false,
+    "signCommitted": false,
+    "decodedFullPayloadCommitted": false,
+    "privateIdsCommitted": false,
+    "rawApiResponsesCommitted": false
+  },
+  "decode": {
+    "wrapperParse": true,
+    "hasBom": true,
+    "wrapperKeyCount": 13,
+    "requiredWrapperKeysPresent": true,
+    "resourceBase64Decode": true,
+    "resourceStringLength": 65688,
+    "resourceDecodedBytes": 49264,
+    "resourceEntropyEstimate": 7.993,
+    "brotliDecode": false,
+    "brotliDecodeAttempts": [
+      {
+        "name": "base64Bytes",
+        "result": "failed",
+        "errorClass": "Z_BUF_ERROR"
+      },
+      {
+        "name": "rawResourceUtf8Bytes",
+        "result": "failed",
+        "errorClass": "ERR__ERROR_FORMAT_CL_SPACE"
+      },
+      {
+        "name": "base64urlBytes",
+        "result": "failed",
+        "errorClass": "Z_BUF_ERROR"
+      }
+    ],
+    "decodedAppPackageInfo": false
+  },
+  "requestedEdit": {
+    "description": "Add one minimal data list named YAPK Runtime Test List",
+    "attempted": false,
+    "reason": "Hard stop: Resource did not Brotli-decode to AppPackageInfo."
+  },
+  "encodeSignVerify": {
+    "reencodedResource": false,
+    "setsignAttempted": false,
+    "verifysignAttempted": false,
+    "generatedPackage": false
+  },
+  "validation": {
+    "inspectorStatus": "fail",
+    "validatorStatus": "fail",
+    "failureCode": "YAPK_RESOURCE_BROTLI_DECODE_FAILED"
+  },
+  "proofBoundary": {
+    "wrapperInspection": "proven for this package",
+    "resourceBase64Decode": "proven for this package",
+    "resourceBrotliDecode": "failed for this package",
+    "resourceEdit": "not attempted",
+    "offlineContentMutation": "unsupported",
+    "runtimeUpgrade": "not attempted"
+  },
+  "nextStep": "Ask product whether this package has an additional Resource encoding/encryption/checksum/package-version layer, or provide a fresh schema-standard YAPK known to Brotli-decode to AppPackageInfo."
+}

@@ -12,6 +12,7 @@ Current proof boundary:
 - `.yapk` wrapper schema is product-schema-backed as `AppExportPackageInfo`.
 - Product schema describes `Resource` as a Brotli compressed string whose decompressed JSON should match `AppPackageInfo`.
 - In the current local study, readable historical `.yapk` artifacts did not Brotli-decode through tested variants, so Resource decode is not yet artifact-proven for those files.
+- A focused runtime-generation attempt against `Projects Center_1-v1..0.yapk` also failed at the decode gate: wrapper parse and Resource base64 decode succeeded, but base64-bytes, raw-UTF8, and base64url Brotli attempts did not produce `AppPackageInfo` JSON.
 - `setsign` / `verifysign` are evidence-backed for wrappers with already-valid existing Resource payloads.
 - Wrapper-only signed packages can be accepted but do not change app content when `Resource` is unchanged.
 - `.yap` gzip Resource encoding is not valid `.yapk` Resource encoding.
@@ -100,3 +101,15 @@ Stop and report the proof boundary when:
 - The task requires app-content mutation but no product-supported Resource-generation/signing/runtime proof is available.
 - The only successful change is wrapper metadata or `Sign`, because unchanged Resource means unchanged app content.
 - Any raw package, payload, private ID, API response, secret, screenshot, or decoded full payload would need to be committed.
+
+## Runtime-generation Experiment Notes
+
+For `Projects Center_1-v1..0.yapk`, do not proceed to edit, encode, sign, or runtime-test from the current tooling. The safe result is:
+
+- wrapper JSON parse: succeeded
+- Resource base64 decode: succeeded
+- Resource Brotli/AppPackageInfo decode: failed
+- requested data-list add: not attempted
+- generated package: none
+
+Ask product whether packages like this use an additional Resource encoding, encryption, checksum, package-version layer, or non-standard Brotli processing before/after the schema-described `AppPackageInfo`.
