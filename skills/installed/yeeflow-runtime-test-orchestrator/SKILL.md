@@ -234,3 +234,11 @@ V1.5 user runtime result: `/Users/Renger/Downloads/Sub List Dynamic Runtime Proo
 
 For Data List print-page follow-up tests, use `docs/studies/data-list-print-page-dynamic-sub-list.md`: import or inspect a package with a Data List custom View form action using `type = "print"`, open the View form, click the print action, and verify the Print Page renders read-only Dynamic Sub List line items. Do not claim runtime print preview/execution from export inspection alone.
 <!-- sub-list-dynamic-content-learning:end -->
+
+<!-- kanban-collection-dynamic-controls-learning:start -->
+## Kanban/Collection Dynamic Controls Runtime Boundary
+
+`Company Overview.yap` export-proves Kanban, Collection, and Dynamic control schema, but not runtime behavior. A focused runtime proof should import a disposable package, open the dashboard pages, verify Kanban grouping and Collection cards render, verify Dynamic field/user/image/file values display without missing-binding errors, and separately test any item click, image preview, file preview/download, or Kanban drag/drop behavior that the package intends to claim.
+
+Data List custom-form Dynamic field usage with source `4` is export-proven on `View page`, but runtime custom-form behavior remains unproven until the form is opened and verified in Yeeflow.
+<!-- kanban-collection-dynamic-controls-learning:end -->

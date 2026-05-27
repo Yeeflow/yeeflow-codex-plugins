@@ -472,3 +472,11 @@ For Data List print pages, use a dedicated Type `1` custom form as the print tar
 
 Read-only print forms should avoid Add/Import/Edit row actions unless intentionally requested. Dynamic item template field controls must bind to row fields and keep `attrs.list_field_binding` aligned with the parent Sub List binding. Runtime print preview/execution remains unproven until a focused runtime test, and Dashboard/Approval Form Print page action availability is product/schema-understanding-backed unless separately export-proven.
 <!-- sub-list-dynamic-content-learning:end -->
+
+<!-- kanban-collection-dynamic-controls-learning:start -->
+## Dynamic Controls On Data List Custom Forms
+
+Use `docs/studies/kanban-collection-dynamic-controls.md` when a Data List custom form needs read-only/current-record display via Dynamic controls. `Company Overview.yap` export-proves three `dynamic-field` controls on the `Company Overview` Data List custom form `View page`. These controls use `attrs.source = "4"` to read the current list item and `attrs["obj-f"]` to identify the current list field.
+
+For generated Data List custom forms, validate that Dynamic controls with source `4` bind to fields on the host list. Prefer Dynamic user for identity fields, Dynamic image for image fields, Dynamic file for attachment/file fields, and Dynamic field for general values. This export does not prove Dynamic user/image/file on Data List custom forms; it proves those specialized controls inside Dashboard Kanban/Collection templates only.
+<!-- kanban-collection-dynamic-controls-learning:end -->

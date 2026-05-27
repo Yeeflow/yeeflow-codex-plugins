@@ -360,3 +360,13 @@ Validate every generated action before handoff. `attrs.data.list.ListID` must re
 
 Focused runtime proof in `docs/studies/container-button-action-runtime-proof.md` confirms a generated dashboard package imported/opened and representative Link, Add list item, Open dashboard, and Open approval form actions worked after the approval request-page fix. Treat this as generated-package proof for current-app navigation/open behavior only; keep save/submit/workflow, cross-app targets, form-action binding, external sensitive navigation, and all open-mode/size combinations unproven.
 <!-- container-button-action-settings-learning:end -->
+
+<!-- kanban-collection-dynamic-controls-learning:start -->
+## Kanban, Collection, And Dynamic Controls
+
+Use `docs/studies/kanban-collection-dynamic-controls.md`, normalized refs under `docs/studies/normalized/kanban-collection-dynamic-controls/`, and `scripts/inspect-kanban-collection-dynamic-controls.mjs` when dashboards use Kanban, Collection, or Dynamic field/user/image/file controls. `Company Overview.yap` export-proves a Dashboard Kanban control on `Company overview` and a Dashboard Collection control on `Collection of activity`, both using a Data List source named `Company Overview`.
+
+Kanban controls use `attrs.data.list` for the data source and `attrs.data.cateField` for category/grouping. Collection controls use `attrs.data.list` for the source and `attrs.layout` for card/grid layout. Dynamic controls inside Kanban/Collection item templates use current-item context with `attrs.source = "3"` and `attrs["obj-f"]` set to a field name on the selected source list. Validate the source list, Kanban category field, and every Dynamic control field binding before handoff.
+
+Use specialized Dynamic controls for specialized source fields: Dynamic user for identity/person fields, Dynamic image for image fields, Dynamic file for attachment/file fields, and Dynamic field for general text/date/number/choice values. This export proves Dynamic user/image/file inside dashboard item templates and Dynamic field on both dashboards and a Data List View page. It does not prove timeline controls, Kanban drag/drop, Collection click behavior, or file/image preview runtime behavior.
+<!-- kanban-collection-dynamic-controls-learning:end -->

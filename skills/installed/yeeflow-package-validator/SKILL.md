@@ -285,3 +285,11 @@ Row operation menu validation: warn when menu buttons do not resolve to local Su
 
 Data List custom form Print Page validation: `Sales Quotation.yap` export-proves a Type `1` custom form target named `Print Page`, a read-only/display-oriented Dynamic Sub List bound to a Sub List field, and a `View Quotation` form action step `type = "print"` with `attrs.printtype = "select"`, a resolvable `attrs.layout`, and `attrs.listdataid[]` carrying current `ListDataID`. Generated-final packages should hard-error missing or unresolved print target layouts and missing current-record context when the schema clearly requires it. Warn when the resolved target is not print-named, when print Dynamic Sub List field bindings do not resolve to `Rules["list-variables"]`, or when read-only print forms expose Add/Import/Edit row actions unexpectedly.
 <!-- sub-list-dynamic-content-learning:end -->
+
+<!-- kanban-collection-dynamic-controls-learning:start -->
+## Kanban/Collection Dynamic Control Validation
+
+Use `scripts/inspect-kanban-collection-dynamic-controls.mjs` and `docs/studies/kanban-collection-dynamic-controls.md` for dashboard Kanban/Collection packages and Data List custom forms with Dynamic controls. Validate that Kanban and Collection `attrs.data.list.ListID` resolves to an included source list; Kanban `attrs.data.cateField` resolves to a source field; Dynamic controls inside Kanban/Collection item templates use source `3` and bind to source-list fields; and Dynamic controls on Data List custom forms use source `4` and bind to host-list fields.
+
+Specialized Dynamic controls should match field families: Dynamic user to identity/person fields, Dynamic image to image fields, Dynamic file to attachment/file fields. Use warnings for historical exports and hard errors for clear generated-final mismatches. Do not treat validator success as runtime proof for Kanban rendering, drag/drop, click behavior, image/file preview, or Data List form runtime behavior.
+<!-- kanban-collection-dynamic-controls-learning:end -->

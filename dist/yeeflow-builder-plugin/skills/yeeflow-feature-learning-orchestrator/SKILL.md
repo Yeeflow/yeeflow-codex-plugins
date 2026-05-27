@@ -357,3 +357,11 @@ V1 runtime feedback found a table-layout defect: the generated header Grid colla
 
 `Sub list Dynamic (1).yap` confirms that Sub List row operation menus can use a `dropbar` inside the dynamic item template with menu buttons bound to local `attrs.actions[]`: Duplicate uses `list_dup`, Insert before/after use positioned `list_new`, Move up uses `list_move`, and Move down uses `list_move` with `attrs.moveMode = "2"`. Keep Delete as a visible last-column action when present rather than duplicating it in the row menu. V1.4 generation/signing/validation is local proof only until runtime testing confirms the row-order actions.
 <!-- sub-list-dynamic-content-learning:end -->
+
+<!-- kanban-collection-dynamic-controls-learning:start -->
+## Kanban/Collection/Dynamic Controls Learning
+
+For Kanban, Collection, and Dynamic control learning, use `docs/studies/kanban-collection-dynamic-controls.md`, normalized refs under `docs/studies/normalized/kanban-collection-dynamic-controls/`, and `scripts/inspect-kanban-collection-dynamic-controls.mjs`. `Company Overview.yap` export-proves Dashboard Kanban usage, Dashboard Collection usage, Dynamic controls inside their item templates, and Dynamic field controls on a Data List `View page`.
+
+Preserve the proof boundary: Kanban/Collection/Dynamic schema is export-proven where observed; runtime rendering, drag/drop, click behavior, dynamic file/image preview, Data List form runtime behavior, and Vertical/Horizontal Timeline controls remain unproven until focused tests or separate exports cover them.
+<!-- kanban-collection-dynamic-controls-learning:end -->

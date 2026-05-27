@@ -679,3 +679,11 @@ Choose structural Yeeflow actions instead of raw links when the target is a Yeef
 
 Focused runtime proof in `docs/studies/container-button-action-runtime-proof.md` confirms representative generated current-app Container/Button action navigation for Link, Add list item, Open dashboard, and Open approval form. For generated approval forms opened from dashboard actions, preserve request-page publish readiness: `DefResource.pageurls[]` should contain a request page with outer `type = 1` and `pagetype = 1`, embedded `formdef.id` equal to the page ID, embedded `formdef.pagetype = 1`, populated form name/title, array `filterVars`/`tempVars`, and Start node `taskurl`/`taskUrl`/`TaskUrl` aliases pointing at that request page. The runtime proof fixed `process request pageUrl is null key:CBAR`; do not claim submit/workflow/cross-app/form-action binding proof from it.
 <!-- container-button-action-settings-learning:end -->
+
+<!-- kanban-collection-dynamic-controls-learning:start -->
+## Kanban/Collection Dynamic Control Application Guidance
+
+When app requirements call for grouped cards, activity cards, or current-record display, use the export-backed guidance in `docs/studies/kanban-collection-dynamic-controls.md`. Dashboard Kanban and Collection controls should resolve `attrs.data.list` to an included source list; Kanban must also resolve `attrs.data.cateField`. Dynamic controls inside item templates use `attrs.source = "3"` for the current Kanban/Collection item, while Data List custom forms use `attrs.source = "4"` for the current list item.
+
+Generate Dynamic user/image/file controls only against compatible user/image/file fields, and use Dynamic field for general fields. Do not claim Vertical Timeline or Horizontal Timeline support from this learning branch, and keep runtime claims for Kanban rendering, drag/drop, click behavior, image/file preview, and Data List form behavior pending until a focused runtime package is tested.
+<!-- kanban-collection-dynamic-controls-learning:end -->

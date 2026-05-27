@@ -370,3 +370,11 @@ For business table-style line items, prefer the corrected Dynamic Sub List grid 
 
 For quote/invoice/proposal scenarios that need print output, `Sales Quotation.yap` export-proves a Data List `Quotation` custom form named `Print Page` with a read-only Dynamic Sub List for line items and a View form button/action that calls it through a `type = "print"` form action step. Generate print pages as dedicated Type `1` custom forms, bind Dynamic Sub List row displays to a real Sub List field, resolve row fields from `Rules["list-variables"]`, hide edit/add actions on read-only print displays, and keep runtime print execution claims pending until the user tests the print preview.
 <!-- sub-list-dynamic-content-learning:end -->
+
+<!-- kanban-collection-dynamic-controls-learning:start -->
+## Kanban/Collection Dynamic Controls Planning
+
+For business apps that need grouped work cards, activity collections, or read-only record headers, prefer native Kanban, Collection, and Dynamic controls where the source list and field bindings can be resolved. `Company Overview.yap` export-proves Dashboard Kanban/Collection item templates using Dynamic controls with source `3`, and a Data List `View page` using Dynamic field controls with source `4`.
+
+In plans and final reports, separate export-proven schema from runtime proof. This branch does not prove Kanban drag/drop, item click behavior, dynamic image/file preview behavior, Data List custom form runtime rendering, or timeline controls.
+<!-- kanban-collection-dynamic-controls-learning:end -->

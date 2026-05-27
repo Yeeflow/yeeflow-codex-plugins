@@ -100,6 +100,10 @@ const PIVOT_TABLE_COUNT_AGGREGATIONS = new Set(["COUNT", "COUNT_DISTINCT"]);
 const PIVOT_TABLE_NUMERIC_AGGREGATIONS = new Set(["SUM", "AVG", "MIN", "MAX"]);
 const PIVOT_TABLE_NUMERIC_FIELD_TYPES = new Set(["input_number", "currency", "percent", "rate", "calculated-column", "Decimal", "Int", "Bigint", "Number"]);
 const PIVOT_TABLE_DATE_FIELD_TYPES = new Set(["datepicker", "time", "Datetime", "DateTime", "Date", "Time"]);
+const DYNAMIC_DISPLAY_CONTROL_TYPES = new Set(["dynamic-field", "dynamic-user", "dynamic-image", "dynamic-file"]);
+const DYNAMIC_USER_FIELD_TYPES = new Set(["identity-picker", "signer", "user", "users", "person"]);
+const DYNAMIC_IMAGE_FIELD_TYPES = new Set(["icon-upload", "image", "picture"]);
+const DYNAMIC_FILE_FIELD_TYPES = new Set(["file-upload", "file-upload-merge", "attachment", "file"]);
 const CUSTOM_FORM_OPEN_MODE_LABELS = {
   modal: "Pop-up window",
   slide: "Slide in",
@@ -1504,19 +1508,42 @@ function validateDashboardFunctionalQuality(page, title, layoutId, report) {
   }
 }
 
+function dynamicFieldTypeIssue(controlType) {
+  if (controlType === "dynamic-user") return { code: "DYNAMIC_USER_FIELD_TYPE_MISMATCH", message: "Dynamic user controls should bind to user/person fields.", allowed: DYNAMIC_USER_FIELD_TYPES };
+  if (controlType === "dynamic-image") return { code: "DYNAMIC_IMAGE_FIELD_TYPE_MISMATCH", message: "Dynamic image controls should bind to image fields.", allowed: DYNAMIC_IMAGE_FIELD_TYPES };
+  if (controlType === "dynamic-file") return { code: "DYNAMIC_FILE_FIELD_TYPE_MISMATCH", message: "Dynamic file controls should bind to attachment/file fields.", allowed: DYNAMIC_FILE_FIELD_TYPES };
+  return null;
+}
+
+function fieldControlType(field) {
+  return safeString(field && (field.Type || field.FieldType));
+}
+
+function validateDynamicFieldType(controlType, field, report, severity, context) {
+  if (!field) return;
+  const mismatch = dynamicFieldTypeIssue(controlType);
+  const sourceType = fieldControlType(field);
+  if (mismatch && sourceType && !mismatch.allowed.has(sourceType)) {
+    issue(report, severity, mismatch.code, mismatch.message, { ...context, sourceType, fieldName: safeString(field.FieldName), fieldDisplayName: safeString(field.DisplayName) });
+  }
+  if (controlType === "dynamic-field" && sourceType && (DYNAMIC_USER_FIELD_TYPES.has(sourceType) || DYNAMIC_IMAGE_FIELD_TYPES.has(sourceType) || DYNAMIC_FILE_FIELD_TYPES.has(sourceType))) {
+    issue(report, "warning", "DYNAMIC_FIELD_SPECIALIZED_CONTROL_RECOMMENDED", "Dynamic field can display general values; for user/image/file fields prefer the specialized Dynamic user/image/file control when generating new layouts.", { ...context, sourceType, fieldName: safeString(field.FieldName), fieldDisplayName: safeString(field.DisplayName) });
+  }
+}
+
 function validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report) {
   const severity = generatorFinalSeverity(report);
   const seenControlIds = new Set();
-  function validateExpressionNode(node, pointer, collection) {
+  function validateExpressionNode(node, pointer, itemContext) {
     if (!isObject(node)) return;
-    if (node.exprType === "variable_ctx" && node.ctx === "__ctx_coll") {
-      if (!collection) {
-        issue(report, severity, "DASHBOARD_COLLECTION_CONTEXT_EXPR_OUTSIDE_COLLECTION", "Collection item expressions should be nested inside a collection item template.", { title, layoutId, pointer, field: safeString(node.id) });
+    if (node.exprType === "variable_ctx" && (node.ctx === "__ctx_coll" || node.ctx === "__ctx_kanban")) {
+      if (!itemContext) {
+        issue(report, severity, "DASHBOARD_ITEM_CONTEXT_EXPR_OUTSIDE_TEMPLATE", "Collection/Kanban item expressions should be nested inside an item template.", { title, layoutId, pointer, ctx: safeString(node.ctx), field: safeString(node.id) });
         return;
       }
       const fieldName = safeString(node.id);
-      if (fieldName && !collection.fields.has(fieldName)) {
-        issue(report, severity, "DASHBOARD_COLLECTION_EXPR_FIELD_UNRESOLVED", "Collection item expression references a field not present on the collection source list.", { title, layoutId, pointer, listId: collection.listId, fieldName });
+      if (fieldName && fieldName !== "_cate" && !itemContext.fields.has(fieldName)) {
+        issue(report, severity, "DASHBOARD_ITEM_EXPR_FIELD_UNRESOLVED", "Collection/Kanban item expression references a field not present on the source list.", { title, layoutId, pointer, host: itemContext.host, listId: itemContext.listId, fieldName });
       }
     }
     if (node.exprType === "variable" && safeString(node.id).startsWith("__filter_")) {
@@ -1531,9 +1558,9 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
     }
   }
 
-  function validateControlDisplay(control, pointer, collection) {
+  function validateControlDisplay(control, pointer, itemContext) {
     for (const [index, rule] of asArray(control.attrs && control.attrs.control_display).entries()) {
-      walk(rule.formulas, (node, formulaPointer) => validateExpressionNode(node, `${pointer}.attrs.control_display[${index}].formulas${formulaPointer.slice(1)}`, collection));
+      walk(rule.formulas, (node, formulaPointer) => validateExpressionNode(node, `${pointer}.attrs.control_display[${index}].formulas${formulaPointer.slice(1)}`, itemContext));
       const ruleControlId = safeString(rule.controlId);
       const controlId = safeString(control.id);
       if (ruleControlId && controlId && ruleControlId !== controlId) {
@@ -1562,7 +1589,7 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
     }
   }
 
-  function visit(control, pointer, collection) {
+  function visit(control, pointer, itemContext) {
     if (!isObject(control)) return;
     const controlId = safeString(control.id);
     if (controlId) {
@@ -1590,18 +1617,26 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
         issue(report, severity, "DASHBOARD_FILTER_CONTROL_BINDING_UNRESOLVED", "Dashboard filter control binding should resolve to page.filterVars.", { title, layoutId, pointer, controlId, binding, filterVar });
       }
     }
-    let activeCollection = collection;
-    if (control.type === "collection") {
+    let activeContext = itemContext;
+    if (control.type === "collection" || control.type === "kanban") {
       const listId = safeString(control.attrs && control.attrs.data && control.attrs.data.list && control.attrs.data.list.ListID);
       if (!listId) {
-        issue(report, severity, "DASHBOARD_COLLECTION_LIST_MISSING", "Collection control should include attrs.data.list.ListID.", { title, layoutId, pointer });
+        issue(report, severity, control.type === "kanban" ? "DASHBOARD_KANBAN_LIST_MISSING" : "DASHBOARD_COLLECTION_LIST_MISSING", "Kanban/Collection control should include attrs.data.list.ListID.", { title, layoutId, pointer, controlType: control.type });
       } else if (!listsById.has(listId)) {
-        issue(report, severity, "DASHBOARD_COLLECTION_LIST_REFERENCE_UNRESOLVED", "Collection control data source should resolve to a list included in the package.", { title, layoutId, pointer, listId });
+        issue(report, severity, control.type === "kanban" ? "DASHBOARD_KANBAN_LIST_REFERENCE_UNRESOLVED" : "DASHBOARD_COLLECTION_LIST_REFERENCE_UNRESOLVED", "Kanban/Collection control data source should resolve to a list included in the package.", { title, layoutId, pointer, listId });
       }
       const fields = fieldsByList.get(listId) || new Map();
-      activeCollection = { listId, fields };
+      activeContext = { host: control.type, listId, fields };
+      if (control.type === "kanban") {
+        const categoryField = safeString(control.attrs && control.attrs.data && control.attrs.data.cateField);
+        if (!categoryField) {
+          issue(report, severity, "DASHBOARD_KANBAN_CATEGORY_FIELD_MISSING", "Kanban control should include attrs.data.cateField for grouping.", { title, layoutId, pointer, listId });
+        } else if (!fields.has(categoryField)) {
+          issue(report, severity, "DASHBOARD_KANBAN_CATEGORY_FIELD_UNRESOLVED", "Kanban category/group-by field should resolve to a source list field.", { title, layoutId, pointer: `${pointer}.attrs.data.cateField`, listId, fieldName: categoryField });
+        }
+      }
       if (!asArray(control.children).length) {
-        issue(report, severity, "DASHBOARD_COLLECTION_ITEM_TEMPLATE_MISSING", "Collection control should include one item-template child.", { title, layoutId, pointer, listId });
+        issue(report, severity, control.type === "kanban" ? "DASHBOARD_KANBAN_ITEM_TEMPLATE_MISSING" : "DASHBOARD_COLLECTION_ITEM_TEMPLATE_MISSING", "Kanban/Collection control should include an item-template child.", { title, layoutId, pointer, listId });
       }
       for (const [fulltextIndex, item] of asArray(control.attrs && control.attrs.data && control.attrs.data.fulltext).entries()) {
         for (const [fieldIndex, fieldName] of asArray(item.fields).map(safeString).entries()) {
@@ -1609,22 +1644,25 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
             issue(report, severity, "DASHBOARD_COLLECTION_FULLTEXT_FIELD_UNRESOLVED", "Collection fulltext search references a field not present on the collection source list.", { title, layoutId, pointer: `${pointer}.attrs.data.fulltext[${fulltextIndex}].fields[${fieldIndex}]`, listId, fieldName });
           }
         }
-        walk(item.value, (node, valuePointer) => validateExpressionNode(node, `${pointer}.attrs.data.fulltext[${fulltextIndex}].value${valuePointer.slice(1)}`, activeCollection));
+        walk(item.value, (node, valuePointer) => validateExpressionNode(node, `${pointer}.attrs.data.fulltext[${fulltextIndex}].value${valuePointer.slice(1)}`, activeContext));
       }
     }
-    if (control.type === "dynamic-field" && safeString(control.attrs && control.attrs.source) === "3") {
-      if (!activeCollection) {
-        issue(report, severity, "DASHBOARD_COLLECTION_DYNAMIC_FIELD_OUTSIDE_COLLECTION", "Dynamic field source 3 should be nested inside a collection item template.", { title, layoutId, pointer, fieldName: safeString(control.attrs && control.attrs["obj-f"]) });
+    if (DYNAMIC_DISPLAY_CONTROL_TYPES.has(safeString(control.type)) && safeString(control.attrs && control.attrs.source) === "3") {
+      if (!activeContext) {
+        issue(report, severity, "DASHBOARD_DYNAMIC_CONTROL_OUTSIDE_ITEM_CONTEXT", "Dynamic controls with source 3 should be nested inside a Kanban/Collection item template.", { title, layoutId, pointer, controlType: control.type, fieldName: safeString(control.attrs && control.attrs["obj-f"]) });
       } else {
         const fieldName = safeString(control.attrs && control.attrs["obj-f"]);
-        if (fieldName && !activeCollection.fields.has(fieldName)) {
-          issue(report, severity, "DASHBOARD_COLLECTION_DYNAMIC_FIELD_UNRESOLVED", "Dynamic field source 3 references a field not present on the collection source list.", { title, layoutId, pointer, listId: activeCollection.listId, fieldName });
+        const field = activeContext.fields.get(fieldName);
+        if (fieldName && !field) {
+          issue(report, severity, "DASHBOARD_DYNAMIC_CONTROL_FIELD_UNRESOLVED", "Dynamic control source 3 references a field not present on the Kanban/Collection source list.", { title, layoutId, pointer, host: activeContext.host, controlType: control.type, listId: activeContext.listId, fieldName });
+        } else {
+          validateDynamicFieldType(safeString(control.type), field, report, severity, { title, layoutId, pointer, host: activeContext.host, controlType: control.type });
         }
       }
     }
-    validateControlDisplay(control, pointer, activeCollection);
-    if (control.attrs) walk(control.attrs, (node, attrPointer) => validateExpressionNode(node, `${pointer}.attrs${attrPointer.slice(1)}`, activeCollection));
-    asArray(control.children).forEach((child, index) => visit(child, `${pointer}.children[${index}]`, activeCollection));
+    validateControlDisplay(control, pointer, activeContext);
+    if (control.attrs) walk(control.attrs, (node, attrPointer) => validateExpressionNode(node, `${pointer}.attrs${attrPointer.slice(1)}`, activeContext));
+    asArray(control.children).forEach((child, index) => visit(child, `${pointer}.children[${index}]`, activeContext));
   }
 
   asArray(page.children).forEach((child, index) => visit(child, `$.children[${index}]`, null));
@@ -2505,6 +2543,18 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report, layo
     }
     if (control.fieldID && !fieldsByName.has(String(control.fieldID))) {
       issue(report, "warning", "CUSTOM_FORM_FIELDID_NOT_FOUND", "Custom form control fieldID does not resolve to a field.", { title: layout.Title, fieldID: control.fieldID });
+    }
+    if (DYNAMIC_DISPLAY_CONTROL_TYPES.has(safeString(control.type)) && safeString(control.attrs && control.attrs.source) === "4") {
+      const fieldName = safeString(control.attrs && control.attrs["obj-f"]);
+      const field = fieldsByName.get(fieldName);
+      const controlPath = `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}`;
+      if (!fieldName) {
+        issue(report, generatorFinalSeverity(report), "CUSTOM_FORM_DYNAMIC_FIELD_BINDING_MISSING", "Dynamic controls on Data List custom forms should include attrs.obj-f for the current list item field.", { title: layout.Title, path: controlPath, controlType: control.type });
+      } else if (!field) {
+        issue(report, generatorFinalSeverity(report), "CUSTOM_FORM_DYNAMIC_FIELD_BINDING_UNRESOLVED", "Dynamic controls on Data List custom forms should bind to a field on the current list item.", { title: layout.Title, path: controlPath, controlType: control.type, fieldName });
+      } else {
+        validateDynamicFieldType(safeString(control.type), field, report, generatorFinalSeverity(report), { title: layout.Title, path: controlPath, host: "data-list-custom-form", controlType: control.type });
+      }
     }
     if (safeString(control.type) === "list") validateCustomFormSubListControl(control, fieldsByName, report, { title: layout.Title, path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}` });
   }));
