@@ -38,6 +38,33 @@ Schema-standard `AppPackageInfo` parse: not reached because Brotli decode failed
 
 Decoded structure summary: unavailable. No decoded JSON top-level keys or list/page/form/report counts could be produced safely because the Resource did not decompress to JSON.
 
+## Decode Debug Follow-up
+
+Product confirmation received after the first run: YAPK `Resource` should be exactly `base64(Brotli(AppPackageInfo JSON))`.
+
+Additional safe diagnostics were run against the same input package:
+
+| Diagnostic | Result |
+| --- | --- |
+| Strict base64 alphabet and padding | passed |
+| Resource length modulo 4 | 0 |
+| Base64 round-trip after decode/re-encode | unchanged |
+| JSON wrapper completeness | closing object present |
+| Local Brotli control stream | passed |
+| Node Brotli full decoded Resource | failed: unexpected end of file |
+| Node Brotli with large-window decoder parameter | failed: unexpected end of file |
+| Homebrew Brotli CLI | failed: corrupt input |
+| Small header skip attempts | no JSON output |
+| Arbitrary trailer trimming with offsets 0-16 | no JSON output |
+| gzip/zlib/raw inflate/unzip/zstd checks | failed |
+| Local `YEEFLOW_API_KEY` for `verifysign` | unavailable |
+
+Interpretation:
+
+- The failure is not caused by JSON BOM handling, non-strict base64, missing base64 padding, URL-safe base64, whitespace, or local Brotli support.
+- The decoded bytes are stable and complete as represented in the wrapper, but standard Brotli decoders do not accept them as a complete Brotli stream.
+- This conflicts with the product-confirmed format for this specific package unless there is another package/source issue, version layer, export option, or product-specific transformation not represented in the schema statement.
+
 ## Requested Edit
 
 Requested change: add one minimal data list named `YAPK Runtime Test List`.

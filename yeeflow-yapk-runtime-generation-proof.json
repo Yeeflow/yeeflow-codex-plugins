@@ -39,6 +39,22 @@
     ],
     "decodedAppPackageInfo": false
   },
+  "decodeDebugFollowUp": {
+    "productConfirmedFormat": "base64(Brotli(AppPackageInfo JSON))",
+    "strictBase64": true,
+    "resourceLengthMod4": 0,
+    "base64RoundTripSame": true,
+    "jsonWrapperComplete": true,
+    "localBrotliControlStream": true,
+    "nodeBrotliFullResource": "failed: unexpected end of file",
+    "nodeBrotliLargeWindow": "failed: unexpected end of file",
+    "homebrewBrotliCli": "failed: corrupt input",
+    "smallHeaderSkipAttempts": "no JSON output",
+    "trailerTrimOffsets0To16": "no JSON output",
+    "gzipZlibRawInflateUnzipZstd": "failed",
+    "localApiKeyAvailableForVerifySign": false,
+    "interpretation": "The blocker is not BOM handling, base64 normalization, padding, URL-safe alphabet handling, whitespace, or local Brotli support. The decoded bytes are stable but are not accepted by standard Brotli decoders for this package."
+  },
   "requestedEdit": {
     "description": "Add one minimal data list named YAPK Runtime Test List",
     "attempted": false,
