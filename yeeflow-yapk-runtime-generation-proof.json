@@ -179,11 +179,11 @@
     "resourceEdit": "completed for one minimal data-list add",
     "reencode": "completed with finalized standard Brotli",
     "signing": "setsign/verifysign passed",
-    "runtimeUpgrade": "v1.1 upgrade/list/form materialization proven; v1.1 record creation failed; v1.2 upgrade failed due invalid date casing; v1.3 tablecode-only fix runtime retest pending",
+    "runtimeUpgrade": "v1.1 upgrade/list/form materialization proven; v1.1 record creation failed; v1.2 upgrade failed due invalid date casing; v1.3 upgrade succeeded but record creation still failed; v1.4 text-only isolation retest pending",
     "offlineContentMutation": "not generally supported beyond this focused experimental proof until runtime succeeds",
     "recordCreation": "not proven"
   },
-  "nextStep": "User upgrades/imports /Users/Renger/Downloads/Projects Center_1-v1.3-yapk-runtime-tablecode-fix.yapk and retests Add new item on YAPK Runtime Test List.",
+  "nextStep": "User upgrades/imports /Users/Renger/Downloads/Projects Center_1-v1.4-yapk-runtime-text-only.yapk and retests Add new item on YAPK Runtime Test List with text fields only.",
   "runtimeUserResultV11": {
     "packageLabel": "Projects Center_1-v1.1-yapk-runtime-test.yapk",
     "upgradeSucceeded": true,
@@ -226,6 +226,31 @@
       "Preserve Test Date FieldName as DateTime4",
       "Preserve Test Date FieldType as DateTime",
       "Preserve layout query/layout references as DateTime4"
+    ],
+    "setsignOk": true,
+    "verifysignOk": true,
+    "inspectorStatus": "pass",
+    "validatorStatus": "pass",
+    "resourceChangedFromV11": true,
+    "signChangedFromV11": true,
+    "runtimeRetestStatus": "pending user manual test"
+  },
+  "runtimeUserResultV13": {
+    "packageLabel": "Projects Center_1-v1.3-yapk-runtime-tablecode-fix.yapk",
+    "upgradeSucceeded": true,
+    "listVisible": true,
+    "addFormRenders": true,
+    "addItemSaveSucceeded": false,
+    "addItemFailureMessage": "Add failed",
+    "conclusion": "TableCode was not the missing save-path piece."
+  },
+  "v14TextOnlyIsolationPackage": {
+    "generatedPackagePath": "/Users/Renger/Downloads/Projects Center_1-v1.4-yapk-runtime-text-only.yapk",
+    "rawPackageCommitted": false,
+    "changesFromV11": [
+      "Remove Test Date field",
+      "Remove DateTime4 from layout query/layout references",
+      "Keep Name, Test Status, and Test Notes text fields"
     ],
     "setsignOk": true,
     "verifysignOk": true,

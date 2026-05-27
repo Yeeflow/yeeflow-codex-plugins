@@ -143,6 +143,15 @@ The v1.3 table-code-only package keeps the upgrade-valid date field shape and ch
 - generated package: `/Users/Renger/Downloads/Projects Center_1-v1.3-yapk-runtime-tablecode-fix.yapk`
 - `setsign`/`verifysign`: passed
 - inspector/validator: passed
+- runtime result: upgrade succeeded, but add-item save still failed
+- conclusion: `TableCode` was not the missing save-path piece
+
+The v1.4 text-only isolation package removes the `Test Date` field to test whether the save failure is caused by DateTime control materialization:
+
+- generated package: `/Users/Renger/Downloads/Projects Center_1-v1.4-yapk-runtime-text-only.yapk`
+- fields: `Name`, `Test Status`, `Test Notes`
+- `setsign`/`verifysign`: passed
+- inspector/validator: passed
 - runtime add-item retest: pending
 
 Ask product to confirm whether the provided `BrotliHelper.Compress(byte[])` should dispose/close `BrotliStream` before reading `MemoryStream.ToArray()`.

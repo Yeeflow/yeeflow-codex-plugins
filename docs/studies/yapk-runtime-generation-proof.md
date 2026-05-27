@@ -316,6 +316,54 @@ Manual runtime retest needed:
 4. Add a new item with values for `Name`, `Test Status`, `Test Notes`, and `Test Date`.
 5. Confirm whether save succeeds.
 
+User runtime result for v1.3:
+
+- Upgrade/import succeeded.
+- `YAPK Runtime Test List` still appears.
+- Add form still renders.
+- Saving a new item still fails with `Add failed`.
+
+Conclusion:
+
+- `TableCode` was not the missing save-path piece.
+- The remaining failure may be tied to the DateTime field, to field/table materialization, or to another server-side list registration detail not represented by wrapper/sign/schema validation.
+
+## v1.4 Text-only Isolation Package
+
+A v1.4 package was generated from v1.1 to remove the date field and isolate whether record creation fails because of the DateTime field/control.
+
+Generated package:
+
+`/Users/Renger/Downloads/Projects Center_1-v1.4-yapk-runtime-text-only.yapk`
+
+Changes from v1.1:
+
+- Removed `Test Date`.
+- Removed `DateTime4` from layout query/layout references.
+- Kept `Name`, `Test Status`, and `Test Notes`.
+- Kept the original generated list table code from v1.1.
+
+Safe local validation:
+
+| Check | Result |
+| --- | --- |
+| `setsign` | 200 OK, 32-byte sign |
+| `verifysign` | 200 OK |
+| Inspector | pass |
+| Validator | pass |
+| Generated Resource changed from v1.1 | yes |
+| Generated Sign changed from v1.1 | yes |
+| `YAPK Runtime Test List` still present | yes |
+| Field count | 3 text fields |
+
+Manual runtime retest needed:
+
+1. Upgrade/import `/Users/Renger/Downloads/Projects Center_1-v1.4-yapk-runtime-text-only.yapk`.
+2. Confirm the upgrade succeeds.
+3. Open `YAPK Runtime Test List`.
+4. Add a new item with values for `Name`, `Test Status`, and `Test Notes`.
+5. Confirm whether save succeeds.
+
 ## Product Question
 
 Ask product to confirm whether the provided `BrotliHelper.Compress(byte[])` intentionally returns the memory stream before disposing `BrotliStream`. If not intentional, the helper should dispose/close the Brotli stream before `ToArray()` so generated Resources are complete standard Brotli streams.
