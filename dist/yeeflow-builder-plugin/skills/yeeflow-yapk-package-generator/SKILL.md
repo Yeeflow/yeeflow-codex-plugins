@@ -12,7 +12,8 @@ Current proof boundary:
 - `.yapk` wrapper schema is product-schema-backed as `AppExportPackageInfo`.
 - Product schema describes `Resource` as a Brotli compressed string whose decompressed JSON should match `AppPackageInfo`.
 - In the current local study, readable historical `.yapk` artifacts did not Brotli-decode through tested variants, so Resource decode is not yet artifact-proven for those files.
-- A focused runtime-generation attempt against `Projects Center_1-v1..0.yapk` also failed at the decode gate: wrapper parse and Resource base64 decode succeeded, but base64-bytes, raw-UTF8, and base64url Brotli attempts did not produce `AppPackageInfo` JSON. Follow-up diagnostics ruled out BOM handling, non-strict base64, padding, URL-safe alphabet handling, whitespace, and local Brotli decoder support as the cause.
+- A focused runtime-generation attempt against `Projects Center_1-v1..0.yapk` found that the original Resource emits complete parseable `AppPackageInfo` JSON from a streaming Brotli decoder before ending with `Z_BUF_ERROR`. Product's provided C# compression helper returns `MemoryStream.ToArray()` after `BrotliStream.Flush()` but before disposing the `BrotliStream`, which explains an unfinished Brotli stream. Treat this as a tolerant decode path, not as a general permission to ignore decompression errors.
+- The same focused experiment added one minimal data list, re-encoded Resource with finalized standard Brotli, called `setsign`, and passed `verifysign`. The generated package is ready for manual Yeeflow upgrade testing, but runtime upgrade is not proven until the user confirms the new list appears.
 - After `.env.local` credentials were added, the signing service accepted the same original `Projects Center_1-v1..0.yapk` wrapper when `/v1` was appended to the configured base URL: `setsign` returned a 32-byte sign and `verifysign` passed for both regenerated and original signs. This proves server-side signing/verification for the original valid Resource, not local Resource decoding or content mutation.
 - `setsign` / `verifysign` are evidence-backed for wrappers with already-valid existing Resource payloads.
 - Wrapper-only signed packages can be accepted but do not change app content when `Resource` is unchanged.
@@ -67,7 +68,7 @@ Do not claim `.yapk` generation is solved just because the wrapper validates or 
 
 Future generation requires all of:
 
-1. Decode `Resource` to schema-valid `AppPackageInfo`.
+1. Decode `Resource` to schema-valid `AppPackageInfo`. If standard Brotli ends with `Z_BUF_ERROR`, a streaming decoder may be used only when the emitted UTF-8 text parses as complete JSON with the expected `AppPackageInfo` keys.
 2. Edit the decoded object safely.
 3. Brotli encode the updated `AppPackageInfo`.
 4. Put the encoded Resource into a valid wrapper.
@@ -76,6 +77,8 @@ Future generation requires all of:
 7. Runtime upgrade in Yeeflow and confirm the intended content changed.
 
 Until step 7 succeeds, classify output as schema study, planning guidance, or experimental validation only. Continue using `.yap` for generated new/cloned application creation.
+
+When editing decoded `AppPackageInfo`, preserve 64-bit numeric IDs. Plain JavaScript `JSON.parse` rounds large IDs and must not be used for app-content mutation unless a lossless JSON parser is used. The first focused edit used Python JSON handling for the app payload and Node only for byte-level compression/API calls.
 
 ## What To Load
 
@@ -105,15 +108,19 @@ Stop and report the proof boundary when:
 
 ## Runtime-generation Experiment Notes
 
-For `Projects Center_1-v1..0.yapk`, do not proceed to edit, encode, sign, or runtime-test from the current tooling. The safe result is:
+For `Projects Center_1-v1..0.yapk`, the safe result is:
 
 - wrapper JSON parse: succeeded
 - Resource base64 decode: succeeded
-- Resource Brotli/AppPackageInfo decode: failed
-- requested data-list add: not attempted
-- generated package: none
+- Resource standard Brotli sync decode: failed with final `unexpected end of file`
+- Resource tolerant streaming decode: emitted complete parseable `AppPackageInfo` JSON
+- requested data-list add: completed locally
+- finalized standard Brotli re-encode: completed
+- `setsign`/`verifysign`: passed
+- generated package: `/Users/Renger/Downloads/Projects Center_1-v1.1-yapk-runtime-test.yapk`
+- runtime upgrade: pending user manual test
 
-Ask product whether packages like this use an additional Resource encoding, encryption, checksum, package-version layer, or non-standard Brotli processing before/after the schema-described `AppPackageInfo`.
+Ask product to confirm whether the provided `BrotliHelper.Compress(byte[])` should dispose/close `BrotliStream` before reading `MemoryStream.ToArray()`.
 
 When using the signing APIs:
 

@@ -53,7 +53,18 @@
     "trailerTrimOffsets0To16": "no JSON output",
     "gzipZlibRawInflateUnzipZstd": "failed",
     "localApiKeyAvailableForVerifySign": false,
-    "interpretation": "The blocker is not BOM handling, base64 normalization, padding, URL-safe alphabet handling, whitespace, or local Brotli support. The decoded bytes are stable but are not accepted by standard Brotli decoders for this package."
+    "interpretation": "The blocker is not BOM handling, base64 normalization, padding, URL-safe alphabet handling, whitespace, or local Brotli support. The decoded bytes are stable but are not accepted by standard Brotli decoders for this package.",
+    "productProvidedBrotliHelperFinding": "C# Compress returns MemoryStream.ToArray after Flush and before BrotliStream disposal; local streaming decode emits complete parseable JSON then reports unexpected end of file.",
+    "streamingDecode": {
+      "streamError": "Z_BUF_ERROR unexpected end of file",
+      "partialDecodedUtf8Bytes": 498287,
+      "parsesAsJson": true,
+      "decodedTopLevelKeyCount": 16,
+      "existingChildCount": 7,
+      "existingPageCount": 2,
+      "existingDataReportCount": 1,
+      "existingThemeCount": 1
+    }
   },
   "signingApiCheck": {
     "envLocalLoaded": true,
@@ -100,27 +111,76 @@
   },
   "requestedEdit": {
     "description": "Add one minimal data list named YAPK Runtime Test List",
-    "attempted": false,
-    "reason": "Hard stop: Resource did not Brotli-decode to AppPackageInfo."
+    "attempted": true,
+    "reason": "Streaming decode emitted complete parseable AppPackageInfo JSON; edit used Python JSON handling to preserve 64-bit numeric IDs.",
+    "result": {
+      "addedListTitle": "YAPK Runtime Test List",
+      "addedFields": [
+        {
+          "displayName": "Name",
+          "fieldName": "Title",
+          "fieldType": "Text",
+          "type": "input"
+        },
+        {
+          "displayName": "Test Status",
+          "fieldName": "Text2",
+          "fieldType": "Text",
+          "type": "input"
+        },
+        {
+          "displayName": "Test Notes",
+          "fieldName": "Text3",
+          "fieldType": "Text",
+          "type": "textarea"
+        },
+        {
+          "displayName": "Test Date",
+          "fieldName": "DateTime4",
+          "fieldType": "DateTime",
+          "type": "datepicker"
+        }
+      ],
+      "addedLayoutCount": 1
+    }
   },
   "encodeSignVerify": {
-    "reencodedResource": false,
-    "setsignAttempted": false,
-    "verifysignAttempted": false,
-    "generatedPackage": false
+    "reencodedResource": true,
+    "encoding": "finalized standard Brotli over edited UTF-8 AppPackageInfo JSON, then base64",
+    "editedJsonBytes": 504154,
+    "generatedResourceBase64Length": 49580,
+    "generatedResourceDecodedBytes": 37185,
+    "setsignAttempted": true,
+    "setsignOk": true,
+    "setsignStatus": 200,
+    "signByteLength": 32,
+    "verifysignAttempted": true,
+    "verifysignOk": true,
+    "verifysignStatus": 200,
+    "generatedPackage": true,
+    "generatedPackagePath": "/Users/Renger/Downloads/Projects Center_1-v1.1-yapk-runtime-test.yapk"
   },
   "validation": {
-    "inspectorStatus": "fail",
-    "validatorStatus": "fail",
-    "failureCode": "YAPK_RESOURCE_BROTLI_DECODE_FAILED"
+    "originalInspectorStatus": "requires tolerant streaming decode due unfinished Brotli end marker",
+    "generatedInspectorStatus": "pass",
+    "generatedValidatorStatus": "pass",
+    "generatedDecodedChildCount": 8,
+    "generatedDecodedFieldCount": 56,
+    "generatedDecodedLayoutCount": 24,
+    "generatedListExists": true,
+    "resourceChanged": true,
+    "signChanged": true,
+    "runtimeUpgradeStatus": "pending user manual test"
   },
   "proofBoundary": {
     "wrapperInspection": "proven for this package",
     "resourceBase64Decode": "proven for this package",
-    "resourceBrotliDecode": "failed for this package",
-    "resourceEdit": "not attempted",
-    "offlineContentMutation": "unsupported",
-    "runtimeUpgrade": "not attempted"
+    "resourceAppPackageInfoRecovery": "proven for this package via tolerant streaming decode with complete parseable JSON",
+    "resourceEdit": "completed for one minimal data-list add",
+    "reencode": "completed with finalized standard Brotli",
+    "signing": "setsign/verifysign passed",
+    "runtimeUpgrade": "pending user manual test",
+    "offlineContentMutation": "not generally supported beyond this focused experimental proof until runtime succeeds"
   },
-  "nextStep": "Ask product whether this package has an additional Resource encoding/encryption/checksum/package-version layer, or provide a fresh schema-standard YAPK known to Brotli-decode to AppPackageInfo."
+  "nextStep": "User manually upgrades/imports /Users/Renger/Downloads/Projects Center_1-v1.1-yapk-runtime-test.yapk and confirms whether YAPK Runtime Test List appears with the expected fields."
 }

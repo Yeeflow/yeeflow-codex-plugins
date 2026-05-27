@@ -65,6 +65,24 @@ Interpretation:
 - The decoded bytes are stable and complete as represented in the wrapper, but standard Brotli decoders do not accept them as a complete Brotli stream.
 - This conflicts with the product-confirmed format for this specific package unless there is another package/source issue, version layer, export option, or product-specific transformation not represented in the schema statement.
 
+Product later provided the C# helper used for Resource compression/decompression. The compression helper writes to a `BrotliStream`, calls `Flush()`, and returns `memoryStream.ToArray()` before the `BrotliStream` is disposed. That can leave the Brotli stream without its final end marker. This matches the local symptom: synchronous Brotli fails with `unexpected end of file`, but a streaming decoder emits valid JSON before the final stream error.
+
+Safe streaming decode result:
+
+| Check | Result |
+| --- | --- |
+| Stream decoder error | `Z_BUF_ERROR` / unexpected end of file |
+| Partial decoded UTF-8 bytes emitted before error | 498287 |
+| Partial decoded text starts with JSON object | yes |
+| Partial decoded text parses as JSON | yes |
+| Top-level keys | 16 expected `AppPackageInfo` keys |
+| Existing child list count | 7 |
+| Existing page count | 2 |
+| Existing data report count | 1 |
+| Existing theme count | 1 |
+
+Important implementation note: the decoded JSON contains 64-bit numeric IDs, so editing must preserve large integers. Plain JavaScript `JSON.parse` is unsafe for app-content editing because it rounds those IDs. The focused edit used Python JSON handling for the decoded `AppPackageInfo` object and used Node only for byte-level extraction, compression, and API calls.
+
 ## Signing API Check After Local Credentials Were Added
 
 Local `.env.local` was later added with these variables present:
@@ -99,21 +117,49 @@ Interpretation:
 
 Requested change: add one minimal data list named `YAPK Runtime Test List`.
 
-Edit result: not attempted.
+Edit result: completed locally in decoded `AppPackageInfo`.
 
-Reason: the experiment hit the hard stop before mutation. The input package did not decode through the product-schema Brotli path, so there was no schema-valid `AppPackageInfo` object to edit.
+Added child package summary:
+
+- `List.Type`: `1`
+- `List.Flags`: includes `Show = 1`
+- `Fields`: 4
+- `Layouts`: 1
+- `RemindRules`: empty
+- `PublicForms`: empty
+- `FlowMappings`: empty
+
+Added fields:
+
+| Display name | FieldName | FieldType | Type |
+| --- | --- | --- | --- |
+| Name | `Title` | `Text` | `input` |
+| Test Status | `Text2` | `Text` | `input` |
+| Test Notes | `Text3` | `Text` | `textarea` |
+| Test Date | `DateTime4` | `DateTime` | `datepicker` |
 
 ## Encode, Sign, and Verify Result
 
-Re-encode result: not attempted.
+Re-encode result: succeeded using finalized standard Brotli over the edited UTF-8 JSON.
 
-Signing result: not attempted.
+Signing result: succeeded with `setsign`.
 
-Verification result: not attempted.
+Verification result: succeeded with `verifysign`.
 
-Generated package path: none.
+Generated package path:
 
-Reason: blind mutation is unsafe. The proof boundary requires successful decode before edit, encode, signing, verification, and runtime upgrade testing.
+`/Users/Renger/Downloads/Projects Center_1-v1.1-yapk-runtime-test.yapk`
+
+Safe generated package stats:
+
+| Check | Result |
+| --- | --- |
+| Edited decoded JSON bytes | 504154 |
+| Generated Resource base64 length | 49580 |
+| Generated Resource decoded bytes | 37185 |
+| `setsign` result | 200 OK, 32-byte sign |
+| `verifysign` result | 200 OK |
+| Generated wrapper written | yes, outside git |
 
 ## Local Validation
 
@@ -121,36 +167,45 @@ Commands used:
 
 - `node scripts/inspect-yapk-schema-standard.mjs <input.yapk>`
 - `node validate-yapk-package.js <input.yapk>`
+- `node scripts/inspect-yapk-schema-standard.mjs <generated.yapk>`
+- `node validate-yapk-package.js <generated.yapk> --baseline <input.yapk>`
 
 Safe validator result:
 
-- wrapper parse succeeded
-- Resource base64 decode succeeded
-- Brotli decode failed
-- validation status: failed at `YAPK_RESOURCE_BROTLI_DECODE_FAILED`
+- original wrapper parse succeeded
+- original Resource base64 decode succeeded
+- original Resource required tolerant streaming decode because the Brotli stream appears unfinished
+- generated Resource standard Brotli decode succeeded
+- generated validation status: passed
+- generated decoded child count: 8
+- generated decoded field count: 56
+- generated decoded layout count: 24
+- generated package contains `YAPK Runtime Test List`
+- generated Resource changed from baseline
+- generated Sign changed from baseline
 
 ## Proof Boundary
 
-This experiment does not prove `.yapk` generation.
+This experiment proves local decode/edit/encode/sign/verify for one focused package, but does not prove Yeeflow runtime upgrade yet.
 
 Current result:
 
-**Failed at decode.** The product schema says `Resource` is Brotli-compressed `AppPackageInfo`, but this `Projects Center_1-v1..0.yapk` package did not Brotli-decode through the tested schema-standard variants.
+**Local decode/edit/encode/sign/verify is proven for this focused package, but Yeeflow runtime upgrade is not proven until the user manually upgrades/imports the generated package and confirms the new list appears.**
 
 Preserved boundaries:
 
 - Wrapper schema inspection is possible.
 - Resource base64 outer decoding is possible.
-- Resource Brotli/AppPackageInfo decoding is not proven for this package.
-- No Resource edits were made.
-- No re-encoded Resource was produced.
-- No signing or verification was attempted.
-- No manual runtime package was generated.
-- Offline `.yapk` content mutation remains unsupported.
+- Resource `AppPackageInfo` recovery is possible for this package by accepting streaming output that parses as complete JSON despite a final Brotli `unexpected end of file` error.
+- The generated package uses finalized standard Brotli Resource encoding and passes local decode/validation.
+- `setsign` and `verifysign` accepted the generated package.
+- Manual Yeeflow runtime upgrade is still pending.
+- The result proves only this focused data-list-add path for one package if runtime upgrade succeeds.
+- Offline `.yapk` content mutation is not generally supported beyond this focused proof.
 
 ## Product Question
 
-Ask product whether this package uses an additional Resource encoding, encryption, checksum, package-version layer, or non-standard Brotli settings before/after the schema-described `AppPackageInfo` payload.
+Ask product to confirm whether the provided `BrotliHelper.Compress(byte[])` intentionally returns the memory stream before disposing `BrotliStream`. If not intentional, the helper should dispose/close the Brotli stream before `ToArray()` so generated Resources are complete standard Brotli streams.
 
 Also ask product for a fresh schema-standard `.yapk` pair known to satisfy:
 
@@ -161,4 +216,11 @@ Also ask product for a fresh schema-standard `.yapk` pair known to satisfy:
 
 ## Next Step
 
-Obtain a fresh product-confirmed schema-standard `.yapk` package and rerun the decode test. Only if decode succeeds should the next experiment attempt the focused data-list add, Brotli re-encode, `setsign`, `verifysign`, and manual Yeeflow upgrade proof.
+Manual runtime test:
+
+1. Upgrade/import `/Users/Renger/Downloads/Projects Center_1-v1.1-yapk-runtime-test.yapk` in Yeeflow.
+2. Confirm whether the upgrade/import succeeds.
+3. Confirm whether `YAPK Runtime Test List` appears.
+4. Confirm whether the fields `Name`, `Test Status`, `Test Notes`, and `Test Date` are present.
+
+Only after user confirmation should this be labeled runtime-upgrade-proven.
