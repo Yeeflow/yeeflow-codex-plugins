@@ -131,6 +131,20 @@ The v1.2 add-fix package adjusted save-path-sensitive list metadata:
 - `setsign`/`verifysign`: passed
 - runtime add-item retest: pending
 
+User runtime result for v1.2:
+
+- upgrade failed
+- error: `Data list: YAPK Runtime Test List (field invalid 'Test Date Datetime4!=DateTime4')`
+- conclusion: do not change this package's generated date field from `DateTime4` / `DateTime` to `Datetime4` / `Datetime`
+
+The v1.3 table-code-only package keeps the upgrade-valid date field shape and changes only:
+
+- generated list `TableCode`: `flowcraft`
+- generated package: `/Users/Renger/Downloads/Projects Center_1-v1.3-yapk-runtime-tablecode-fix.yapk`
+- `setsign`/`verifysign`: passed
+- inspector/validator: passed
+- runtime add-item retest: pending
+
 Ask product to confirm whether the provided `BrotliHelper.Compress(byte[])` should dispose/close `BrotliStream` before reading `MemoryStream.ToArray()`.
 
 When using the signing APIs:

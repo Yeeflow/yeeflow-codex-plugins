@@ -267,6 +267,55 @@ Manual runtime retest needed:
 3. Add a new item with values for `Name`, `Test Status`, `Test Notes`, and `Test Date`.
 4. Confirm whether save succeeds.
 
+User runtime result for v1.2:
+
+- Upgrade/import failed.
+- Error: `Data list: YAPK Runtime Test List (field invalid 'Test Date Datetime4!=DateTime4')`.
+
+Conclusion:
+
+- The v1.2 date-field casing hypothesis was wrong.
+- Yeeflow's upgrade validator expects the schema field to remain `DateTime4` for this generated field.
+- Do not change `DateTime4` / `DateTime` to `Datetime4` / `Datetime` for this package path.
+
+## v1.3 TableCode-only Fix Package
+
+A v1.3 repair package was generated from v1.1 to keep the DateTime field shape accepted by upgrade validation while testing only the likely save-path table-code issue.
+
+Generated package:
+
+`/Users/Renger/Downloads/Projects Center_1-v1.3-yapk-runtime-tablecode-fix.yapk`
+
+Changes from v1.1:
+
+- Kept the same generated list and field IDs.
+- Changed generated list `TableCode` to `flowcraft`.
+- Preserved the test date field as `FieldName: "DateTime4"`.
+- Preserved the test date field as `FieldType: "DateTime"`.
+- Preserved layout query/layout references to `DateTime4`.
+
+Safe local validation:
+
+| Check | Result |
+| --- | --- |
+| `setsign` | 200 OK, 32-byte sign |
+| `verifysign` | 200 OK |
+| Inspector | pass |
+| Validator | pass |
+| Generated Resource changed from v1.1 | yes |
+| Generated Sign changed from v1.1 | yes |
+| `YAPK Runtime Test List` still present | yes |
+| `TableCode` | `flowcraft` |
+| Test Date field | `DateTime4` / `DateTime` / `datepicker` |
+
+Manual runtime retest needed:
+
+1. Upgrade/import `/Users/Renger/Downloads/Projects Center_1-v1.3-yapk-runtime-tablecode-fix.yapk`.
+2. Confirm the upgrade succeeds.
+3. Open `YAPK Runtime Test List`.
+4. Add a new item with values for `Name`, `Test Status`, `Test Notes`, and `Test Date`.
+5. Confirm whether save succeeds.
+
 ## Product Question
 
 Ask product to confirm whether the provided `BrotliHelper.Compress(byte[])` intentionally returns the memory stream before disposing `BrotliStream`. If not intentional, the helper should dispose/close the Brotli stream before `ToArray()` so generated Resources are complete standard Brotli streams.
