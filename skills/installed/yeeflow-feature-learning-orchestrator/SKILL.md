@@ -364,4 +364,12 @@ V1 runtime feedback found a table-layout defect: the generated header Grid colla
 For Kanban, Collection, and Dynamic control learning, use `docs/studies/kanban-collection-dynamic-controls.md`, normalized refs under `docs/studies/normalized/kanban-collection-dynamic-controls/`, and `scripts/inspect-kanban-collection-dynamic-controls.mjs`. `Company Overview.yap` export-proves Dashboard Kanban usage, Dashboard Collection usage, Dynamic controls inside their item templates, and Dynamic field controls on a Data List `View page`.
 
 Preserve the proof boundary: Kanban/Collection/Dynamic schema is export-proven where observed; runtime rendering, drag/drop, click behavior, dynamic file/image preview, Data List form runtime behavior, and Vertical/Horizontal Timeline controls remain unproven until focused tests or separate exports cover them.
+
+## Timeline Dynamic Controls Learning
+
+For Vertical Timeline and Horizontal Timeline learning, use `docs/studies/timeline-controls-dynamic-controls.md`, normalized refs under `docs/studies/normalized/timeline-controls-dynamic-controls/`, and `scripts/inspect-timeline-dynamic-controls.mjs`. `Company Overview (1).yap` export-proves dashboard `timeline-v` and `timeline-h` controls on `Timeline with controls`, both bound to the `Company Overview` Data List and using Dynamic field/user/image/file controls inside item templates.
+
+Timeline controls use `attrs.data.list` for the data source, `attrs.data.title.variable[]` for timeline title/date labels, `attrs.data.sort[]` for ordered display, and `children[]` for the repeated item template. The export uses the same current item binding pattern as Collection/Kanban: Dynamic controls use `attrs.source = "3"` and `attrs["obj-f"]`, while expression tokens use `exprType = "variable_ctx"` with `ctx = "__ctx_coll"`.
+
+Preserve the proof boundary: Vertical/Horizontal Timeline schema and observed Dynamic control bindings are export-proven; runtime rendering, scrolling, click/open behavior, dynamic file/image preview, and any drag/drop/reordering behavior remain unproven until focused runtime tests. Product docs support general usage guidance for vertical chronological feeds/history and horizontal schedules/roadmaps, but dashboard runtime behavior still needs a generated proof before broad promotion.
 <!-- kanban-collection-dynamic-controls-learning:end -->

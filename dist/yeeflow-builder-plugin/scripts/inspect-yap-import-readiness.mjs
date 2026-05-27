@@ -117,6 +117,9 @@ function main() {
       ignoredFindingCodes: ["TARGET_DASHBOARD_PAGE_NOT_FOUND"],
     }));
     steps.push(runJsonStep("kanban-collection-dynamic-controls-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-kanban-collection-dynamic-controls.mjs"), inputPath]));
+    steps.push(runJsonStep("timeline-dynamic-controls-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-timeline-dynamic-controls.mjs"), inputPath], {
+      ignoredFindingCodes: ["TARGET_DASHBOARD_PAGE_NOT_FOUND"],
+    }));
     steps.push(runJsonStep("container-button-actions-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-container-button-actions.mjs"), inputPath]));
     steps.push(runJsonStep("sub-list-dynamic-controls-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-sub-list-dynamic-controls.mjs"), inputPath]));
 

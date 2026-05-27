@@ -104,6 +104,8 @@ const DYNAMIC_DISPLAY_CONTROL_TYPES = new Set(["dynamic-field", "dynamic-user", 
 const DYNAMIC_USER_FIELD_TYPES = new Set(["identity-picker", "signer", "user", "users", "person"]);
 const DYNAMIC_IMAGE_FIELD_TYPES = new Set(["icon-upload", "image", "picture"]);
 const DYNAMIC_FILE_FIELD_TYPES = new Set(["file-upload", "file-upload-merge", "attachment", "file"]);
+const DASHBOARD_ITEM_CONTEXT_CONTROL_TYPES = new Set(["collection", "kanban", "timeline-v", "timeline-h"]);
+const DASHBOARD_TIMELINE_CONTROL_TYPES = new Set(["timeline-v", "timeline-h"]);
 const CUSTOM_FORM_OPEN_MODE_LABELS = {
   modal: "Pop-up window",
   slide: "Slide in",
@@ -1536,14 +1538,14 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
   const seenControlIds = new Set();
   function validateExpressionNode(node, pointer, itemContext) {
     if (!isObject(node)) return;
-    if (node.exprType === "variable_ctx" && (node.ctx === "__ctx_coll" || node.ctx === "__ctx_kanban")) {
+    if (node.exprType === "variable_ctx" && (node.ctx === "__ctx_coll" || node.ctx === "__ctx_kanban" || node.ctx === "__ctx_timeline")) {
       if (!itemContext) {
-        issue(report, severity, "DASHBOARD_ITEM_CONTEXT_EXPR_OUTSIDE_TEMPLATE", "Collection/Kanban item expressions should be nested inside an item template.", { title, layoutId, pointer, ctx: safeString(node.ctx), field: safeString(node.id) });
+        issue(report, severity, "DASHBOARD_ITEM_CONTEXT_EXPR_OUTSIDE_TEMPLATE", "Collection/Kanban/Timeline item expressions should be nested inside an item template.", { title, layoutId, pointer, ctx: safeString(node.ctx), field: safeString(node.id) });
         return;
       }
       const fieldName = safeString(node.id);
       if (fieldName && fieldName !== "_cate" && !itemContext.fields.has(fieldName)) {
-        issue(report, severity, "DASHBOARD_ITEM_EXPR_FIELD_UNRESOLVED", "Collection/Kanban item expression references a field not present on the source list.", { title, layoutId, pointer, host: itemContext.host, listId: itemContext.listId, fieldName });
+        issue(report, severity, "DASHBOARD_ITEM_EXPR_FIELD_UNRESOLVED", "Collection/Kanban/Timeline item expression references a field not present on the source list.", { title, layoutId, pointer, host: itemContext.host, listId: itemContext.listId, fieldName });
       }
     }
     if (node.exprType === "variable" && safeString(node.id).startsWith("__filter_")) {
@@ -1589,6 +1591,21 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
     }
   }
 
+  function collectVariableCtxFieldIds(value) {
+    const fields = [];
+    const visit = (node) => {
+      if (Array.isArray(node)) {
+        node.forEach(visit);
+        return;
+      }
+      if (!isObject(node)) return;
+      if (node.exprType === "variable_ctx" && safeString(node.id)) fields.push(safeString(node.id));
+      Object.values(node).forEach(visit);
+    };
+    visit(value);
+    return fields;
+  }
+
   function visit(control, pointer, itemContext) {
     if (!isObject(control)) return;
     const controlId = safeString(control.id);
@@ -1618,12 +1635,14 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
       }
     }
     let activeContext = itemContext;
-    if (control.type === "collection" || control.type === "kanban") {
+    if (DASHBOARD_ITEM_CONTEXT_CONTROL_TYPES.has(control.type)) {
       const listId = safeString(control.attrs && control.attrs.data && control.attrs.data.list && control.attrs.data.list.ListID);
       if (!listId) {
-        issue(report, severity, control.type === "kanban" ? "DASHBOARD_KANBAN_LIST_MISSING" : "DASHBOARD_COLLECTION_LIST_MISSING", "Kanban/Collection control should include attrs.data.list.ListID.", { title, layoutId, pointer, controlType: control.type });
+        const code = control.type === "kanban" ? "DASHBOARD_KANBAN_LIST_MISSING" : DASHBOARD_TIMELINE_CONTROL_TYPES.has(control.type) ? "DASHBOARD_TIMELINE_LIST_MISSING" : "DASHBOARD_COLLECTION_LIST_MISSING";
+        issue(report, severity, code, "Kanban/Collection/Timeline control should include attrs.data.list.ListID.", { title, layoutId, pointer, controlType: control.type });
       } else if (!listsById.has(listId)) {
-        issue(report, severity, control.type === "kanban" ? "DASHBOARD_KANBAN_LIST_REFERENCE_UNRESOLVED" : "DASHBOARD_COLLECTION_LIST_REFERENCE_UNRESOLVED", "Kanban/Collection control data source should resolve to a list included in the package.", { title, layoutId, pointer, listId });
+        const code = control.type === "kanban" ? "DASHBOARD_KANBAN_LIST_REFERENCE_UNRESOLVED" : DASHBOARD_TIMELINE_CONTROL_TYPES.has(control.type) ? "DASHBOARD_TIMELINE_LIST_REFERENCE_UNRESOLVED" : "DASHBOARD_COLLECTION_LIST_REFERENCE_UNRESOLVED";
+        issue(report, severity, code, "Kanban/Collection/Timeline control data source should resolve to a list included in the package.", { title, layoutId, pointer, listId });
       }
       const fields = fieldsByList.get(listId) || new Map();
       activeContext = { host: control.type, listId, fields };
@@ -1635,8 +1654,26 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
           issue(report, severity, "DASHBOARD_KANBAN_CATEGORY_FIELD_UNRESOLVED", "Kanban category/group-by field should resolve to a source list field.", { title, layoutId, pointer: `${pointer}.attrs.data.cateField`, listId, fieldName: categoryField });
         }
       }
+      if (DASHBOARD_TIMELINE_CONTROL_TYPES.has(control.type)) {
+        const sortFields = asArray(control.attrs && control.attrs.data && control.attrs.data.sort).map((sort) => safeString(sort && sort.SortName)).filter(Boolean);
+        const titleFields = collectVariableCtxFieldIds(control.attrs && control.attrs.data && control.attrs.data.title);
+        if (!sortFields.length && !titleFields.length) {
+          issue(report, severity, "DASHBOARD_TIMELINE_DATE_FIELD_MISSING", "Timeline controls should include a resolvable date/time field in attrs.data.title or attrs.data.sort so timeline points can be ordered/labeled.", { title, layoutId, pointer, controlType: control.type, listId });
+        }
+        for (const [index, fieldName] of sortFields.entries()) {
+          if (!fields.has(fieldName)) {
+            issue(report, severity, "DASHBOARD_TIMELINE_SORT_FIELD_UNRESOLVED", "Timeline sort/date field should resolve to the source list fields.", { title, layoutId, pointer: `${pointer}.attrs.data.sort[${index}].SortName`, controlType: control.type, listId, fieldName });
+          }
+        }
+        for (const fieldName of titleFields) {
+          if (!fields.has(fieldName)) {
+            issue(report, severity, "DASHBOARD_TIMELINE_TITLE_FIELD_UNRESOLVED", "Timeline title/date expression should resolve to a source list field.", { title, layoutId, pointer: `${pointer}.attrs.data.title`, controlType: control.type, listId, fieldName });
+          }
+        }
+      }
       if (!asArray(control.children).length) {
-        issue(report, severity, control.type === "kanban" ? "DASHBOARD_KANBAN_ITEM_TEMPLATE_MISSING" : "DASHBOARD_COLLECTION_ITEM_TEMPLATE_MISSING", "Kanban/Collection control should include an item-template child.", { title, layoutId, pointer, listId });
+        const code = control.type === "kanban" ? "DASHBOARD_KANBAN_ITEM_TEMPLATE_MISSING" : DASHBOARD_TIMELINE_CONTROL_TYPES.has(control.type) ? "DASHBOARD_TIMELINE_ITEM_TEMPLATE_MISSING" : "DASHBOARD_COLLECTION_ITEM_TEMPLATE_MISSING";
+        issue(report, severity, code, "Kanban/Collection/Timeline control should include an item-template child.", { title, layoutId, pointer, listId });
       }
       for (const [fulltextIndex, item] of asArray(control.attrs && control.attrs.data && control.attrs.data.fulltext).entries()) {
         for (const [fieldIndex, fieldName] of asArray(item.fields).map(safeString).entries()) {
@@ -1649,12 +1686,12 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
     }
     if (DYNAMIC_DISPLAY_CONTROL_TYPES.has(safeString(control.type)) && safeString(control.attrs && control.attrs.source) === "3") {
       if (!activeContext) {
-        issue(report, severity, "DASHBOARD_DYNAMIC_CONTROL_OUTSIDE_ITEM_CONTEXT", "Dynamic controls with source 3 should be nested inside a Kanban/Collection item template.", { title, layoutId, pointer, controlType: control.type, fieldName: safeString(control.attrs && control.attrs["obj-f"]) });
+        issue(report, severity, "DASHBOARD_DYNAMIC_CONTROL_OUTSIDE_ITEM_CONTEXT", "Dynamic controls with source 3 should be nested inside a Kanban/Collection/Timeline item template.", { title, layoutId, pointer, controlType: control.type, fieldName: safeString(control.attrs && control.attrs["obj-f"]) });
       } else {
         const fieldName = safeString(control.attrs && control.attrs["obj-f"]);
         const field = activeContext.fields.get(fieldName);
         if (fieldName && !field) {
-          issue(report, severity, "DASHBOARD_DYNAMIC_CONTROL_FIELD_UNRESOLVED", "Dynamic control source 3 references a field not present on the Kanban/Collection source list.", { title, layoutId, pointer, host: activeContext.host, controlType: control.type, listId: activeContext.listId, fieldName });
+          issue(report, severity, "DASHBOARD_DYNAMIC_CONTROL_FIELD_UNRESOLVED", "Dynamic control source 3 references a field not present on the Kanban/Collection/Timeline source list.", { title, layoutId, pointer, host: activeContext.host, controlType: control.type, listId: activeContext.listId, fieldName });
         } else {
           validateDynamicFieldType(safeString(control.type), field, report, severity, { title, layoutId, pointer, host: activeContext.host, controlType: control.type });
         }

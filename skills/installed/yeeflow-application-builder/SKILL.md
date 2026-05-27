@@ -377,4 +377,10 @@ For quote/invoice/proposal scenarios that need print output, `Sales Quotation.ya
 For business apps that need grouped work cards, activity collections, or read-only record headers, prefer native Kanban, Collection, and Dynamic controls where the source list and field bindings can be resolved. `Company Overview.yap` export-proves Dashboard Kanban/Collection item templates using Dynamic controls with source `3`, and a Data List `View page` using Dynamic field controls with source `4`.
 
 In plans and final reports, separate export-proven schema from runtime proof. This branch does not prove Kanban drag/drop, item click behavior, dynamic image/file preview behavior, Data List custom form runtime rendering, or timeline controls.
+
+## Timeline Controls Planning
+
+For business apps that need chronological or time-progression views, consider native Vertical Timeline and Horizontal Timeline before custom code. `Company Overview (1).yap` export-proves dashboard `timeline-v` and `timeline-h` controls bound to a Data List and using Dynamic controls inside item templates.
+
+Use Vertical Timeline for activity feeds, history, lifecycle logs, audit/event streams, approval history, and vertical milestone flows. Use Horizontal Timeline for project schedules, roadmaps, lifecycle stages, campaign plans, and phase progression. Timelines should resolve a source list plus date/title/order fields, and item templates should bind Dynamic controls with `attrs.source = "3"` and `attrs["obj-f"]`. Keep runtime claims pending until a focused generated package proves timeline rendering and intended interactions.
 <!-- kanban-collection-dynamic-controls-learning:end -->

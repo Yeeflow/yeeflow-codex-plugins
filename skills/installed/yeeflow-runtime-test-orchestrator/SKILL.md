@@ -240,5 +240,11 @@ For Data List print-page follow-up tests, use `docs/studies/data-list-print-page
 
 `Company Overview.yap` export-proves Kanban, Collection, and Dynamic control schema, but not runtime behavior. A focused runtime proof should import a disposable package, open the dashboard pages, verify Kanban grouping and Collection cards render, verify Dynamic field/user/image/file values display without missing-binding errors, and separately test any item click, image preview, file preview/download, or Kanban drag/drop behavior that the package intends to claim.
 
+## Timeline Dynamic Controls Runtime Boundary
+
+`Company Overview (1).yap` export-proves Vertical Timeline and Horizontal Timeline dashboard schema, Dynamic controls in timeline item templates, and the current item binding pattern (`attrs.source = "3"` plus `attrs["obj-f"]`). It does not prove runtime rendering or interaction. A focused runtime proof should import a disposable package, open the timeline dashboard, verify the Vertical Timeline and Horizontal Timeline render against safe sample rows, confirm Dynamic field/user/image/file display, and separately test timeline item click/open behavior, horizontal arrows/slides, scrolling, image preview, and file preview/download if those claims are needed.
+
+Keep proof claims narrow: a rendered Vertical Timeline does not prove Horizontal Timeline arrows; Dynamic field rendering does not prove file preview/download; dashboard timeline proof does not prove approval-form or data-list-form timeline hosts.
+
 Data List custom-form Dynamic field usage with source `4` is export-proven on `View page`, but runtime custom-form behavior remains unproven until the form is opened and verified in Yeeflow.
 <!-- kanban-collection-dynamic-controls-learning:end -->

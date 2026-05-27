@@ -369,4 +369,12 @@ Use `docs/studies/kanban-collection-dynamic-controls.md`, normalized refs under 
 Kanban controls use `attrs.data.list` for the data source and `attrs.data.cateField` for category/grouping. Collection controls use `attrs.data.list` for the source and `attrs.layout` for card/grid layout. Dynamic controls inside Kanban/Collection item templates use current-item context with `attrs.source = "3"` and `attrs["obj-f"]` set to a field name on the selected source list. Validate the source list, Kanban category field, and every Dynamic control field binding before handoff.
 
 Use specialized Dynamic controls for specialized source fields: Dynamic user for identity/person fields, Dynamic image for image fields, Dynamic file for attachment/file fields, and Dynamic field for general text/date/number/choice values. This export proves Dynamic user/image/file inside dashboard item templates and Dynamic field on both dashboards and a Data List View page. It does not prove timeline controls, Kanban drag/drop, Collection click behavior, or file/image preview runtime behavior.
+
+## Vertical And Horizontal Timeline Controls
+
+Use `docs/studies/timeline-controls-dynamic-controls.md`, normalized refs under `docs/studies/normalized/timeline-controls-dynamic-controls/`, and `scripts/inspect-timeline-dynamic-controls.mjs` when dashboards need chronological/event-style timelines. `Company Overview (1).yap` export-proves dashboard `timeline-v` and `timeline-h` controls on `Timeline with controls`.
+
+Timeline controls bind to source data through `attrs.data.list`. The studied export uses `attrs.data.title.variable[]` with `exprType = "variable_ctx"` / `ctx = "__ctx_coll"` for timeline labels, `attrs.data.sort[]` for the date/order field, and `children[]` for the repeated item template. Dynamic controls inside timeline templates use `attrs.source = "3"` and `attrs["obj-f"]`, the same current-item field binding pattern as Collection/Kanban. Validate source list, date/title/sort fields, and every Dynamic control binding.
+
+Use Vertical Timeline for activity feeds, histories, lifecycle logs, and vertically scanned milestones. Use Horizontal Timeline for schedules, roadmaps, project phases, campaign plans, and time progression where left-to-right scanning matters. Horizontal Timeline adds horizontal/card options such as columns, arrows, and slides-to-scroll. Do not claim runtime timeline rendering, click/open behavior, scrolling, image/file preview, or reordering until focused runtime proof exists.
 <!-- kanban-collection-dynamic-controls-learning:end -->

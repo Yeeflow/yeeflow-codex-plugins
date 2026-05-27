@@ -686,4 +686,10 @@ Focused runtime proof in `docs/studies/container-button-action-runtime-proof.md`
 When app requirements call for grouped cards, activity cards, or current-record display, use the export-backed guidance in `docs/studies/kanban-collection-dynamic-controls.md`. Dashboard Kanban and Collection controls should resolve `attrs.data.list` to an included source list; Kanban must also resolve `attrs.data.cateField`. Dynamic controls inside item templates use `attrs.source = "3"` for the current Kanban/Collection item, while Data List custom forms use `attrs.source = "4"` for the current list item.
 
 Generate Dynamic user/image/file controls only against compatible user/image/file fields, and use Dynamic field for general fields. Do not claim Vertical Timeline or Horizontal Timeline support from this learning branch, and keep runtime claims for Kanban rendering, drag/drop, click behavior, image/file preview, and Data List form behavior pending until a focused runtime package is tested.
+
+## Timeline Dynamic Control Application Guidance
+
+When app requirements need a chronological dashboard surface, use `docs/studies/timeline-controls-dynamic-controls.md`. Vertical Timeline (`timeline-v`) is appropriate for activity feeds, histories, lifecycle logs, and vertical milestone/event streams. Horizontal Timeline (`timeline-h`) is appropriate for roadmaps, project schedules, phase plans, campaign plans, and horizontal time progression.
+
+Generate timeline controls with `attrs.data.list` resolving to an included source list, a resolvable date/order/title field in `attrs.data.title.variable[]` and/or `attrs.data.sort[]`, and an item template in `children[]`. Dynamic controls inside timeline templates should use `attrs.source = "3"` and `attrs["obj-f"]` just like Collection/Kanban item templates. Use Dynamic user/image/file only against compatible source field types, and use Dynamic field for general values. Do not claim runtime timeline rendering, click/open behavior, horizontal arrow scrolling, or dynamic file/image preview until a focused runtime package is tested.
 <!-- kanban-collection-dynamic-controls-learning:end -->
