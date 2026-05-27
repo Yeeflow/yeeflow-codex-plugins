@@ -179,8 +179,37 @@
     "resourceEdit": "completed for one minimal data-list add",
     "reencode": "completed with finalized standard Brotli",
     "signing": "setsign/verifysign passed",
-    "runtimeUpgrade": "pending user manual test",
-    "offlineContentMutation": "not generally supported beyond this focused experimental proof until runtime succeeds"
+    "runtimeUpgrade": "v1.1 upgrade/list/form materialization proven; v1.1 record creation failed; v1.2 add-fix runtime retest pending",
+    "offlineContentMutation": "not generally supported beyond this focused experimental proof until runtime succeeds",
+    "recordCreation": "not proven"
   },
-  "nextStep": "User manually upgrades/imports /Users/Renger/Downloads/Projects Center_1-v1.1-yapk-runtime-test.yapk and confirms whether YAPK Runtime Test List appears with the expected fields."
+  "nextStep": "User upgrades/imports /Users/Renger/Downloads/Projects Center_1-v1.2-yapk-runtime-add-fix.yapk and retests Add new item on YAPK Runtime Test List.",
+  "runtimeUserResultV11": {
+    "packageLabel": "Projects Center_1-v1.1-yapk-runtime-test.yapk",
+    "upgradeSucceeded": true,
+    "versionManagementStatus": "succeed",
+    "listVisibleInApplicationSettings": true,
+    "listVisibleInApplicationNavigation": true,
+    "addFormRenders": true,
+    "addItemSaveSucceeded": false,
+    "addItemFailureMessage": "Add failed",
+    "proofBoundary": "Runtime upgrade/list/form materialization proven; record creation not proven."
+  },
+  "v12AddFixPackage": {
+    "generatedPackagePath": "/Users/Renger/Downloads/Projects Center_1-v1.2-yapk-runtime-add-fix.yapk",
+    "rawPackageCommitted": false,
+    "changesFromV11": [
+      "Set generated list TableCode to flowcraft",
+      "Change Test Date FieldName from DateTime4 to Datetime4",
+      "Change Test Date FieldType from DateTime to Datetime",
+      "Update layout query/layout references to Datetime4"
+    ],
+    "setsignOk": true,
+    "verifysignOk": true,
+    "inspectorStatus": "pass",
+    "validatorStatus": "pass",
+    "resourceChangedFromV11": true,
+    "signChangedFromV11": true,
+    "runtimeRetestStatus": "pending user manual test"
+  }
 }

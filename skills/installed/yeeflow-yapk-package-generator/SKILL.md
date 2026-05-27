@@ -13,7 +13,7 @@ Current proof boundary:
 - Product schema describes `Resource` as a Brotli compressed string whose decompressed JSON should match `AppPackageInfo`.
 - In the current local study, readable historical `.yapk` artifacts did not Brotli-decode through tested variants, so Resource decode is not yet artifact-proven for those files.
 - A focused runtime-generation attempt against `Projects Center_1-v1..0.yapk` found that the original Resource emits complete parseable `AppPackageInfo` JSON from a streaming Brotli decoder before ending with `Z_BUF_ERROR`. Product's provided C# compression helper returns `MemoryStream.ToArray()` after `BrotliStream.Flush()` but before disposing the `BrotliStream`, which explains an unfinished Brotli stream. Treat this as a tolerant decode path, not as a general permission to ignore decompression errors.
-- The same focused experiment added one minimal data list, re-encoded Resource with finalized standard Brotli, called `setsign`, and passed `verifysign`. The generated package is ready for manual Yeeflow upgrade testing, but runtime upgrade is not proven until the user confirms the new list appears.
+- The same focused experiment added one minimal data list, re-encoded Resource with finalized standard Brotli, called `setsign`, and passed `verifysign`. User confirmed v1.1 upgraded successfully, the generated list appeared, and the add form rendered, but saving a record failed with `Add failed`. Treat runtime upgrade/list/form materialization as proven and record creation as not proven.
 - After `.env.local` credentials were added, the signing service accepted the same original `Projects Center_1-v1..0.yapk` wrapper when `/v1` was appended to the configured base URL: `setsign` returned a 32-byte sign and `verifysign` passed for both regenerated and original signs. This proves server-side signing/verification for the original valid Resource, not local Resource decoding or content mutation.
 - `setsign` / `verifysign` are evidence-backed for wrappers with already-valid existing Resource payloads.
 - Wrapper-only signed packages can be accepted but do not change app content when `Resource` is unchanged.
@@ -118,7 +118,18 @@ For `Projects Center_1-v1..0.yapk`, the safe result is:
 - finalized standard Brotli re-encode: completed
 - `setsign`/`verifysign`: passed
 - generated package: `/Users/Renger/Downloads/Projects Center_1-v1.1-yapk-runtime-test.yapk`
-- runtime upgrade: pending user manual test
+- runtime upgrade/list/form materialization: user-proven
+- record creation: failed with `Add failed`
+
+The v1.2 add-fix package adjusted save-path-sensitive list metadata:
+
+- generated list `TableCode`: `flowcraft`
+- date field `FieldName`: `Datetime4`
+- date field `FieldType`: `Datetime`
+- layout references updated to `Datetime4`
+- generated package: `/Users/Renger/Downloads/Projects Center_1-v1.2-yapk-runtime-add-fix.yapk`
+- `setsign`/`verifysign`: passed
+- runtime add-item retest: pending
 
 Ask product to confirm whether the provided `BrotliHelper.Compress(byte[])` should dispose/close `BrotliStream` before reading `MemoryStream.ToArray()`.
 

@@ -186,7 +186,7 @@ Safe validator result:
 
 ## Proof Boundary
 
-This experiment proves local decode/edit/encode/sign/verify for one focused package, but does not prove Yeeflow runtime upgrade yet.
+This experiment proves local decode/edit/encode/sign/verify for one focused package and user-confirmed Yeeflow upgrade/list/form materialization. Item creation is not fully proven yet because the first generated package showed `Add failed` when saving a new record.
 
 Current result:
 
@@ -202,6 +202,70 @@ Preserved boundaries:
 - Manual Yeeflow runtime upgrade is still pending.
 - The result proves only this focused data-list-add path for one package if runtime upgrade succeeds.
 - Offline `.yapk` content mutation is not generally supported beyond this focused proof.
+
+## User Runtime Result for v1.1
+
+User-tested package:
+
+`/Users/Renger/Downloads/Projects Center_1-v1.1-yapk-runtime-test.yapk`
+
+User-confirmed runtime results:
+
+- Application upgrade: succeeded.
+- Version-management row status: succeeded.
+- `YAPK Runtime Test List` appears in Application settings.
+- `YAPK Runtime Test List` appears in the application navigation.
+- Add-item form opens and renders the expected fields.
+- Saving a new item fails with `Add failed`.
+
+Updated proof boundary:
+
+- Runtime upgrade is proven for this focused package.
+- List registration/materialization is proven.
+- Add-form rendering is proven.
+- Record creation is not proven.
+
+Likely save-path-sensitive differences found in the v1.1 generated list:
+
+- Native lists use `TableCode: "flowcraft"`, while v1.1 used a custom table code.
+- Native date fields use `FieldName: "DatetimeN"` and `FieldType: "Datetime"`, while v1.1 used `FieldName: "DateTime4"` and `FieldType: "DateTime"`.
+
+## v1.2 Add-fix Package
+
+A v1.2 repair package was generated to test the narrow save failure.
+
+Generated package:
+
+`/Users/Renger/Downloads/Projects Center_1-v1.2-yapk-runtime-add-fix.yapk`
+
+Changes from v1.1:
+
+- Kept the same generated list and field IDs.
+- Changed the generated list `TableCode` to `flowcraft`.
+- Changed the test date field to `FieldName: "Datetime4"`.
+- Changed the test date field to `FieldType: "Datetime"`.
+- Updated layout query/layout references to `Datetime4`.
+
+Safe local validation:
+
+| Check | Result |
+| --- | --- |
+| `setsign` | 200 OK, 32-byte sign |
+| `verifysign` | 200 OK |
+| Inspector | pass |
+| Validator | pass |
+| Generated Resource changed from v1.1 | yes |
+| Generated Sign changed from v1.1 | yes |
+| `YAPK Runtime Test List` still present | yes |
+| `TableCode` | `flowcraft` |
+| Test Date field | `Datetime4` / `Datetime` / `datepicker` |
+
+Manual runtime retest needed:
+
+1. Upgrade/import `/Users/Renger/Downloads/Projects Center_1-v1.2-yapk-runtime-add-fix.yapk`.
+2. Open `YAPK Runtime Test List`.
+3. Add a new item with values for `Name`, `Test Status`, `Test Notes`, and `Test Date`.
+4. Confirm whether save succeeds.
 
 ## Product Question
 
