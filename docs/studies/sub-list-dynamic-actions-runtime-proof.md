@@ -2,7 +2,7 @@
 
 ## Status
 
-V1 runtime issue found. V1.2 YAPK generation is prepared from the user-corrected V1.1 baseline, but signing is currently blocked because local `.env.local` is a macOS dataless file and cannot be read for `YEEFLOW_API_KEY`.
+V1 runtime issue found. V1.2 YAPK has been generated, signed, and verified from the user-corrected V1.1 baseline. Manual runtime confirmation is still pending.
 
 Generated package:
 
@@ -12,7 +12,7 @@ Corrected baseline studied:
 
 `/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.1.yapk`
 
-Expected V1.2 output after credentials are hydrated:
+Generated V1.2 output:
 
 `/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.2-grid-fixed.yapk`
 
@@ -82,7 +82,13 @@ V1.2 follow-up:
 - V1.1 approval form `DefResource` decoded safely.
 - Broken V1 YAP and corrected V1.1 YAPK were compared structurally.
 - Generator was updated so the normal path creates a V1.2 YAPK from the corrected V1.1 baseline and keeps the old YAP path behind `--legacy-yap`.
-- V1.2 signing is blocked until `.env.local` is locally hydrated.
+- V1.2 YAPK generation passed.
+- `setsign` returned a 32-byte signature.
+- `verifysign` returned HTTP 200.
+- V1.2 wrapper parse and standard Brotli decode passed.
+- V1.2 Sub List inspection passed: one Approval Form, one Dynamic Sub List, caption off, body grid present, five body-grid column containers, Add/Import footer buttons, and action steps `list_new`, `list_dup`, `list_del`, and `list_import`.
+- The stale standalone V1 header Grid was removed from V1.2 before signing.
+- The body grid field controls were wrapped in column containers before signing.
 
 Skipped due to local tool hangs:
 
@@ -116,4 +122,4 @@ This package is generated from export-proven Approval Form Dynamic Sub List sche
 
 Runtime proof, once confirmed, applies only to this generated package, the Approval Form host, and the exact tested actions. It must not be generalized to all Sub List actions, Data List custom forms, workflow execution, current-object expression evaluation, scrollbar behavior, or row persistence.
 
-For the V1.2 YAPK follow-up, the user-corrected V1.1 YAPK is the source of truth for the grid/header/body layout. V1.2 remains pending until it is signed, verified, imported/upgraded, and manually tested.
+For the V1.2 YAPK follow-up, the user-corrected V1.1 YAPK is the source of truth for the grid/header/body layout. V1.2 is generated/signed/verified, but remains runtime-pending until it is imported/upgraded and manually tested.

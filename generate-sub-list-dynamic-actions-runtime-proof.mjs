@@ -169,11 +169,140 @@ function postJsonWithCurl(url, apiKey, body) {
   };
 }
 
+function pythonJsonTransform(script, input, args = []) {
+  return execFileSync("python3", ["-c", script, ...args], {
+    input,
+    maxBuffer: 10 * 1024 * 1024,
+  });
+}
+
+function extractFirstFormDefResource(appPackageBytes) {
+  return pythonJsonTransform("import json,sys; print(json.load(sys.stdin)['Forms'][0]['DefResource'], end='')", appPackageBytes).toString("utf8");
+}
+
+function decodeEmbeddedBrotliText(encoded, label) {
+  const prefix = Buffer.from(BROTLI_PREFIX, "utf8");
+  let bytes;
+  if (encoded.startsWith(BROTLI_PREFIX)) {
+    bytes = Buffer.from(encoded.slice(BROTLI_PREFIX.length), "base64");
+  } else {
+    const raw = Buffer.from(encoded, "base64");
+    if (!raw.subarray(0, prefix.length).equals(prefix)) throw new Error(`${label} does not use the expected embedded Brotli prefix.`);
+    bytes = raw.subarray(prefix.length);
+  }
+  return zlib.brotliDecompressSync(bytes).toString("utf8");
+}
+
+function encodeEmbeddedBrotliText(text) {
+  const compressed = zlib.brotliCompressSync(Buffer.from(text, "utf8"));
+  return Buffer.concat([Buffer.from(BROTLI_PREFIX, "utf8"), compressed]).toString("base64");
+}
+
+function mutateFormDefForCorrectedTableLayout(formDefText) {
+  const script = String.raw`
+import json, sys, uuid
+
+doc = json.load(sys.stdin)
+page = doc["pageurls"][0]["formdef"]
+
+def walk(node):
+    if isinstance(node, dict):
+        yield node
+        for child in node.get("children") or []:
+            yield from walk(child)
+
+def caption_off(node):
+    if isinstance(node, dict):
+        node["displayLabel"] = [None, False]
+
+def find_first(node, predicate):
+    for item in walk(node):
+        if predicate(item):
+            return item
+    return None
+
+def contains_direct(node, type_name):
+    return any(isinstance(child, dict) and child.get("type") == type_name for child in (node.get("children") or []))
+
+def find_combined_section(root):
+    for item in walk(root):
+        children = item.get("children") or []
+        if any(isinstance(child, dict) and child.get("type") == "flex_grid" for child in children) and any(isinstance(child, dict) and child.get("type") == "list" for child in children):
+            return item
+    return None
+
+section = find_combined_section(page)
+if section:
+    # Remove stale standalone header grids from the same parent when the corrected
+    # section already contains the actual header grid plus Sub List.
+    def prune(parent):
+        children = parent.get("children") or []
+        if section in children:
+            parent["children"] = [
+                child for child in children
+                if child is section or not (isinstance(child, dict) and child.get("type") == "flex_grid")
+            ]
+            return True
+        for child in children:
+            if isinstance(child, dict) and prune(child):
+                return True
+        return False
+    prune(page)
+
+sub_list = find_first(page, lambda item: item.get("type") == "list")
+if sub_list:
+    caption_off(sub_list)
+    body = next((child for child in sub_list.get("children", []) if isinstance(child, dict) and child.get("type") == "list-body"), None)
+    if body:
+        body_grid = next((child for child in body.get("children", []) if isinstance(child, dict) and child.get("type") in ("flex_grid", "grid")), None)
+        if body_grid:
+            caption_off(body_grid)
+            wrapped = []
+            for child in body_grid.get("children") or []:
+                if isinstance(child, dict) and child.get("attrs", {}).get("list_field") is True:
+                    wrapped.append({
+                        "id": str(uuid.uuid4()),
+                        "type": "container",
+                        "label": "Container",
+                        "nv_label": f"{child.get('label') or child.get('binding') or 'Field'} column",
+                        "attrs": {"style": {"gap": [None, "--sp--s0"], "direction": [None, "column"]}},
+                        "children": [child],
+                    })
+                else:
+                    wrapped.append(child)
+            body_grid["children"] = wrapped
+
+if section:
+    for item in walk(section):
+        if item.get("type") in ("flex_grid", "grid"):
+            caption_off(item)
+
+print(json.dumps(doc, separators=(",", ":")), end="")
+`;
+  return pythonJsonTransform(script, formDefText).toString("utf8");
+}
+
+function replaceFirstFormDefResource(appPackageBytes, encodedFormDef) {
+  const script = String.raw`
+import json, sys
+payload = json.load(sys.stdin)
+payload["Forms"][0]["DefResource"] = sys.argv[1]
+print(json.dumps(payload, separators=(",", ":")), end="")
+`;
+  return pythonJsonTransform(script, appPackageBytes, [encodedFormDef]);
+}
+
 async function generateYapkFromCorrectedBaseline() {
   const baseline = readJsonFile(SOURCE_YAPK);
   const appPackageBytes = await extractTolerantBrotliText(baseline.Resource, "YAPK Resource");
   parseJson(appPackageBytes.toString("utf8"), "YAPK AppPackageInfo");
-  const finalizedResource = zlib.brotliCompressSync(appPackageBytes).toString("base64");
+  const originalFormDefResource = extractFirstFormDefResource(appPackageBytes);
+  const formDefText = decodeEmbeddedBrotliText(originalFormDefResource, "Approval Form DefResource");
+  const mutatedFormDefText = mutateFormDefForCorrectedTableLayout(formDefText);
+  const mutatedFormDefResource = encodeEmbeddedBrotliText(mutatedFormDefText);
+  const mutatedAppPackageBytes = replaceFirstFormDefResource(appPackageBytes, mutatedFormDefResource);
+  parseJson(mutatedAppPackageBytes.toString("utf8"), "Mutated YAPK AppPackageInfo");
+  const finalizedResource = zlib.brotliCompressSync(mutatedAppPackageBytes).toString("base64");
   const wrapper = {
     ...baseline,
     PackageId: uuid(),
@@ -192,7 +321,9 @@ async function generateYapkFromCorrectedBaseline() {
     version: signed.Version,
     date: signed.Date,
     resourceBytes: Buffer.from(signed.Resource, "base64").length,
-    appPackageBytes: appPackageBytes.length,
+    appPackageBytes: mutatedAppPackageBytes.length,
+    staleHeaderGridRemoved: true,
+    bodyFieldControlsWrappedInContainers: true,
     signBytes,
     signBaseVariant: baseVariant,
     verifyStatus,

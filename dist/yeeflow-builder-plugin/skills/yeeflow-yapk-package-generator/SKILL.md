@@ -168,7 +168,7 @@ When using the signing APIs:
 - never print or persist raw API responses, `Resource`, or `Sign`
 - treat a successful `setsign`/`verifysign` on an unchanged Resource as wrapper/signing proof only
 
-Sub List Dynamic Runtime Proof V1.2 note: the user-corrected `Sub List Dynamic Runtime Proof-V1.1.yapk` is the baseline for grid/header fixes. Generate V1.2 from that YAPK rather than the older `.yap`: tolerant-decode the V1.1 Resource, preserve the corrected table-style AppPackageInfo content, re-encode with finalized standard Brotli, update wrapper PackageId/Version/Date/Notes, then run `setsign` and `verifysign`. Do not claim runtime proof until the signed V1.2 package is upgraded/imported and manually tested.
+Sub List Dynamic Runtime Proof V1.2 note: the user-corrected `Sub List Dynamic Runtime Proof-V1.1.yapk` is the baseline for grid/header fixes. Generate V1.2 from that YAPK rather than the older `.yap`: tolerant-decode the V1.1 Resource, remove the stale standalone V1 header grid, wrap body-grid field controls in containers, re-encode with finalized standard Brotli, update wrapper PackageId/Version/Date/Notes, then run `setsign` and `verifysign`. The generated V1.2 package signed and verified; do not claim runtime proof until V1.2 is upgraded/imported and manually tested.
 
 If product states the format is exactly `base64(Brotli(AppPackageInfo JSON))`, ask for one of:
 

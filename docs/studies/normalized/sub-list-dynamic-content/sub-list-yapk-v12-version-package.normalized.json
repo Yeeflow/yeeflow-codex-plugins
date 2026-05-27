@@ -10,6 +10,14 @@
     "update wrapper PackageId, Version, Date, and Notes",
     "setsign and verifysign before handoff"
   ],
-  "currentBlocker": "local .env.local is dataless and must be hydrated before signing can complete",
-  "proofBoundary": "Generated/signed V1.2 and runtime upgrade confirmation are pending."
+  "signingResult": {
+    "setsign": "passed with 32-byte signature",
+    "verifysign": "passed"
+  },
+  "structureFixes": [
+    "removed stale standalone V1 header grid before signing",
+    "wrapped body grid field controls in containers",
+    "preserved list_new, list_dup, list_del, and list_import actions"
+  ],
+  "proofBoundary": "V1.2 is generated/signed/verified; runtime upgrade confirmation is pending."
 }
