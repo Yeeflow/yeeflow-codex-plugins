@@ -4,8 +4,8 @@ import crypto from "node:crypto";
 import { execFileSync } from "node:child_process";
 
 const BROTLI_PREFIX = "::brotli::";
-const SOURCE_YAPK = process.env.YEEFLOW_SOURCE_YAPK || "/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.3-purchase-request.yapk";
-const OUT_YAPK = "/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.4-row-menu-actions.yapk";
+const SOURCE_YAPK = process.env.YEEFLOW_SOURCE_YAPK || "/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.4-row-menu-actions.yapk";
+const OUT_YAPK = "/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.5-row-menu-actions-resource-fixed.yapk";
 const OUT_DIR = ".tmp/sub-list-dynamic-row-menu-actions-yapk";
 const OUT_REPORT = `${OUT_DIR}/generation-report.json`;
 
@@ -205,21 +205,28 @@ print(json.dumps(doc, separators=(",", ":")), end="")
   return pythonTransform(script, formDefText).toString("utf8");
 }
 
-function replacePurchaseFormResource(appPackageText, purchaseDefResource) {
+function replacePurchaseFormResource(appPackageText, purchaseDefResource, resourceIdBase) {
   const script = String.raw`
 import json, sys
 app = json.load(sys.stdin)
 resource = sys.argv[1]
+resource_id_base = int(sys.argv[2])
 updated = False
 for form in app.get("Forms") or []:
     if form.get("Name") == "Purchase Request Form" or form.get("Key") == "PRF":
         form["DefResource"] = resource
+        # Bump definition resource IDs so Yeeflow materializes the updated
+        # request page instead of reusing a previously deployed cached form.
+        form["DefResourceID"] = resource_id_base + 1
+        form["DeployedDefID"] = resource_id_base + 2
+        form["Status"] = 1
+        form["Deployed"] = True
         updated = True
 if not updated:
     raise SystemExit("Purchase Request Form was not found in AppPackageInfo.")
 print(json.dumps(app, separators=(",", ":")), end="")
 `;
-  return pythonTransform(script, appPackageText, [purchaseDefResource]).toString("utf8");
+  return pythonTransform(script, appPackageText, [purchaseDefResource, String(resourceIdBase)]).toString("utf8");
 }
 
 function extractPurchaseFormResource(appPackageText) {
@@ -247,15 +254,16 @@ async function main() {
   const purchaseFormDef = decodeEmbeddedBrotliText(purchaseResource);
   const mutatedFormDef = mutatePurchaseFormDef(purchaseFormDef);
   const mutatedResource = encodeEmbeddedBrotliText(mutatedFormDef);
-  const mutatedAppPackage = replacePurchaseFormResource(appPackageText, mutatedResource);
+  const resourceIdBase = Date.now() * 1000;
+  const mutatedAppPackage = replacePurchaseFormResource(appPackageText, mutatedResource, resourceIdBase);
 
   const wrapper = {
     ...baseline,
     PackageId: crypto.randomUUID(),
     Resource: zlib.brotliCompressSync(Buffer.from(mutatedAppPackage, "utf8")).toString("base64"),
-    Version: "V1.4",
+    Version: "V1.5",
     Date: utcNowNoMillis(),
-    Notes: "Adds Dynamic Sub List row operation menu actions: Duplicate, Insert before, Insert after, Move up, and Move down.",
+    Notes: "Bumps Purchase Request form definition resource IDs and applies Dynamic Sub List row menu actions: Duplicate, Insert before, Insert after, Move up, and Move down.",
   };
   delete wrapper.Sign;
   const signed = await signYapkWrapper(wrapper);
@@ -264,15 +272,16 @@ async function main() {
     status: "pass",
     sourceYapk: SOURCE_YAPK,
     outputYapk: OUT_YAPK,
-    version: "V1.4",
+    version: "V1.5",
     signBytes: signed.signBytes,
     verifyStatus: signed.verifyStatus,
     baseVariant: signed.baseVariant,
+    definitionResourceIdsUpdated: true,
     rowMenuActions: ["Duplicate", "Insert before", "Insert after", "Move up", "Move down"],
     proofBoundary: "Generated/signed/verified only; manual runtime test pending.",
   };
   fs.writeFileSync(OUT_REPORT, `${JSON.stringify(report, null, 2)}\n`);
-  console.log(JSON.stringify({ status: "pass", package: OUT_YAPK, version: "V1.4", signBytes: signed.signBytes, verifyStatus: signed.verifyStatus }, null, 2));
+  console.log(JSON.stringify({ status: "pass", package: OUT_YAPK, version: "V1.5", signBytes: signed.signBytes, verifyStatus: signed.verifyStatus }, null, 2));
 }
 
 main().catch((error) => {

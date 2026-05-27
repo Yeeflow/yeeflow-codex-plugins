@@ -172,6 +172,8 @@ Sub List Dynamic Runtime Proof V1.2 note: the user-corrected `Sub List Dynamic R
 
 Sub List Dynamic Runtime Proof V1.4 note: V1.3 rendering was user-confirmed for the Purchase Request Dynamic Sub List, but the row menu only had Duplicate/Delete. V1.4 is generated from V1.3 by mutating only the Purchase Request form row menu to Duplicate, Insert before, Insert after, Move up, and Move down, preserving visible Delete in the last column. Sign and verify the wrapper as usual, but keep Insert/Move runtime behavior pending until user testing confirms it.
 
+Sub List Dynamic Runtime Proof V1.5 note: V1.4 decoded locally with the five menu items but runtime still showed the old Duplicate/Delete menu. The earlier add-form generation had collapsed the Purchase Request `ProcModelID`, `DefResourceID`, and `DeployedDefID` to the same rounded large value. For form-definition mutations in YAPK upgrades, bump the target form `DefResourceID` and `DeployedDefID` along with `DefResource` so Yeeflow materializes the fresh deployed form definition. V1.5 applies that fix and remains runtime-pending.
+
 If product states the format is exactly `base64(Brotli(AppPackageInfo JSON))`, ask for one of:
 
 - a fresh `.yapk` known to decode with that exact path,

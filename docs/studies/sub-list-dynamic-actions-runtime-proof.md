@@ -24,6 +24,10 @@ Generated V1.4 row-menu output:
 
 `/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.4-row-menu-actions.yapk`
 
+Generated V1.5 row-menu resource-fix output:
+
+`/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.5-row-menu-actions-resource-fixed.yapk`
+
 Local source package used as schema evidence:
 
 `/Users/Renger/Downloads/Sub list Dynamic.yap`
@@ -150,6 +154,16 @@ V1.4 row-menu follow-up:
 - V1.4 Sub List inspection passed: two Approval Forms, two Dynamic Sub Lists, Purchase Request row menu actions resolved to `list_dup`, `list_new`, and `list_move` steps.
 - Both decoded Approval Form definitions passed final validation with zero errors.
 
+V1.4 user runtime result and V1.5 correction:
+
+- V1.4 still showed only Duplicate and Delete in the runtime row menu.
+- Local decode showed V1.4 contained the five menu items, so the issue was not the menu schema itself.
+- The Purchase Request form resource identifiers inherited from the earlier add-form generation were not distinct: `ProcModelID`, `DefResourceID`, and `DeployedDefID` had collapsed to the same large rounded value.
+- V1.5 keeps the five-item row menu and bumps the Purchase Request `DefResourceID` and `DeployedDefID` so Yeeflow should materialize a fresh deployed form definition instead of reusing the prior two-item menu definition.
+- V1.5 generated, signed, and verified successfully.
+- V1.5 Sub List inspection passed: the Purchase Request row menu contains Duplicate, Insert before, Insert after, Move up, and Move down.
+- V1.5 package validation and schema-standard inspection passed with zero errors.
+
 Skipped due to local tool hangs:
 
 - `validate-yap-graph.js`
@@ -170,6 +184,10 @@ For the purchase-request follow-up, import or upgrade with:
 For the row-menu follow-up, import or upgrade with:
 
 `/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.4-row-menu-actions.yapk`
+
+For the resource-ID fix follow-up, import or upgrade with:
+
+`/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.5-row-menu-actions-resource-fixed.yapk`
 
 Then verify:
 
@@ -206,3 +224,5 @@ For the V1.2 YAPK follow-up, the user-corrected V1.1 YAPK is the source of truth
 For the V1.3 purchase-request follow-up, the V1.2 grid-fixed YAPK is the source of truth. V1.3 is generated/signed/verified and adds a second Approval Form for purchase-item Sub List testing, but remains runtime-pending until it is imported/upgraded and manually tested.
 
 For the V1.4 row-menu follow-up, V1.3 runtime rendering is user-confirmed. V1.4 is generated/signed/verified and updates the Purchase Request row operation menu, but Insert before, Insert after, Move up, and Move down behavior remains runtime-pending until manually tested.
+
+For the V1.5 row-menu resource-fix follow-up, V1.4 runtime proved the old two-item menu was still being materialized. V1.5 updates the Purchase Request form definition resource IDs as well as the row menu, but runtime confirmation remains pending until imported/upgraded and tested.
