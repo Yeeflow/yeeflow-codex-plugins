@@ -247,4 +247,6 @@ For Data List print-page follow-up tests, use `docs/studies/data-list-print-page
 Keep proof claims narrow: a rendered Vertical Timeline does not prove Horizontal Timeline arrows; Dynamic field rendering does not prove file preview/download; dashboard timeline proof does not prove approval-form or data-list-form timeline hosts.
 
 Data List custom-form Dynamic field usage with source `4` is export-proven on `View page`, but runtime custom-form behavior remains unproven until the form is opened and verified in Yeeflow.
+
+Current generated runtime candidate: `/Users/Renger/Downloads/kanban-collection-timeline-runtime-proof.v1.yap`, produced by `generate-kanban-collection-timeline-runtime-proof.mjs`. Manual checklist: import the package, open `Dynamic Controls Runtime Dashboard`, verify Kanban grouping, Collection cards, Vertical Timeline items, Horizontal Timeline items, and Dynamic field values. Then verify Dynamic user/image/file controls are stable with empty values; optionally add safe runtime owner/image/file values before claiming display or preview behavior. Do not claim drag/drop, click/open, preview/download, or Data List form runtime behavior unless those exact interactions are tested.
 <!-- kanban-collection-dynamic-controls-learning:end -->
