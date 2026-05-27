@@ -9,6 +9,8 @@ Business Travel schema-practice carry-forward: generated data-list and document-
 
 Pivot Table runtime-proof carry-forward: the v1 generated package imported but its seeded `ListDatas` rows did not appear and manual Add failed because data-list field definitions were cloned by array position, crossing `FieldName` and `FieldType` storage metadata. The v2 package cloned definitions by `FieldName`, included 20 safe rows, and the user confirmed rows, Pivot Tables, and Add new item worked. Future generated data lists, especially analytics/demo lists, must keep storage families aligned (`Text* -> Text`, `Datetime* -> Datetime/date`, `Decimal* -> Decimal/number`, `Bigint* -> Bigint/integer`, `Bit* -> Bit/boolean`) and validate seed-row keys against those fields before handoff.
 
+LayoutView add-form hardening: generated Data Lists that expose the default `+ New item` action must include runtime-safe `ListModel.LayoutView` display settings. `LayoutView.add` must point to a real Type `1` New/Edit custom form layout in the same list; `opentype.add` and `modalsize.add` alone are not enough and can leave the Add modal loading forever. The focused fixed Container/Button action package is user-confirmed to import, open `Action Runtime Requests`, and render the default `+ New item` Add modal when `add/edit/view` resolve to concrete Type `1` layouts and object-shaped display-settings `sort` is omitted. `LayoutView.view` must resolve when present, `LayoutView.edit` may be `default` only when intentionally using Yeeflow default edit behavior, and display-settings `sort` should be omitted unless using an export-supported field-ID array shape. Do not put Type `0` view sort objects such as `{ SortName, SortByDesc }` in `ListModel.LayoutView.sort`. This proof does not cover Add form save/data mutation, Public Forms, Document Libraries, Form Reports, or unrelated generated app patterns.
+
 ## Application Navigation References
 
 When a generated application exposes data lists through the app navigation menu, reference each list from the root app `Data.Item.ListModel.LayoutView.sort[]` using `Type = 1`, the list `ListID`, root `ListSetID`, `Title`, optional `DisplayName`, optional `Icon`, and boolean `IsHidden` when needed. Omit `DisplayName` to allow Yeeflow to use the data list title as the menu label. Use `Icon: ""` for no-icon.
@@ -155,6 +157,7 @@ Load only the relevant reference:
   - `LayoutInResources[0].RefId = LayoutID`
   - `LayoutInResources[0].Resource` is a JSON string with `children`, `attrs`, `title`, `filterVars`, `ver`, `tempVars`
   - `Item.ListModel.LayoutView.add/edit/view` points to the custom form `LayoutID`
+  - for generated lists with default New item enabled, `Item.ListModel.LayoutView.add` is mandatory and must resolve before handoff
 - Single lookup sample values are plain target record `ListDataID` strings.
 - For staged standalone related lists, import/export the reference list first, patch the dependent lookup to real metadata, and exclude external lookup IDs from `Resource.ReplaceIds`.
 - For app-level `.yap` internal lookup samples, target sample record IDs are local IDs, should be included in `ReplaceIds`, and dependent lookup sample values may reference those local IDs.

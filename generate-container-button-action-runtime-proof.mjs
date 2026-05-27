@@ -4,11 +4,11 @@ import zlib from "node:zlib";
 
 const GZIP_PREFIX = "[______gizp______]";
 const SOURCE_PACKAGE = "/Users/Renger/Downloads/generated-dashboard-filter-controls-v5.yap";
-const OUT_PACKAGE = "container-button-action-runtime-proof.v1.yap";
-const DOWNLOADS_COPY = "/Users/Renger/Downloads/container-button-action-runtime-proof.v1.yap";
-const OUT_RESOURCE = ".tmp/container-button-action-runtime-proof.v1.resource.json";
-const OUT_DATA = ".tmp/container-button-action-runtime-proof.v1.app-def.json";
-const OUT_REPORT = ".tmp/container-button-action-runtime-proof.v1.generation-report.json";
+const OUT_PACKAGE = "container-button-action-runtime-proof.layoutview-fixed.v1.yap";
+const DOWNLOADS_COPY = "/Users/Renger/Downloads/container-button-action-runtime-proof.layoutview-fixed.v1.yap";
+const OUT_RESOURCE = ".tmp/container-button-action-runtime-proof.layoutview-fixed.v1.resource.json";
+const OUT_DATA = ".tmp/container-button-action-runtime-proof.layoutview-fixed.v1.app-def.json";
+const OUT_REPORT = ".tmp/container-button-action-runtime-proof.layoutview-fixed.v1.generation-report.json";
 const TITLE = "Container Button Action Runtime Proof";
 const DESCRIPTION = "Focused generated package for representative Container/Button action navigation runtime proof.";
 const FRESH_ID_BASE = 2060600000001000000n;
@@ -180,6 +180,75 @@ function pageShell(title, subtitle, children) {
   };
 }
 
+function formControl(field, index, readOnly = false) {
+  const fieldName = String(field.FieldName || field.InternalName || `Field${index}`);
+  const fieldType = String(field.Type || "input");
+  return {
+    id: uuid(`list-form-${fieldName}-${index}`),
+    type: fieldType,
+    label: field.DisplayName || field.Title || fieldName,
+    binding: fieldName,
+    fieldID: field.FieldID,
+    isListControl: true,
+    identifier: fieldName,
+    InternalName: field.InternalName || fieldName,
+    attrs: {
+      ...(field.Rules ? parseJson(field.Rules, `Rules for ${fieldName}`) : {}),
+      ...(readOnly ? { readonly: true, disabled: true } : {}),
+    },
+    children: [],
+  };
+}
+
+function customFormResource(title, fields, readOnly = false) {
+  return JSON.stringify({
+    title,
+    ver: "2.0",
+    attrs: { container: { cw: "2" } },
+    filterVars: [],
+    tempVars: [],
+    exts: [],
+    children: [{
+      id: uuid(`${title}-form-root`),
+      type: "container",
+      label: "Container",
+      attrs: {
+        container: { cw: "2" },
+        common: { padding: { t: [null, "--sp--s0"], r: [null, "--sp--s0"], b: [null, "--sp--s0"], l: [null, "--sp--s0"] } },
+      },
+      children: [{
+        id: uuid(`${title}-form-grid`),
+        type: "flex_grid",
+        label: "Grid",
+        attrs: {
+          ver: "2",
+          columns: { 1: "1", 3: "2" },
+          rows: { 1: "auto" },
+          cgap: { 1: "16" },
+          cgapU: "px",
+        },
+        children: fields.map((field, index) => formControl(field, index, readOnly)),
+      }],
+    }],
+  });
+}
+
+function customFormLayout(layoutId, listId, title, fields, readOnly = false) {
+  return {
+    LayoutID: layoutId,
+    Type: 1,
+    Title: title,
+    IsDefault: false,
+    ListID: listId,
+    LayoutView: null,
+    LayoutInResources: [{ ID: layoutId, RefId: layoutId, Resource: customFormResource(title, fields, readOnly) }],
+    Ext2: JSON.stringify({ src: true }),
+    IsItemPerm: false,
+    Created: new Date().toISOString(),
+    Modified: new Date().toISOString(),
+  };
+}
+
 function configureList(data) {
   const list = data.Childs?.[0];
   if (!list) throw new Error("Template package does not contain a child data list.");
@@ -188,13 +257,23 @@ function configureList(data) {
   list.ListModel.Flags = 1;
   list.ListModel.Status = 1;
   list.ListModel.ListType = 1;
+  const addLayoutId = fresh(601);
+  const editLayoutId = fresh(602);
+  const viewLayoutId = fresh(603);
+  const fields = list.Defs || [];
+  const existingViews = (list.Layouts || []).filter((layout) => Number(layout.Type) !== 1);
+  list.Layouts = [
+    ...existingViews,
+    customFormLayout(addLayoutId, list.ListModel.ListID, "New Item", fields, false),
+    customFormLayout(editLayoutId, list.ListModel.ListID, "Edit Item", fields, false),
+    customFormLayout(viewLayoutId, list.ListModel.ListID, "View Item", fields, true),
+  ];
   list.ListModel.LayoutView = JSON.stringify({
-    add: list.Layouts.find((layout) => layout.Title === "Edit Item")?.LayoutID || list.Layouts[1]?.LayoutID,
-    edit: list.Layouts.find((layout) => layout.Title === "Edit Item")?.LayoutID || list.Layouts[1]?.LayoutID,
-    view: list.Layouts.find((layout) => layout.Title === "View Item")?.LayoutID || list.Layouts[2]?.LayoutID,
+    add: addLayoutId,
+    edit: editLayoutId,
+    view: viewLayoutId,
     opentype: { add: "modal" },
     modalsize: { add: 1 },
-    sort: [{ SortName: "Created", SortByDesc: true }],
   });
   for (const field of list.Defs || []) {
     if (typeof field.InternalName === "string") {

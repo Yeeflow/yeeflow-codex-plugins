@@ -94,9 +94,17 @@ const APP_RESOURCE_PERMISSION_CONFLICT_KEYS = {
   dataReports: { schemaAllowed: new Set([0, 8]), rulesAllowed: new Set([0, 1]), label: "schema says Read=8; rules document says Submit=1" },
 };
 const CUSTOM_FORM_DISPLAY_USAGES = ["add", "edit", "view"];
+const PIVOT_TABLE_SOURCE_TYPES = new Map([[1, "Data list"], [16, "Document library"], [32, "Form report"], [64, "Data report"]]);
+const PIVOT_TABLE_DATE_GROUPINGS = new Set(["DAY", "MONTH", "QUARTER", "YEAR"]);
+const PIVOT_TABLE_COUNT_AGGREGATIONS = new Set(["COUNT", "COUNT_DISTINCT"]);
+const PIVOT_TABLE_NUMERIC_AGGREGATIONS = new Set(["SUM", "AVG", "MIN", "MAX"]);
+const PIVOT_TABLE_NUMERIC_FIELD_TYPES = new Set(["input_number", "currency", "percent", "rate", "calculated-column", "Decimal", "Int", "Bigint", "Number"]);
+const PIVOT_TABLE_DATE_FIELD_TYPES = new Set(["datepicker", "time", "Datetime", "DateTime", "Date", "Time"]);
 const CUSTOM_FORM_OPEN_MODE_LABELS = {
   modal: "Pop-up window",
   slide: "Slide in",
+  target: "Current page",
+  new: "New page",
   page: "Full page",
   fullpage: "Full page",
   fullPage: "Full page",
@@ -558,6 +566,38 @@ function normalizeType(field) {
   return "unknown";
 }
 
+function expectedFieldTypeForFieldName(fieldName) {
+  const name = safeString(fieldName);
+  if (name === "Title" || /^Text\d+$/i.test(name)) return { family: "text", allowed: ["text", "string"] };
+  if (/^Datetime\d+$/i.test(name)) return { family: "date", allowed: ["datetime", "date", "time"] };
+  if (/^Decimal\d+$/i.test(name)) return { family: "decimal", allowed: ["decimal", "currency", "number"] };
+  if (/^Bigint\d+$/i.test(name)) return { family: "integer", allowed: ["bigint", "int", "integer", "number"] };
+  if (/^Bit\d+$/i.test(name)) return { family: "boolean", allowed: ["bit", "bool", "boolean"] };
+  return null;
+}
+
+function validateFieldNameStorageTypeAlignment(field, listTitle, pathPrefix, report) {
+  const expected = expectedFieldTypeForFieldName(field && field.FieldName);
+  if (!expected) return;
+  const fieldType = safeString(field && field.FieldType).toLowerCase();
+  if (!fieldType) return;
+  if (!expected.allowed.some((token) => fieldType.includes(token))) {
+    issue(
+      report,
+      generatorFinalSeverity(report),
+      "FIELD_NAME_FIELDTYPE_MISMATCH",
+      "Generated data-list fields must keep FieldName storage prefix aligned with FieldType; cloned template fields must be selected by FieldName, not by array position, before seeded rows or add-new-item runtime tests.",
+      {
+        list: listTitle,
+        path: `${pathPrefix}.FieldType`,
+        fieldName: field && field.FieldName,
+        fieldType: field && field.FieldType,
+        expectedFamily: expected.family,
+      }
+    );
+  }
+}
+
 function classifyListResource(item, isRoot = false) {
   const list = item && item.ListModel ? item.ListModel : {};
   const type = Number(list.Type);
@@ -887,6 +927,14 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
   }
   const rootLayouts = asArray(data.Item && data.Item.Layouts);
   const rootPageLayouts = new Set(rootLayouts.filter((layout) => safeString(layout.Type) === "103").map((layout) => safeString(layout.LayoutID)).filter(Boolean));
+  const approvalFormsByKey = new Set(asArray(data.Forms).map((form) => safeString(form.Key || form.DefKey || form.ProcKey)).filter(Boolean));
+  const layoutsById = new Set();
+  for (const resource of [data.Item, ...asArray(data.Childs)]) {
+    for (const candidateLayout of asArray(resource && resource.Layouts)) {
+      const candidateLayoutId = safeString(candidateLayout.LayoutID);
+      if (candidateLayoutId) layoutsById.add(candidateLayoutId);
+    }
+  }
   const documentLibraryOnlyPackage = isDocumentLibraryOnlyPackage(data);
   if (!rootPageLayouts.size) {
     issue(
@@ -940,7 +988,7 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
         if (!Array.isArray(page.children) || !page.children.length) {
           issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_EMPTY_CHILDREN", "Root Type 103 app page Resource should contain at least one child component.", { title: layout.Title, layoutId, resourceId });
         }
-        validateDashboardPageResource(page, layout, resource, listsById, fieldsByList, rootPageLayouts, report, outerResource);
+        validateDashboardPageResource(page, layout, resource, listsById, fieldsByList, rootPageLayouts, approvalFormsByKey, layoutsById, report, outerResource);
       }
     }
   }
@@ -1104,7 +1152,7 @@ function validateRootNavigationMenuStructure(items, report, depth = 1, path = "$
   });
 }
 
-function validateDashboardPageResource(page, layout, resource, listsById, fieldsByList, rootPageLayouts, report, outerResource) {
+function validateDashboardPageResource(page, layout, resource, listsById, fieldsByList, rootPageLayouts, approvalFormsByKey, layoutsById, report, outerResource) {
   const severity = generatorFinalSeverity(report);
   const title = layout.Title;
   const layoutId = safeString(layout.LayoutID);
@@ -1132,6 +1180,7 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
   const applyButtonIds = new Set();
   const dataFilterControls = [];
   const removeFilterControls = [];
+  const pivotTableControls = [];
   const seenTempVars = new Set();
   for (const item of asArray(page.tempVars)) {
     const id = safeString(item.id);
@@ -1175,6 +1224,10 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
     if (safeString(node.type) === "document-library") {
       validateDashboardDocLibraryControl(node, title, layoutId, pointer, listsById, fieldsByList, report);
     }
+    if (safeString(node.type) === "pivot-table") {
+      pivotTableControls.push({ pointer, controlId, control: node });
+    }
+    validateContainerButtonActionControl(node, title, layoutId, pointer, listsById, fieldsByList, rootPageLayouts, approvalFormsByKey, layoutsById, report);
     const dataForm = node.attrs && node.attrs.data && node.attrs.data.form;
     if (dataForm && safeString(dataForm.ListSetID) && safeString(dataForm.ListSetID) !== safeString(resource.ListSetID || (resource.Item && resource.Item.ListID)) && !listsById.has(safeString(dataForm.ListSetID))) {
       issue(report, report.mode === "generator" ? "error" : "dependency", "DASHBOARD_FORM_EXTERNAL_LISTSET_REFERENCE", "Dashboard action references a form/listset outside the package; generated dashboards should model or exclude external dependencies.", { title, layoutId, pointer, listSetId: safeString(dataForm.ListSetID), procKey: safeString(dataForm.ProcKey) });
@@ -1187,6 +1240,7 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
 
   validateDashboardDataFilterControls(title, layoutId, filterVars, applyButtonIds, dataFilterControls, removeFilterControls, report);
 
+  const pivotExtByControlId = new Map();
   asArray(page.exts).forEach((ext, index) => {
     const attr = ext && ext.attr;
     const extId = safeString(ext && ext.i);
@@ -1200,6 +1254,9 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
       issue(report, severity, "DASHBOARD_EXT_ATTR_MISSING", "Dashboard ext entries should include attr configuration.", { title, layoutId, index });
       return;
     }
+    if (safeString(ext && ext.key) === "PivotTable" || (safeString(ext && ext.category) === "___Pivot___" && pivotTableControls.some((control) => control.controlId === extId))) {
+      pivotExtByControlId.set(extId, { ext, index });
+    }
     validateDashboardListId(title, layoutId, `$.exts[${index}].attr.ListID`, attr.ListID, listsById, report);
     validateDashboardExtFieldRefs(title, layoutId, `$.exts[${index}]`, attr, fieldsByList, filterVars, report);
     walk(attr, (node, pointer) => {
@@ -1208,8 +1265,88 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
       validateDashboardListId(title, layoutId, `$.exts[${index}].attr${pointer.slice(1)}.ListID`, node.ListID, listsById, report);
     });
   });
+  validateDashboardPivotTableControls(title, layoutId, pivotTableControls, pivotExtByControlId, listsById, fieldsByList, filterVars, report);
   validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report);
   validateDashboardFunctionalQuality(page, title, layoutId, report);
+}
+
+function validateContainerButtonActionControl(node, title, layoutId, pointer, listsById, fieldsByList, rootPageLayouts, approvalFormsByKey, layoutsById, report) {
+  if (!node || !["container", "button", "action_button"].includes(safeString(node.type))) return;
+  const attrs = node.attrs;
+  if (!attrs || !Object.prototype.hasOwnProperty.call(attrs, "action-type")) return;
+  const severity = generatorFinalSeverity(report);
+  const controlType = safeString(node.type);
+  const actionType = safeString(attrs["action-type"]);
+  const knownActionTypes = new Set(["1", "2", "5", "6", "8"]);
+  const knownOpenModes = new Set(["", "modal", "slide", "target", "new"]);
+  const knownModalSizes = new Set(["0", "1", "2", "3", "9"]);
+  if (!knownActionTypes.has(actionType)) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "CONTAINER_BUTTON_ACTION_TYPE_UNKNOWN", "Container/Button action-type should be one of the export-proven action codes: 1 form action, 2 Link, 5 Add list item, 6 Open dashboard, 8 Open approval form.", { title, layoutId, pointer, controlType, actionType });
+  }
+  const op = safeString(attrs.op);
+  if (!knownOpenModes.has(op)) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "CONTAINER_BUTTON_ACTION_OPEN_MODE_UNKNOWN", "Container/Button open behavior should use an export-proven op value: empty/default, modal, slide, target, or new.", { title, layoutId, pointer, controlType, actionType, op });
+  }
+  if (attrs.modalsize !== undefined && !knownModalSizes.has(safeString(attrs.modalsize))) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "CONTAINER_BUTTON_ACTION_SIZE_UNKNOWN", "Container/Button modal size should use an export-proven value. Custom size uses modalsize 9 with cusize.", { title, layoutId, pointer, controlType, actionType, modalsize: attrs.modalsize });
+  }
+  if (safeString(attrs.modalsize) === "9" && attrs.cusize !== undefined && !isObject(attrs.cusize)) {
+    issue(report, severity, "CONTAINER_BUTTON_ACTION_CUSTOM_SIZE_INVALID", "Container/Button custom size should be an object such as { w } or { w, wu } when modalsize is 9.", { title, layoutId, pointer, controlType, actionType });
+  }
+
+  if (actionType === "2") {
+    const link = attrs.link;
+    const hasUrl = typeof link?.url === "string" && link.url.trim();
+    const hasVariable = Array.isArray(link?.variable) && link.variable.length > 0;
+    if (!isObject(link) || (!hasUrl && !hasVariable)) {
+      issue(report, severity, "CONTAINER_BUTTON_LINK_TARGET_MISSING", "Link actions should include attrs.link with a literal URL or a URL expression variable.", { title, layoutId, pointer, controlType });
+    }
+    return;
+  }
+
+  if (actionType === "5") {
+    const listId = safeString(attrs.data && attrs.data.list && attrs.data.list.ListID);
+    if (!listId) {
+      issue(report, severity, "CONTAINER_BUTTON_ADD_LIST_TARGET_MISSING", "Add list item actions should include attrs.data.list.ListID.", { title, layoutId, pointer, controlType });
+    } else if (!listsById.has(listId)) {
+      issue(report, severity, "CONTAINER_BUTTON_ADD_LIST_TARGET_UNRESOLVED", "Add list item actions must reference an included Data List or Document Library when generated for this app.", { title, layoutId, pointer, controlType, listId });
+    }
+    const actionLayoutId = safeString(attrs.layout);
+    if (actionLayoutId && !layoutsById.has(actionLayoutId)) {
+      issue(report, severity, "CONTAINER_BUTTON_ADD_LIST_LAYOUT_UNRESOLVED", "Add list item layout should resolve to a target list/document-library form layout when present.", { title, layoutId, pointer, controlType, actionLayoutId });
+    }
+    for (const [index, passvalue] of asArray(attrs.passvalues).entries()) {
+      const fieldName = safeString(passvalue && passvalue.Name);
+      if (fieldName && listId && fieldsByList.has(listId) && !fieldsByList.get(listId).has(fieldName)) {
+        issue(report, severity, "CONTAINER_BUTTON_PASSVALUE_FIELD_UNRESOLVED", "Container/Button Add list item passvalues must reference fields on the target list.", { title, layoutId, pointer: `${pointer}.attrs.passvalues[${index}]`, controlType, listId, fieldName });
+      }
+    }
+    return;
+  }
+
+  if (actionType === "6") {
+    const pageId = safeString(attrs.data && attrs.data.page && attrs.data.page.PageID);
+    if (!pageId) {
+      issue(report, severity, "CONTAINER_BUTTON_OPEN_DASHBOARD_TARGET_MISSING", "Open dashboard actions should include attrs.data.page.PageID.", { title, layoutId, pointer, controlType });
+    } else if (!rootPageLayouts.has(pageId)) {
+      issue(report, severity, "CONTAINER_BUTTON_OPEN_DASHBOARD_TARGET_UNRESOLVED", "Open dashboard actions must reference an included Type 103 dashboard when generated for this app.", { title, layoutId, pointer, controlType, pageId });
+    }
+    return;
+  }
+
+  if (actionType === "8") {
+    const procKey = safeString(attrs.data && attrs.data.form && attrs.data.form.ProcKey);
+    if (!procKey) {
+      issue(report, severity, "CONTAINER_BUTTON_OPEN_APPROVAL_FORM_TARGET_MISSING", "Open approval form actions should include attrs.data.form.ProcKey.", { title, layoutId, pointer, controlType });
+    } else if (!approvalFormsByKey.has(procKey)) {
+      issue(report, severity, "CONTAINER_BUTTON_OPEN_APPROVAL_FORM_TARGET_UNRESOLVED", "Open approval form actions must reference an included approval form when generated for this app.", { title, layoutId, pointer, controlType, procKey });
+    }
+    return;
+  }
+
+  if (actionType === "1" && !safeString(attrs.control_action || attrs.action || attrs["control_action"])) {
+    issue(report, report.mode === "generator" ? "error" : "warning", "CONTAINER_BUTTON_FORM_ACTION_TARGET_MISSING", "Form action binding actions should include an action/control_action reference.", { title, layoutId, pointer, controlType });
+  }
 }
 
 function isDashboardDataFilterControlType(type) {
@@ -1509,6 +1646,92 @@ function validateDashboardExtFieldRefs(title, layoutId, pointer, attr, fieldsByL
     }
   }
   validateDashboardConditions(title, layoutId, `${pointer}.attr.settings.Conditions`, settings.Conditions, fields, filterVars, report);
+}
+
+function validateDashboardPivotTableControls(title, layoutId, controls, extByControlId, listsById, fieldsByList, filterVars, report) {
+  const severity = generatorFinalSeverity(report);
+  for (const control of controls) {
+    if (!control.controlId) {
+      issue(report, severity, "PIVOT_TABLE_CONTROL_ID_MISSING", "Pivot Table controls need stable ids so page.exts can bind data analytics settings.", { title, layoutId, pointer: control.pointer });
+      continue;
+    }
+    const match = extByControlId.get(control.controlId);
+    if (!match) {
+      issue(report, severity, "PIVOT_TABLE_EXT_MISSING", "Pivot Table controls must have a matching page.exts entry with key PivotTable and i equal to the control id.", { title, layoutId, pointer: control.pointer, controlId: control.controlId });
+      continue;
+    }
+    validatePivotTableExt(title, layoutId, `$.exts[${match.index}]`, match.ext, listsById, fieldsByList, filterVars, report);
+  }
+}
+
+function validatePivotTableExt(title, layoutId, pointer, ext, listsById, fieldsByList, filterVars, report) {
+  const severity = generatorFinalSeverity(report);
+  const attr = ext && ext.attr;
+  if (safeString(ext && ext.key) !== "PivotTable") {
+    issue(report, "warning", "PIVOT_TABLE_EXT_KEY_UNKNOWN", "Pivot Table data analytics ext entries are export-proven with key = PivotTable.", { title, layoutId, pointer, key: safeString(ext && ext.key) });
+  }
+  if (!isObject(attr)) {
+    issue(report, severity, "PIVOT_TABLE_EXT_ATTR_MISSING", "Pivot Table ext entries should include attr with ListID and settings.", { title, layoutId, pointer });
+    return;
+  }
+  const listId = safeString(attr.ListID);
+  if (!listId) {
+    issue(report, severity, "PIVOT_TABLE_DATA_SOURCE_MISSING", "Pivot Table ext attr must include a data source ListID.", { title, layoutId, pointer });
+    return;
+  }
+  const source = listsById.get(listId);
+  if (!source) {
+    issue(report, severity, "PIVOT_TABLE_DATA_SOURCE_UNRESOLVED", "Pivot Table data source ListID must resolve to an included data list, document library, Form Report, or Data Report resource.", { title, layoutId, pointer, listId });
+    return;
+  }
+  const sourceType = Number(source.item && source.item.ListModel && source.item.ListModel.Type);
+  if (!PIVOT_TABLE_SOURCE_TYPES.has(sourceType)) {
+    issue(report, "warning", "PIVOT_TABLE_SOURCE_TYPE_UNPROVEN", "Pivot Table source type is not in the product-supported Data Analytics source set.", { title, layoutId, pointer, listId, sourceType, source: source.title });
+  }
+  const settings = attr.settings;
+  if (!isObject(settings)) {
+    issue(report, severity, "PIVOT_TABLE_SETTINGS_MISSING", "Pivot Table ext attr.settings should include rows, columns, and values.", { title, layoutId, pointer, listId });
+    return;
+  }
+  const fields = fieldsByList.get(listId) || new Map();
+  for (const axis of ["rows", "columns", "values"]) {
+    if (!Array.isArray(settings[axis])) {
+      issue(report, severity, "PIVOT_TABLE_AXIS_NOT_ARRAY", "Pivot Table settings rows, columns, and values should be arrays.", { title, layoutId, pointer: `${pointer}.attr.settings.${axis}`, axis });
+      continue;
+    }
+    settings[axis].forEach((item, index) => validatePivotTableAxisItem(title, layoutId, `${pointer}.attr.settings.${axis}[${index}]`, axis, item, fields, report));
+  }
+  validateDashboardConditions(title, layoutId, `${pointer}.attr.settings.Conditions`, settings.Conditions, fields, filterVars, report);
+}
+
+function validatePivotTableAxisItem(title, layoutId, pointer, axis, item, fields, report) {
+  const severity = generatorFinalSeverity(report);
+  if (!isObject(item)) {
+    issue(report, "warning", "PIVOT_TABLE_AXIS_ITEM_UNKNOWN", "Pivot Table axis item uses an unknown schema variant.", { title, layoutId, pointer, axis });
+    return;
+  }
+  const fieldName = safeString(item.fieldName);
+  const field = fields.get(fieldName);
+  if (fieldName && !field && !KNOWN_SYSTEM_FIELDS.has(fieldName)) {
+    issue(report, severity, "PIVOT_TABLE_FIELD_UNRESOLVED", "Pivot Table rows, columns, and values must reference fields on the selected data source.", { title, layoutId, pointer: `${pointer}.fieldName`, axis, fieldName });
+  }
+  const func = safeString(item.func);
+  const fieldType = safeString(item.fieldType || field && field.Type);
+  if (axis === "values") {
+    if (!func) {
+      issue(report, severity, "PIVOT_TABLE_VALUE_AGGREGATION_MISSING", "Pivot Table value entries should declare an aggregation such as COUNT, SUM, AVG, MIN, or MAX.", { title, layoutId, pointer, fieldName });
+    } else if (!PIVOT_TABLE_COUNT_AGGREGATIONS.has(func) && !PIVOT_TABLE_NUMERIC_AGGREGATIONS.has(func)) {
+      issue(report, "warning", "PIVOT_TABLE_VALUE_AGGREGATION_UNKNOWN", "Pivot Table value aggregation is not export-proven.", { title, layoutId, pointer: `${pointer}.func`, aggregation: func });
+    } else if (PIVOT_TABLE_NUMERIC_AGGREGATIONS.has(func) && fieldType && !PIVOT_TABLE_NUMERIC_FIELD_TYPES.has(fieldType)) {
+      issue(report, severity, "PIVOT_TABLE_VALUE_AGGREGATION_FIELD_TYPE_UNPROVEN", "Numeric Pivot Table aggregations should target numeric/currency fields where detectable.", { title, layoutId, pointer, fieldName, fieldType, aggregation: func });
+    }
+  } else if (func) {
+    if (!PIVOT_TABLE_DATE_GROUPINGS.has(func)) {
+      issue(report, "warning", "PIVOT_TABLE_AXIS_GROUPING_UNKNOWN", "Pivot Table row/column grouping is not export-proven.", { title, layoutId, pointer: `${pointer}.func`, axis, grouping: func });
+    } else if (fieldType && !PIVOT_TABLE_DATE_FIELD_TYPES.has(fieldType)) {
+      issue(report, severity, "PIVOT_TABLE_DATE_GROUPING_FIELD_TYPE_INVALID", "Pivot Table date grouping should only be used on date/time fields where detectable.", { title, layoutId, pointer, axis, fieldName, fieldType, grouping: func });
+    }
+  }
 }
 
 function validateDashboardConditions(title, layoutId, pointer, conditions, fields, filterVars, report) {
@@ -1936,6 +2159,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
       );
     }
     if (field.Rules && !tryParseJson(field.Rules)) issue(report, "warning", "FIELD_RULES_JSON_INVALID", "Field Rules is not valid JSON.", { list: title, field: displayName || fieldName });
+    validateFieldNameStorageTypeAlignment(field, title, fp, report);
     validateDataListFieldTypeSettings(field, title, fp, report);
     validateFieldAgainstSchema(field, report._controlFieldSchemas).forEach((schemaIssue) => {
       issue(report, "warning", `FIELD_SCHEMA_${schemaIssue.code}`, schemaIssue.message, {
@@ -2083,9 +2307,13 @@ function validateCustomFormDisplaySettings(layoutView, layouts, report, context)
   const customFormLayoutIds = new Set(asArray(layouts).filter((layout) => Number(layout.Type) === 1).map((layout) => safeString(layout.LayoutID)).filter(Boolean));
   const opentype = isObject(layoutView.opentype) ? layoutView.opentype : {};
   const modalsize = isObject(layoutView.modalsize) ? layoutView.modalsize : {};
+  const finalGenerated = report.mode === "generator" && report.stage === "final";
   for (const usage of CUSTOM_FORM_DISPLAY_USAGES) {
     const formRef = safeString(layoutView[usage] === undefined ? "default" : layoutView[usage]);
     const usesDefault = formRef === "" || formRef === "default";
+    if (usage === "add" && usesDefault && finalGenerated) {
+      issue(report, "error", "LAYOUTVIEW_ADD_LAYOUT_MISSING", "Generated data lists must assign ListModel.LayoutView.add to a real custom form layout. A display setting with only opentype/modalsize can make the default New item modal load forever.", { ...context, usage, formRef });
+    }
     if (!usesDefault && !customFormLayoutIds.has(formRef)) {
       issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_DISPLAY_FORM_REF_NOT_FOUND", "New/Edit/View display setting references a custom list form layout that does not exist.", { ...context, usage, formRef });
     }
@@ -2096,6 +2324,19 @@ function validateCustomFormDisplaySettings(layoutView, layouts, report, context)
     const hasSize = rawSize !== undefined && rawSize !== null && rawSize !== "";
     if (hasSize && !CUSTOM_FORM_SIZE_LABELS.has(Number(rawSize))) issue(report, "warning", "CUSTOM_FORM_DISPLAY_SIZE_UNKNOWN", "Custom list form display setting uses an unknown size code.", { ...context, usage, size: rawSize });
     if (openMode === "Full page" && hasSize) issue(report, "warning", "CUSTOM_FORM_DISPLAY_FULL_PAGE_SIZE_SET", "Full page display settings should not rely on pop-up/slide size behavior unless a future export proves it.", { ...context, usage, size: rawSize });
+  }
+  if (layoutView.sort !== undefined) {
+    if (!Array.isArray(layoutView.sort)) {
+      issue(report, finalGenerated ? "error" : "warning", "LAYOUTVIEW_SORT_SHAPE_UNSUPPORTED", "Data-list ListModel.LayoutView.sort must be omitted or use an export-supported array shape.", { ...context, shape: typeof layoutView.sort });
+    } else {
+      layoutView.sort.forEach((entry, index) => {
+        if (isObject(entry)) {
+          issue(report, finalGenerated ? "error" : "warning", "LAYOUTVIEW_SORT_OBJECT_UNSUPPORTED", "Data-list ListModel.LayoutView.sort object entries such as SortName/SortByDesc are not runtime-supported for display settings; omit sort or use an export-shaped field-id array.", { ...context, index });
+        } else if (Array.isArray(entry) && !entry.every((fieldId) => typeof fieldId === "string" || typeof fieldId === "number")) {
+          issue(report, finalGenerated ? "error" : "warning", "LAYOUTVIEW_SORT_FIELD_ARRAY_INVALID", "Data-list ListModel.LayoutView.sort field-id arrays must contain field IDs only.", { ...context, index });
+        }
+      });
+    }
   }
 }
 
@@ -2301,6 +2542,9 @@ function validatePublicForms(item, fieldsByName, pathPrefix, report) {
       const controlPath = `${context.path}.Resource.children[${childIndex}]${pointer.slice(1)}`;
       if (!type) return;
       if (type === "submit-button") submitControls += 1;
+      if (type === "pivot-table") {
+        issue(report, generatorFinalSeverity(report), "PIVOT_TABLE_PUBLIC_FORM_UNSUPPORTED", "Pivot Table is a Data Analytics control and should not be generated on Data List Public Forms.", { ...context, path: controlPath });
+      }
       if (!PUBLIC_FORM_KNOWN_CONTROL_TYPES.has(type)) {
         issue(report, "warning", "PUBLIC_FORM_CONTROL_TYPE_UNKNOWN", "Public form uses a control type that is not yet export-proven for public forms.", { ...context, path: controlPath, type });
       }
@@ -2946,6 +3190,9 @@ function validateApprovalFormLayoutQuality(formdef, page, form, report, pageInde
     }
     if (isSubmitPage && /(internal routing|approval routing|routing details|budget owner|finance approver|decision notes|reviewer decision|approver notes)/i.test(label)) {
       issue(report, severity, "SUBMIT_FORM_INTERNAL_ROUTING_DETAILS", "Submission forms should focus on submitter inputs and business context; internal routing, approver, and reviewer decision details belong on task pages unless explicitly requested.", { form: form.Name, page: pageName, pageId, path: `Data.Forms[].DefResource.pageurls[${pageIndex}].formdef${pointer.slice(1)}`, control: label, controlType: control.type });
+    }
+    if (type === "pivot-table") {
+      issue(report, severity, "PIVOT_TABLE_APPROVAL_FORM_UNSUPPORTED", "Pivot Table is a Data Analytics control and should not be generated on approval forms or approval task pages.", { form: form.Name, page: pageName, pageId, path: `Data.Forms[].DefResource.pageurls[${pageIndex}].formdef${pointer.slice(1)}`, control: label });
     }
   });
 }

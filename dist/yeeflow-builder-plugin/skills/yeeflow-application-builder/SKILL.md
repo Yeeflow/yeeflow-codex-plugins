@@ -50,6 +50,8 @@ Cover these planning areas:
 - Integrations and connections: HTTP API, OAuth, OpenAPI/REST tools, external calls, post-import connection setup, credential safety, and execution deferral.
 - Runtime and validation plan: import-proof target, runtime-proof target, render-only or validation-only areas, validators to run, and artifacts/private data that must never be committed.
 
+For any generated Data List that users will create records in, include a runtime-safe Add form plan. `ListModel.LayoutView.add` must resolve to a generated or export-backed Type `1` custom form layout; `opentype.add` and `modalsize.add` alone are not enough. The focused fixed Container/Button action package is user-confirmed to render the default `+ New item` Add modal for `Action Runtime Requests` after this shape was corrected, but save/data mutation and other hosts remain separate proof items. Validate the default `+ New item` path locally and include manual runtime verification of the Add modal rendering when the app depends on user-created list records.
+
 If planning depends on real users, departments, locations, or positions, use `yeeflow-api-operator` only when local credentials are present and the user wants authorized lookup. Do not invent org/reference data when safe API lookup is available, but do not require API access for ordinary package generation. Keep generated packages free of private user data unless explicitly required, narrow in scope, and safe; prefer placeholders, empty app groups, requester/current-user expressions, or post-import configuration.
 
 Every `Capability Coverage Plan` should include:
