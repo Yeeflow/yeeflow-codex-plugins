@@ -20,14 +20,14 @@ Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.0
+yeeflow-builder-plugin-v0.6.1-rc1
 
 Sparse paths:
 .agents/plugins/marketplace.json
 dist/yeeflow-builder-plugin
 ```
 
-After installation, ask Codex to confirm the installed Yeeflow Builder Plugin version. The expected version is `0.6.0`.
+After installation, ask Codex to confirm the installed Yeeflow Builder Plugin version. The expected version is `0.6.1`.
 
 ## Configuring Tenant URL And API Key
 
@@ -142,7 +142,7 @@ Runtime proof must state exactly what was tested, what passed, and what remains 
 ## Troubleshooting
 
 - Plugin does not appear: re-add the marketplace and verify sparse paths.
-- Wrong version: check the Git ref is `yeeflow-builder-plugin-v0.6.0`.
+- Wrong version: check the Git ref is `yeeflow-builder-plugin-v0.6.1-rc1`.
 - API check fails: verify `.env.local`, `YEEFLOW_API_BASE_URL`, `YEEFLOW_API_KEY`, and any active `YEEFLOW_PROFILE`; do not paste secrets into chat.
 - Import fails: run validators first and inspect blocking errors before retrying.
 - Runtime behavior differs by tenant: replace tenant-specific users, groups, positions, or external connections with safe placeholders or explicit post-import configuration.

@@ -27,6 +27,30 @@ Use this when Codex asks to add a plugin marketplace from a GitHub repo, Git URL
 
 Verified install status: passed on 2026-05-18.
 
+v0.6.1 RC install smoke test target:
+
+- RC tag to test: `yeeflow-builder-plugin-v0.6.1-rc1`
+- Marketplace name: `Yeeflow Internal`
+- Category: `Developer Tools`
+- Plugin name: `Yeeflow Builder`
+- Expected version: `0.6.1`
+- Expected bundled skills: `21`
+- Smoke-test question: `How does v0.6.1 handle Yeeflow tenant URLs and .env.local configuration?`
+
+Use these values in Codex's Add marketplace dialog for the v0.6.1 RC:
+
+```text
+Source:
+https://github.com/Yeeflow/yeeflow-codex-plugins.git
+
+Git ref:
+yeeflow-builder-plugin-v0.6.1-rc1
+
+Sparse paths:
+.agents/plugins/marketplace.json
+dist/yeeflow-builder-plugin
+```
+
 v0.6.0 RC install smoke test result:
 
 - RC tag tested: `yeeflow-builder-plugin-v0.6.0-rc1`

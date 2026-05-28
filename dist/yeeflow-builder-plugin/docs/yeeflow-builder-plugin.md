@@ -2,7 +2,7 @@
 
 The Yeeflow Builder Plugin is a skills-only Codex plugin for Yeeflow application builders. It packages proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth or MCP servers. API-backed helper scripts require local environment variables and must not hardcode a tenant-specific URL.
 
-Package status: v0.6.0 Git marketplace install smoke test passed with RC tag `yeeflow-builder-plugin-v0.6.0-rc1`, targeting RC package commit `d4a6b2d78756d306f85a28a2504b47a769d1427e`. Final release tag: `yeeflow-builder-plugin-v0.6.0`. The official public Git install source is `https://github.com/Yeeflow/yeeflow-codex-plugins.git`.
+Package status: v0.6.1 RC1 is prepared for tenant-neutral public sharing hardening and `.env.local` profile guidance. Latest final release tag: `yeeflow-builder-plugin-v0.6.0`. v0.6.1 final tagging must wait until marketplace install smoke testing passes. The official public Git install source is `https://github.com/Yeeflow/yeeflow-codex-plugins.git`.
 
 ## Package Contents
 
@@ -163,6 +163,22 @@ Included Advanced Controls: Tab, Toggle, Timer, Icon list, Divider, Alert, Progr
 Runtime proof: `/Users/Renger/Downloads/advanced-controls-runtime-proof.v1.yap` imported successfully, `Advanced Controls Runtime Dashboard` opened, Tab switching worked, Toggle expand/collapse worked, Timer/Icon list/Divider/Alert/Progress bar/Spacer/Progress circle/Steps bar/QR Code/Barcode rendered, Embed rendered safely without breaking the page, Document embed rendered a safe empty state, and no missing binding/render/action error appeared.
 
 Proof boundary: this runtime proof is limited to the generated Advanced Controls runtime package and covers rendering/basic interactions only. It does not prove QR scan behavior, Barcode scan behavior, external iframe content loading beyond safe render, non-empty document preview, dynamic value changes, or Approval Form/Public Form host behavior.
+
+## v0.6.1 RC Scope
+
+v0.6.1 adds tenant-neutral public sharing hardening and `.env.local` profile guidance while preserving v0.6.0 Advanced Controls support and all earlier v0.5.27 through v0.5.22 capability milestones.
+
+Included environment hardening:
+
+- `docs/environment-configuration.md`
+- `.env.example`
+- `YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1` for API calls
+- `YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com` for tenant/app links
+- `YEEFLOW_PROFILE` multi-tenant profile mode, with one active tenant profile per script run
+- `YEEFLOW_BASE_URL` retained only as a legacy API base alias/fallback
+- shared env helper scripts and updated API/YAPK scripts
+
+Proof boundary: v0.6.1 is a public-sharing, documentation, environment-resolution, and packaging-hygiene patch. It does not add new runtime capability proof beyond v0.6.0 and earlier documented milestones.
 
 ## Current Limitations
 

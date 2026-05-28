@@ -1,7 +1,7 @@
 {
   "name": "yeeflow-builder",
-  "version": "0.6.0",
-  "description": "Private Codex plugin for building, validating, testing, and improving Yeeflow applications using Yeeflow-specific skills, including Advanced Controls learning and runtime proof.",
+  "version": "0.6.1",
+  "description": "Private Codex plugin for building, validating, testing, and improving Yeeflow applications using Yeeflow-specific skills, including Advanced Controls learning, runtime proof, and tenant-neutral environment configuration guidance.",
   "visibility": "private/internal",
   "category": "developer/productivity/internal tools",
   "keywords": [
@@ -65,7 +65,7 @@
       "Run the safe Yeeflow directory API connectivity smoke test.",
       "Update the Yeeflow Builder Plugin release.",
       "What Collection and Kanban actions support is included in v0.5.27?",
-      "What Advanced Controls support is included in v0.6.0?"
+      "How does v0.6.1 handle Yeeflow tenant URLs and .env.local configuration?"
     ],
     "brandColor": "#2563EB",
     "composerIcon": "./assets/icon.png",

@@ -9,7 +9,7 @@ Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.0
+yeeflow-builder-plugin-v0.6.1-rc1
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -59,7 +59,7 @@ What Yeeflow Builder Plugin version is installed?
 Expected version:
 
 ```text
-0.6.0
+0.6.1
 ```
 
 ## Run A Basic Prompt
@@ -91,7 +91,7 @@ Record whether import, open, rendering, save, submit, workflow, or other runtime
 ## Troubleshooting Checklist
 
 - Confirm the install source is the official Yeeflow repo.
-- Confirm the Git ref is `yeeflow-builder-plugin-v0.6.0`.
+- Confirm the Git ref is `yeeflow-builder-plugin-v0.6.1-rc1`.
 - Confirm sparse paths include both marketplace and plugin folder paths.
 - Confirm `.env.local` is present only locally and is gitignored.
 - Confirm `YEEFLOW_API_BASE_URL` is `https://api.yeeflow.com/v1`.

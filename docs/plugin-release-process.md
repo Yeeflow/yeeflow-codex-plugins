@@ -16,10 +16,10 @@ Plugin root:
 dist/yeeflow-builder-plugin/
 ```
 
-Current release archive:
+Current release-candidate archive:
 
 ```text
-dist/yeeflow-builder-plugin-0.6.0.zip
+dist/yeeflow-builder-plugin-0.6.1.zip
 ```
 
 Current release status:
@@ -31,6 +31,7 @@ Current release status:
 - v0.5.22 private Git marketplace install: passed; includes v0.5.22 YAPK support and 21 bundled skills.
 - v0.5.23 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.5.23-rc1`; final tag `yeeflow-builder-plugin-v0.5.23`.
 - v0.6.0 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.6.0-rc1`; final tag `yeeflow-builder-plugin-v0.6.0`.
+- v0.6.1 RC prepared for tenant-neutral public sharing hardening and `.env.local` profile guidance; final tag pending marketplace install smoke test.
 - ZIP package smoke test: passed locally.
 - Git marketplace install: passed.
 - Production/public marketplace: not applicable.
@@ -53,7 +54,7 @@ Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.0-rc1
+yeeflow-builder-plugin-v0.6.1-rc1
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -78,6 +79,45 @@ Smoke prompts tested:
 - Dashboard-generator data-bound document-library dashboard guidance.
 
 ## Release Notes
+
+### v0.6.1 RC1
+
+Previous final version: `0.6.0`.
+
+RC version: `0.6.1`.
+
+RC tag: `yeeflow-builder-plugin-v0.6.1-rc1`.
+
+Bundled skill count: `21`.
+
+Included milestone: tenant-neutral public sharing hardening and `.env.local` profile guidance.
+
+Verified marketplace install values:
+
+- Source: `https://github.com/Yeeflow/yeeflow-codex-plugins.git`
+- Git ref: `yeeflow-builder-plugin-v0.6.1-rc1`
+- Sparse paths: `.agents/plugins/marketplace.json`, `dist/yeeflow-builder-plugin`
+- Expected marketplace: `Yeeflow Internal`
+- Expected plugin: `Yeeflow Builder`
+- Expected version: `0.6.1`
+- Expected bundled skills: `21`
+
+Main improvements:
+
+- Adds `docs/environment-configuration.md` and `.env.example`.
+- Documents `YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1` for API calls.
+- Documents `YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com` for tenant/app links.
+- Documents `YEEFLOW_PROFILE` multi-tenant profile mode, with one active profile per script run.
+- Retains `YEEFLOW_BASE_URL` only as a legacy API base alias/fallback.
+- Removes hard-coded internal tenant URL references from public repo and archive content.
+- Adds shared env helper scripts and updates API/YAPK scripts to use tenant-neutral environment resolution.
+- Preserves v0.6.0 Advanced Controls support and v0.5.27 through v0.5.22 capability milestones.
+
+Proof boundary:
+
+- v0.6.1 changes public-sharing documentation, environment handling, and packaging hygiene only.
+- It does not add new Yeeflow runtime capability proof beyond the v0.6.0 and earlier documented milestones.
+- Final `yeeflow-builder-plugin-v0.6.1` tag must wait until marketplace install smoke testing passes.
 
 ### v0.6.0
 
