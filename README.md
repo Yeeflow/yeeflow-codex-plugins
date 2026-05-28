@@ -108,6 +108,21 @@ YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com
 YEEFLOW_TENANT_ID=<optional tenant id if required>
 ```
 
+Prompt to ask Codex to create the local file:
+
+```text
+Create a local .env.local file in this project. Do not commit it.
+
+Add these placeholder variables:
+
+YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
+YEEFLOW_API_KEY=<my Yeeflow API key>
+YEEFLOW_TENANT_URL=https://<mycompany>.yeeflow.com
+YEEFLOW_TENANT_ID=<optional tenant id if required>
+
+Then verify .env.local is ignored by Git.
+```
+
 For users managing multiple Yeeflow tenants, keep one shared API base and select one active profile per script run:
 
 ```env
