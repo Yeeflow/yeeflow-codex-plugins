@@ -81,29 +81,14 @@ Only the selected profile is active for that run.
 
 ## Variable Reference
 
-`YEEFLOW_API_BASE_URL`  
-The shared API endpoint for Yeeflow API calls. Prefer `https://api.yeeflow.com/v1`. Scripts normalize trailing slashes and avoid double `/v1`.
-
-`YEEFLOW_API_KEY`  
-The default API key used when `YEEFLOW_PROFILE` is not set.
-
-`YEEFLOW_TENANT_URL`  
-The tenant app URL used for links and tenant-specific browser/runtime references, such as `https://<yourdomain>.yeeflow.com`. Do not use it as the API base URL.
-
-`YEEFLOW_TENANT_ID`  
-Optional tenant ID for scripts that explicitly require it. Do not commit real tenant IDs.
-
-`YEEFLOW_PROFILE`  
-Optional local selector for multi-tenant profiles. It is not sent to Yeeflow as a server-side setting.
-
-`YEEFLOW_<PROFILE>_API_KEY`  
-The API key for the selected profile.
-
-`YEEFLOW_<PROFILE>_TENANT_URL`  
-The tenant app URL for the selected profile.
-
-`YEEFLOW_<PROFILE>_TENANT_ID`  
-Optional tenant ID for the selected profile.
+- `YEEFLOW_API_BASE_URL`: the shared API endpoint for Yeeflow API calls. Prefer `https://api.yeeflow.com/v1`. Scripts normalize trailing slashes and avoid double `/v1`.
+- `YEEFLOW_API_KEY`: the default API key used when `YEEFLOW_PROFILE` is not set.
+- `YEEFLOW_TENANT_URL`: the tenant app URL used for links and tenant-specific browser/runtime references, such as `https://<yourdomain>.yeeflow.com`. Do not use it as the API base URL.
+- `YEEFLOW_TENANT_ID`: optional tenant ID for scripts that explicitly require it. Do not commit real tenant IDs.
+- `YEEFLOW_PROFILE`: optional local selector for multi-tenant profiles. It is not sent to Yeeflow as a server-side setting.
+- `YEEFLOW_<PROFILE>_API_KEY`: the API key for the selected profile.
+- `YEEFLOW_<PROFILE>_TENANT_URL`: the tenant app URL for the selected profile.
+- `YEEFLOW_<PROFILE>_TENANT_ID`: optional tenant ID for the selected profile.
 
 ## Legacy `YEEFLOW_BASE_URL`
 
