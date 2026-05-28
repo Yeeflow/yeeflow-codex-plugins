@@ -40,7 +40,7 @@ Verified marketplace install values:
 
 ```text
 Source:
-https://github.com/rengerhu/yeeflow-ai-builder-research.git
+https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
 yeeflow-builder-plugin-v0.6.0-rc1
@@ -89,7 +89,7 @@ Included milestone: Advanced Controls learning and focused runtime proof.
 
 Verified marketplace install values:
 
-- Source: `https://github.com/rengerhu/yeeflow-ai-builder-research.git`
+- Source: `https://github.com/Yeeflow/yeeflow-codex-plugins.git`
 - Git ref: `yeeflow-builder-plugin-v0.6.0-rc1`
 - Sparse paths: `.agents/plugins/marketplace.json`, `dist/yeeflow-builder-plugin`
 - Expected marketplace: `Yeeflow Internal`
@@ -131,7 +131,7 @@ Included milestone: Data List LayoutView Add form hardening.
 
 Verified marketplace install values:
 
-- Source: `https://github.com/rengerhu/yeeflow-ai-builder-research.git`
+- Source: `https://github.com/Yeeflow/yeeflow-codex-plugins.git`
 - Sparse paths: `.agents/plugins/marketplace.json`, `dist/yeeflow-builder-plugin`
 - Expected marketplace: `Yeeflow Internal`
 - Expected plugin: `Yeeflow Builder`

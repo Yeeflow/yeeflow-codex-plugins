@@ -155,7 +155,7 @@ The v0.5.23 private marketplace smoke passed for RC tag `yeeflow-builder-plugin-
 Install source:
 
 ```text
-https://github.com/rengerhu/yeeflow-ai-builder-research.git
+https://github.com/Yeeflow/yeeflow-codex-plugins.git
 ```
 
 Sparse paths:
@@ -174,7 +174,7 @@ The v0.3.0 private marketplace install smoke test passed with RC tag `yeeflow-bu
 Install source:
 
 ```text
-https://github.com/rengerhu/yeeflow-ai-builder-research.git
+https://github.com/Yeeflow/yeeflow-codex-plugins.git
 ```
 
 Sparse paths:
@@ -198,7 +198,7 @@ Install through Codex's private marketplace flow with:
 
 ```text
 Source:
-https://github.com/rengerhu/yeeflow-ai-builder-research.git
+https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
 yeeflow-builder-plugin-v0.2.0-rc1

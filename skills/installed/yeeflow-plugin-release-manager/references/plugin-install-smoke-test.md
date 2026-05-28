@@ -8,7 +8,7 @@ Use the current release candidate tag unless the user explicitly asks to test an
 
 ```text
 Source:
-https://github.com/rengerhu/yeeflow-ai-builder-research.git
+https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
 yeeflow-builder-plugin-v<version>-rc<n>

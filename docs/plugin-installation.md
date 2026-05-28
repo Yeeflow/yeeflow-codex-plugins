@@ -41,7 +41,7 @@ Use these values in Codex's Add marketplace dialog for the tested v0.6.0 RC:
 
 ```text
 Source:
-https://github.com/rengerhu/yeeflow-ai-builder-research.git
+https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
 yeeflow-builder-plugin-v0.6.0-rc1
@@ -71,7 +71,7 @@ Use these values in Codex's Add marketplace dialog for the tested RC:
 
 ```text
 Source:
-https://github.com/rengerhu/yeeflow-ai-builder-research.git
+https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
 yeeflow-builder-plugin-v0.4.0-rc1
@@ -97,7 +97,7 @@ Use these values in Codex's Add marketplace dialog for the tested RC:
 
 ```text
 Source:
-https://github.com/rengerhu/yeeflow-ai-builder-research.git
+https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
 yeeflow-builder-plugin-v0.3.0-rc1
@@ -119,7 +119,7 @@ Use these values in Codex's Add marketplace dialog for the tested RC:
 
 ```text
 Source:
-https://github.com/rengerhu/yeeflow-ai-builder-research.git
+https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
 yeeflow-builder-plugin-v0.2.0-rc1
