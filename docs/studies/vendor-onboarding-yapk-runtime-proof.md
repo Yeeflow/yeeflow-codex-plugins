@@ -5,11 +5,13 @@
 This study records the local generation and validation status for the Vendor Onboarding & Compliance Management YAPK candidate generated from the approved UI implementation spec.
 
 - Approved spec: `docs/generated-app-plans/vendor-onboarding-compliance-ui-implementation-spec.md`
-- Output package: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.yapk`
+- V1 output package: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.yapk`
+- V1.1 signed output package: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.1-signed.yapk`
 - Generator: `generate-vendor-onboarding-compliance-yapk.mjs`
 - Branch: `codex/vendor-onboarding-yapk-runtime-proof`
 - Package type: YAPK
-- Generated status: local validation candidate
+- V1 generated status: local validation candidate with placeholder signature shape
+- V1.1 generated status: server-signed and verified YAPK candidate
 
 ## Implemented Data Lists
 
@@ -58,11 +60,11 @@ The package also includes supporting maintenance forms for Vendor Documents, Com
 
 ## Validation Results
 
-Validation was run on the generated YAPK, the decoded app resource, and a temporary YAP-format validation wrapper around the same decoded app graph for legacy import-readiness inspectors.
+Validation was run on the generated V1.1 signed YAPK, the decoded app resource, and a temporary YAP-format validation wrapper around the same decoded app graph for legacy import-readiness inspectors.
 
 | Check | Result | Notes |
 | --- | --- | --- |
-| YAPK wrapper decode/parse | Pass | Resource Brotli-decodes and validates as AppPackageInfo. |
+| YAPK wrapper decode/parse | Pass | V1.1 Resource Brotli-decodes and validates as AppPackageInfo. |
 | YAPK schema standard inspection | Pass | No wrapper/schema errors. |
 | Strict generated package validation | Pass with warnings | 0 errors, warnings are schema-support/proof-boundary items for generated fields and advanced controls. |
 | Graph validation | Pass with warnings | 0 errors, no unresolved lookup or graph edges. |
@@ -76,30 +78,31 @@ Validation was run on the generated YAPK, the decoded app resource, and a tempor
 The generator uses the standard Yeeflow API base URL behavior through `scripts/yeeflow-env-utils.mjs`.
 
 - API base URL used by the generator environment helper: `https://api.yeeflow.com/v1`
-- Server signing status: skipped because no local `YEEFLOW_API_KEY` was configured
-- Local placeholder signature shape: 32-byte base64 value
-- `verifysign` status: not run
+- V1 server signing status: skipped because no local `YEEFLOW_API_KEY` was configured during the first generation pass
+- V1 local placeholder signature shape: 32-byte base64 value
+- V1.1 server signing status: `signed_and_verified`
+- V1.1 server signature shape: 32-byte base64 value
+- V1.1 `verifysign` status: HTTP 200
 
-This means the package is a locally generated YAPK candidate with a valid wrapper shape, but it is not server-signed or server-verified in this run.
+The V1 package remains the locally validated baseline. The V1.1 package is the server-signed and verified candidate generated from the same approved Vendor Onboarding app graph.
 
 ## Known Gaps
 
 - No live Yeeflow import proof has been performed yet.
 - No runtime page-open proof has been performed yet.
-- Server signing and `verifysign` were skipped because credentials were not available.
 - Collection/Kanban action steps are safe local placeholders and should be connected to tenant-specific workflows after import if needed.
 - Advanced controls such as Document embed, QR Code, Barcode, timeline, and print layout require runtime visual confirmation.
 - Custom CSS polish is represented as layout/style intent in generated controls; final visual polish must be checked in Yeeflow after import.
 
 ## Proof Boundary
 
-This branch proves that a full-scope Vendor Onboarding & Compliance Management YAPK candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, YAPK-schema, and import-readiness checks with no blocking errors.
+This branch proves that a full-scope Vendor Onboarding & Compliance Management YAPK candidate can be generated from the approved UI implementation spec, pass local structural, graph, UI-quality, YAPK-schema, and import-readiness checks with no blocking errors, and be server-signed and verified as V1.1 through the Yeeflow signing APIs.
 
-It does not prove live import success, server signature verification, runtime rendering, or end-user workflow behavior. Those require a focused manual import and runtime proof in a Yeeflow tenant.
+It does not prove live import success, runtime rendering, or end-user workflow behavior. Those require a focused manual import and runtime proof in a Yeeflow tenant.
 
 ## Manual Test Checklist
 
-1. Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.yapk`.
+1. Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.1-signed.yapk`.
 2. Open the Vendor Management Dashboard.
 3. Check dashboard padding, cards, KPI layout, alert, and quick links.
 4. Verify dashboard Data tables show configured columns.
@@ -113,4 +116,4 @@ It does not prove live import success, server signature verification, runtime re
 12. Open the Vendor Print Page.
 13. Verify print layout, divider spacing, approval timeline, document checklist, QR Code, and Barcode.
 14. Connect placeholder collection/workflow actions to tenant-specific workflows if needed.
-15. Re-run import/runtime proof after server signing if production distribution requires signed package verification.
+15. Record the live import/runtime result before treating this as runtime-proven.

@@ -12,7 +12,8 @@ const GENERATED_AT_UTC = "2026-05-29T01:30:00Z";
 const APP_TITLE = "Vendor Onboarding & Compliance Management";
 const APP_DESCRIPTION = "Full-scope generated YAPK candidate for vendor onboarding, compliance review, document tracking, task management, dashboards, and print summary.";
 const SPEC_PATH = "docs/generated-app-plans/vendor-onboarding-compliance-ui-implementation-spec.md";
-const OUT_YAPK = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.yapk";
+const OUT_YAPK = process.env.VENDOR_ONBOARDING_YAPK_OUTPUT || "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.yapk";
+const WRAPPER_VERSION = process.env.VENDOR_ONBOARDING_YAPK_VERSION || "1.0";
 const TMP_DIR = ".tmp/vendor-onboarding-compliance-management";
 const OUT_DECODED_DATA = `${TMP_DIR}/vendor-onboarding-compliance-management.decoded-data.json`;
 const OUT_DECODED_RESOURCE = `${TMP_DIR}/vendor-onboarding-compliance-management.decoded-resource.json`;
@@ -1016,16 +1017,17 @@ function assertEnvReadable(filePath) {
 async function signIfConfigured(wrapper) {
   loadDotenvFile(fs, ".env.local", { assertReadable: assertEnvReadable });
   const env = resolveYeeflowEnvironment(process.env);
+  const signingWrapper = env.tenantId ? { ...wrapper, TenantID: env.tenantId } : wrapper;
   if (!env.apiKey) {
     return {
-      wrapper: { ...wrapper, Sign: Buffer.alloc(32).toString("base64") },
+      wrapper: { ...signingWrapper, Sign: Buffer.alloc(32).toString("base64") },
       status: "skipped_missing_api_key",
       signByteLength: 32,
       verifyStatus: null,
       apiBaseUrl: env.apiBaseUrl,
     };
   }
-  const unsigned = { ...wrapper };
+  const unsigned = { ...signingWrapper };
   delete unsigned.Sign;
   const signResult = postJsonWithCurl(`${env.apiBaseUrl}/utils/apppackage/setsign`, env.apiKey, unsigned);
   if (signResult.status < 200 || signResult.status > 299) {
@@ -1034,7 +1036,7 @@ async function signIfConfigured(wrapper) {
   const signJson = JSON.parse(signResult.body || "{}");
   const sign = signJson?.Data ?? signJson?.data ?? signJson?.Sign ?? signJson?.sign ?? (typeof signJson === "string" ? signJson : null);
   if (typeof sign !== "string" || Buffer.from(sign, "base64").length !== 32) throw new Error("setsign response did not contain a 32-byte base64 signature.");
-  const signed = { ...wrapper, Sign: sign };
+  const signed = { ...signingWrapper, Sign: sign };
   const verifyResult = postJsonWithCurl(`${env.apiBaseUrl}/utils/apppackage/verifysign`, env.apiKey, signed);
   if (verifyResult.status < 200 || verifyResult.status > 299) throw new Error(`verifysign failed with HTTP ${verifyResult.status}`);
   return {
@@ -1047,6 +1049,9 @@ async function signIfConfigured(wrapper) {
 }
 
 function wrapperForAppPackage(resourceBase64) {
+  const versionNote = WRAPPER_VERSION === "1.0"
+    ? "Generated from the approved Vendor Onboarding UI implementation spec. Tenant-neutral package candidate; manual runtime import proof is required."
+    : `Server-signed ${WRAPPER_VERSION} package generated from the validated V1 Vendor Onboarding baseline. Tenant-neutral package candidate; manual runtime import proof is required.`;
   return {
     PackageId: crypto.randomUUID(),
     TenantID: "0",
@@ -1056,10 +1061,10 @@ function wrapperForAppPackage(resourceBase64) {
     Description: APP_DESCRIPTION,
     IconUrl: "{\"b\":\"#E6F7FF\",\"i\":\"fa-regular fa-building-shield\",\"c\":\"#008DA6\"}",
     Resource: resourceBase64,
-    Notes: "Generated from the approved Vendor Onboarding UI implementation spec. Tenant-neutral package candidate; manual runtime import proof is required.",
+    Notes: versionNote,
     Author: "Yeeflow Builder",
     Date: GENERATED_AT_UTC,
-    Version: "1.0",
+    Version: WRAPPER_VERSION,
     Sign: "",
   };
 }
