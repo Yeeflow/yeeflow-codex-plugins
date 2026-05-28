@@ -27,17 +27,17 @@ Use this when Codex asks to add a plugin marketplace from a GitHub repo, Git URL
 
 Verified install status: passed on 2026-05-18.
 
-v0.6.0 RC install smoke test target:
+v0.6.0 RC install smoke test result:
 
-- RC tag to test: `yeeflow-builder-plugin-v0.6.0-rc1`
-- Install result: pending
+- RC tag tested: `yeeflow-builder-plugin-v0.6.0-rc1`
+- Install result: passed
 - Marketplace name: `Yeeflow Internal`
 - Category: `Developer Tools`
 - Plugin name: `Yeeflow Builder`
 - Expected version: `0.6.0`
 - Expected bundled skills: `21`
 
-Use these values in Codex's Add marketplace dialog for the v0.6.0 RC:
+Use these values in Codex's Add marketplace dialog for the tested v0.6.0 RC:
 
 ```text
 Source:

@@ -2,7 +2,7 @@
 
 The Yeeflow Builder Plugin is a private, skills-only Codex plugin for internal Yeeflow application builders. It packages the current repo's proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth, Yeeflow API integration, or MCP servers.
 
-Package status: v0.6.0 RC prepared as `yeeflow-builder-plugin-v0.6.0-rc1` after Advanced Controls learning and focused runtime proof. The final `yeeflow-builder-plugin-v0.6.0` tag must wait until the private marketplace install smoke test passes. Production/public marketplace release is not applicable, and the partner-safe edition is planned but not released.
+Package status: v0.6.0 private Git marketplace install smoke test passed with RC tag `yeeflow-builder-plugin-v0.6.0-rc1`, targeting RC package commit `d4a6b2d78756d306f85a28a2504b47a769d1427e`. Final release tag: `yeeflow-builder-plugin-v0.6.0`. Production/public marketplace release is not applicable, and the partner-safe edition is planned but not released.
 
 ## Package Contents
 
@@ -120,7 +120,7 @@ The generator now creates concrete Type `1` New Item, Edit Item, and View Item l
 
 Runtime proof is user-confirmed for the generated fixed Container/Button action runtime package: `Action Runtime Requests` opened, the default `+ New item` button was clicked, and the Add modal rendered successfully. This proves Add modal rendering for that package only; Add form save/data mutation, other layout modes, Public Forms, Document Library layouts, Form Reports, and unrelated generated app patterns remain unproven.
 
-## v0.6.0 RC Scope
+## v0.6.0 Scope
 
 v0.6.0 adds Advanced Controls learning and runtime proof while carrying forward v0.5.27 Collection/Kanban action runtime proof, v0.5.26 YAPK-from-scratch hardening, v0.5.25 Kanban/Collection/Timeline Dynamic controls learning and runtime proof, v0.5.24 Dynamic Sub List and Print Page support, v0.5.23 LayoutView hardening, and v0.5.22 YAPK support.
 
