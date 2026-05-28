@@ -141,6 +141,16 @@ When the plan is accepted:
 Generate the Yeeflow application package and validate it before import.
 ```
 
+## Getting Better Generation Quality
+
+For stronger generated applications, include the business goal, target users, required data lists, dashboard pages, important fields, preferred layout style, and validation expectations. Ask Codex to create a UI plan before generating the package, and ask it to fix missing bindings, empty controls, or layout spacing issues before returning the final package.
+
+High-quality generation prompt:
+
+```text
+Generate a Yeeflow application for a Purchase Request process. Before generating, create a UI plan. Use padded dashboard and form layouts. Any Data table must include meaningful display columns. Use cards/sections for layout. Validate the generated package and fix any missing field bindings or empty controls before returning the final package.
+```
+
 ## Working With YAP And YAPK Packages
 
 Use `.yap` for new application packages. Use `.yapk` for existing application upgrade packages and treat signing as a separate proof boundary.

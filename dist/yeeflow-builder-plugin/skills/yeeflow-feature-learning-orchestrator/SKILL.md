@@ -89,7 +89,7 @@ Focused runtime baseline rules:
 - build the smallest app that tests only the learned capability
 - avoid unrelated app complexity
 - validate locally before building, and build before runtime testing
-- import only into `https://<yourdomain>.yeeflow.com/` after local validation passes and runtime testing is requested
+- import only into `https://<yourdomain>.yeeflow.com` after local validation passes and runtime testing is requested
 - avoid live AI calls, real email, external APIs, destructive updates, private users, private images, private documents, and credentials unless the safe scope is explicit
 - document exact proof labels: passed, partial, blocked, or not tested
 
@@ -101,6 +101,8 @@ Merge rule:
 - never treat import/open, configuration visibility, render-only proof, and executed runtime behavior as the same evidence level
 
 For generated-app UI/UX standards, first study a focused export such as `UI and UX design (1).yap`, document dashboard/list/approval form shells, add validator warnings where exact checks are safe, and only then propose a minimal generated test package. Do not make UI/UX standard warnings into hard generator errors until a generated package has runtime import/open and export-back proof.
+
+For generated application quality hardening, promote only safe reusable rules from observed failures into skills, docs, and validators. Current generated-final standards include: dashboards and Data List custom forms need safe outer padding and section/card/container grouping; dashboard Data table controls must have a source and meaningful display columns; data-bound controls must resolve fields/actions before handoff; and empty dynamic item templates should warn or fail depending on the proven host. Use `docs/studies/application-generation-quality-hardening.md` and `scripts/inspect-generated-ui-quality.mjs` when consolidating these findings. Runtime proof is still required before claiming every future generated app will be visually perfect.
 
 For Yeeflow Document Library learning and generation, use `docs/studies/document-library-resource-structure.md`, `docs/studies/document-library-fields-views-forms.md`, `docs/studies/document-library-generation-rules.md`, `docs/studies/document-library-runtime-test-plan.md`, and `document-library-resource-reference.normalized.json`. `Projects Center.yap` proved document libraries are app child resources with `ListModel.Type = 16`, normal child-resource envelopes, root navigation entries with `Type = 16`, document-specific default fields, Type `0` views, and Type `1` custom forms. `Document Library Sample.yap` proved document-library-only apps may export with no root pages, root `LayoutView = {"sortVer":1}`, empty view `LayoutView`, an unassigned `New file` upload form, and top-level `Resource.SimplePortal = null`. The user-runtime-tested `document-library-sample-new-library-only.v1.yap` imported and ran successfully; treat the `New Document Library` resource shape, with default Type `0` view `LayoutView = ""`, as the canonical minimal base definition. Do not use the earlier generated `Baseline Documents` experiment as the base definition. The v2 `Enterprise Document Center` runtime pass imported/opened three generated Type `16` libraries with simple custom fields and configured views. The v2 folder pass proved generated root-level folder rows using the export-backed `ListDatas` shape with `Bigint1 = "0"` and `Text1 = "folder"`; nested folders and upload persistence remain runtime-sensitive. `Enterprise Document Center Folders Runtime.yap` proves dashboard Doc library controls with `type = "document-library"`, `attrs.data.list`, optional `attrs.data.folder.path = "0/<folder ListDataID>"`, optional expression-token `attrs.data.customPath`, `attrs.listarr`, and caption/search/add-true settings. The form-host study proved document-library custom-form hosting for root-bound controls with disabled search/add; approval-form controls rendered in Builder preview, but live request proof is blocked by workflow assignment-task assignee and task form setting generation rather than the Doc library control schema; data-list custom-form hosting remains validation-only until focused runtime tests.
 
@@ -187,7 +189,7 @@ Also read the relevant installed feature skills when the task touches their area
 7. Write a dedicated study doc such as `docs/dashboard-feature-pattern-study.md`, `docs/document-library-feature-pattern-study.md`, `docs/report-feature-pattern-study.md`, or `docs/ai-agent-feature-pattern-study.md`.
 8. Generate only the smallest possible test package, using fresh local ID families and minimal dependencies.
 9. Run component and package validators. Build wrappers only after validators pass.
-10. If the user explicitly asks for runtime testing, import into `https://<yourdomain>.yeeflow.com/` and capture runtime evidence.
+10. If the user explicitly asks for runtime testing, import into `https://<yourdomain>.yeeflow.com` and capture runtime evidence.
 11. If runtime fails, isolate with smaller packages instead of guessing. If app materialization fails or imports as an empty shell, stop before testing custom controls and focus on app shell/resource linkage, global field IDs, field ownership, duplicate field names, `ReplaceIds`, and dashboard/navigation references.
 12. If possible, export the imported app back and compare generated source, wrapper, and exported-back `.yap`.
 13. Patch minimally with fresh IDs, retest, and preserve known-good baselines.
@@ -223,7 +225,7 @@ Adapt paths to the active workspace or installed skill script location. Report i
 
 Never import into Yeeflow or operate Chrome for Yeeflow testing unless the user explicitly asks. When the user does ask, use the Codex Yeeflow environment:
 
-`https://<yourdomain>.yeeflow.com/`
+`https://<yourdomain>.yeeflow.com`
 
 Use Chrome console/network evidence when import or runtime behavior fails. Do not expose secrets or tenant credentials in logs, summaries, docs, or skills.
 

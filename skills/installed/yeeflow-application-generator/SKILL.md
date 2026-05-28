@@ -15,6 +15,16 @@ description: generate, inspect, validate, package, debug, and improve small yeef
 - Validate and redact environment variables before API calls and never print API keys, raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, or generated runtime packages.
 - Keep generated examples tenant-neutral unless the user explicitly requests a target-tenant-specific package and provides safe mappings.
 
+## Generated Application UI Quality Gate
+
+Before package generation, write a short UI plan covering pages, sections, data sources, controls, displayed fields, and safe spacing. Use the plan to avoid broad unfinished dashboards and to prefer fewer, complete controls.
+
+Generated dashboards and Data List custom forms must have safe left/right padding through a root or near-root page section/container. Aim for 24px to 32px desktop horizontal padding when supported, with smaller responsive padding on narrower surfaces. Major dashboard cards, tables, charts, and form sections should sit inside sections, cards, or containers rather than directly against page edges.
+
+Every dashboard Data table (`type = "data-list"`) must resolve its source list and include nonempty `attrs.listarr` display columns. Use 3 to 5 meaningful columns when fields are available, including the primary title/name field and useful status/date/owner/amount/progress fields. Empty Data table columns, unresolved source lists, and unresolved display fields are generated-final blockers.
+
+Data-bound controls are not complete until sources and field bindings resolve. Collection/Kanban/Timeline item templates need dynamic fields; progress and steps controls need valid values or bindings; action buttons must reference valid actions. Run `scripts/inspect-generated-ui-quality.mjs` as part of final package validation and do not hand off packages that fail the generated UI quality gate.
+
 Business Travel runtime-practice rule: every generated root app/listset and child list-like resource must emit `ListModel.Flags = 1`. Emit `ListModel.Status = 1` when including Status, keep `ListModel.Type` inside the schema-v2 enum `1`, `16`, `32`, `64`, `128`, `1024`, and keep `Defs`/`Layouts` arrays. Before package handoff, validate that workflow variables are declared before use in controls, summaries, sequence-flow conditions, Set Variable targets, task-assignment expressions, and ContentList mappings. Do not emit placeholder user/group/position IDs into final packages; direct `method="position"` assignees require real numeric position IDs or a user-approved fallback. The fixed Business Travel package is user-proven for import/open/workflow publish only; do not infer workflow execution, routing, data mutation, or true Finance Manager assignment.
 
 YAPK-from-scratch hardening addendum: if the requested output is `.yapk` instead of `.yap`, keep the same generated-app correctness gate before encoding/signing. The inner `AppPackageInfo` must pass package, app-creation, graph, workflow publish-readiness, and placeholder checks before Brotli/base64/sign. Signing/verifysign is not a substitute for generated-app validation.

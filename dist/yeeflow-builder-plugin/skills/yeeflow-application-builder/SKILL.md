@@ -15,6 +15,16 @@ description: build real Yeeflow business applications from requirements, process
 - Validate and redact environment variables before API calls and never print API keys, raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, or generated runtime packages.
 - Keep generated examples tenant-neutral unless the user explicitly requests a target-tenant-specific package and provides safe mappings.
 
+## Generated Application UI Quality Gate
+
+Before package generation, create a short UI plan that names the pages, major sections, data sources, controls per page, fields shown in every data-bound control, and the padding/container approach. Prefer fewer well-configured controls over a broad unfinished dashboard.
+
+Default generated dashboards and Data List custom forms must use safe outer spacing. Use an outer page section/container with desktop left/right padding around 24px to 32px when the schema supports it, with smaller responsive padding for tablet/mobile. Do not place major controls directly against the page or window edge. Group important content in sections, cards, or containers with readable row and section spacing.
+
+Do not generate empty or unconfigured controls. Every generated Data table must configure a data source and at least 3 to 5 meaningful display columns when fields are available, including title/name plus status, date, owner, amount, or progress fields where relevant. If suitable fields are unavailable, use cards, Collection, or a simple message instead. Empty Data table display configuration is a generated-final hard error.
+
+Every data-bound control must resolve its source and field bindings before handoff. Collection, Kanban, and Timeline templates need meaningful dynamic fields; progress, steps, QR/barcode, embed, document embed, and buttons/actions need valid values, bindings, or actions. Run the generated UI quality gate together with package validation and do not claim the package is ready when table, dashboard, or form quality checks fail.
+
 Use this skill when the user provides business requirements, process documents, forms, screenshots, SOPs, sample exports, workflow requirements, or app ideas and asks Codex to build, implement, create, generate, test, or output a Yeeflow application package, `.yap`, or `.yapk`.
 
 YAPK-from-scratch rule: when the requested deliverable is a generated `.yapk`, the builder must still treat the inner application as the first deliverable. Build and validate `AppPackageInfo` content before Brotli/base64/sign. Do not sign if package/app creation validators, graph validators, workflow publish-readiness checks, or placeholder scans fail. `setsign` and `verifysign` prove wrapper/resource integrity, not generated-app correctness or tenant-specific routing. Preserve the proof boundary and write generated `.yapk` output outside git.

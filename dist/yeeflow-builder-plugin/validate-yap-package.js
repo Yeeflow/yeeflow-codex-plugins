@@ -317,6 +317,56 @@ function zeroPadding(padding) {
   return ["top", "right", "bottom", "left"].every((side) => value[side] === "--sp--s0" || value[side] === 0 || value[side] === "0" || value[side] === "");
 }
 
+function hasSafeHorizontalPaddingValue(value) {
+  if (value === undefined || value === null || value === "") return false;
+  if (typeof value === "number") return value >= 16;
+  if (typeof value === "string") {
+    if (/--sp--s([3-9]|[1-9]\d+)/.test(value)) return true;
+    const numeric = Number(value.trim().replace(/px$/, ""));
+    return Number.isFinite(numeric) && numeric >= 16;
+  }
+  if (Array.isArray(value)) return value.some(hasSafeHorizontalPaddingValue);
+  if (!isObject(value)) return false;
+  return ["left", "right", "x", "horizontal"].some((key) => hasSafeHorizontalPaddingValue(value[key]));
+}
+
+function controlPaddingCandidates(control) {
+  const attrs = control && control.attrs || {};
+  const common = attrs.common || {};
+  return [
+    attrs.padding,
+    attrs.container && attrs.container.padding,
+    attrs.style && attrs.style.padding,
+    common.padding,
+    common.positioning && common.positioning.padding,
+    control && control.padding,
+  ];
+}
+
+function hasSafeHorizontalPaddingNearRoot(root) {
+  if (!isObject(root)) return false;
+  if (controlPaddingCandidates(root).some(hasSafeHorizontalPaddingValue)) return true;
+  let found = false;
+  asArray(root.children).forEach((child, index) => {
+    walkControls(child, (control, pointer) => {
+      if (found) return;
+      const depth = pointer.split(".children[").length - 1 + pointer.split(".columns[").length - 1;
+      if (depth > 2) return;
+      if (controlPaddingCandidates(control).some(hasSafeHorizontalPaddingValue)) found = true;
+    }, `$.children[${index}]`);
+  });
+  return found;
+}
+
+function displayColumnFieldName(column) {
+  if (!isObject(column)) return safeString(column);
+  for (const candidate of [column.FieldName, column.fieldName, column.field, column.Name, column.name, column.SortName, column.id, column.FieldID, column.fieldID, column.value]) {
+    const value = safeString(candidate);
+    if (value) return value;
+  }
+  return "";
+}
+
 function findControlByLabel(root, label) {
   let found = null;
   walkControls(root, (control) => {
@@ -1171,8 +1221,12 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
   if (page.attrs && page.attrs.hideHeaderAll !== true) {
     uiStandardWarning(report, "UI_STANDARD_DASHBOARD_HEADER_NOT_HIDDEN", "UI/UX standard dashboards should set attrs.hideHeaderAll to true.", { title, layoutId });
   }
-  if (!zeroPadding(page.attrs && page.attrs.container && page.attrs.container.padding)) {
-    uiStandardWarning(report, "UI_STANDARD_DASHBOARD_PADDING_NOT_ZERO", "UI/UX standard dashboards should use zero page padding: attrs.container.padding with --sp--s0 on all sides.", { title, layoutId });
+  const dashboardRootPadding = page.attrs && page.attrs.container && page.attrs.container.padding;
+  if (!zeroPadding(dashboardRootPadding) && !hasSafeHorizontalPaddingValue(dashboardRootPadding)) {
+    uiStandardWarning(report, "UI_STANDARD_DASHBOARD_PADDING_UNUSUAL", "Dashboard page root padding should be either zero with padded inner sections or safe horizontal page padding.", { title, layoutId });
+  }
+  if (!hasSafeHorizontalPaddingNearRoot(page)) {
+    uiStandardWarning(report, "UI_QUALITY_DASHBOARD_SAFE_PADDING_MISSING", "Generated dashboards should include safe left/right padding on an outer page section or container so controls do not touch window edges.", { title, layoutId });
   }
   validateUiStandardContainers(page, report, { surface: "dashboard", title, layoutId, requireFormBody: false });
   if (page.filterVars !== undefined && !Array.isArray(page.filterVars)) {
@@ -1211,6 +1265,8 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
       dataFilterControls.push({ pointer, controlId, controlType, binding: safeString(node.binding), attrs: node.attrs || {} });
     } else if (controlType === "remove-filters" || controlType === "remove-filers") {
       removeFilterControls.push({ pointer, controlId, controlType, attrs: node.attrs || {} });
+    } else if (controlType === "data-list") {
+      validateDashboardDataTableControl(node, title, layoutId, pointer, listsById, fieldsByList, report);
     } else if (controlType && /filter/i.test(controlType) && !isKnownNonDataFilterControlType(controlType)) {
       issue(report, "warning", "DASHBOARD_DATA_FILTER_TYPE_UNKNOWN", "Dashboard contains an unknown filter-like control type. Treat this as unproven until an export maps the schema.", { title, layoutId, pointer, controlType });
     }
@@ -1935,6 +1991,35 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
 
   asArray(page.children).forEach((child, index) => visit(child, `$.children[${index}]`, null));
   validateDashboardPageActions();
+}
+
+function validateDashboardDataTableControl(control, title, layoutId, pointer, listsById, fieldsByList, report) {
+  const severity = generatorFinalSeverity(report);
+  const listId = safeString(control.attrs && control.attrs.data && control.attrs.data.list && control.attrs.data.list.ListID);
+  const columns = asArray(control.attrs && control.attrs.listarr);
+  if (!listId) {
+    issue(report, severity, "DASHBOARD_DATA_TABLE_SOURCE_MISSING", "Generated dashboard Data table controls must configure attrs.data.list.", { title, layoutId, pointer });
+    return;
+  }
+  if (!listsById.has(listId)) {
+    issue(report, severity, "DASHBOARD_DATA_TABLE_SOURCE_UNRESOLVED", "Generated dashboard Data table controls must reference a packaged data list.", { title, layoutId, pointer, listId });
+  }
+  if (!columns.length) {
+    issue(report, severity, "DASHBOARD_DATA_TABLE_DISPLAY_COLUMNS_MISSING", "Generated dashboard Data table controls must include attrs.listarr display fields. Empty table field configuration is not handoff-ready.", { title, layoutId, pointer, listId });
+    return;
+  }
+  if (columns.length < 3) {
+    issue(report, "warning", "DASHBOARD_DATA_TABLE_DISPLAY_COLUMNS_THIN", "Generated dashboard Data table controls should include 3 to 5 meaningful display columns when source fields are available.", { title, layoutId, pointer, listId, columnCount: columns.length });
+  }
+  const fields = fieldsByList.get(listId) || new Map();
+  columns.forEach((column, index) => {
+    const fieldName = displayColumnFieldName(column);
+    if (!fieldName) {
+      issue(report, severity, "DASHBOARD_DATA_TABLE_DISPLAY_FIELD_MISSING", "Data table display column entries must identify a source field.", { title, layoutId, pointer: `${pointer}.attrs.listarr[${index}]`, listId });
+    } else if (fieldsByList.has(listId) && !fields.has(fieldName)) {
+      issue(report, severity, "DASHBOARD_DATA_TABLE_DISPLAY_FIELD_UNRESOLVED", "Data table display column must resolve to the selected source list fields.", { title, layoutId, pointer: `${pointer}.attrs.listarr[${index}]`, listId, fieldName });
+    }
+  });
 }
 
 function validateDashboardExtFieldRefs(title, layoutId, pointer, attr, fieldsByList, filterVars, report) {
@@ -2796,6 +2881,9 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report, layo
   }
   validateCustomFormActions(form, fieldsByName, pathPrefix, report, layout.Title, layoutsById);
   validateUiStandardFormRoot(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix });
+  if (!hasSafeHorizontalPaddingNearRoot(form)) {
+    uiStandardWarning(report, "UI_QUALITY_CUSTOM_FORM_SAFE_PADDING_MISSING", "Generated Data List custom forms should include safe left/right padding on an outer section or container so fields do not touch page edges.", { title: layout.Title, path: pathPrefix });
+  }
   validateUiStandardContainers(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix, requireFormBody: false });
   if (!asArray(form.children).length) {
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "CUSTOM_FORM_EMPTY_CHILDREN", "Assigned custom form has no controls.", { title: layout.Title });
@@ -3815,8 +3903,9 @@ function validateUiStandardFormRoot(form, report, context = {}) {
   if (container && container.cw !== "2") {
     uiStandardWarning(report, "UI_STANDARD_CONTENT_WIDTH_NOT_FULL", "UI/UX standard forms should use full-width content area: attrs.container.cw = \"2\".", context);
   }
-  if (!zeroPadding(container && container.padding)) {
-    uiStandardWarning(report, "UI_STANDARD_FORM_PADDING_NOT_ZERO", "UI/UX standard forms should use zero page padding: attrs.container.padding with --sp--s0 on all sides.", context);
+  const rootPadding = container && container.padding;
+  if (!zeroPadding(rootPadding) && !hasSafeHorizontalPaddingValue(rootPadding)) {
+    uiStandardWarning(report, "UI_STANDARD_FORM_PADDING_UNUSUAL", "Form root padding should be either zero with padded inner sections or safe horizontal page padding.", context);
   }
 }
 
