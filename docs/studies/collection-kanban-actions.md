@@ -21,7 +21,7 @@ Collection and Kanban controls can define local actions under the host control a
 
 The current rendered item is available to action expressions through `exprType = "variable_ctx"`, `ctx = "__ctx_coll"`. The export uses this context for the current item ID through `id = "ListDataID"` and for current item fields such as `Text1` / Status. Kanban also uses `ctx = "__ctx_kanban"` with `id = "_cate"` for category styling rules; item operations still use `__ctx_coll`.
 
-Runtime proof update: `docs/studies/collection-kanban-actions-runtime-proof.md` records a focused generated package that the user imported and tested successfully on 2026-05-28. The proof confirms the generated package's Collection/Kanban item actions, current item update, selection toggle, selected count, bulk toolbar, bulk mark completed, and bulk delete behaviors. Keep the claim limited to the tested package and tested actions.
+Runtime proof update: `docs/studies/collection-kanban-actions-runtime-proof.md` now tracks the correct-project v2 runtime-test candidate. Treat runtime execution as pending for v2 until the user imports and tests `/Users/Renger/Downloads/collection-kanban-actions-runtime-proof.v2.yap` from the `formreport-clean` branch. Keep any future runtime claim limited to the tested package and tested actions.
 
 ## Company Overview Kanban
 
@@ -220,7 +220,7 @@ Collection item operation step labels from the screenshot are UI-reference-backe
 
 Item selection, variable storage, checked/unchecked dynamic display rules, and bulk update/delete patterns are export-proven where observed.
 
-Runtime execution of edit/delete/update/select/bulk operations is user-confirmed for the focused generated package documented in `docs/studies/collection-kanban-actions-runtime-proof.md`.
+Runtime execution of edit/delete/update/select/bulk operations is pending for the correct-project v2 package documented in `docs/studies/collection-kanban-actions-runtime-proof.md`.
 
 Cross-host variable access in approval forms, Data List forms, and dashboards is product/user-understanding-backed unless separately export-proven for that host.
 

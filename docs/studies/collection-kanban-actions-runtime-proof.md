@@ -2,30 +2,17 @@
 
 ## Status
 
-Runtime status: user-confirmed passed on 2026-05-28.
+Runtime status: pending user test for the correct-project v2 package.
+
+Correct-project rerun: this package was generated from `/Users/Renger/Documents/Codex Projects/AI Agent and Copilot templates - formreport-clean` on branch `codex/collection-kanban-actions-runtime-proof-v2`. It is intentionally separate from any earlier wrong-project runtime artifacts or claims.
 
 Generated package:
 
 ```text
-/Users/Renger/Downloads/collection-kanban-actions-runtime-proof.v1.yap
+/Users/Renger/Downloads/collection-kanban-actions-runtime-proof.v2.yap
 ```
 
-The package was generated from local schema/export-backed patterns and passed local validation/import-readiness gates with zero errors. The user then imported and tested the package in Yeeflow.
-
-User runtime result:
-
-- package imported successfully
-- Collection rendered
-- Kanban rendered
-- Edit item worked
-- Delete item worked
-- Mark current item as Completed worked
-- selection toggle worked
-- selected count updated
-- bulk toolbar appeared when items were selected
-- bulk mark completed worked
-- bulk delete worked
-- no missing binding, render, or action execution error appeared
+The generated `.yap` is a manual runtime-test candidate only. It must stay outside git.
 
 ## Package Scope
 
@@ -43,10 +30,11 @@ Included controls:
 - one Dashboard Kanban control
 - local Collection actions under `attrs.actions[]`
 - local Kanban actions under `attrs.actions[]`
-- item-template `action_button` and selection-container bindings through `attrs.control_action`
-- checked/unchecked icon dynamic display rules
-- page temp variables for selection and affected-row counts
-- bulk toolbar shown by selected count
+- item-template `action_button` bindings through `attrs.control_action`
+- absolute-positioned item selection container
+- checked and unchecked icon controls with dynamic display rules
+- page temp variables for selected IDs, selected count, confirmation helpers, and affected-row counts
+- bulk toolbar shown when selected count is greater than zero
 
 ## Included Actions
 
@@ -80,19 +68,18 @@ Dashboard temp variables:
 - `var_UpdatedItemsAmount`
 - `var_DeletedItemsAmount`
 
-The selection pattern stores comma-delimited current item `ListDataID` values in `var_SelectedItems`, calculates `var_SelectedItemsAmount`, and uses that count to show/hide the bulk toolbar.
+The selection pattern stores comma-delimited current item `ListDataID` values in `var_SelectedItems`, calculates `var_SelectedItemsAmount`, and uses that count to show or hide the bulk toolbar.
 
 ## Local Validation
 
-Local validation results:
+Local validation results for the v2 candidate:
 
-- package validator: `pass_with_warnings`, 0 errors
-- graph validator: `pass_with_warnings`, 0 errors
-- materialization inspector: `pass_with_warnings`, 0 errors
-- import-readiness gate: `pass_with_warnings`, 0 errors
-- Collection/Kanban actions inspector: `pass`
-- Kanban/Collection dynamic controls inspector: `pass`
-- wrapper round trip and placeholder scan: `pass`
+- package validator: `pass_with_warnings`, 0 errors, 32 warnings
+- graph validator: `pass_with_warnings`, 0 errors, 1 warning
+- import-readiness gate: `pass_with_warnings`, 0 errors, 35 warnings
+- Collection/Kanban actions inspector: `pass`, 0 errors
+- Kanban/Collection Dynamic controls inspector: `pass`, 0 errors
+- wrapper round trip and placeholder scan: `pass` through import-readiness
 
 The remaining warnings are runtime-sensitive or UI-standard warnings, not blocking structural errors for this focused proof package.
 
@@ -104,13 +91,19 @@ collectionControls: 1
 kanbanControls: 1
 localCollectionActions: 7
 pageActions: 3
-Collection action bindings: 4/4
-Kanban action bindings: 3/3
+dashboardDynamicControls: 12
+customFormDynamicControls: 21
 ```
+
+Local validation is not runtime proof.
 
 ## Manual Test Instructions
 
-Import `/Users/Renger/Downloads/collection-kanban-actions-runtime-proof.v1.yap`.
+Import:
+
+```text
+/Users/Renger/Downloads/collection-kanban-actions-runtime-proof.v2.yap
+```
 
 Open `Collection Kanban Actions Runtime Proof`.
 
@@ -118,6 +111,7 @@ Open `Collection Actions Runtime Dashboard`.
 
 Verify:
 
+- app imports successfully
 - dashboard opens
 - Collection renders items
 - Kanban renders items grouped by status
@@ -137,32 +131,11 @@ Verify:
 - selection variables reset after item/bulk actions
 - no missing binding, render, or action execution error appears
 
-## Confirmed Runtime Proof
-
-This runtime proof covers the generated package at:
-
-```text
-/Users/Renger/Downloads/collection-kanban-actions-runtime-proof.v1.yap
-```
-
-Confirmed tested behaviors:
-
-- Collection item-template buttons bound to local Collection actions
-- Kanban item-template buttons bound to local Kanban actions
-- current collection item context for tested item operations
-- Edit item
-- Delete item
-- Mark current item as Completed / update fields
-- item selection toggle
-- checked/unchecked icon dynamic display
-- selected item count
-- bulk toolbar visibility
-- bulk mark completed
-- bulk delete
-
 ## Proof Boundary
 
-Runtime proof is limited to this generated package.
+Runtime proof is not claimed until the user imports and tests the v2 package from this correct-project branch.
+
+When tested, proof will be limited to this generated package and the tested actions only.
 
 Do not claim all Collection action step types from this package.
 
@@ -172,4 +145,4 @@ Do not claim Trigger list workflow behavior.
 
 Do not claim Barcode, NFC, AI assistant, or unrelated general form action steps.
 
-Do not claim all Kanban action behaviors unless the Kanban paths above are actually tested.
+Do not claim every Kanban action behavior beyond the tested Edit/Delete/Mark completed paths.
