@@ -1536,6 +1536,17 @@ function validateDynamicFieldType(controlType, field, report, severity, context)
 function validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report) {
   const severity = generatorFinalSeverity(report);
   const seenControlIds = new Set();
+  const pageTempVars = new Set(asArray(page && page.tempVars).map((variable) => safeString(variable && variable.id)).filter(Boolean));
+  const pageActionIds = new Set(asArray(page && page.actions).map((action) => safeString(action && action.id)).filter(Boolean));
+  const hostContexts = [];
+  function isDeclaredPageVariable(id, name) {
+    const rawId = safeString(id);
+    const rawName = safeString(name);
+    if (!rawId && !rawName) return true;
+    if (rawId.startsWith("__filter_")) return filterVars.has(rawId.slice("__filter_".length)) || filterVars.has(rawName);
+    if (rawId.startsWith("__temp_")) return pageTempVars.has(rawId.slice("__temp_".length)) || pageTempVars.has(rawName);
+    return pageTempVars.has(rawId) || pageTempVars.has(rawName) || filterVars.has(rawId) || filterVars.has(rawName);
+  }
   function validateExpressionNode(node, pointer, itemContext) {
     if (!isObject(node)) return;
     if (node.exprType === "variable_ctx" && (node.ctx === "__ctx_coll" || node.ctx === "__ctx_kanban" || node.ctx === "__ctx_timeline")) {
@@ -1544,7 +1555,7 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
         return;
       }
       const fieldName = safeString(node.id);
-      if (fieldName && fieldName !== "_cate" && !itemContext.fields.has(fieldName)) {
+      if (fieldName && fieldName !== "_cate" && fieldName !== "ListDataID" && !itemContext.fields.has(fieldName)) {
         issue(report, severity, "DASHBOARD_ITEM_EXPR_FIELD_UNRESOLVED", "Collection/Kanban/Timeline item expression references a field not present on the source list.", { title, layoutId, pointer, host: itemContext.host, listId: itemContext.listId, fieldName });
       }
     }
@@ -1557,6 +1568,8 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
       if (expectedId && safeString(node.id) !== expectedId) {
         issue(report, severity, "DASHBOARD_COLLECTION_FILTER_VARIABLE_ID_MISMATCH", "Collection filter expression id should use the __filter_ prefix plus the filter variable name.", { title, layoutId, pointer, id: safeString(node.id), expected: expectedId });
       }
+    } else if (node.exprType === "variable" && safeString(node.id).startsWith("__temp_") && !isDeclaredPageVariable(node.id, node.name)) {
+      issue(report, severity, "DASHBOARD_PAGE_VARIABLE_UNRESOLVED", "Dashboard action or dynamic display expression references a temp/page variable not declared on the page.", { title, layoutId, pointer, id: safeString(node.id), name: safeString(node.name) });
     }
   }
 
@@ -1606,6 +1619,126 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
     return fields;
   }
 
+  function makeHostContext(host, listId) {
+    const fields = fieldsByList.get(listId) || new Map();
+    const sourceList = listsById.get(listId);
+    const layouts = new Set(asArray(sourceList && sourceList.item && sourceList.item.Layouts).map((layout) => safeString(layout.LayoutID)).filter(Boolean));
+    return { host, listId, fields, layouts };
+  }
+
+  function actionStepContext(step, fallbackContext) {
+    const listId = safeString(step && step.attrs && step.attrs.data && step.attrs.data.list && step.attrs.data.list.ListID);
+    if (listId && listsById.has(listId)) return makeHostContext("page-action", listId);
+    return fallbackContext;
+  }
+
+  function validateCollectionActionStep(step, stepPath, hostContext, localActionIds) {
+    if (!isObject(step)) {
+      issue(report, severity, "DASHBOARD_COLLECTION_ACTION_STEP_BAD_SHAPE", "Collection/Kanban action steps should be objects.", { title, layoutId, pointer: stepPath });
+      return;
+    }
+    const stepType = safeString(step.type);
+    const allowedStepTypes = new Set(["listitem", "deleteitem", "setdatalist", "setvar", "confirm", "otheraction", "redirect", "close", "aiassistant", "barcode", "nfc"]);
+    if (!stepType) {
+      issue(report, severity, "DASHBOARD_COLLECTION_ACTION_STEP_TYPE_MISSING", "Collection/Kanban action steps should include type.", { title, layoutId, pointer: `${stepPath}.type` });
+    } else if (!allowedStepTypes.has(stepType)) {
+      issue(report, "warning", "DASHBOARD_COLLECTION_ACTION_STEP_TYPE_UNSTUDIED", "Collection/Kanban action step type is not covered by current export-backed validation.", { title, layoutId, pointer: `${stepPath}.type`, stepType });
+    }
+    const stepContext = stepType === "otheraction" ? null : hostContext;
+    walk(step, (node, pointer) => validateExpressionNode(node, `${stepPath}${pointer.slice(1)}`, stepContext));
+    const attrs = step.attrs || {};
+    if (stepType === "listitem") {
+      const opType = safeString(attrs.op_type);
+      if (!["view", "edit"].includes(opType)) issue(report, "warning", "DASHBOARD_COLLECTION_LISTITEM_OP_UNSTUDIED", "Collection item Open item form step is export-proven for edit in this study; view is UI-reference-backed.", { title, layoutId, pointer: `${stepPath}.attrs.op_type`, opType });
+      const listDataIdTokens = asArray(attrs.listdataid);
+      if (!listDataIdTokens.some((token) => isObject(token) && token.exprType === "variable_ctx" && token.ctx === "__ctx_coll" && token.id === "ListDataID")) {
+        issue(report, severity, "DASHBOARD_COLLECTION_LISTITEM_ID_CONTEXT_MISSING", "Collection item open/edit step should pass current item ListDataID through __ctx_coll.", { title, layoutId, pointer: `${stepPath}.attrs.listdataid` });
+      }
+      const layout = safeString(attrs.layout);
+      if (layout && hostContext && !hostContext.layouts.has(layout)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_LISTITEM_LAYOUT_UNRESOLVED", "Collection item open/edit step references a layout not present on the source list.", { title, layoutId, pointer: `${stepPath}.attrs.layout`, targetLayout: layout });
+      }
+    }
+    if (stepType === "setdatalist") {
+      const opType = safeString(attrs.type);
+      if (!["edit", "remove", "add"].includes(opType)) issue(report, "warning", "DASHBOARD_COLLECTION_SETDATALIST_OP_UNSTUDIED", "Collection action Set data list step uses an unstudied operation type.", { title, layoutId, pointer: `${stepPath}.attrs.type`, opType });
+      for (const [index, where] of asArray(attrs.wheres).entries()) {
+        const left = safeString(where && where.left);
+        if (left && left !== "ListDataID" && hostContext && !hostContext.fields.has(left)) {
+          issue(report, severity, "DASHBOARD_COLLECTION_SETDATALIST_WHERE_FIELD_UNRESOLVED", "Collection action Set data list filter field does not resolve on the source list.", { title, layoutId, pointer: `${stepPath}.attrs.wheres[${index}].left`, fieldName: left });
+        }
+      }
+      for (const [index, row] of asArray(attrs.listdatas).entries()) {
+        const fieldName = safeString(row && row.Columns);
+        if (fieldName && hostContext && !hostContext.fields.has(fieldName)) {
+          issue(report, severity, "DASHBOARD_COLLECTION_UPDATE_FIELD_UNRESOLVED", "Collection action Update fields target does not resolve on the source list.", { title, layoutId, pointer: `${stepPath}.attrs.listdatas[${index}].Columns`, fieldName });
+        }
+      }
+      if (attrs.totalcount && !isDeclaredPageVariable(attrs.totalcount, attrs.totalcount)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_TOTALCOUNT_VARIABLE_UNRESOLVED", "Collection bulk Set data list totalcount target should resolve to a declared page temp variable.", { title, layoutId, pointer: `${stepPath}.attrs.totalcount`, totalcount: safeString(attrs.totalcount) });
+      }
+    }
+    if (stepType === "setvar") {
+      const entries = attrs.setvar_multi === true ? asArray(attrs.setvar_array) : [{ var: attrs.setvar_var, value: attrs.setvar_val }];
+      entries.forEach((entry, index) => {
+        const target = entry && entry.var;
+        if (!isObject(target) || !isDeclaredPageVariable(target.id, target.name)) {
+          issue(report, severity, "DASHBOARD_COLLECTION_SETVAR_TARGET_UNRESOLVED", "Collection action Set variables target should resolve to a declared dashboard/page variable.", { title, layoutId, pointer: `${stepPath}.attrs.setvar${attrs.setvar_multi === true ? `_array[${index}]` : "_var"}` });
+        }
+      });
+    }
+    if (stepType === "otheraction") {
+      const target = safeString(attrs.control_action);
+      if (target && !localActionIds.has(target) && !pageActionIds.has(target)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_OTHERACTION_TARGET_UNRESOLVED", "Collection action Start another action step should resolve to a local Collection/Kanban action or page action.", { title, layoutId, pointer: `${stepPath}.attrs.control_action` });
+      }
+    }
+  }
+
+  function validateCollectionActions(control, pointer, hostContext) {
+    const actions = control.attrs && control.attrs.actions;
+    if (actions === undefined) return;
+    if (!Array.isArray(actions)) {
+      issue(report, severity, "DASHBOARD_COLLECTION_ACTIONS_NOT_ARRAY", "Collection/Kanban local actions should be stored as attrs.actions[].", { title, layoutId, pointer: `${pointer}.attrs.actions`, controlType: control.type });
+      return;
+    }
+    const localActionIds = new Set(actions.map((action) => safeString(action && action.id)).filter(Boolean));
+    actions.forEach((action, actionIndex) => {
+      const actionPath = `${pointer}.attrs.actions[${actionIndex}]`;
+      if (!isObject(action)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_ACTION_BAD_SHAPE", "Collection/Kanban local action entries should be objects.", { title, layoutId, pointer: actionPath });
+        return;
+      }
+      if (safeString(action.type) !== "coll") issue(report, "warning", "DASHBOARD_COLLECTION_ACTION_TYPE_UNEXPECTED", "Collection/Kanban local actions are export-proven with type = coll.", { title, layoutId, pointer: `${actionPath}.type`, actionType: safeString(action.type) });
+      if (!safeString(action.id)) issue(report, severity, "DASHBOARD_COLLECTION_ACTION_ID_MISSING", "Collection/Kanban local actions should include id for item-template binding.", { title, layoutId, pointer: `${actionPath}.id` });
+      if (!safeString(action.name)) issue(report, "warning", "DASHBOARD_COLLECTION_ACTION_NAME_MISSING", "Collection/Kanban local actions should include a readable name.", { title, layoutId, pointer: `${actionPath}.name` });
+      if (!asArray(action.steps).length) issue(report, severity, "DASHBOARD_COLLECTION_ACTION_STEPS_EMPTY", "Collection/Kanban local actions should include at least one step.", { title, layoutId, pointer: `${actionPath}.steps` });
+      asArray(action.steps).forEach((step, stepIndex) => validateCollectionActionStep(step, `${actionPath}.steps[${stepIndex}]`, hostContext, localActionIds));
+    });
+    walkControls(control, (node, nodePointer) => {
+      const ref = safeString(node.attrs && node.attrs.control_action);
+      if (!ref) return;
+      if (!localActionIds.has(ref)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_ACTION_BINDING_UNRESOLVED", "Item-template buttons/containers/icons inside Collection/Kanban should bind to local attrs.actions[].id.", { title, layoutId, pointer: `${pointer}${nodePointer.slice(1)}.attrs.control_action`, controlType: node.type, label: safeString(node.label || node.nv_label) });
+      }
+    });
+  }
+
+  function validateDashboardPageActions() {
+    const fallbackContext = hostContexts[0] || null;
+    asArray(page && page.actions).forEach((action, actionIndex) => {
+      const actionPath = `$.actions[${actionIndex}]`;
+      if (!isObject(action)) return;
+      asArray(action.steps).forEach((step, stepIndex) => {
+        validateCollectionActionStep(step, `${actionPath}.steps[${stepIndex}]`, actionStepContext(step, fallbackContext), new Set());
+      });
+    });
+    const onLoad = safeString(page && page.formAction && page.formAction.onLoad);
+    if (onLoad && !pageActionIds.has(onLoad)) {
+      issue(report, severity, "DASHBOARD_PAGE_ONLOAD_ACTION_UNRESOLVED", "Dashboard page onLoad action should resolve to a page-level action id.", { title, layoutId, pointer: "$.formAction.onLoad" });
+    }
+  }
+
   function visit(control, pointer, itemContext) {
     if (!isObject(control)) return;
     const controlId = safeString(control.id);
@@ -1644,8 +1777,9 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
         const code = control.type === "kanban" ? "DASHBOARD_KANBAN_LIST_REFERENCE_UNRESOLVED" : DASHBOARD_TIMELINE_CONTROL_TYPES.has(control.type) ? "DASHBOARD_TIMELINE_LIST_REFERENCE_UNRESOLVED" : "DASHBOARD_COLLECTION_LIST_REFERENCE_UNRESOLVED";
         issue(report, severity, code, "Kanban/Collection/Timeline control data source should resolve to a list included in the package.", { title, layoutId, pointer, listId });
       }
-      const fields = fieldsByList.get(listId) || new Map();
-      activeContext = { host: control.type, listId, fields };
+      activeContext = makeHostContext(control.type, listId);
+      if (control.type === "collection" || control.type === "kanban") hostContexts.push(activeContext);
+      const fields = activeContext.fields;
       if (control.type === "kanban") {
         const categoryField = safeString(control.attrs && control.attrs.data && control.attrs.data.cateField);
         if (!categoryField) {
@@ -1683,6 +1817,9 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
         }
         walk(item.value, (node, valuePointer) => validateExpressionNode(node, `${pointer}.attrs.data.fulltext[${fulltextIndex}].value${valuePointer.slice(1)}`, activeContext));
       }
+      if (control.type === "collection" || control.type === "kanban") {
+        validateCollectionActions(control, pointer, activeContext);
+      }
     }
     if (DYNAMIC_DISPLAY_CONTROL_TYPES.has(safeString(control.type)) && safeString(control.attrs && control.attrs.source) === "3") {
       if (!activeContext) {
@@ -1703,6 +1840,7 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
   }
 
   asArray(page.children).forEach((child, index) => visit(child, `$.children[${index}]`, null));
+  validateDashboardPageActions();
 }
 
 function validateDashboardExtFieldRefs(title, layoutId, pointer, attr, fieldsByList, filterVars, report) {
