@@ -6,6 +6,8 @@ Export studied: `/Users/Renger/Downloads/Company Overview (2).yap`
 
 Reference UI screenshot: Collection actions step chooser showing standard action steps plus Collection item operations: View item, Edit item, Delete item, Update fields, and Trigger list workflow.
 
+Correct-project rerun note: this study was rechecked in `/Users/Renger/Documents/Codex Projects/AI Agent and Copilot templates - formreport-clean` on branch `codex/collection-kanban-actions-learning-v2` using the export at `/Users/Renger/Downloads/Company Overview (2).yap`. The raw `.yap`, screenshots, decoded payloads, sample records, private IDs, `Resource`, and `Sign` values remain outside git.
+
 Target dashboard pages:
 
 - `Company overview`
