@@ -274,7 +274,7 @@ Verify:
 
 ## Phase 10 - Runtime Import Test
 
-Use `https://codex.yeeflow.com/` only when the user asks Codex to test.
+Use `https://<yourdomain>.yeeflow.com` only when the user asks Codex to test.
 
 Runtime checklist:
 

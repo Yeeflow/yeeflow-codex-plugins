@@ -81,7 +81,7 @@ Wrapper round-trip:
 
 ## Runtime Results
 
-Tested at `https://codex.yeeflow.com/`.
+Tested at `https://<yourdomain>.yeeflow.com`.
 
 Observed:
 

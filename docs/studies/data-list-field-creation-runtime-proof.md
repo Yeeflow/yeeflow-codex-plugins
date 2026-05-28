@@ -10,7 +10,7 @@ This focused runtime baseline validates a generated Data List package after the 
 - Local package: `data-list-field-creation-runtime-proof.v1.yap`
 - Import copy: `/Users/Renger/Downloads/data-list-field-creation-runtime-proof.v1.yap`
 - App: `Data List Field Creation Runtime Proof`
-- Runtime site: `https://codex.yeeflow.com/`
+- Runtime site: `https://<yourdomain>.yeeflow.com`
 
 Generated resources:
 

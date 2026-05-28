@@ -56,8 +56,8 @@ Status: passed.
 
 Runtime URL after import:
 
-- App/listset: `https://codex.yeeflow.com/#/list-set/41/2054943196075274240/2054943200723742720`
-- Target list: `https://codex.yeeflow.com/#/list-set/41/2054943196075274240/2054943200723742722`
+- App/listset: `https://<yourdomain>.yeeflow.com#/list-set/<workspace-id>/<listset-id>/<list-id>`
+- Target list: `https://<yourdomain>.yeeflow.com#/list-set/<workspace-id>/<listset-id>/<list-id>`
 
 Verified:
 

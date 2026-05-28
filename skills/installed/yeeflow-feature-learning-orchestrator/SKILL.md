@@ -89,7 +89,7 @@ Focused runtime baseline rules:
 - build the smallest app that tests only the learned capability
 - avoid unrelated app complexity
 - validate locally before building, and build before runtime testing
-- import only into `https://codex.yeeflow.com/` after local validation passes and runtime testing is requested
+- import only into `https://<yourdomain>.yeeflow.com` after local validation passes and runtime testing is requested
 - avoid live AI calls, real email, external APIs, destructive updates, private users, private images, private documents, and credentials unless the safe scope is explicit
 - document exact proof labels: passed, partial, blocked, or not tested
 
@@ -187,7 +187,7 @@ Also read the relevant installed feature skills when the task touches their area
 7. Write a dedicated study doc such as `docs/dashboard-feature-pattern-study.md`, `docs/document-library-feature-pattern-study.md`, `docs/report-feature-pattern-study.md`, or `docs/ai-agent-feature-pattern-study.md`.
 8. Generate only the smallest possible test package, using fresh local ID families and minimal dependencies.
 9. Run component and package validators. Build wrappers only after validators pass.
-10. If the user explicitly asks for runtime testing, import into `https://codex.yeeflow.com/` and capture runtime evidence.
+10. If the user explicitly asks for runtime testing, import into `https://<yourdomain>.yeeflow.com` and capture runtime evidence.
 11. If runtime fails, isolate with smaller packages instead of guessing. If app materialization fails or imports as an empty shell, stop before testing custom controls and focus on app shell/resource linkage, global field IDs, field ownership, duplicate field names, `ReplaceIds`, and dashboard/navigation references.
 12. If possible, export the imported app back and compare generated source, wrapper, and exported-back `.yap`.
 13. Patch minimally with fresh IDs, retest, and preserve known-good baselines.
@@ -223,7 +223,7 @@ Adapt paths to the active workspace or installed skill script location. Report i
 
 Never import into Yeeflow or operate Chrome for Yeeflow testing unless the user explicitly asks. When the user does ask, use the Codex Yeeflow environment:
 
-`https://codex.yeeflow.com/`
+`https://<yourdomain>.yeeflow.com`
 
 Use Chrome console/network evidence when import or runtime behavior fails. Do not expose secrets or tenant credentials in logs, summaries, docs, or skills.
 

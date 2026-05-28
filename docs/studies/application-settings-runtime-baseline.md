@@ -77,7 +77,7 @@ Package validation warnings were unrelated to the application settings behavior:
 
 ## Runtime Results
 
-Runtime testing was performed in `https://codex.yeeflow.com/` after local validation passed.
+Runtime testing was performed in `https://<yourdomain>.yeeflow.com` after local validation passed.
 
 | Layout | Import/open | Navigation result | Resource result | Header result |
 | --- | --- | --- | --- | --- |

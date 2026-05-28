@@ -46,7 +46,7 @@ V1 uses a linear workflow with rejection paths. Conditional InclusiveGateway rou
 
 ## Runtime Checklist
 
-1. Import app into `https://codex.yeeflow.com/`.
+1. Import app into `https://<yourdomain>.yeeflow.com`.
 2. Confirm import popup shows name/icon/description.
 3. Open app.
 4. Confirm Overview dashboard renders.

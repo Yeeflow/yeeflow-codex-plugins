@@ -4,7 +4,7 @@ Source of truth: `Test Dashboard Only.yap`.
 
 Proven generated package: `generated-dashboard-minimal-v1.yap`.
 
-Runtime result: imported into `https://codex.yeeflow.com/`, appeared in Shared Workspace after refresh, opened as `Dashboard | Generated Dashboard Minimal v1`, and rendered the empty dashboard page shell.
+Runtime result: imported into `https://<yourdomain>.yeeflow.com`, appeared in Shared Workspace after refresh, opened as `Dashboard | Generated Dashboard Minimal v1`, and rendered the empty dashboard page shell.
 
 ## App Shape
 

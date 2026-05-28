@@ -2,7 +2,7 @@
 
 Package: `knowledge-base-category-lookup-v11.yap`
 
-Download copy: `<downloads>/Knowledge Base Category Lookup v11.yap`
+Download copy: `/Users/Renger/Downloads/Knowledge Base Category Lookup v11.yap`
 
 Status: validation passed and runtime import/open/list smoke tests passed with one refresh required on the first Articles list load.
 
@@ -25,7 +25,7 @@ It proves:
 
 Imported app was remapped by Yeeflow to:
 
-`#/list-set/41/2054546520105824257/2054546526046138369`
+`#/list-set/<workspace-id>/<listset-id>/<list-id>`
 
 Verified:
 

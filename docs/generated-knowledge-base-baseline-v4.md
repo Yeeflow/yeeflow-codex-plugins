@@ -4,7 +4,7 @@ Package: `knowledge-base-generated-v4.yap`
 
 Download copy: `/Users/Renger/Downloads/Knowledge Base Generated v4.yap`
 
-Status: validation passed and runtime import/open/list smoke tests passed at `https://codex.yeeflow.com/`.
+Status: validation passed and runtime import/open/list smoke tests passed at `https://<yourdomain>.yeeflow.com`.
 
 ## What It Proves
 
@@ -37,7 +37,7 @@ Do not reuse this ID family for another import test.
 
 Imported app was remapped by Yeeflow to:
 
-`#/list-set/41/2054483631043002369/2054483637063004161`
+`#/list-set/<workspace-id>/<listset-id>/<list-id>`
 
 Verified:
 

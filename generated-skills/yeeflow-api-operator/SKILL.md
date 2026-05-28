@@ -5,6 +5,14 @@ description: Safely use Yeeflow REST APIs from Codex when local credentials are 
 
 # Yeeflow API Operator
 
+## Public Tenant Safety
+
+- Never hardcode a tenant-specific Yeeflow URL. Use `https://<yourdomain>.yeeflow.com` in docs and examples.
+- For live API calls, require local configuration through `YEEFLOW_BASE_URL` and `YEEFLOW_API_KEY`; do not ask users to paste secrets into chat.
+- Treat `YEEFLOW_BASE_URL` as the tenant root by default, for example `https://<yourdomain>.yeeflow.com`; helper scripts may append `/v1` when a v1 API endpoint is needed.
+- Validate environment variables before API calls and never print API keys, raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, or generated runtime packages.
+- Keep generated examples tenant-neutral unless the user explicitly requests a target-tenant-specific package and provides safe mappings.
+
 ## Purpose
 
 Use this skill when Codex needs safe, credential-aware Yeeflow REST API access. The v1 boundary is read-only directory and master-data access for users, departments, locations, positions, user groups, group members, and position assignments.
@@ -37,8 +45,8 @@ Use the API only when local credentials are available and the user has asked for
 The workspace should provide credentials locally, preferably in `.env.local` at the project root:
 
 ```env
-YEEFLOW_API_KEY=your_api_key_here
-YEEFLOW_BASE_URL=https://codex.yeeflow.com
+YEEFLOW_API_KEY=<your Yeeflow API key>
+YEEFLOW_BASE_URL=https://<yourdomain>.yeeflow.com
 ```
 
 Rules:
@@ -48,7 +56,7 @@ Rules:
 - Ensure `.env.local` is gitignored before running API checks.
 - If `.env.local` or the key is missing, explain setup steps and ask the user to store the key locally, not in chat.
 
-`YEEFLOW_BASE_URL` may be an app/site base URL. The directory endpoints are documented under the official Yeeflow developer API base, and the current helper tries the env base, env base plus `/v1`, and the known documented developer API base as a read-only fallback.
+Use the tenant root for `YEEFLOW_BASE_URL`. The current helpers try the configured root first, append `/v1` when a v1 endpoint is needed, and may try the documented developer API base as a read-only fallback for directory probes. Do not include `/v1` unless a specific script says it expects the API base.
 
 ## Supported Read-Only Operations
 

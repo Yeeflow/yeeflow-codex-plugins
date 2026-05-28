@@ -2,7 +2,7 @@
 
 Use the Codex Yeeflow environment only when the user explicitly asks Codex to import or test generated packages:
 
-`https://codex.yeeflow.com/`
+`https://<yourdomain>.yeeflow.com`
 
 ## Runtime Gate
 
@@ -14,7 +14,7 @@ If runtime proof is deferred, label the merge as export-proven, validator-backed
 
 ## Import Flow
 
-1. Open `https://codex.yeeflow.com/`.
+1. Open `https://<yourdomain>.yeeflow.com`.
 2. Go to Shared Workspace.
 3. Click New application.
 4. Choose Import application.

@@ -66,7 +66,7 @@ Before runtime:
 
 Runtime:
 
-- import into `https://codex.yeeflow.com/`
+- import into `https://<yourdomain>.yeeflow.com`
 - confirm import metadata parses
 - confirm app opens
 - confirm dashboard navigation renders

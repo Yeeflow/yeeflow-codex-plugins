@@ -2376,7 +2376,7 @@ fs.writeFileSync(outReportPath, `${JSON.stringify({
   },
   runtimeValidation: {
     status: "not_started",
-    target: "https://codex.yeeflow.com/",
+    target: "https://<yourdomain>.yeeflow.com",
     note: "Do not claim final runtime baseline until import and v1/v2 regression plus v3 scope tests pass."
   }
 }, null, 2)}\n`);

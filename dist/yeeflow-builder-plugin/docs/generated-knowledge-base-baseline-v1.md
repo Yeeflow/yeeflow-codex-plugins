@@ -2,7 +2,7 @@
 
 Package: `knowledge-base-generated-v1.yap`
 
-Download copy: `<downloads>/Knowledge Base Generated v1.yap`
+Download copy: `/Users/Renger/Downloads/Knowledge Base Generated v1.yap`
 
 Status: validation passed; runtime import completed; runtime app shell opened but generated components were not rendered.
 
@@ -83,7 +83,7 @@ Only warning: `APP_THEME_EMPTY`, which is allowed for these dashboard learning b
 
 ## Runtime Results
 
-Tested at `https://codex.yeeflow.com/`.
+Tested at `https://<yourdomain>.yeeflow.com`.
 
 Observed:
 
@@ -91,7 +91,7 @@ Observed:
 - import metadata dialog showed `Knowledge Base Generated v1`
 - import completed successfully
 - app tile appeared in Shared Workspace
-- app opened at `#/list-set/41/2054466041058967552`
+- app opened at `#/list-set/<workspace-id>/<listset-id>`
 - runtime showed Yeeflow's empty component shell (`Add Component`) instead of the generated Home dashboard/navigation
 
 Result: v1 is not a successful runtime baseline. The follow-up v2/v3/v4 isolation path found two fixes:

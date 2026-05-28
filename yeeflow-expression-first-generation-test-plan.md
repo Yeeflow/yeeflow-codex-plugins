@@ -46,7 +46,7 @@ Expression-editor UI contexts to prove:
 
 ## Runtime Checks
 
-When explicitly requested, import into `https://codex.yeeflow.com/` and verify:
+When explicitly requested, import into `https://<yourdomain>.yeeflow.com` and verify:
 
 - app imports and opens
 - form opens

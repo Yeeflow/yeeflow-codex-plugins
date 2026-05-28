@@ -55,7 +55,7 @@ All validator failures were zero. Warnings remained for runtime-sensitive docume
 
 Status: partial runtime proof, with generated folder rows runtime-proven for import/open/list/persistence.
 
-Runtime-tested in `https://codex.yeeflow.com/`.
+Runtime-tested in `https://<yourdomain>.yeeflow.com`.
 
 Observed results:
 

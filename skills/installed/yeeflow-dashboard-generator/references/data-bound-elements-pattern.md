@@ -6,7 +6,7 @@ Source of truth: `Generated Dashboard Simple Elements v2.yap`.
 
 Proven generated package: `generated-dashboard-data-bound-v3.yap`.
 
-Runtime result: imported into `https://codex.yeeflow.com/`, opened as `Dashboard | Generated Dashboard Data Bound v3`, rendered two summary cards, rendered a data table, and opened the local `Event Planning` list without a visible query failure.
+Runtime result: imported into `https://<yourdomain>.yeeflow.com`, opened as `Dashboard | Generated Dashboard Data Bound v3`, rendered two summary cards, rendered a data table, and opened the local `Event Planning` list without a visible query failure.
 
 ## App Shape
 

@@ -318,7 +318,7 @@ Do not import or hand off a newly generated `.yap` if strict generator/import-re
 
 Use:
 
-`https://codex.yeeflow.com/`
+`https://<yourdomain>.yeeflow.com`
 
 Runtime checklist:
 
@@ -439,7 +439,7 @@ Expected Codex behavior:
 2. Create plan/spec.
 3. Generate v1.
 4. Validate locally.
-5. Import/runtime-test in `codex.yeeflow.com` if requested as part of the app build/test.
+5. Import/runtime-test in `<yourdomain>.yeeflow.com` if requested as part of the app build/test.
 6. Fix issues with fresh IDs if needed.
 7. Document result.
 8. Commit/push.

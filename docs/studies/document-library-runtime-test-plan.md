@@ -1,6 +1,6 @@
 # Yeeflow Document Library Runtime Test Plan
 
-Target environment: `https://codex.yeeflow.com/`
+Target environment: `https://<yourdomain>.yeeflow.com`
 
 Run this only after local validation passes.
 

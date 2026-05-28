@@ -42,7 +42,7 @@ Final local status:
 
 ## Runtime Evidence
 
-Runtime testing was performed in `https://codex.yeeflow.com/` on 2026-05-18.
+Runtime testing was performed in `https://<yourdomain>.yeeflow.com` on 2026-05-18.
 
 ### Document Library Custom Form Host
 

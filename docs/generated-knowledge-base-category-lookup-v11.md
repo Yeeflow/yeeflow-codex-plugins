@@ -25,7 +25,7 @@ It proves:
 
 Imported app was remapped by Yeeflow to:
 
-`#/list-set/41/2054546520105824257/2054546526046138369`
+`#/list-set/<workspace-id>/<listset-id>/<list-id>`
 
 Verified:
 

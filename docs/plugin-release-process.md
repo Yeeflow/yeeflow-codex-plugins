@@ -1,6 +1,6 @@
 # Yeeflow Builder Plugin Release Process
 
-This document defines the v0 release packaging process for the private Yeeflow Builder Plugin.
+This document defines the v0 release packaging process for the Yeeflow Builder Plugin.
 
 ## Release Inputs
 
@@ -35,6 +35,13 @@ Current release status:
 - Git marketplace install: passed.
 - Production/public marketplace: not applicable.
 - Partner-safe edition: planned, not released.
+
+Public sharing hardening:
+
+- Public install docs must use the official repo `https://github.com/Yeeflow/yeeflow-codex-plugins.git`.
+- Tenant-specific URLs must be placeholders such as `https://<yourdomain>.yeeflow.com`.
+- API scripts should read `YEEFLOW_BASE_URL` from local environment and append `/v1` only when a v1 endpoint is needed.
+- Do not commit `.env.local`, API keys, tokens, raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, screenshots, or generated runtime packages.
 
 Verified marketplace install values:
 

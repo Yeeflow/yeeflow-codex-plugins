@@ -30,7 +30,7 @@ Source baseline: Stage M generated package and local Stage M decoded app/resourc
 
 ## Runtime Results
 
-Runtime environment: `https://codex.yeeflow.com/`
+Runtime environment: `https://<yourdomain>.yeeflow.com`
 
 Stage N imported and opened successfully. Executive Dashboard rendered the active helper copy:
 

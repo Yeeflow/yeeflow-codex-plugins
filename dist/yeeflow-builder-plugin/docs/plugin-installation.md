@@ -1,15 +1,15 @@
 # Yeeflow Builder Plugin Installation
 
-This document covers private distribution and installation guidance for the Yeeflow Builder Plugin v0. The plugin is currently a skills-only Codex plugin with no OAuth, no Yeeflow API integration, and no MCP servers.
+This document covers public Git marketplace installation guidance for the Yeeflow Builder Plugin v0. The plugin is currently a skills-only Codex plugin with no OAuth and no MCP servers. API-backed helper scripts, when used, read tenant settings only from local environment variables.
 
 ## Distribution Options
 
 The supported v0 distribution paths are:
 
-- Git repo sharing from the private repository and release branch.
-- ZIP package sharing from `dist/yeeflow-builder-plugin-0.1.0.zip`.
+- Git marketplace install from the official Yeeflow repository.
+- ZIP package sharing from the matching release archive when a marketplace install is not available.
 
-Organization-level private marketplace distribution is a future option. Do not assume it is available until Codex admin setup, supported marketplace configuration, and the target environment's install flow are confirmed.
+Use tenant-neutral configuration for all public installs. Do not use an internal test tenant URL as a default.
 
 ## Verified Private Marketplace Install
 
@@ -37,19 +37,28 @@ v0.6.0 RC install smoke test result:
 - Expected version: `0.6.0`
 - Expected bundled skills: `21`
 
-Use these values in Codex's Add marketplace dialog for the tested v0.6.0 RC:
+Use these values in Codex's Add marketplace dialog for the final v0.6.0 release:
 
 ```text
 Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.0-rc1
+yeeflow-builder-plugin-v0.6.0
 
 Sparse paths:
 .agents/plugins/marketplace.json
 dist/yeeflow-builder-plugin
 ```
+
+For API-backed workflows, configure your own tenant root locally:
+
+```env
+YEEFLOW_BASE_URL=https://<yourdomain>.yeeflow.com
+YEEFLOW_API_KEY=<your Yeeflow API key>
+```
+
+Current helper scripts try the configured tenant root first and append `/v1` when a v1 API endpoint is required. Never commit `.env.local`, API keys, tenant IDs, raw API responses, or private tenant URLs.
 
 Smoke-test question:
 

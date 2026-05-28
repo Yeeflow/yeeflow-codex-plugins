@@ -341,7 +341,7 @@ Stop before generation if:
 
 Runtime proof:
 
-- imported successfully into `https://codex.yeeflow.com/`
+- imported successfully into `https://<yourdomain>.yeeflow.com`
 - opened as `Tickets Collection Search | Generated Dashboard Collection Search v5`
 - rendered horizontal table header and rows
 - did not render `Table header` or `Table row` captions
@@ -357,7 +357,7 @@ Runtime proof:
 
 Runtime proof:
 
-- v6 and v7 imported successfully into `https://codex.yeeflow.com/`
+- v6 and v7 imported successfully into `https://<yourdomain>.yeeflow.com`
 - both opened the local Support Tickets add panel through the New Ticket button
 - v7 rendered two rows of three Collection cards
 - v8 rendered two rows of three Collection cards, opened the add panel, and hid Assigned Team on Medium-priority cards while showing it on non-Medium cards

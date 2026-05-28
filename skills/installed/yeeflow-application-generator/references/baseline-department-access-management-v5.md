@@ -58,7 +58,7 @@ Confirmed rules:
 The generated app's first successful open route was:
 
 ```text
-/#/list-set/41/2053789849616134145/2053789859457155085
+/#/list-set/<workspace-id>/<listset-id>/<list-id>
 ```
 
 This confirms Yeeflow remapped the generated root app/listset ID and Type `103` page layout ID during import.

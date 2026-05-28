@@ -4,7 +4,7 @@ Package: `knowledge-base-phase1-full.generated.yap`
 
 Download copy: `/Users/Renger/Downloads/Knowledge Base Phase 1 Full.yap`
 
-Status: validation passed and runtime import/open/dashboard/list smoke tests passed at `https://codex.yeeflow.com/`.
+Status: validation passed and runtime import/open/dashboard/list smoke tests passed at `https://<yourdomain>.yeeflow.com`.
 
 ## What It Proves
 
@@ -41,7 +41,7 @@ Do not reuse this ID family for another import test.
 
 Imported app was remapped by Yeeflow to:
 
-`#/list-set/41/2054558162600345601/2054558170608447488`
+`#/list-set/<workspace-id>/<listset-id>/<list-id>`
 
 Verified:
 

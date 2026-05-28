@@ -4,7 +4,7 @@ Only operate Yeeflow UI when the user explicitly asks for runtime testing.
 
 Runtime environment:
 
-`https://codex.yeeflow.com/`
+`https://<yourdomain>.yeeflow.com`
 
 ## Import Flow
 

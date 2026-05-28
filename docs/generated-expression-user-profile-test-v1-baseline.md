@@ -59,7 +59,7 @@ In token form, `Boarding Date` maps to the export-backed `LatestHireDate` key. I
 
 ## Runtime Result
 
-Runtime-tested on `https://codex.yeeflow.com/`.
+Runtime-tested on `https://<yourdomain>.yeeflow.com`.
 
 Passed:
 

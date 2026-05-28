@@ -5,6 +5,14 @@ description: Inspect, validate, compare, and plan Yeeflow .yapk existing-applica
 
 # Yeeflow YAPK Package Generator
 
+## Public Tenant Safety
+
+- Never hardcode a tenant-specific Yeeflow URL. Use `https://<yourdomain>.yeeflow.com` in docs and examples.
+- For live API calls, require local configuration through `YEEFLOW_BASE_URL` and `YEEFLOW_API_KEY`; do not ask users to paste secrets into chat.
+- Treat `YEEFLOW_BASE_URL` as the tenant root by default, for example `https://<yourdomain>.yeeflow.com`; helper scripts may append `/v1` when a v1 API endpoint is needed.
+- Validate environment variables before API calls and never print API keys, raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, or generated runtime packages.
+- Keep generated examples tenant-neutral unless the user explicitly requests a target-tenant-specific package and provides safe mappings.
+
 Use this skill for Yeeflow `.yapk` version-management packages for existing application upgrades.
 
 ## YAPK From Scratch Hardening

@@ -4,7 +4,7 @@ Source of truth: `Test Dashboard Only (2).yap`.
 
 Proven generated package: `generated-dashboard-simple-elements-v2.yap`.
 
-Runtime result: imported into `https://codex.yeeflow.com/`, appeared in Shared Workspace after refresh, opened as `Dashboard | Generated Dashboard Simple Elements v2`, and rendered static dashboard page content.
+Runtime result: imported into `https://<yourdomain>.yeeflow.com`, appeared in Shared Workspace after refresh, opened as `Dashboard | Generated Dashboard Simple Elements v2`, and rendered static dashboard page content.
 
 ## App Shape
 

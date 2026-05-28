@@ -44,7 +44,7 @@ Expected validation warnings remain around environment-sensitive controls and ru
 
 ## Runtime Import Result
 
-Runtime target: `https://codex.yeeflow.com/`
+Runtime target: `https://<yourdomain>.yeeflow.com`
 
 Import path used for file picker compatibility: `/private/tmp/a.yap`, copied from the generated package.
 

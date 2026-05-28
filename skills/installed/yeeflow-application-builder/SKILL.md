@@ -5,6 +5,14 @@ description: build real Yeeflow business applications from requirements, process
 
 # Yeeflow Application Builder
 
+## Public Tenant Safety
+
+- Never hardcode a tenant-specific Yeeflow URL. Use `https://<yourdomain>.yeeflow.com` in docs and examples.
+- For live API calls, require local configuration through `YEEFLOW_BASE_URL` and `YEEFLOW_API_KEY`; do not ask users to paste secrets into chat.
+- Treat `YEEFLOW_BASE_URL` as the tenant root by default, for example `https://<yourdomain>.yeeflow.com`; helper scripts may append `/v1` when a v1 API endpoint is needed.
+- Validate environment variables before API calls and never print API keys, raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, or generated runtime packages.
+- Keep generated examples tenant-neutral unless the user explicitly requests a target-tenant-specific package and provides safe mappings.
+
 Use this skill when the user provides business requirements, process documents, forms, screenshots, SOPs, sample exports, workflow requirements, or app ideas and asks Codex to build, implement, create, generate, test, or output a Yeeflow application package, `.yap`, or `.yapk`.
 
 YAPK-from-scratch rule: when the requested deliverable is a generated `.yapk`, the builder must still treat the inner application as the first deliverable. Build and validate `AppPackageInfo` content before Brotli/base64/sign. Do not sign if package/app creation validators, graph validators, workflow publish-readiness checks, or placeholder scans fail. `setsign` and `verifysign` prove wrapper/resource integrity, not generated-app correctness or tenant-specific routing. Preserve the proof boundary and write generated `.yapk` output outside git.

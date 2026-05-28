@@ -1,8 +1,8 @@
 # Yeeflow Builder Plugin
 
-The Yeeflow Builder Plugin is a private, skills-only Codex plugin for internal Yeeflow application builders. It packages the current repo's proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth, Yeeflow API integration, or MCP servers.
+The Yeeflow Builder Plugin is a skills-only Codex plugin for Yeeflow application builders. It packages proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth or MCP servers. API-backed helper scripts require local environment variables and must not hardcode a tenant-specific URL.
 
-Package status: v0.6.0 private Git marketplace install smoke test passed with RC tag `yeeflow-builder-plugin-v0.6.0-rc1`, targeting RC package commit `d4a6b2d78756d306f85a28a2504b47a769d1427e`. Final release tag: `yeeflow-builder-plugin-v0.6.0`. Production/public marketplace release is not applicable, and the partner-safe edition is planned but not released.
+Package status: v0.6.0 Git marketplace install smoke test passed with RC tag `yeeflow-builder-plugin-v0.6.0-rc1`, targeting RC package commit `d4a6b2d78756d306f85a28a2504b47a769d1427e`. Final release tag: `yeeflow-builder-plugin-v0.6.0`. The official public Git install source is `https://github.com/Yeeflow/yeeflow-codex-plugins.git`.
 
 ## Package Contents
 
@@ -73,6 +73,23 @@ The builder should:
 6. Record runtime test planning and runtime results before accepting a baseline.
 
 New app creation outputs `.yap`.
+
+## Tenant Configuration
+
+Each Yeeflow tenant has a unique URL:
+
+```text
+https://<yourdomain>.yeeflow.com
+```
+
+Use this tenant root in local configuration:
+
+```env
+YEEFLOW_BASE_URL=https://<yourdomain>.yeeflow.com
+YEEFLOW_API_KEY=<your Yeeflow API key>
+```
+
+Helper scripts append `/v1` when they need a v1 API endpoint. Keep `.env.local`, API keys, tenant IDs, private URLs, raw API responses, raw `Resource`, raw `Sign`, decoded payloads, and generated runtime packages out of Git.
 
 ## Starting a Learning Pass
 

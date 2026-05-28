@@ -53,12 +53,12 @@ Focused Text structural check:
 
 ## Runtime
 
-Runtime verification on `https://codex.yeeflow.com/` passed for the Text-control bug fix.
+Runtime verification on `https://<yourdomain>.yeeflow.com` passed for the Text-control bug fix.
 
 - Imported `/Users/Renger/Downloads/IT Hardware CAPEX Request v4 Text Standard.yap` successfully.
 - Opened the imported app successfully.
 - Opened the generated approval form successfully.
-- Designer URL verified: `https://codex.yeeflow.com/#/admin/model/designer?appid=41&defkey=2054861455097737221&listsetid=2054861443109240833`
+- Designer URL verified: `https://<yourdomain>.yeeflow.com#/admin/model/designer?appid=<app-id>&defkey=<definition-key>&listsetid=<listset-id>`
 - Selected the generated `Draft` metric Text control in the form designer.
 - Typography settings popup opened successfully.
 - Text shadow settings popup opened successfully.

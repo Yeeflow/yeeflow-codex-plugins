@@ -35,7 +35,7 @@ Validator result summary:
 
 ## Runtime Result
 
-Runtime target: `https://codex.yeeflow.com/`
+Runtime target: `https://<yourdomain>.yeeflow.com`
 
 Result: pass after regenerating with the corrected Query data filter path.
 

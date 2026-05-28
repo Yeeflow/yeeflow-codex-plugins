@@ -9,7 +9,7 @@ This is a focused runtime proof pass for Dashboard Pivot Table Data Analytics co
 - Downloads copy: `/Users/Renger/Downloads/pivot-table-control-runtime-proof.v1.yap`
 - Follow-up package: `pivot-table-control-runtime-proof-with-sample-data.v2.yap`
 - Follow-up Downloads copy: `/Users/Renger/Downloads/pivot-table-control-runtime-proof-with-sample-data.v2.yap`
-- Runtime site: `https://codex.yeeflow.com/`
+- Runtime site: `https://<yourdomain>.yeeflow.com`
 - App name: `Pivot Table Runtime Proof`
 - Dashboard page: `Dashboard`
 - Source learning baseline: `docs/studies/pivot-table-control.md`

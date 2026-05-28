@@ -81,7 +81,7 @@ For Stage L:
 
 ## Runtime Results
 
-Runtime environment: `https://codex.yeeflow.com/`
+Runtime environment: `https://<yourdomain>.yeeflow.com`
 
 Stage L imported and opened successfully. Direct navigation to `Drill-down Tickets List` rendered the data-bound table with only two rows: `T-1001` and `T-1006`. Both visible rows had `Priority = High`.
 

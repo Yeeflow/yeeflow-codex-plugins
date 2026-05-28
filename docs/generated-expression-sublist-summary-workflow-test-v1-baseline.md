@@ -84,7 +84,7 @@ Package, graph, form, list, workflow action, expression smoke, and wrapper round
 
 Runtime status: passed.
 
-Runtime site: `https://codex.yeeflow.com/`
+Runtime site: `https://<yourdomain>.yeeflow.com`
 
 Verified:
 

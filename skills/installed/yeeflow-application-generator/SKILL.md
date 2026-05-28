@@ -5,6 +5,14 @@ description: generate, inspect, validate, package, debug, and improve small yeef
 
 # Yeeflow Application Generator
 
+## Public Tenant Safety
+
+- Never hardcode a tenant-specific Yeeflow URL. Use `https://<yourdomain>.yeeflow.com` in docs and examples.
+- For live API calls, require local configuration through `YEEFLOW_BASE_URL` and `YEEFLOW_API_KEY`; do not ask users to paste secrets into chat.
+- Treat `YEEFLOW_BASE_URL` as the tenant root by default, for example `https://<yourdomain>.yeeflow.com`; helper scripts may append `/v1` when a v1 API endpoint is needed.
+- Validate environment variables before API calls and never print API keys, raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, or generated runtime packages.
+- Keep generated examples tenant-neutral unless the user explicitly requests a target-tenant-specific package and provides safe mappings.
+
 Business Travel runtime-practice rule: every generated root app/listset and child list-like resource must emit `ListModel.Flags = 1`. Emit `ListModel.Status = 1` when including Status, keep `ListModel.Type` inside the schema-v2 enum `1`, `16`, `32`, `64`, `128`, `1024`, and keep `Defs`/`Layouts` arrays. Before package handoff, validate that workflow variables are declared before use in controls, summaries, sequence-flow conditions, Set Variable targets, task-assignment expressions, and ContentList mappings. Do not emit placeholder user/group/position IDs into final packages; direct `method="position"` assignees require real numeric position IDs or a user-approved fallback. The fixed Business Travel package is user-proven for import/open/workflow publish only; do not infer workflow execution, routing, data mutation, or true Finance Manager assignment.
 
 YAPK-from-scratch hardening addendum: if the requested output is `.yapk` instead of `.yap`, keep the same generated-app correctness gate before encoding/signing. The inner `AppPackageInfo` must pass package, app-creation, graph, workflow publish-readiness, and placeholder checks before Brotli/base64/sign. Signing/verifysign is not a substitute for generated-app validation.

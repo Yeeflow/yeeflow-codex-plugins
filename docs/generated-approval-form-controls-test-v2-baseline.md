@@ -64,7 +64,7 @@ Warnings are expected because this stage intentionally exercises schema-supporte
 
 ## Runtime Result
 
-Runtime testing was completed in `https://codex.yeeflow.com/`.
+Runtime testing was completed in `https://<yourdomain>.yeeflow.com`.
 
 Verified:
 

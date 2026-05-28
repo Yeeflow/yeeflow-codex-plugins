@@ -66,7 +66,7 @@ Run:
 
 Only after local validation:
 
-1. Import to `https://codex.yeeflow.com/`.
+1. Import to `https://<yourdomain>.yeeflow.com`.
 2. Open app.
 3. Open data list; confirm no `datas/query` 400.
 4. Open approval form.

@@ -84,7 +84,7 @@ Passed:
 
 ## Runtime Results
 
-Tested at `https://codex.yeeflow.com/`.
+Tested at `https://<yourdomain>.yeeflow.com`.
 
 Observed:
 
