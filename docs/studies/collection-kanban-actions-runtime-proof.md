@@ -2,7 +2,7 @@
 
 ## Status
 
-Runtime status: pending user test.
+Runtime status: user-confirmed passed on 2026-05-28.
 
 Generated package:
 
@@ -10,7 +10,22 @@ Generated package:
 /Users/Renger/Downloads/collection-kanban-actions-runtime-proof.v1.yap
 ```
 
-The package was generated from local schema/export-backed patterns and passed local validation/import-readiness gates with zero errors. This is not runtime proof until the package is imported and tested in Yeeflow.
+The package was generated from local schema/export-backed patterns and passed local validation/import-readiness gates with zero errors. The user then imported and tested the package in Yeeflow.
+
+User runtime result:
+
+- package imported successfully
+- Collection rendered
+- Kanban rendered
+- Edit item worked
+- Delete item worked
+- Mark current item as Completed worked
+- selection toggle worked
+- selected count updated
+- bulk toolbar appeared when items were selected
+- bulk mark completed worked
+- bulk delete worked
+- no missing binding, render, or action execution error appeared
 
 ## Package Scope
 
@@ -122,9 +137,32 @@ Verify:
 - selection variables reset after item/bulk actions
 - no missing binding, render, or action execution error appears
 
+## Confirmed Runtime Proof
+
+This runtime proof covers the generated package at:
+
+```text
+/Users/Renger/Downloads/collection-kanban-actions-runtime-proof.v1.yap
+```
+
+Confirmed tested behaviors:
+
+- Collection item-template buttons bound to local Collection actions
+- Kanban item-template buttons bound to local Kanban actions
+- current collection item context for tested item operations
+- Edit item
+- Delete item
+- Mark current item as Completed / update fields
+- item selection toggle
+- checked/unchecked icon dynamic display
+- selected item count
+- bulk toolbar visibility
+- bulk mark completed
+- bulk delete
+
 ## Proof Boundary
 
-This package is designed to prove only the generated package's Collection/Kanban local action behavior after manual runtime testing.
+Runtime proof is limited to this generated package.
 
 Do not claim all Collection action step types from this package.
 
@@ -135,5 +173,3 @@ Do not claim Trigger list workflow behavior.
 Do not claim Barcode, NFC, AI assistant, or unrelated general form action steps.
 
 Do not claim all Kanban action behaviors unless the Kanban paths above are actually tested.
-
-Until manual testing is complete, this is validator-backed and manual-test-ready, not runtime-proven.
