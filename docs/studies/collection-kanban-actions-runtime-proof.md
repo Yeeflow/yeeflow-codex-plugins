@@ -2,7 +2,7 @@
 
 ## Status
 
-Runtime status: pending user test for the correct-project v2 package.
+Runtime status: user-confirmed pass for the correct-project v2 package.
 
 Correct-project rerun: this package was generated from `/Users/Renger/Documents/Codex Projects/AI Agent and Copilot templates - formreport-clean` on branch `codex/collection-kanban-actions-runtime-proof-v2`. It is intentionally separate from any earlier wrong-project runtime artifacts or claims.
 
@@ -12,7 +12,7 @@ Generated package:
 /Users/Renger/Downloads/collection-kanban-actions-runtime-proof.v2.yap
 ```
 
-The generated `.yap` is a manual runtime-test candidate only. It must stay outside git.
+The generated `.yap` is the user-tested runtime proof package for this focused scope. It must stay outside git.
 
 ## Package Scope
 
@@ -95,7 +95,25 @@ dashboardDynamicControls: 12
 customFormDynamicControls: 21
 ```
 
-Local validation is not runtime proof.
+Local validation was completed before the user runtime test.
+
+## User Runtime Result
+
+The user confirmed the correct-project v2 package passed runtime testing after import into Yeeflow:
+
+- the generated package imported successfully
+- `Collection Actions Runtime Dashboard` opened
+- Collection rendered items
+- Kanban rendered items
+- Edit item worked as expected
+- Delete item worked as expected
+- Mark current item as Completed worked as expected
+- selection toggle worked as expected
+- selected count updated as expected
+- bulk toolbar appeared when items were selected
+- bulk mark completed worked as expected
+- bulk delete worked as expected
+- no missing binding, render, or action execution error appeared
 
 ## Manual Test Instructions
 
@@ -133,9 +151,18 @@ Verify:
 
 ## Proof Boundary
 
-Runtime proof is not claimed until the user imports and tests the v2 package from this correct-project branch.
+Runtime proof is limited to this generated v2 package in the correct project.
 
-When tested, proof will be limited to this generated package and the tested actions only.
+Runtime proof covers only the tested Collection/Kanban item action paths:
+
+- Edit item
+- Delete item
+- Mark current item as Completed
+- selection toggle
+- selected count
+- bulk toolbar
+- bulk mark completed
+- bulk delete
 
 Do not claim all Collection action step types from this package.
 
