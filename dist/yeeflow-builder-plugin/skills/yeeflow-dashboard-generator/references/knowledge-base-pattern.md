@@ -2,7 +2,7 @@
 
 Use this reference after the minimal dashboard, data-list, lookup, and Collection-control patterns are already understood.
 
-Source studied: `<downloads>/Knowledge Base_1.yap`
+Source studied: `/Users/Renger/Downloads/Knowledge Base_1.yap`
 
 Runtime-proven generated baseline: `knowledge-base-generated-v4.yap`
 

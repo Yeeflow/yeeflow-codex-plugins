@@ -19,7 +19,7 @@ dist/yeeflow-builder-plugin/
 Current release archive:
 
 ```text
-dist/yeeflow-builder-plugin-0.5.23.zip
+dist/yeeflow-builder-plugin-0.6.0.zip
 ```
 
 Current release status:
@@ -30,6 +30,7 @@ Current release status:
 - v0.4.0 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.4.0-rc1`.
 - v0.5.22 private Git marketplace install: passed; includes v0.5.22 YAPK support and 21 bundled skills.
 - v0.5.23 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.5.23-rc1`; final tag `yeeflow-builder-plugin-v0.5.23`.
+- v0.6.0 RC prepared as `yeeflow-builder-plugin-v0.6.0-rc1`; final tag is pending private marketplace install smoke test.
 - ZIP package smoke test: passed locally.
 - Git marketplace install: passed.
 - Production/public marketplace: not applicable.
@@ -42,7 +43,7 @@ Source:
 https://github.com/rengerhu/yeeflow-ai-builder-research.git
 
 Git ref:
-yeeflow-builder-plugin-v0.5.23-rc1
+yeeflow-builder-plugin-v0.6.0-rc1
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -67,6 +68,44 @@ Smoke prompts tested:
 - Dashboard-generator data-bound document-library dashboard guidance.
 
 ## Release Notes
+
+### v0.6.0 RC1
+
+Previous final version: `0.5.27`.
+
+Selected version: `0.6.0`.
+
+RC tag: `yeeflow-builder-plugin-v0.6.0-rc1`.
+
+Final tag: not created. It must wait until the private marketplace install smoke test passes.
+
+Bundled skill count: `21`.
+
+Included milestone: Advanced Controls learning and focused runtime proof.
+
+Verified marketplace install values:
+
+- Source: `https://github.com/rengerhu/yeeflow-ai-builder-research.git`
+- Git ref: `yeeflow-builder-plugin-v0.6.0-rc1`
+- Sparse paths: `.agents/plugins/marketplace.json`, `dist/yeeflow-builder-plugin`
+- Expected marketplace: `Yeeflow Internal`
+- Expected plugin: `Yeeflow Builder`
+- Expected version: `0.6.0`
+- Expected bundled skills: `21`
+
+Main improvements:
+
+- Adds Advanced Controls export-learning from `/Users/Renger/Downloads/Company Overview (3).yap`.
+- Adds focused generated runtime proof from `/Users/Renger/Downloads/advanced-controls-runtime-proof.v1.yap`.
+- Bundles `scripts/inspect-advanced-controls.mjs`, `generate-advanced-controls-runtime-proof.mjs`, `docs/studies/advanced-controls.md`, `docs/studies/advanced-controls-runtime-proof.md`, and normalized Advanced Controls refs.
+- Updates validators/import-readiness and generator/runtime/package skills for Tab, Toggle, Timer, Icon list, Divider, Alert, Progress bar, Spacer, Progress circle, Steps bar, QR Code, Barcode, Embed, and Document embed.
+- Preserves v0.5.27 Collection/Kanban actions support, v0.5.26 YAPK hardening, v0.5.25 Kanban/Collection/Timeline support, v0.5.24 Dynamic Sub List/Print Page support, v0.5.23 LayoutView hardening, and v0.5.22 YAPK support.
+
+Proof boundary:
+
+- Advanced Controls runtime proof is limited to the generated package and covers rendering/basic interactions only.
+- It does not prove QR scan behavior, Barcode scan behavior, external iframe content loading beyond safe render, non-empty document preview, dynamic value changes, or Approval Form/Public Form host behavior.
+- Existing v0.5.27, v0.5.26, v0.5.25, v0.5.24, v0.5.23, and v0.5.22 proof boundaries remain preserved.
 
 ### v0.5.23
 

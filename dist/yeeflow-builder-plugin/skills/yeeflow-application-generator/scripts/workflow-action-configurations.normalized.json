@@ -1,7 +1,7 @@
 {
   "schema_version": "2026-05-13.workflow-action-configurations.v1",
   "source": {
-    "path": "<downloads>/node-configurations.json",
+    "path": "/Users/Renger/Downloads/node-configurations.json",
     "note": "Read-only source supplied by user; normalized locally for generator validation."
   },
   "generated_at": "2026-05-13T12:37:24.280Z",

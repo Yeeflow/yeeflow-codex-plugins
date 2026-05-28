@@ -5,9 +5,9 @@ import path from "node:path";
 import zlib from "node:zlib";
 
 const GZIP_PREFIX = "[______gizp______]";
-const DEFAULT_INPUT = "<downloads>/business-travel-budget-control.v1.yap";
+const DEFAULT_INPUT = "/Users/Renger/Downloads/business-travel-budget-control.v1.yap";
 const DEFAULT_OUTPUT = "business-travel-budget-control.schema-fixed.v1.yap";
-const DEFAULT_DOWNLOADS_OUTPUT = "<downloads>/business-travel-budget-control.schema-fixed.v1.yap";
+const DEFAULT_DOWNLOADS_OUTPUT = "/Users/Renger/Downloads/business-travel-budget-control.schema-fixed.v1.yap";
 
 const WORKFLOW_VALUE_TYPES = new Map([
   ["TotalAmount", "number"],

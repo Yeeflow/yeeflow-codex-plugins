@@ -1,6 +1,6 @@
 # Knowledge Base App Pattern
 
-Source studied: `<downloads>/Knowledge Base_1.yap`
+Source studied: `/Users/Renger/Downloads/Knowledge Base_1.yap`
 
 Use this when generating a small Knowledge Base-style `.yap` app that combines local lists and dashboard pages.
 

@@ -2,7 +2,7 @@
 
 The Yeeflow Builder Plugin is a private, skills-only Codex plugin for internal Yeeflow application builders. It packages the current repo's proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth, Yeeflow API integration, or MCP servers.
 
-Package status: v0.5.23 private Git marketplace install smoke test passed with RC tag `yeeflow-builder-plugin-v0.5.23-rc1`, targeting remote commit `b010ee335ea4108d66161ce3d1065d56e1c5b6f9`. Final release tag: `yeeflow-builder-plugin-v0.5.23`. Production/public marketplace release is not applicable, and the partner-safe edition is planned but not released.
+Package status: v0.6.0 RC prepared as `yeeflow-builder-plugin-v0.6.0-rc1` after Advanced Controls learning and focused runtime proof. The final `yeeflow-builder-plugin-v0.6.0` tag must wait until the private marketplace install smoke test passes. Production/public marketplace release is not applicable, and the partner-safe edition is planned but not released.
 
 ## Package Contents
 
@@ -119,6 +119,16 @@ v0.5.23 includes the Data List LayoutView Add form hardening. The broken generat
 The generator now creates concrete Type `1` New Item, Edit Item, and View Item layouts, resolves `ListModel.LayoutView.add/edit/view` to real local layout IDs, and omits unsafe display-settings `sort: [{ SortName, SortByDesc }]`. Validators hard-fail generated packages with `LAYOUTVIEW_ADD_LAYOUT_MISSING` and `LAYOUTVIEW_SORT_OBJECT_UNSUPPORTED`.
 
 Runtime proof is user-confirmed for the generated fixed Container/Button action runtime package: `Action Runtime Requests` opened, the default `+ New item` button was clicked, and the Add modal rendered successfully. This proves Add modal rendering for that package only; Add form save/data mutation, other layout modes, Public Forms, Document Library layouts, Form Reports, and unrelated generated app patterns remain unproven.
+
+## v0.6.0 RC Scope
+
+v0.6.0 adds Advanced Controls learning and runtime proof while carrying forward v0.5.27 Collection/Kanban action runtime proof, v0.5.26 YAPK-from-scratch hardening, v0.5.25 Kanban/Collection/Timeline Dynamic controls learning and runtime proof, v0.5.24 Dynamic Sub List and Print Page support, v0.5.23 LayoutView hardening, and v0.5.22 YAPK support.
+
+Included Advanced Controls: Tab, Toggle, Timer, Icon list, Divider, Alert, Progress bar, Spacer, Progress circle, Steps bar, QR Code, Barcode, Embed, and Document embed.
+
+Runtime proof: `/Users/Renger/Downloads/advanced-controls-runtime-proof.v1.yap` imported successfully, `Advanced Controls Runtime Dashboard` opened, Tab switching worked, Toggle expand/collapse worked, Timer/Icon list/Divider/Alert/Progress bar/Spacer/Progress circle/Steps bar/QR Code/Barcode rendered, Embed rendered safely without breaking the page, Document embed rendered a safe empty state, and no missing binding/render/action error appeared.
+
+Proof boundary: this runtime proof is limited to the generated Advanced Controls runtime package and covers rendering/basic interactions only. It does not prove QR scan behavior, Barcode scan behavior, external iframe content loading beyond safe render, non-empty document preview, dynamic value changes, or Approval Form/Public Form host behavior.
 
 ## Current Limitations
 

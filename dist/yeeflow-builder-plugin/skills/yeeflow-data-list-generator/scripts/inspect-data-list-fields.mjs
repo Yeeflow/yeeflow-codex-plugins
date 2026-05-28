@@ -97,7 +97,7 @@ function usage(exitCode = 1) {
     "  node scripts/inspect-data-list-fields.mjs <app.yap|list.ydl|decoded.json> [--list <name>] [--json <report.json>] [--normalized-dir <dir>]",
     "",
     "Examples:",
-    "  node scripts/inspect-data-list-fields.mjs '<downloads>/Data Lists (2).yap' --list 'Data list with fields part A' --list 'Data list with fields part B'",
+    "  node scripts/inspect-data-list-fields.mjs '/Users/Renger/Downloads/Data Lists (2).yap' --list 'Data list with fields part A' --list 'Data list with fields part B'",
     "  node scripts/inspect-data-list-fields.mjs sample.yap --json tmp/report.json --normalized-dir docs/studies/normalized/data-list-fields",
   ].join("\n");
   (exitCode === 0 ? console.log : console.error)(text);

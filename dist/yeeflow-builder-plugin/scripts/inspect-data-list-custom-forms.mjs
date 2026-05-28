@@ -30,7 +30,7 @@ function usage(exitCode = 1) {
     "  node scripts/inspect-data-list-custom-forms.mjs <app.yap|decoded.json> [--list <name>] [--json <report.json>] [--normalized-dir <dir>]",
     "",
     "Examples:",
-    "  node scripts/inspect-data-list-custom-forms.mjs '<downloads>/Data Lists (3).yap'",
+    "  node scripts/inspect-data-list-custom-forms.mjs '/Users/Renger/Downloads/Data Lists (3).yap'",
     "  node scripts/inspect-data-list-custom-forms.mjs sample.yap --list 'Data list with fields part A' --normalized-dir docs/studies/normalized/data-list-custom-forms",
   ].join("\n");
   (exitCode === 0 ? console.log : console.error)(text);

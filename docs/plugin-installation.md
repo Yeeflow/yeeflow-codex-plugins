@@ -27,6 +27,38 @@ Use this when Codex asks to add a plugin marketplace from a GitHub repo, Git URL
 
 Verified install status: passed on 2026-05-18.
 
+v0.6.0 RC install smoke test target:
+
+- RC tag to test: `yeeflow-builder-plugin-v0.6.0-rc1`
+- Install result: pending
+- Marketplace name: `Yeeflow Internal`
+- Category: `Developer Tools`
+- Plugin name: `Yeeflow Builder`
+- Expected version: `0.6.0`
+- Expected bundled skills: `21`
+
+Use these values in Codex's Add marketplace dialog for the v0.6.0 RC:
+
+```text
+Source:
+https://github.com/rengerhu/yeeflow-ai-builder-research.git
+
+Git ref:
+yeeflow-builder-plugin-v0.6.0-rc1
+
+Sparse paths:
+.agents/plugins/marketplace.json
+dist/yeeflow-builder-plugin
+```
+
+Smoke-test question:
+
+```text
+What Advanced Controls support is included in v0.6.0?
+```
+
+Expected answer: v0.6.0 adds Advanced Controls learning and runtime proof. It includes Tab, Toggle, Timer, Icon list, Divider, Alert, Progress bar, Spacer, Progress circle, Steps bar, QR Code, Barcode, Embed, and Document embed. Runtime proof confirms the generated package imports, the Advanced Controls Runtime Dashboard opens, Tab switching works, Toggle expand/collapse works, and Timer/Icon list/Divider/Alert/Progress/Spacer/Progress circle/Steps bar/QR Code/Barcode/Embed safe render/Document embed empty state render without missing binding/render errors. The proof does not cover QR scan behavior, Barcode scan behavior, external iframe content loading beyond safe render, non-empty document preview, dynamic value changes, or Approval/Public Form host behavior. Prior v0.5.27 through v0.5.22 milestones remain included.
+
 v0.4.0 RC install smoke test result:
 
 - RC tag tested: `yeeflow-builder-plugin-v0.4.0-rc1`

@@ -38,7 +38,7 @@ const APP_PACKAGE_REQUIRED = [
 ];
 const LIST_PACKAGE_REQUIRED = ["List", "Fields", "Layouts", "RemindRules", "PublicForms", "FlowMappings"];
 const LIST_TYPE_ENUM = new Set([1, 16, 32, 64, 128, 1024]);
-const FIELD_TYPE_ENUM = new Set(["Text", "Bit", "Decimal", "DateTime"]);
+const FIELD_TYPE_ENUM = new Set(["Text", "Bit", "Decimal", "DateTime", "Datetime", "Bigint"]);
 const FIELD_CONTROL_TYPES = new Set([
   "input",
   "textarea",
@@ -73,6 +73,7 @@ const INTERNAL_NAME_RE = /^[A-Za-z0-9_]+$/;
 const FIELD_NAME_SUFFIX_RE = /(\d+)$/;
 const UTC_DATE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 const NUMERIC_STRING_RE = /^\d+$/;
+const PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
 
 function usage() {
   console.error("Usage: node validate-yapk-package.js <package.yapk> [--baseline <baseline.yapk>]");
@@ -85,6 +86,12 @@ function isObject(value) {
 
 function asArray(value) {
   return Array.isArray(value) ? value : [];
+}
+
+function walk(value, visitor, pointer = "$") {
+  visitor(value, pointer);
+  if (Array.isArray(value)) value.forEach((item, index) => walk(item, visitor, `${pointer}[${index}]`));
+  else if (isObject(value)) Object.entries(value).forEach(([key, child]) => walk(child, visitor, `${pointer}.${key}`));
 }
 
 function readWrapper(file) {
@@ -169,8 +176,8 @@ function validateField(field, path, errors, warnings) {
   }
   const fieldName = String(field.FieldName || "");
   const match = fieldName.match(FIELD_NAME_SUFFIX_RE);
-  if (!match) add(errors, "YAPK_FIELD_NAME_SUFFIX_MISSING", "FieldName must end with digits.", { path: `${path}.FieldName` });
-  else if (String(field.FieldIndex ?? "") !== match[1]) add(errors, "YAPK_FIELD_NAME_SUFFIX_INDEX_MISMATCH", "FieldName trailing digits must equal FieldIndex.", { path: `${path}.FieldName` });
+  if (!match && fieldName !== "Title") add(errors, "YAPK_FIELD_NAME_SUFFIX_MISSING", "FieldName must end with digits, except the built-in Title field.", { path: `${path}.FieldName` });
+  else if (match && String(field.FieldIndex ?? "") !== match[1]) add(errors, "YAPK_FIELD_NAME_SUFFIX_INDEX_MISMATCH", "FieldName trailing digits must equal FieldIndex.", { path: `${path}.FieldName` });
   if (typeof field.InternalName !== "string" || !INTERNAL_NAME_RE.test(field.InternalName)) add(errors, "YAPK_FIELD_INTERNAL_NAME_INVALID", "InternalName must match ^[a-zA-Z0-9_]+$.", { path: `${path}.InternalName` });
   if (field.FieldType !== undefined && !FIELD_TYPE_ENUM.has(field.FieldType)) add(errors, "YAPK_FIELD_TYPE_INVALID", "FieldType is outside product schema enum.", { path: `${path}.FieldType` });
   if (field.Type !== undefined && !FIELD_CONTROL_TYPES.has(field.Type)) add(warnings, "YAPK_FIELD_CONTROL_TYPE_UNKNOWN", "Field Type is not in product schema known control-type list.", { path: `${path}.Type` });
@@ -186,7 +193,7 @@ function validateListPackage(pkg, path, errors, warnings, counts) {
   if (!isObject(pkg.List)) add(errors, "YAPK_LIST_INFO_MISSING", "ListPackageInfo.List must be an object.", { path: `${path}.List` });
   else {
     if (pkg.List.Type !== undefined && !LIST_TYPE_ENUM.has(Number(pkg.List.Type))) add(errors, "YAPK_LIST_TYPE_INVALID", "List.Type is outside product schema enum.", { path: `${path}.List.Type` });
-    if (pkg.List.Flags !== undefined && (Number(pkg.List.Flags) & 1) !== 1) add(errors, "YAPK_LIST_FLAGS_SHOW_MISSING", "List.Flags should include Show = 1.", { path: `${path}.List.Flags` });
+    if (Number(pkg.List.Flags) !== 1) add(errors, "YAPK_LISTMODEL_FLAGS_MISSING_OR_INVALID", "Generated AppPackageInfo child list resources require List.Flags = 1 before signing.", { path: `${path}.List.Flags`, value: pkg.List.Flags });
   }
   counts.fields += asArray(pkg.Fields).length;
   counts.layouts += asArray(pkg.Layouts).length;
@@ -209,6 +216,7 @@ function validateNoRule(form, path, errors, counts) {
 }
 
 function validateAppPackage(decoded, errors, warnings) {
+  const errorCountBeforeContent = errors.length;
   const counts = {
     pages: 0,
     forms: 0,
@@ -230,6 +238,9 @@ function validateAppPackage(decoded, errors, warnings) {
     return { decodedKeys: [], counts };
   }
   for (const key of APP_PACKAGE_REQUIRED) if (!(key in decoded)) add(errors, "YAPK_APP_PACKAGE_KEY_MISSING", "Decoded AppPackageInfo is missing a schema-required key.", { key });
+  if (isObject(decoded.ListSet) && Number(decoded.ListSet.Flags) !== 1) {
+    add(errors, "YAPK_LISTMODEL_FLAGS_MISSING_OR_INVALID", "Generated AppPackageInfo root app/list-set resource requires ListSet.Flags = 1 before signing.", { path: "ListSet.Flags", value: decoded.ListSet.Flags });
+  }
   counts.pages = asArray(decoded.Pages).length;
   counts.formReports = asArray(decoded.FormReports).length;
   counts.formNewReports = asArray(decoded.FormNewReports).length;
@@ -241,6 +252,19 @@ function validateAppPackage(decoded, errors, warnings) {
   counts.components = asArray(decoded.Components).length;
   for (const [index, form] of asArray(decoded.Forms).entries()) validateNoRule(form, `Forms[${index}]`, errors, counts);
   for (const [index, child] of asArray(decoded.Childs).entries()) validateListPackage(child, `Childs[${index}]`, errors, warnings, counts);
+  const placeholders = [];
+  walk(decoded, (value, pointer) => {
+    if (typeof value === "string" && PLACEHOLDER_RE.test(value)) placeholders.push({ path: pointer, placeholder: value });
+  });
+  for (const placeholder of placeholders.slice(0, 25)) {
+    add(errors, "YAPK_UNRESOLVED_PLACEHOLDER", "Generated AppPackageInfo must not contain unresolved required placeholders before signing.", placeholder);
+  }
+  if (placeholders.length > 25) {
+    add(errors, "YAPK_UNRESOLVED_PLACEHOLDER_TRUNCATED", "Additional unresolved required placeholders remain in generated AppPackageInfo.", { additionalCount: placeholders.length - 25 });
+  }
+  if (errors.length > errorCountBeforeContent) {
+    add(errors, "YAPK_CONTENT_VALIDATION_FAILED_BEFORE_SIGNING", "Do not run setsign for generated YAPK content until decoded AppPackageInfo/package validation, graph validation, workflow publish-readiness checks, and placeholder scans pass.");
+  }
   return { decodedKeys: Object.keys(decoded), counts };
 }
 
