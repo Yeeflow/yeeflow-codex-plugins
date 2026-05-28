@@ -23,6 +23,21 @@ For full application generation, dashboard work must come from the application p
 
 Do not substitute a static or minimal dashboard for a planned functional dashboard. Generate the full planned dashboard scope when it is inside proven patterns: source lists, KPI summaries, queues, charts, Data tables, Collection/Kanban/Timeline views, actions, and filters as appropriate. Staged/minimal dashboard packages are only for explicit MVP requests or focused runtime proof.
 
+## Web App Dashboard Pattern Mapping
+
+Design dashboards like modern web application pages first, then map the design to Yeeflow controls. Decide the user goal, information priority, main actions, density, responsive expectation, and operational vs executive use before selecting controls.
+
+Use dashboard control combinations intentionally:
+
+- overview dashboard: KPI cards, Progress circle/bar, status Alerts, Collection or Data table, and quick action buttons
+- operational queue: Data table with configured columns plus filters/actions, or Collection/Kanban when cards/status lanes serve the workflow better
+- status board: Kanban with group/category field, meaningful item template fields, and item actions
+- activity/history view: Vertical Timeline or Horizontal Timeline with date/title/status fields
+- reporting dashboard: summaries, charts/Pivot Table when proven, Data table drill-down, and explanatory sections
+- shortcut hub: Icon list or button/card layout with clear action labels
+
+Use styling capabilities for padded sections, card/container spacing, grid columns, section backgrounds, typography hierarchy, status colors, icons, border radius, borders/shadows where supported, and responsive layout. Use scoped custom CSS only for safe spacing/alignment, scrollable/fixed-width tables, card polish, conditional visual states, or dashboard grouping when standard style settings are insufficient. Use Custom code control only for true custom dashboard UI needs that standard controls cannot satisfy.
+
 ## Generated Dashboard Quality Gate
 
 Before generating a dashboard, create a compact page plan with major sections, data sources, controls, displayed fields, and padding/container choices. Use fewer polished sections instead of many incomplete widgets.
@@ -32,6 +47,8 @@ Every generated dashboard should use safe horizontal page padding through a root
 Every Data table control (`type = "data-list"`) must configure `attrs.data.list` and nonempty `attrs.listarr` display columns. Include 3 to 5 meaningful columns when fields exist, prioritizing title/name, status, date, owner, amount, and progress fields. If the source fields are not known, do not generate a Data table; use a card, Collection, or clear empty-state message instead. Empty Data table columns are a generated-final error.
 
 Collection, Kanban, and Timeline controls must include meaningful item-template dynamic fields. Progress controls must have numeric values or valid bindings. Steps bars must have steps or valid field bindings. QR/barcode/embed/document controls need safe configuration or should be omitted. Run the generated UI quality inspector before handoff and fix dashboard warnings/errors that indicate missing padding, empty controls, or unresolved data bindings.
+
+Fail dashboard quality review when controls lack business rationale, advanced controls are present without meaningful content, Custom code is used where standard controls would be better, or the generated dashboard does not match the app plan's `UI/UX and Control Mapping` section.
 
 ## What To Load
 

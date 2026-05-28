@@ -33,6 +33,12 @@ Ask focused clarification questions when approval routing, roles, conditions, re
 
 Do not downgrade a planned approval process to a simple one-step or static form unless the user explicitly asks for a simple/MVP package. Implement the full planned approval flow where safe, and document any excluded/deferred workflow behavior with a reason, fallback, and validation/runtime proof boundary.
 
+Design approval experiences like web applications first, then map to Yeeflow controls. The requester page should prioritize what the user needs to enter first; task pages should prioritize reviewer decision context and common actions; printable pages should optimize read-only record output.
+
+Use intentional control combinations: request form sections, Dynamic Sub List for line items/details, Steps bar or Progress for process state, Alerts for policy/status messages, Tabs/Toggle for dense supporting information, Print Page for printable output, timeline/history surfaces where useful, QR/Barcode/Embed/Document embed only when the business process needs them, and Custom code only when standard approval controls, form actions, workflow actions, custom CSS, and expressions cannot meet the UI requirement.
+
+The app plan's `UI/UX and Control Mapping` section should explain each approval page's user goal, selected controls, rationale, data bindings, actions, styling approach, custom CSS/custom code needs, and validation checks.
+
 ## Core Workflow
 
 Always work in stages:

@@ -25,6 +25,16 @@ Default to the full functional application described in the plan, not a simple/M
 
 After generation, compare the package against the plan before handoff. Planned data lists, important fields, forms, dashboards/pages, Data table columns, actions/workflows, padding/layout standards, and data bindings must exist or be explicitly marked deferred. Do not mark the package ready when the implementation is a smaller version than the plan.
 
+## Web App UI/UX Control Mapping
+
+Design the Yeeflow app like a modern web application first, then map the design to Yeeflow controls. Use the best combination of standard Yeeflow controls, style settings, custom CSS, and Custom code control when needed.
+
+The app plan must include `UI/UX and Control Mapping`. For each page/form/dashboard, state the user goal, layout pattern, selected Yeeflow controls, rationale, data bindings, actions, styling approach, custom CSS/custom code needs, alternatives considered, and validation checks.
+
+Map web-app patterns to Yeeflow controls intentionally: admin grids to Data table with columns/actions; card feeds to Collection with dynamic fields; task boards to Kanban; histories to Vertical/Horizontal Timeline; dense detail pages to Tabs/Toggle/containers/grids/dividers/alerts; line items to Dynamic Sub List; printable records to Print Page; status visualization to Steps bar/progress/badges/alerts; shortcuts to Icon list or button/card layouts; QR/barcode needs to QR Code/Barcode; embedded safe external content to Embed; documents to Document embed; and true custom UI to scoped CSS or Custom code only when standard controls are insufficient.
+
+Do not emit isolated controls without a product-design rationale. Combine controls into useful page patterns such as overview dashboard, record detail page, approval experience, or operations board. Use styling capabilities for padding, spacing, grid columns, section backgrounds, border radius, borders/shadows where supported, typography, status colors, icons, responsiveness, and safe custom CSS when needed.
+
 ## Generated Application UI Quality Gate
 
 Before package generation, write a short UI plan covering pages, sections, data sources, controls, displayed fields, and safe spacing. Use the plan to avoid broad unfinished dashboards and to prefer fewer, complete controls.

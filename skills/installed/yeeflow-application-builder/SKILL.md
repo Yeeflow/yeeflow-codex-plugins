@@ -19,13 +19,45 @@ description: build real Yeeflow business applications from requirements, process
 
 For application-generation requests, create an application plan Markdown file before building a `.yap` or `.yapk` package unless the user explicitly says to skip planning. Save safe plans under `docs/generated-app-plans/<safe-app-name>-plan.md` when the plan is suitable for git. If the plan contains tenant-specific, private, or runtime-generated details that should not be committed, save it outside git and clearly report the path.
 
-The app plan must cover the application purpose, target users/roles, business process overview, data lists and fields, document libraries when needed, New/Edit/View forms, Print Page when needed, approval forms when needed, dashboards/pages, controls selected for each page, actions/workflows, automation logic, permissions/roles, integration/API needs, layout/design approach, validation checklist, assumptions, exclusions/deferred items, and proof boundary.
+The app plan must cover the application purpose, target users/roles, business process overview, data lists and fields, document libraries when needed, New/Edit/View forms, Print Page when needed, approval forms when needed, dashboards/pages, controls selected for each page, actions/workflows, automation logic, permissions/roles, integration/API needs, layout/design approach, a `UI/UX and Control Mapping` section, validation checklist, assumptions, exclusions/deferred items, and proof boundary.
 
 Ask focused clarification questions before generation when blocking details are missing: app purpose, roles, data lists, important fields, statuses, approval flow, dashboards/reports, required actions/workflows, integrations, package type, or target output. Ask only the minimum needed to avoid a bad package. If uncertainty is not blocking, state assumptions in the plan and proceed.
 
 Do not default to a simple, MVP, basic, or small v1 package. The default is the complete functional application described in the plan, including all core data lists, fields, forms, dashboards, actions, workflows, and major controls that are safe to generate. Staged generation is allowed only when the user requests it, the app is too large for one safe package, critical information is missing and the user accepts assumptions, or the task is explicitly a focused runtime proof package.
 
 After generation, compare the package against the plan. Do not return the final package until planned data lists, important fields, forms, dashboards/pages, major controls, workflows/actions, Data table display columns, padding/layout quality, and required bindings are present or explicitly documented as deferred with a reason and workaround.
+
+## Web App UI/UX To Yeeflow Control Mapping
+
+Design the Yeeflow app like a modern web application first, then map the design to Yeeflow controls. Use the best combination of standard Yeeflow controls, style settings, custom CSS, and Custom code control when needed.
+
+Before selecting controls, understand the business goal, target users/roles, main journeys, data-entry flows, review/approval flows, dashboard/reporting needs, mobile/desktop expectations, what users need to see first, and the actions users perform most often. Decide which pages should be simple, dense, visual, printable, or operational before choosing Yeeflow controls.
+
+Map common web-app patterns deliberately:
+
+- data grid/admin table -> Data table with configured columns, filters, actions, and safe padding
+- card list/activity feed -> Collection with Dynamic field/user/image/file controls
+- status board/task board -> Kanban with group/category field and item actions
+- timeline/history/milestones -> Vertical Timeline or Horizontal Timeline
+- multi-section detail page -> Tabs, Toggle, Containers, Grid, Divider, Alert, Steps bar, and Progress controls
+- line items/invoice details/purchase items -> Dynamic Sub List with body grid, containers, row actions, and summary settings
+- printable record -> Data List custom Print Page with read-only fields and Dynamic Sub List when needed
+- process/status visualization -> Steps bar, Progress bar/circle, badges, alerts, and status fields
+- quick links/shortcuts -> Icon list or button/card layout
+- QR/barcode sharing/scanning -> QR Code and Barcode controls
+- embedded report/map/video/page -> Embed control when safe
+- attachment/document preview -> Document embed
+- highly customized UI -> scoped custom CSS or Custom code control only after standard controls are insufficient
+
+Choose control combinations based on business value, not because a control is easy to generate. Example combinations include dashboard overview with KPI cards, progress circles, alerts, data table/collection, and quick actions; record view with a header summary, tabs for details/history/files, steps bar, line-item sub list, and document embed; approval app with request form, dynamic sub list, approval timeline, print page, and dashboard status board; operations app with Kanban, Collection action buttons, bulk selection, and administrative Data table.
+
+Use Yeeflow styling capabilities intentionally: layout padding, card/container spacing, grid columns, section backgrounds, border radius, shadows/borders where supported, typography hierarchy, status colors, icons, responsive layout, and custom CSS when needed. Generated applications should not look like raw unstyled controls placed on a blank page.
+
+Use custom CSS only when standard style settings are not enough for fixed-width tables, scrollable layouts, spacing/alignment refinement, visual card polish, conditional visual states, print formatting, special sub-list/table layouts, or dashboard grouping. Keep custom CSS minimal, scoped, documented, safe, and never use it to hide broken structure.
+
+Use Custom code control only when standard Yeeflow controls plus style settings/custom CSS cannot meet the requirement. Confirm whether the requirement can be solved with standard controls first, whether custom CSS is enough, whether custom code can be safely embedded and maintained, and what native fallback exists. Do not use custom code as a shortcut for normal Yeeflow controls.
+
+Each app plan must include a `UI/UX and Control Mapping` section. For each page/form/dashboard, list the user goal, chosen layout pattern, selected Yeeflow controls, rationale, data bindings, actions, styling approach, custom CSS/custom code needs, alternatives considered when relevant, and validation checks.
 
 ## Generated Application UI Quality Gate
 
@@ -36,6 +68,8 @@ Default generated dashboards and Data List custom forms must use safe outer spac
 Do not generate empty or unconfigured controls. Every generated Data table must configure a data source and at least 3 to 5 meaningful display columns when fields are available, including title/name plus status, date, owner, amount, or progress fields where relevant. If suitable fields are unavailable, use cards, Collection, or a simple message instead. Empty Data table display configuration is a generated-final hard error.
 
 Every data-bound control must resolve its source and field bindings before handoff. Collection, Kanban, and Timeline templates need meaningful dynamic fields; progress, steps, QR/barcode, embed, document embed, and buttons/actions need valid values, bindings, or actions. Run the generated UI quality gate together with package validation and do not claim the package is ready when table, dashboard, or form quality checks fail.
+
+Fail the quality review when controls are selected without business rationale, Data tables have no columns, Collection/Kanban/Timeline templates are empty or too minimal, dashboards/forms lack padding or grouping, advanced controls lack meaningful content, Custom code is used where standard controls would be better, or the package does not match the `UI/UX and Control Mapping` plan.
 
 Use this skill when the user provides business requirements, process documents, forms, screenshots, SOPs, sample exports, workflow requirements, or app ideas and asks Codex to build, implement, create, generate, test, or output a Yeeflow application package, `.yap`, or `.yapk`.
 

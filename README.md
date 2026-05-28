@@ -167,12 +167,12 @@ Validate this YAP package and report import blockers without overclaiming runtim
 
 ## How To Get Better Application Generation Results
 
-For higher-quality generated applications, tell Codex the business goal, target users/roles, required data lists and fields if known, required forms, dashboards, workflows, important actions, preferred layout style, and validation expectations. Ask Codex to create an app plan first, confirm assumptions or ask clarifying questions, generate the full planned application instead of a simple version, and validate data tables, field bindings, layout padding, and plan-to-package coverage before returning the package.
+For higher-quality generated applications, tell Codex the business process, target users/roles, required data lists and fields if known, desired pages, required forms, dashboards, workflows, important actions, desired UI style, web-app patterns you like, whether dashboards should be table-based, card-based, Kanban-based, timeline-based, or mixed, and whether custom CSS/custom code is allowed. Ask Codex to create an app plan first, confirm assumptions or ask clarifying questions, generate the full planned application instead of a simple version, and validate data tables, field bindings, layout padding, UI/UX control mapping, and plan-to-package coverage before returning the package.
 
 Sample prompt:
 
 ```text
-Generate a complete Yeeflow YAPK application for [business process]. Before generating the package, create a detailed app plan in Markdown and ask me clarifying questions if any core requirement is unclear. Do not build a simple/MVP version unless I explicitly ask for it. Implement the full planned app in one package where feasible, including data lists, fields, forms, dashboards, actions/workflows, and validation. Use padded dashboard/form layouts, configure all Data table display columns, and validate the package against the plan before returning the final file.
+Generate a complete Yeeflow application for [business process]. Think like a web application product designer first. Create a detailed app plan with a UI/UX and Control Mapping section before building. Choose the best combination of Yeeflow controls for each page, such as Data table, Collection, Kanban, Timeline, Tabs, Toggle, Steps bar, Progress controls, Sub List Dynamic content, QR Code, Barcode, Embed, Document embed, custom CSS, or Custom code if needed. Do not build a simple MVP unless I ask for one. Implement the full planned application in one package where feasible, and validate that every data-bound control has fields, every page has good padding/layout, and the generated package matches the plan.
 ```
 
 Generated dashboards and Data List custom forms should use safe left/right padding, section/card/container grouping, and fully configured data-bound controls. Prefer fewer well-configured controls over many incomplete controls.

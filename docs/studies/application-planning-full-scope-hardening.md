@@ -55,6 +55,7 @@ A good Yeeflow app plan should include:
 - approval forms if needed
 - dashboards and pages
 - controls selected for each page
+- UI/UX and Control Mapping
 - actions and workflows
 - automation/workflow logic
 - permissions/roles if relevant
@@ -63,6 +64,65 @@ A good Yeeflow app plan should include:
 - validation checklist
 - assumptions, exclusions, and deferred items
 - proof boundary
+
+## Web Application UI/UX Mapping
+
+Yeeflow application generation should use product-design reasoning before control assembly. Codex should first understand the business goal, target users/roles, main user journeys, data-entry flows, review/approval flows, dashboard/reporting needs, mobile/desktop expectations, what information users need first, and what actions users perform most often.
+
+After designing the intended web-application experience, map the design into Yeeflow controls, layout settings, actions, custom CSS, and Custom code control when needed.
+
+Common mappings:
+
+- web app data grid/admin table -> Yeeflow Data table with configured columns, filters, actions, and padding
+- card list/activity feed -> Collection with Dynamic field/user/image/file controls
+- status board/task board -> Kanban with configured group/category field and item actions
+- timeline/history/milestones -> Vertical Timeline or Horizontal Timeline
+- multi-section detail page -> Tabs, Toggle, Containers, Grid, Divider, Alert, Steps bar, and Progress controls
+- line items/invoice details/purchase items -> Dynamic Sub List with content layout, body grid, containers, row actions, and summary settings
+- printable record -> Data List custom Print Page with read-only fields and Dynamic Sub List where needed
+- process/status visualization -> Steps bar, Progress bar/circle, badges, alerts, and status fields
+- quick links/shortcuts -> Icon list or custom button/card layout
+- QR/barcode sharing/scanning -> QR Code and Barcode controls
+- embedded report/map/video/page -> Embed when safe
+- attachment/document preview -> Document embed
+- custom UI beyond standard controls -> scoped custom CSS or Custom code control when justified
+
+The `UI/UX and Control Mapping` plan section should include, for each page/form/dashboard:
+
+- user goal
+- chosen layout pattern
+- selected Yeeflow controls
+- why those controls were selected
+- data bindings
+- actions
+- styling approach
+- custom CSS/custom code needs
+- alternatives considered when relevant
+- validation checks
+
+Example:
+
+```text
+Dashboard: Sales Overview
+- User goal: give sales managers a fast view of pipeline health and follow-up work.
+- Layout: padded dashboard with KPI cards, chart/collection area, and data table.
+- Controls:
+  - Progress circle for target attainment
+  - Alert for overdue opportunities
+  - Collection for priority deals
+  - Data table for full deal list with configured columns
+  - Icon list for quick actions
+- Rationale: combines executive summary with operational follow-up.
+- Validation: all data-bound controls must resolve fields and all tables must have columns.
+```
+
+## Styling And Customization
+
+Generated applications should not look like raw unstyled controls placed on a blank page. Use Yeeflow styling capabilities for layout padding, card/container spacing, grid columns, section backgrounds, border radius, shadows/borders where supported, typography hierarchy, status colors, icon usage, and responsive layout.
+
+Use custom CSS when standard style settings are not enough for fixed-width tables or scrollable layouts, spacing and alignment refinement, visual card polish, conditional visual states, print-page formatting, special sub-list/table layouts, or dashboard visual grouping. Keep CSS minimal, scoped, documented, safe, and never use it to hide broken structure.
+
+Use Custom code control only when standard Yeeflow controls plus style settings/custom CSS cannot meet the requirement. Confirm that the custom code can be safely embedded, maintained, validated, and runtime-tested.
 
 ## Full-Scope Generation Expectation
 
@@ -92,6 +152,7 @@ After generation, compare the package against the plan:
 - data sources and bindings resolve
 - no empty required controls remain
 - package is not an underbuilt simple version when the plan says full implementation
+- package matches the `UI/UX and Control Mapping` rationale
 
 Use `scripts/inspect-generated-app-quality.mjs --package <package> --plan <plan.md>` to combine plan presence, package inventory, and generated UI quality checks.
 
@@ -113,6 +174,8 @@ Choose controls based on business value:
 - Print Page for printable record output
 
 Prefer fewer complete controls over many incomplete controls.
+
+Fail the quality review when controls are selected without business rationale, advanced controls are added without meaningful content, Custom code is used where standard controls would be better, or the generated package does not match the UI/UX control mapping plan.
 
 ## Proof Boundary
 

@@ -126,6 +126,14 @@ Use Yeeflow Builder to plan a complete issue intake application. Before generati
 
 Review the plan before asking Codex to generate a package. Unless you explicitly want a simple/MVP package, ask Codex to implement the full planned application.
 
+For best results, describe your preferred web-app experience too: target users, desired pages, whether dashboards should use tables, cards, Kanban, timelines, or a mix, and whether custom CSS or Custom code is allowed. Ask Codex to include a `UI/UX and Control Mapping` section that explains why each Yeeflow control was selected.
+
+Example:
+
+```text
+Generate a complete Yeeflow application for [business process]. Think like a web application product designer first. Create a detailed app plan with a UI/UX and Control Mapping section before building. Choose the best combination of Yeeflow controls for each page, such as Data table, Collection, Kanban, Timeline, Tabs, Toggle, Steps bar, Progress controls, Sub List Dynamic content, QR Code, Barcode, Embed, Document embed, custom CSS, or Custom code if needed. Do not build a simple MVP unless I ask for one. Implement the full planned application in one package where feasible, and validate that every data-bound control has fields, every page has good padding/layout, and the generated package matches the plan.
+```
+
 ## Generate And Validate The Planned Application Package
 
 ```text
