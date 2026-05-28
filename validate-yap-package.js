@@ -178,6 +178,12 @@ const PUBLIC_FORM_KNOWN_CONTROL_TYPES = new Set([
   "img",
   "total",
 ]);
+const ADVANCED_CONTROL_TYPES = new Set(["aktabs", "toggle", "timer", "icon_list", "line", "alert", "progress", "gap", "progress-circle", "steps-bar", "list-qrcode", "qrcode", "barcode", "embed", "document-embed"]);
+const ADVANCED_CONTAINER_CHILD_TYPES = new Map([["aktabs", "ak-tabs-tab"], ["toggle", "toggle-panel"]]);
+const ADVANCED_NUMERIC_FIELD_TYPES = new Set(["input_number", "currency", "percent", "rate", "calculated-column", "Decimal", "Int", "Bigint", "Number"]);
+const ADVANCED_SINGLE_SELECT_FIELD_TYPES = new Set(["radio", "select", "flowstatus", "status"]);
+const ADVANCED_FILE_FIELD_TYPES = new Set(["file-upload", "file-upload-merge", "icon-upload", "file", "image"]);
+const ADVANCED_BARCODE_TYPES = new Set(["CODE128", "CODE128A", "CODE128B", "CODE128C", "EAN13", "EAN8", "UPC", "CODE39", "ITF14", "MSI", "pharmacode", "codabar"]);
 
 function usage(exitCode = 1) {
   const text = [
@@ -1233,6 +1239,12 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
     if (safeString(node.type) === "pivot-table") {
       pivotTableControls.push({ pointer, controlId, control: node });
     }
+    validateAdvancedControl(node, report, {
+      surface: "dashboard",
+      title,
+      path: pointer,
+      fieldsByName: null,
+    });
     validateContainerButtonActionControl(node, title, layoutId, pointer, listsById, fieldsByList, rootPageLayouts, approvalFormsByKey, layoutsById, report);
     const dataForm = node.attrs && node.attrs.data && node.attrs.data.form;
     if (dataForm && safeString(dataForm.ListSetID) && safeString(dataForm.ListSetID) !== safeString(resource.ListSetID || (resource.Item && resource.Item.ListID)) && !listsById.has(safeString(dataForm.ListSetID))) {
@@ -1274,6 +1286,80 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
   validateDashboardPivotTableControls(title, layoutId, pivotTableControls, pivotExtByControlId, listsById, fieldsByList, filterVars, report);
   validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report);
   validateDashboardFunctionalQuality(page, title, layoutId, report);
+}
+
+function validateAdvancedControl(control, report, context) {
+  const type = safeString(control && control.type);
+  if (!ADVANCED_CONTROL_TYPES.has(type)) return;
+  const attrs = control.attrs && isObject(control.attrs) ? control.attrs : {};
+  const severity = generatorFinalSeverity(report);
+  const base = { surface: context.surface, title: context.title, path: context.path, controlType: type };
+  const childType = ADVANCED_CONTAINER_CHILD_TYPES.get(type);
+  if (childType) {
+    const children = asArray(control.children).filter((child) => safeString(child.type) === childType);
+    if (!children.length) issue(report, severity, `ADVANCED_${type === "aktabs" ? "TAB" : "TOGGLE"}_ITEMS_MISSING`, `${type === "aktabs" ? "Tab" : "Toggle"} controls should include ${childType} child containers.`, base);
+    children.forEach((child, index) => {
+      if (!safeString(child.id)) issue(report, severity, "ADVANCED_CONTAINER_ITEM_ID_MISSING", "Advanced Tab/Toggle child containers need stable ids.", { ...base, item: index + 1, childType });
+      if (type === "aktabs" && !safeString(child.label)) issue(report, severity, "ADVANCED_TAB_ITEM_TITLE_MISSING", "Tab items should include a title/label.", { ...base, item: index + 1 });
+      if (type === "toggle" && !safeString(child.attrs && child.attrs.title && child.attrs.title.value)) issue(report, severity, "ADVANCED_TOGGLE_SECTION_TITLE_MISSING", "Toggle sections should include attrs.title.value.", { ...base, item: index + 1 });
+      if (!asArray(child.children).length) issue(report, "warning", "ADVANCED_CONTAINER_ITEM_EMPTY", "Advanced Tab/Toggle child containers should include nested controls.", { ...base, item: index + 1, childType });
+    });
+  }
+  if (type === "timer" && !attrs.set && !attrs.date && !attrs.value && !attrs["obj-f"]) {
+    issue(report, severity, "ADVANCED_TIMER_DATE_MISSING", "Timer controls should include static date settings or a dynamic date binding.", base);
+  }
+  if (type === "icon_list" && !asArray(attrs.items || attrs.options || attrs.data).length) {
+    issue(report, "warning", "ADVANCED_ICON_LIST_ITEMS_UNOBSERVED", "Icon list controls should include item configuration when generated; this export may store variants opaquely.", base);
+  }
+  if (type === "progress" || type === "progress-circle") {
+    const value = attrs.value || attrs.per || attrs.percent || attrs.progress || attrs["current-value"];
+    if (value === undefined || value === null || value === "") issue(report, severity, "ADVANCED_PROGRESS_VALUE_MISSING", "Progress bar/circle controls should include a static numeric value or dynamic numeric binding.", base);
+    validateAdvancedFieldBinding(value, context.fieldsByName, ADVANCED_NUMERIC_FIELD_TYPES, report, base, "ADVANCED_PROGRESS_FIELD_TYPE_UNPROVEN", "Progress bar/circle bindings should resolve to numeric-compatible fields.");
+  }
+  if (type === "steps-bar") {
+    if (!asArray(attrs["steps-options"]).length) issue(report, severity, "ADVANCED_STEPS_ITEMS_MISSING", "Steps bar controls should include steps-options entries.", base);
+    const fieldBinding = attrs["obj-f"] || attrs["current-step"];
+    validateAdvancedFieldBinding(fieldBinding, context.fieldsByName, ADVANCED_SINGLE_SELECT_FIELD_TYPES, report, base, "ADVANCED_STEPS_FIELD_TYPE_UNPROVEN", "Field-bound Steps bar controls should resolve to single-select/status fields.");
+  }
+  if ((type === "list-qrcode" || type === "qrcode") && !attrs.value && !attrs.url && !attrs.source && !attrs["qr-source"] && !attrs["qr-code-link"]) {
+    issue(report, "warning", "ADVANCED_QR_VALUE_IMPLICIT", "QR Code has no explicit URL/value; treat current page/form/item URL behavior as host-sensitive until runtime-proven.", base);
+  }
+  if (type === "barcode") {
+    if (!attrs.value) issue(report, severity, "ADVANCED_BARCODE_VALUE_MISSING", "Barcode controls should include a static value or dynamic value binding.", base);
+    const barcodeType = safeString(attrs.type);
+    if (barcodeType && !ADVANCED_BARCODE_TYPES.has(barcodeType)) issue(report, "warning", "ADVANCED_BARCODE_TYPE_UNPROVEN", "Barcode type is not in the export-backed supported set.", { ...base, barcodeType });
+  }
+  if (type === "embed" && !attrs.code && !attrs.src && !attrs.url) {
+    issue(report, severity, "ADVANCED_EMBED_SOURCE_MISSING", "Embed controls should include iframe/code/src/url configuration.", base);
+  }
+  if (type === "document-embed") {
+    if (!attrs["doc-source"]) issue(report, severity, "ADVANCED_DOCUMENT_EMBED_SOURCE_MISSING", "Document embed controls should bind to an attachment/file field.", base);
+    validateAdvancedFieldBinding(attrs["doc-source"], context.fieldsByName, ADVANCED_FILE_FIELD_TYPES, report, base, "ADVANCED_DOCUMENT_EMBED_FIELD_TYPE_UNPROVEN", "Document embed controls should bind to file/image attachment fields.");
+  }
+}
+
+function validateAdvancedFieldBinding(value, fieldsByName, allowedTypes, report, context, code, message) {
+  if (!fieldsByName || value === undefined || value === null || value === "") return;
+  const fieldName = advancedFieldName(value);
+  if (!fieldName) return;
+  const field = fieldsByName.get(fieldName);
+  if (!field) {
+    issue(report, generatorFinalSeverity(report), "ADVANCED_FIELD_BINDING_UNRESOLVED", "Advanced control field binding should resolve to a field on the host form/list.", { ...context, fieldName });
+    return;
+  }
+  const fieldType = safeString(field.Type);
+  if (fieldType && !allowedTypes.has(fieldType)) issue(report, generatorFinalSeverity(report), code, message, { ...context, fieldName, fieldType });
+}
+
+function advancedFieldName(value) {
+  if (typeof value === "string") return value;
+  let found = "";
+  walk(value, (node) => {
+    if (found || !isObject(node) || safeString(node.type) !== "expr") return;
+    if (safeString(node.exprType) !== "list_field") return;
+    found = safeString(node.prop || node.id);
+  });
+  return found;
 }
 
 function validateContainerButtonActionControl(node, title, layoutId, pointer, listsById, fieldsByList, rootPageLayouts, approvalFormsByKey, layoutsById, report) {
@@ -2711,6 +2797,12 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report, layo
       title: layout.Title,
       path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}`,
       surface: "custom list form",
+    });
+    validateAdvancedControl(control, report, {
+      surface: "data-list-custom-form",
+      title: layout.Title,
+      path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}`,
+      fieldsByName,
     });
     const binding = control.binding;
     if (binding && !(control.attrs && control.attrs.list_field === true) && !fieldsByName.has(String(binding))) {

@@ -258,3 +258,40 @@ Data List custom-form Dynamic field usage with source `4` is export-proven on `V
 
 Runtime-proven generated package: `/Users/Renger/Downloads/kanban-collection-timeline-runtime-proof.v1.yap`, produced by `generate-kanban-collection-timeline-runtime-proof.mjs`. User-confirmed result: app imported successfully, `Dynamic Controls Runtime Dashboard` opened, Kanban rendered, Collection rendered, Vertical Timeline rendered, Horizontal Timeline rendered, Dynamic field values rendered, Dynamic user/image/file controls did not crash with empty values, and no missing binding/render error appeared. Do not claim non-empty user/image/file display, preview/download, drag/drop, click/open, or Data List form runtime behavior unless those exact interactions are tested.
 <!-- kanban-collection-dynamic-controls-learning:end -->
+
+<!-- advanced-controls-learning:start -->
+## Advanced Yeeflow Controls Learning
+
+Company Overview (3).yap export-proves advanced Dashboard and Data List custom-form control patterns documented in docs/studies/advanced-controls.md and normalized under docs/studies/normalized/advanced-controls/. Treat this as export-proven and validator-backed only unless a later focused runtime pass proves rendering and interactions.
+
+Planning guidance:
+
+- Use Tab (aktabs / ak-tabs-tab) for multi-tab content grouping when users need related peer views without leaving the page.
+- Use Toggle (toggle / toggle-panel) for collapsible multi-section content, FAQ blocks, grouped detail panels, and optional guidance.
+- Use Timer for static or dynamic date countdown/deadline indicators such as SLA, due date, campaign, and task timers.
+- Use Icon list for quick links, resource shortcuts, and compact navigation lists.
+- Use Divider and Spacer for layout structure and visual rhythm between control groups.
+- Use Alert for info, success, warning, and error messages where guidance or status communication matters.
+- Use Progress bar and Progress circle for numeric progress, completion percentages, KPI capacity, score, and utilization.
+- Use Steps bar for phase/status/workflow/approval/onboarding progress; prefer static steps or field-bound single-select/status sources where supported.
+- Use QR Code for record/page/form/link sharing and mobile access.
+- Use Barcode for encoded record, inventory, ticket, asset, static, or dynamic values.
+- Use Embed for iframe/external content such as reports, maps, dashboards, docs, and videos when tenant/security context allows it.
+- Use Document embed for attachment/file previews such as contracts, invoices, images, PDFs, Word documents, and PowerPoint decks.
+
+Validation guidance:
+
+- Tab items need valid ids/titles and child control containers.
+- Toggle sections need valid ids/titles and child control containers.
+- Timer needs a valid static date or dynamic date binding.
+- Icon list items should define icon/text/link settings where required.
+- Progress bar/circle values must be numeric or resolve to numeric fields/variables.
+- Steps bar static steps need valid items; bound sources should resolve to single-select/status fields where applicable.
+- QR Code value/URL should be static, dynamic, current-item, current-page, or current-form source; implicit host-current URL behavior remains runtime-sensitive.
+- Barcode value must be static or dynamic and barcode type should be supported (CODE128/CODE128A observed).
+- Embed code/src/url must be configured and generated-final packages must not contain unsafe placeholder URLs.
+- Document embed must bind to attachment/file fields and respect single/multiple settings when configured.
+- Generated-final packages should hard-error unresolved required bindings, invalid URLs, incompatible numeric/file/status fields, unsupported barcode types, and unsupported host placement. Historical exports should warn when uncertain.
+
+Proof boundary: Tab and Toggle dashboard usage, Additional-controls dashboard usage, and Company Overview / View page Data List form usage are export-proven only. Approval Form/Public Form support is product-understanding-backed unless separately export-proven. Runtime rendering, link navigation, QR/barcode scan behavior, iframe loading, document preview behavior, and dynamic value changes are not proven in this branch.
+<!-- advanced-controls-learning:end -->
