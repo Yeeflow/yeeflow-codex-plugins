@@ -21,6 +21,8 @@ Data Filter controls can be used in approval forms at the product level, but the
 
 Pivot Table is a Data Analytics control and is not supported on Approval Forms. Keep Pivot Table generation on Dashboard pages, and only use Data List forms when a product-backed design explicitly calls for it and validation can prove the host/source/field references. If a user asks for approval analytics, place the Pivot Table on a dashboard or supported reporting surface instead of the submission, task, or approval form page.
 
+Collection/Kanban item actions are currently export-proven on Dashboard pages from `Company Overview (2).yap`. Cross-host access to approval-form variables from Collection/Kanban-like controls is product/user-understanding-backed only until an approval-form export proves the exact host schema. Do not generate approval-form item actions from this dashboard export alone; if an approval design needs repeated-item actions, prefer proven Sub List list actions or run a focused export/runtime study first.
+
 When approval-form changes target an existing imported app, confirm whether the user wants a new cloned `.yap` or an upgrade `.yapk`. For `.yapk`, start from a Version management baseline and preserve existing form/workflow IDs; do not regenerate fresh IDs for existing objects unless the workflow is explicitly a generated-new-content experiment. Offline app-content mutation inside `.yapk` remains proof-boundary-sensitive: content validation, signing, verification, and focused runtime upgrade proof are all separate gates.
 
 ## Core Workflow
