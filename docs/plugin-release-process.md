@@ -31,7 +31,7 @@ Current release status:
 - v0.5.22 private Git marketplace install: passed; includes v0.5.22 YAPK support and 21 bundled skills.
 - v0.5.23 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.5.23-rc1`; final tag `yeeflow-builder-plugin-v0.5.23`.
 - v0.6.0 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.6.0-rc1`; final tag `yeeflow-builder-plugin-v0.6.0`.
-- v0.6.1 RC prepared for tenant-neutral public sharing hardening and `.env.local` profile guidance; final tag pending marketplace install smoke test.
+- v0.6.1 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.6.1-rc1`; final tag `yeeflow-builder-plugin-v0.6.1`.
 - ZIP package smoke test: passed locally.
 - Git marketplace install: passed.
 - Production/public marketplace: not applicable.
@@ -80,13 +80,19 @@ Smoke prompts tested:
 
 ## Release Notes
 
-### v0.6.1 RC1
+### v0.6.1
 
 Previous final version: `0.6.0`.
 
-RC version: `0.6.1`.
+Final version: `0.6.1`.
 
-RC tag: `yeeflow-builder-plugin-v0.6.1-rc1`.
+Tested RC tag: `yeeflow-builder-plugin-v0.6.1-rc1`.
+
+RC target commit: `e9dd4fead685f920560924a8762dc1432a5c4579`.
+
+Private marketplace install smoke test: passed.
+
+Final tag: `yeeflow-builder-plugin-v0.6.1`.
 
 Bundled skill count: `21`.
 
@@ -117,7 +123,7 @@ Proof boundary:
 
 - v0.6.1 changes public-sharing documentation, environment handling, and packaging hygiene only.
 - It does not add new Yeeflow runtime capability proof beyond the v0.6.0 and earlier documented milestones.
-- Final `yeeflow-builder-plugin-v0.6.1` tag must wait until marketplace install smoke testing passes.
+- Marketplace install smoke testing passed for `yeeflow-builder-plugin-v0.6.1-rc1`; the final `yeeflow-builder-plugin-v0.6.1` tag records the accepted release state.
 
 ### v0.6.0
 
