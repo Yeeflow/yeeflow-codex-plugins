@@ -1308,7 +1308,7 @@ function validateAdvancedControl(control, report, context) {
   if (type === "timer" && !attrs.set && !attrs.date && !attrs.value && !attrs["obj-f"]) {
     issue(report, severity, "ADVANCED_TIMER_DATE_MISSING", "Timer controls should include static date settings or a dynamic date binding.", base);
   }
-  if (type === "icon_list" && !asArray(attrs.items || attrs.options || attrs.data).length) {
+  if (type === "icon_list" && !advancedIconListItems(attrs).length) {
     issue(report, "warning", "ADVANCED_ICON_LIST_ITEMS_UNOBSERVED", "Icon list controls should include item configuration when generated; this export may store variants opaquely.", base);
   }
   if (type === "progress" || type === "progress-circle") {
@@ -1349,6 +1349,14 @@ function validateAdvancedFieldBinding(value, fieldsByName, allowedTypes, report,
   }
   const fieldType = safeString(field.Type);
   if (fieldType && !allowedTypes.has(fieldType)) issue(report, generatorFinalSeverity(report), code, message, { ...context, fieldName, fieldType });
+}
+
+function advancedIconListItems(attrs) {
+  if (Array.isArray(attrs.items)) return attrs.items;
+  if (Array.isArray(attrs.options)) return attrs.options;
+  if (Array.isArray(attrs.data)) return attrs.data;
+  if (attrs.data && Array.isArray(attrs.data.links)) return attrs.data.links;
+  return [];
 }
 
 function advancedFieldName(value) {

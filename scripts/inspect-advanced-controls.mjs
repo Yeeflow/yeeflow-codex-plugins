@@ -142,6 +142,14 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function iconListItems(attrs) {
+  if (Array.isArray(attrs.items)) return attrs.items;
+  if (Array.isArray(attrs.options)) return attrs.options;
+  if (Array.isArray(attrs.data)) return attrs.data;
+  if (attrs.data && Array.isArray(attrs.data.links)) return attrs.data.links;
+  return [];
+}
+
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
@@ -276,6 +284,9 @@ function summarizeItems(control) {
   if (Array.isArray(attrs.data)) {
     items.data = attrs.data.map((item, index) => ({ key: `<item:${index + 1}>`, keys: Object.keys(item || {}).sort() }));
   }
+  if (attrs.data && Array.isArray(attrs.data.links)) {
+    items.links = attrs.data.links.map((item, index) => ({ key: `<link:${index + 1}>`, keys: Object.keys(item || {}).sort() }));
+  }
   return items;
 }
 
@@ -339,7 +350,7 @@ function validateControl(control, host, fieldsByName, findings, pointer) {
   }
 
   if (type === "icon_list") {
-    const items = asArray(attrs.items || attrs.options || attrs.data || attrs["icon-list"]);
+    const items = iconListItems(attrs);
     if (!items.length) push("warning", "ADVANCED_ICON_LIST_ITEMS_UNOBSERVED", "Icon list should include item configuration; this export stores some variants opaquely.");
   }
 

@@ -497,3 +497,42 @@ Validation guidance:
 
 Proof boundary: Tab and Toggle dashboard usage, Additional-controls dashboard usage, and Company Overview / View page Data List form usage are export-proven only. Approval Form/Public Form support is product-understanding-backed unless separately export-proven. Runtime rendering, link navigation, QR/barcode scan behavior, iframe loading, document preview behavior, and dynamic value changes are not proven in this branch.
 <!-- advanced-controls-learning:end -->
+
+<!-- advanced-controls-runtime-proof:start -->
+## Advanced Controls Runtime Proof Pattern
+
+Use docs/studies/advanced-controls-runtime-proof.md and generate-advanced-controls-runtime-proof.mjs as the focused generated package pattern for advanced Yeeflow controls. The generated manual-test package is /Users/Renger/Downloads/advanced-controls-runtime-proof.v1.yap and is intentionally uncommitted. The proof status is pending user runtime test until import/open/render checks are completed.
+
+Safe minimal generation pattern:
+
+- Generate one compact dashboard named Advanced Controls Runtime Dashboard for Dashboard-host controls.
+- Generate one Data List named Advanced Control Runtime Items when current-item bindings are needed.
+- Use a View page for Data List form-host controls that are export-proven only on list forms, especially field-bound Steps bar and Document embed.
+- Keep sample data synthetic and leave file-upload fields empty when testing Document embed safe empty state.
+- Use static public Yeeflow URLs for QR Code and Embed tests; never use private tenant URLs.
+- Use static safe Barcode values such as ACR-PROOF-001 and observed-supported barcode types such as CODE128/CODE128A.
+
+Control-specific safe patterns:
+
+- Tab: aktabs with ak-tabs-tab children, titles, one default tab, and nested content controls.
+- Toggle: toggle with toggle-panel children, attrs.title.value, and nested controls.
+- Timer: timer with attrs.set.date.value using a safe static future date.
+- Icon list: icon_list with attrs.data.links[], safe icons, titles, and public links.
+- Divider: line with explicit width, line-width, color token, and spacing.
+- Alert: alert with attrs.alert.title and attrs.alert.desc; include info/success/warning/error variants when useful.
+- Progress bar: progress with attrs.bar.per.value as a static numeric percentage for the runtime baseline.
+- Spacer: gap with explicit attrs.space.
+- Progress circle: progress-circle with static attrs.per values and common positioning.
+- Steps bar: steps-bar with static steps-options on dashboards; on Data List View pages, bind current-step to a current item radio/status field only when the field resolves.
+- QR Code: list-qrcode with attrs.qr-code-link.customUrl.url for static URL proof; implicit current URL modes remain host-sensitive.
+- Barcode: barcode with attrs.value.value and attrs.type; prefer CODE128 for generated runtime smoke tests.
+- Embed: embed with attrs.code containing a safe iframe to a public URL; iframe load success is not guaranteed until runtime-tested.
+- Document embed: document-embed with attrs.doc-source bound to a file-upload field; empty-field rendering is a separate proof from non-empty document preview.
+
+Validation and proof boundaries:
+
+- The local gate should include validate-yap-package, validate-yap-graph, inspect-advanced-controls, inspect-yap-schema-standard, inspect-yap-materialization, inspect-app-creation-rules, inspect-yap-import-readiness, wrapper build/round-trip, git diff --check, and safety scan.
+- Zero local validation errors only proves local readiness, not import/open/render behavior.
+- Do not claim QR scan behavior, Barcode scan behavior, external iframe content loading, non-empty document preview, dynamic value changes, or Approval Form/Public Form host behavior unless those exact behaviors are tested.
+- Keep generated .yap files, decoded payloads, screenshots, and private data out of commits.
+<!-- advanced-controls-runtime-proof:end -->
