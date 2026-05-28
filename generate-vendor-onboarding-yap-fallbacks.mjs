@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import zlib from "node:zlib";
 import { spawnSync } from "node:child_process";
 
 const SOURCE_RESOURCE = ".tmp/vendor-onboarding-compliance-management/vendor-onboarding-compliance-management.decoded-resource.json";
@@ -222,6 +223,9 @@ function main() {
   const dataModel = makeDataModelOnly(data);
   const dataModelResourcePath = writeResource("vendor-onboarding-compliance-management.decoded-resource-yap-v1.2-data-model", resource, dataModel);
   const dataModelResult = buildYap(dataModelResourcePath, "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.2-data-model.yap");
+  const schemaDirect = makeSchemaDirectData(dataModel);
+  const schemaDirectPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.3-schema-direct.yap";
+  writeSchemaDirectYap(schemaDirect, schemaDirectPath);
 
   console.log(JSON.stringify({
     status: "generated",
@@ -240,8 +244,186 @@ function main() {
         dashboards: dataModel.Item.Layouts.length,
         layouts: dataModel.Childs.reduce((total, child) => total + child.Layouts.length, 0),
       },
+      {
+        path: schemaDirectPath,
+        purpose: "schema-direct YAP v1 candidate",
+        buildStatus: "written",
+        dataLists: schemaDirect.Childs.length,
+        fields: schemaDirect.Childs.reduce((total, child) => total + child.Defs.length, 0),
+        dashboards: schemaDirect.Item.Layouts.length,
+        layouts: schemaDirect.Childs.reduce((total, child) => total + child.Layouts.length, 0) + schemaDirect.Item.Layouts.length,
+      },
     ],
   }, null, 2));
 }
 
 main();
+
+function makeSchemaDirectData(source) {
+  const data = structuredClone(source);
+  const normalizeDate = "2026-05-29T01:30:00Z";
+  const mapFieldName = (name) => name === "Title" ? "Text0" : name;
+  const fixLayoutView = (value) => {
+    if (typeof value !== "string" || !value.trim()) return "";
+    try {
+      const parsed = JSON.parse(value);
+      const rewrite = (node) => {
+        if (Array.isArray(node)) return node.map(rewrite);
+        if (node && typeof node === "object") {
+          for (const [key, child] of Object.entries(node)) {
+            if ((key === "FieldName" || key === "SortName" || key === "listfield" || key === "displayField") && child === "Title") node[key] = "Text0";
+            else node[key] = rewrite(child);
+          }
+        }
+        return node;
+      };
+      return JSON.stringify(rewrite(parsed));
+    } catch {
+      return value;
+    }
+  };
+  const listModel = (model) => ({
+    TenantID: 0,
+    AppID: model.AppID || 41,
+    ListID: model.ListID,
+    Title: model.Title,
+    Description: model.Description || "",
+    Status: 1,
+    IsItemPerm: false,
+    IsVerRecord: false,
+    HasComment: false,
+    IconUrl: model.IconUrl || ICON_URL,
+    TableCode: model.TableCode || "flowcraft",
+    IndexCode: "",
+    Created: normalizeDate,
+    Modified: normalizeDate,
+    CreatedBy: 0,
+    ModifiedBy: 0,
+    Ext1: "",
+    Ext2: "",
+    Ext3: "",
+    Perm: 0,
+    Type: model.Type,
+    Flags: 1,
+    CustomType: model.CustomType || "",
+    WorkspaceID: "0",
+    LayoutView: fixLayoutView(model.LayoutView),
+    IsBreakInherit: false,
+    IsDataSeparate: false,
+    HasDeleted: false,
+    HasEnabled: true,
+    HasDisabled: false,
+    AdvanceList: [],
+  });
+  const field = (item) => {
+    const next = { ...item };
+    next.FieldName = mapFieldName(next.FieldName);
+    if (next.FieldName === "Text0") {
+      next.FieldIndex = 0;
+      next.IsSystem = false;
+      next.Status = 1;
+      next.Type = "input";
+    }
+    if (typeof next.Rules === "string") {
+      try {
+        const rules = JSON.parse(next.Rules);
+        if (rules.listfield === "Title") rules.listfield = "Text0";
+        if (rules.displayField === "Title") rules.displayField = "Text0";
+        next.Rules = JSON.stringify(rules);
+      } catch {
+        // Leave opaque Rules strings unchanged.
+      }
+    }
+    return next;
+  };
+  const layout = (item) => ({
+    LayoutID: item.LayoutID,
+    ListID: item.ListID,
+    Type: item.Type,
+    Title: item.Title || "",
+    LayoutView: fixLayoutView(item.LayoutView),
+    AppID: 41,
+    TenantID: 0,
+    Created: normalizeDate,
+    Modified: normalizeDate,
+    CreatedBy: 0,
+    ModifiedBy: 0,
+    Ext1: typeof item.Ext1 === "string" ? item.Ext1 : "",
+    Ext2: typeof item.Ext2 === "string" ? item.Ext2 : "",
+    Ext3: typeof item.Ext3 === "string" ? item.Ext3 : "",
+    IsDefault: !!item.IsDefault,
+    IsItemPerm: !!item.IsItemPerm,
+    LayoutInResources: (item.LayoutInResources || []).map((resource) => ({
+      ID: item.LayoutID,
+      RefId: item.LayoutID,
+      Resource: resource.Resource || "",
+    })),
+  });
+  return {
+    Item: {
+      ListModel: listModel(data.Item.ListModel),
+      Defs: [],
+      Layouts: (data.Item.Layouts || []).map(layout),
+      PublicForms: [],
+      RemindRules: [],
+      FlowMappings: [],
+      ListDatas: {},
+    },
+    Childs: data.Childs.map((child) => ({
+      ListModel: listModel(child.ListModel),
+      Defs: child.Defs.map(field),
+      Layouts: child.Layouts.map(layout),
+      PublicForms: [],
+      RemindRules: [],
+      FlowMappings: [],
+      ListDatas: {},
+    })),
+    Forms: [],
+    FormReports: [],
+    DataReports: [],
+    FormNewReports: [],
+    AppGroups: [],
+    AppTags: [],
+    AppMetadatas: [],
+    AppThemes: [],
+    AppComponents: [],
+    OtherModules: [],
+  };
+}
+
+function writeSchemaDirectYap(data, output) {
+  let resourceText = JSON.stringify(data);
+  resourceText = unquoteIntegerProperties(resourceText);
+  const wrapper = {
+    Title: TITLE,
+    Description: DESCRIPTION,
+    IconUrl: ICON_URL,
+    IsListSet: true,
+    Resource: `[______gizp______]${zlib.gzipSync(Buffer.from(resourceText, "utf8")).toString("base64")}`,
+  };
+  fs.writeFileSync(output, `${JSON.stringify(wrapper, null, 2)}\n`);
+}
+
+function unquoteIntegerProperties(jsonText) {
+  const keys = [
+    "TenantID",
+    "AppID",
+    "ListID",
+    "CreatedBy",
+    "ModifiedBy",
+    "Perm",
+    "Type",
+    "Flags",
+    "LayoutID",
+    "FieldID",
+    "FieldIndex",
+    "ID",
+    "RefId",
+    "Status",
+  ];
+  let out = jsonText;
+  for (const key of keys) {
+    out = out.replace(new RegExp(`"${key}":"(-?\\d+)"`, "g"), `"${key}":$1`);
+  }
+  return out;
+}

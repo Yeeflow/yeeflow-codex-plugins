@@ -12,6 +12,7 @@ This study records the local generation and validation status for the Vendor Onb
 - YAP fallback output package: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.yap`
 - YAP numeric `MainListType` candidate: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.1-mainlisttype.yap`
 - YAP data-model isolation candidate: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.2-data-model.yap`
+- YAP schema-direct candidate: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.3-schema-direct.yap`
 - Generator: `generate-vendor-onboarding-compliance-yapk.mjs`
 - Install-compatibility generator: `generate-vendor-onboarding-install-compatible-yapk.mjs`
 - Branch: `codex/vendor-onboarding-yapk-runtime-proof`
@@ -23,6 +24,7 @@ This study records the local generation and validation status for the Vendor Onb
 - YAP fallback status: generated from the same decoded application resource for normal application import testing after the YAPK path failed materialization
 - YAP V1.1 status: same full generated application as V1 YAP with `Resource.MainListType` normalized from string `classes` to numeric `1024`
 - YAP V1.2 data-model status: import-isolation candidate that removes the rich dashboard/custom-page surfaces and app groups, keeping the five data lists, fields, simple list forms, list views, and a minimal Home page
+- YAP V1.3 schema-direct status: generated after reviewing the supplied standard YAP schema; `Resource` decodes directly to `ListExportInfo` instead of the older `Resource.Data` envelope
 
 ## Implemented Data Lists
 
@@ -184,6 +186,24 @@ The first `.yap` import test also failed with `Created failed`. Inspection found
 
 If V1.2 data-model imports, the failure is isolated to the rich UI/dashboard/custom-form layer rather than the core data model.
 
+The V1.2 data-model import test created an application tile but still showed `Import failed`. A review against `/Users/Renger/Downloads/yap-v1-schema_v2.json` found a standard-schema mismatch in the fallback packages: the schema describes the wrapper `Resource` as fixed gzip prefix plus `Gzip(UTF8 JSON(ListExportInfo))`, and its decoded-resource schema points directly to `ListExportInfo`. The earlier fallback wrapped the app data in a legacy object with `AppID`, `MainListType`, `Data`, `ReplaceIds`, `ReportIds`, and `FormKeys`, which the standard schema rejects as additional properties.
+
+The V1.3 schema-direct YAP candidate fixes that schema mismatch:
+
+- Output: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.3-schema-direct.yap`
+- Package type: `.yap`
+- Wrapper fields: `Title`, `Description`, `IconUrl`, `IsListSet`, `Resource`
+- Decoded `Resource`: direct `ListExportInfo`
+- Child lists: 5
+- Fields: 59
+- Layouts: 16
+- `PortalInfo`: omitted because it is optional in `ListExportInfo` and cannot be `null` when present
+- Field/list/layout metadata: normalized to the supplied schema types and allowed properties
+- Standard schema validation using `/Users/Renger/Downloads/yap-v1-schema_v2.json`: pass, 0 errors
+- Yeeflow schema-standard inspector: pass, 0 errors, 0 warnings
+
+The V1.3 schema-direct YAP is now the recommended next manual import candidate. If it still creates a tile but shows `Import failed`, the next blocker is likely inside server-side materialization semantics that are not expressed by the provided JSON schema, and Yeeflow server-side import diagnostics will be needed.
+
 ## Signing And Verification
 
 The generator uses the standard Yeeflow API base URL behavior through `scripts/yeeflow-env-utils.mjs`.
@@ -210,20 +230,20 @@ The V1 package remains the locally validated baseline. The V1.1 package proved s
 - V1.2 reached application-tile creation but failed materialization.
 - V1.3 reached the same materialization-failure state.
 - The full `.yap` fallback reached the import dialog but failed create.
-- The `.yap` V1.2 data-model isolation package must be manually import-tested before being treated as import-proven.
+- The `.yap` V1.3 schema-direct package must be manually import-tested before being treated as import-proven.
 - Collection/Kanban action steps are safe local placeholders and should be connected to tenant-specific workflows after import if needed.
 - Advanced controls such as Document embed, QR Code, Barcode, timeline, and print layout require runtime visual confirmation.
 - Custom CSS polish is represented as layout/style intent in generated controls; final visual polish must be checked in Yeeflow after import.
 
 ## Proof Boundary
 
-This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. The `.yapk` variants showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. The full `.yap` fallback showed that direct app import can still fail when the rich generated UI payload is present. The `.yap` V1.2 data-model isolation package is generated to test the core data model separately from the rich UI layer.
+This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. The `.yapk` variants showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. The full `.yap` fallback showed that direct app import can still fail when the rich generated UI payload is present. The `.yap` V1.2 data-model isolation package created an application tile but still failed materialization. The `.yap` V1.3 schema-direct package aligns the decoded `Resource` shape with the supplied standard YAP schema and is ready for the next manual import test.
 
 It does not prove live import success, runtime rendering, or end-user workflow behavior. Those require a focused manual import and runtime proof in a Yeeflow tenant.
 
 ## Manual Test Checklist
 
-1. Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.2-data-model.yap`.
+1. Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.3-schema-direct.yap`.
 2. Open the Vendor Management Dashboard.
 3. Check dashboard padding, cards, KPI layout, alert, and quick links.
 4. Verify dashboard Data tables show configured columns.

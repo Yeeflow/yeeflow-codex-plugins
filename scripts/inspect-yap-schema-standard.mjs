@@ -123,8 +123,11 @@ function decodeInput(inputPath, findings, largeNumbers) {
       add(findings, "error", "YAP_RESOURCE_DECODE_INVALID", "Resource gzip/base64 or JSON decode failed.", { error: error.message });
       return { wrapper: parsed, resource: null, data: null, inputType: "wrapped-yap" };
     }
+    if (isObject(resource.Item) || Array.isArray(resource.Childs)) {
+      return { wrapper: parsed, resource, data: resource, inputType: "wrapped-yap-schema-direct" };
+    }
     if (typeof resource.Data !== "string") {
-      add(findings, "error", "RESOURCE_DATA_MISSING", "Decoded Resource.Data must be a JSON string.");
+      add(findings, "error", "RESOURCE_DATA_MISSING", "Decoded Resource should be schema-direct ListExportInfo, or legacy Resource.Data must be a JSON string.");
       return { wrapper: parsed, resource, data: null, inputType: "wrapped-yap" };
     }
     try {
