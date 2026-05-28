@@ -64,6 +64,8 @@ https://<yourdomain>.yeeflow.com
 
 Do not use an internal test tenant URL as a default. API calls use the shared Yeeflow API endpoint, while tenant/app links use the tenant URL.
 
+For a full setup guide, see [Environment Configuration](docs/environment-configuration.md).
+
 ## Environment Variables
 
 For local API-backed checks, create a gitignored `.env.local` file in your working copy. For a single tenant:
@@ -85,15 +87,15 @@ YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
 YEEFLOW_PROFILE=dev
 
 YEEFLOW_DEV_API_KEY=<dev API key>
-YEEFLOW_DEV_TENANT_URL=https://<devdomain>.yeeflow.com
+YEEFLOW_DEV_TENANT_URL=https://devcompany.yeeflow.com
 YEEFLOW_DEV_TENANT_ID=<optional>
 
 YEEFLOW_PROD_API_KEY=<prod API key>
-YEEFLOW_PROD_TENANT_URL=https://<proddomain>.yeeflow.com
+YEEFLOW_PROD_TENANT_URL=https://company.yeeflow.com
 YEEFLOW_PROD_TENANT_ID=<optional>
 
 YEEFLOW_CLIENT_A_API_KEY=<client A API key>
-YEEFLOW_CLIENT_A_TENANT_URL=https://<client-a-domain>.yeeflow.com
+YEEFLOW_CLIENT_A_TENANT_URL=https://client-a.yeeflow.com
 YEEFLOW_CLIENT_A_TENANT_ID=<optional>
 ```
 

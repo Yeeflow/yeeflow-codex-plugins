@@ -29,6 +29,8 @@ YEEFLOW_TENANT_ID=<optional tenant id if required>
 
 Use `YEEFLOW_API_BASE_URL` for API calls. The standard value is `https://api.yeeflow.com/v1`. Use `YEEFLOW_TENANT_URL` for browser/app links to your tenant root, such as `https://<yourdomain>.yeeflow.com`. Keep `.env.local` out of Git.
 
+For the complete setup, profile, and troubleshooting guide, see [Environment Configuration](environment-configuration.md).
+
 Optional multi-tenant profile mode:
 
 ```env
@@ -36,11 +38,11 @@ YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
 YEEFLOW_PROFILE=dev
 
 YEEFLOW_DEV_API_KEY=<dev API key>
-YEEFLOW_DEV_TENANT_URL=https://<devdomain>.yeeflow.com
+YEEFLOW_DEV_TENANT_URL=https://devcompany.yeeflow.com
 YEEFLOW_DEV_TENANT_ID=<optional>
 
 YEEFLOW_PROD_API_KEY=<prod API key>
-YEEFLOW_PROD_TENANT_URL=https://<proddomain>.yeeflow.com
+YEEFLOW_PROD_TENANT_URL=https://company.yeeflow.com
 YEEFLOW_PROD_TENANT_ID=<optional>
 ```
 

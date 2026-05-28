@@ -93,6 +93,8 @@ YEEFLOW_TENANT_ID=<optional tenant id if required>
 
 `YEEFLOW_API_BASE_URL` should normally be `https://api.yeeflow.com/v1`; scripts normalize trailing slashes and avoid double `/v1`. `YEEFLOW_TENANT_URL` should be the tenant root, such as `https://<yourdomain>.yeeflow.com`, and must not be used as the API base. `YEEFLOW_BASE_URL` is a legacy API base URL alias only. Keep `.env.local`, API keys, tenant IDs, private URLs, raw API responses, raw `Resource`, raw `Sign`, decoded payloads, and generated runtime packages out of Git.
 
+For a complete `.env.local` setup guide, see [Environment Configuration](environment-configuration.md).
+
 For multiple tenants, use profile variables:
 
 ```env
@@ -100,7 +102,7 @@ YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
 YEEFLOW_PROFILE=client_a
 
 YEEFLOW_CLIENT_A_API_KEY=<client A API key>
-YEEFLOW_CLIENT_A_TENANT_URL=https://<client-a-domain>.yeeflow.com
+YEEFLOW_CLIENT_A_TENANT_URL=https://client-a.yeeflow.com
 YEEFLOW_CLIENT_A_TENANT_ID=<optional>
 ```
 
