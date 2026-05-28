@@ -1977,7 +1977,7 @@ function validateListExportItemSchema(item, pathPrefix, report) {
     issue(report, generatorFinalSeverity(report), "LIST_EXPORT_ITEM_LISTMODEL_MISSING", "Generated app/list resources should include ListExportItem.ListModel.", { path: `${pathPrefix}.ListModel` });
   } else {
     if (item.ListModel.Flags !== 1) {
-      issue(report, generatorFinalSeverity(report), "LISTMODEL_FLAGS_INVALID", "Product schema v2 requires CustomListModel.Flags = 1; missing or different values can fail import.", { path: `${pathPrefix}.ListModel.Flags`, value: item.ListModel.Flags });
+      issue(report, generatorFinalSeverity(report), "LISTMODEL_FLAGS_MISSING_OR_INVALID", "Product schema v2 requires CustomListModel.Flags = 1 on generated root and child list resources; missing or different values can fail import.", { path: `${pathPrefix}.ListModel.Flags`, value: item.ListModel.Flags });
     }
     if (item.ListModel.Status !== undefined && item.ListModel.Status !== 1) {
       issue(report, generatorFinalSeverity(report), "LISTMODEL_STATUS_INVALID", "Product schema v2 fixes CustomListModel.Status to 1 when present.", { path: `${pathPrefix}.ListModel.Status`, value: item.ListModel.Status });
@@ -3010,7 +3010,7 @@ function validateWorkflowDesignerCompatibility(form, def, report) {
   if (def.graphver === undefined) issue(report, severity, "WORKFLOW_DEF_GRAPHVER_MISSING", "Workflow designer expects DefResource.graphver metadata.", { form: formName, key });
 
   const shapes = collectShapes(def);
-  const workflowVariableIds = collectWorkflowVariableIds(def);
+  const workflowVariables = collectWorkflowVariables(def);
   shapes.forEach((shape, index) => {
     const type = shapeType(shape);
     const id = safeString(shape.id);
@@ -3025,35 +3025,47 @@ function validateWorkflowDesignerCompatibility(form, def, report) {
       if (!shape.target || !safeString(shape.target.id) || !safeString(shape.target.resourceid)) {
         issue(report, severity, "WORKFLOW_SEQUENCE_TARGET_INVALID", "SequenceFlow target should include id and resourceid.", { form: formName, key, index });
       }
-      validateSequenceFlowConditionVariables(shape, workflowVariableIds, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.conditioninfo` });
+      validateSequenceFlowConditionVariables(shape, workflowVariables, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.conditioninfo` });
     } else if (type === "SetVariableTask") {
-      validateSetVariableTaskTargets(shape, workflowVariableIds, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.variablesetting` });
+      validateSetVariableTaskTargets(shape, workflowVariables, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.variablesetting` });
     } else if (type === "MultiAssignmentTask" || type === "CandidateTask") {
-      validateTaskAssignmentVariables(shape, workflowVariableIds, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.usertaskassignment` });
+      validateTaskAssignmentVariables(shape, workflowVariables, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.usertaskassignment` });
     } else if (!isObject(shape.position)) {
       issue(report, severity, "WORKFLOW_NODE_POSITION_MISSING", "Workflow designer expects non-sequence workflow nodes to include position metadata.", { form: formName, key, index, type });
     }
   });
 }
 
-function collectWorkflowVariableIds(def) {
+function collectWorkflowVariables(def) {
   const ids = new Set();
+  const keys = new Set();
+  const byId = new Map();
+  function addVariable(variable) {
+    if (!isObject(variable)) return;
+    const id = safeString(variable.id);
+    const idx = safeString(variable.idx);
+    const name = safeString(variable.name);
+    if (id) {
+      ids.add(id);
+      keys.add(id);
+      byId.set(id, { id, idx, name });
+    }
+    if (idx) keys.add(idx);
+    if (name) keys.add(name);
+  }
   for (const variable of asArray(def && def.variables && def.variables.basic)) {
-    const id = safeString(variable && variable.id);
-    if (id) ids.add(id);
+    addVariable(variable);
   }
   for (const listref of asArray(def && def.variables && def.variables.listref)) {
-    const id = safeString(listref && listref.id);
-    if (id) ids.add(id);
+    addVariable(listref);
     for (const field of asArray(listref && listref.fields)) {
-      const fieldId = safeString(field && field.id);
-      if (fieldId) ids.add(fieldId);
+      addVariable(field);
     }
   }
-  return ids;
+  return { ids, keys, byId };
 }
 
-function validateSequenceFlowConditionVariables(shape, workflowVariableIds, report, context) {
+function validateSequenceFlowConditionVariables(shape, workflowVariables, report, context) {
   const conditions = asArray(shape && shape.properties && shape.properties.conditioninfo);
   conditions.forEach((condition, conditionIndex) => {
     for (const side of ["left", "right"]) {
@@ -3061,41 +3073,55 @@ function validateSequenceFlowConditionVariables(shape, workflowVariableIds, repo
       const token = isObject(operand) && isObject(operand.value) ? operand.value : null;
       if (!token || token.exprType !== "variable") continue;
       const id = safeString(token.id);
-      if (id && !workflowVariableIds.has(id)) {
+      const name = safeString(token.name);
+      const key = id || name;
+      if (key && !workflowVariables.keys.has(key)) {
         issue(report, generatorFinalSeverity(report), "WORKFLOW_SEQUENCE_CONDITION_VARIABLE_UNRESOLVED", "SequenceFlow condition references a workflow variable that is not present in DefResource.variables.", {
           ...context,
-          path: `${context.path}[${conditionIndex}].${side}.value.id`,
+          path: `${context.path}[${conditionIndex}].${side}.value`,
           node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
-          variableId: id,
+          variableId: id || null,
+          variableName: name || null,
         });
       }
     }
   });
 }
 
-function validateSetVariableTaskTargets(shape, workflowVariableIds, report, context) {
+function validateSetVariableTaskTargets(shape, workflowVariables, report, context) {
   asArray(shape && shape.properties && shape.properties.variablesetting).forEach((setting, settingIndex) => {
     const id = safeString(setting && setting.id);
-    if (id && !workflowVariableIds.has(id)) {
+    const idx = safeString(setting && setting.idx);
+    const declared = workflowVariables.byId.get(id);
+    if (id && !workflowVariables.ids.has(id)) {
       issue(report, generatorFinalSeverity(report), "SETVARIABLE_UNKNOWN_VARIABLE", "SetVariableTask references a workflow variable that is not present in DefResource.variables.", {
         ...context,
         path: `${context.path}[${settingIndex}].id`,
         node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
         variableId: id,
       });
+    } else if (declared && idx && declared.idx && idx !== declared.idx) {
+      issue(report, generatorFinalSeverity(report), "SETVARIABLE_UNKNOWN_VARIABLE", "SetVariableTask target idx does not match the declared workflow variable idx.", {
+        ...context,
+        path: `${context.path}[${settingIndex}].idx`,
+        node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
+        variableId: id,
+        variableIdx: idx,
+        declaredIdx: declared.idx,
+      });
     }
   });
 }
 
-function validateTaskAssignmentVariables(shape, workflowVariableIds, report, context) {
+function validateTaskAssignmentVariables(shape, workflowVariables, report, context) {
   asArray(shape && shape.properties && shape.properties.usertaskassignment).forEach((assignment, assignmentIndex) => {
     const text = JSON.stringify(assignment || {});
     const variableIds = [...text.matchAll(/\\"id\\":\\"([^"\\]+)\\"|"id":"([^"]+)"/g)]
       .map((match) => safeString(match[1] || match[2]))
       .filter((id) => id && !["FlowNo"].includes(id));
     for (const id of variableIds) {
-      if (workflowVariableIds.has(id)) continue;
-      issue(report, generatorFinalSeverity(report), "TASK_ASSIGNMENT_VARIABLE_UNRESOLVED", "Task assignment references a workflow variable that is not present in DefResource.variables.", {
+      if (workflowVariables.keys.has(id)) continue;
+      issue(report, generatorFinalSeverity(report), "ASSIGNMENT_TASK_VARIABLE_UNRESOLVED", "Task assignment references a workflow variable that is not present in DefResource.variables.", {
         ...context,
         path: `${context.path}[${assignmentIndex}]`,
         node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),

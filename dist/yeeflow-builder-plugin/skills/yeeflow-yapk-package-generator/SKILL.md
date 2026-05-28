@@ -7,6 +7,16 @@ description: Inspect, validate, compare, and plan Yeeflow .yapk existing-applica
 
 Use this skill for Yeeflow `.yapk` version-management packages for existing application upgrades.
 
+## YAPK From Scratch Hardening
+
+YAPK-from-scratch generation is allowed only after the inner application content passes package/app/workflow publish-readiness validation. Generate and validate `AppPackageInfo` first, then Brotli/base64/sign only after content validators, graph validators, workflow publish-readiness checks, and placeholder scans pass.
+
+Signing and `verifysign` validate wrapper/resource integrity, not full business publish-readiness. Do not run `setsign` for generated content when any of these are present: missing/non-1 root or child list flags, unresolved sequence-flow variables, undeclared Set Variable targets, undeclared assignment-expression variables, unresolved required placeholders, or tenant-specific user/group/position placeholders.
+
+Generation order for new content: build `AppPackageInfo`, validate decoded content, run workflow publish-readiness checks, scan placeholders, Brotli-compress `Resource`, base64 encode, update wrapper metadata, call `setsign`, call `verifysign`, and write the generated `.yapk` outside git, normally to Downloads. Never commit generated `.yapk` packages, raw `Resource`, raw `Sign`, decoded full payloads, API responses, tenant IDs, or private data.
+
+Business Travel hardening rules: set `Flags = 1` on root app/list-set and child list resources; declare every workflow variable used by sequence flows, Set Variable nodes, task assignments, form bindings, summaries, and ContentList mappings; remove stale renamed variables from conditions; do not use placeholders such as `__POSITION_ID_REQUIRED_*`; direct position assignment requires a real numeric tenant position ID or a user-approved post-import binding/fallback. Preserve the proof boundary: these rules harden content validation and do not prove arbitrary YAPK-from-scratch generation for all app types or tenant-specific routing.
+
 Current proof boundary:
 
 - `.yapk` wrapper schema is product-schema-backed as `AppExportPackageInfo`.

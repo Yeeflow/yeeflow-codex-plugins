@@ -7,11 +7,13 @@ description: Standardize runtime testing for generated or modified Yeeflow appli
 
 Business Travel runtime-practice checkpoint: when a generated package imports, continue with a separate workflow designer publish check before claiming workflow readiness. The fixed `business-travel-budget-control.schema-fixed.v1.yap` package is user-proven for import, app open, workflow open, and workflow publish after schema/variable/assignee repairs. Keep workflow execution, routing, request submission, email, ContentList/data mutation, and true Finance Manager assignment unproven until explicitly tested. A package that imports after `ListModel.Flags = 1` is not automatically workflow-publish-proven.
 
+YAPK-from-scratch runtime checkpoint: a signed and verified `.yapk` is not runtime proof. Before runtime upgrade testing, confirm that decoded `AppPackageInfo` passed content validators, graph checks, workflow publish-readiness checks, and placeholder scans before signing. Classify signing/verifysign as integrity proof only; classify upgrade/import, app open, workflow publish, workflow execution, assignment routing, and data mutation separately.
+
 ## Core Rule
 
 Treat local package validation and Yeeflow runtime proof as separate gates. A package can be locally valid but still not accepted as a baseline until the runtime pass is documented.
 
-For `.yapk` runtime claims, use `yeeflow-yapk-package-generator` for preflight inspection and keep wrapper acceptance separate from app-content proof. Do not classify `.yapk` content mutation as runtime-proven unless the test uses a schema-valid Resource rebuild, product-supported signing/verification, and a Yeeflow upgrade that visibly verifies the intended changed lists, fields, dashboards, forms, or workflows.
+For `.yapk` runtime claims, use `yeeflow-yapk-package-generator` for preflight inspection and keep wrapper acceptance separate from app-content proof. Do not classify `.yapk` content mutation as runtime-proven unless the test uses a schema-valid Resource rebuild, product-supported signing/verification, and a Yeeflow upgrade that visibly verifies the intended changed lists, fields, dashboards, forms, or workflows. Tenant-specific position/user/group routing is not proven without real authorized mappings and focused runtime evidence.
 
 Never accept fake dashboards, static KPI mockups, or unbound placeholder charts as runtime-proven. Dashboard KPIs, charts, and tables must be data-bound and must render from actual Yeeflow data sources.
 

@@ -135,7 +135,7 @@ function inspectList(list, index, findings) {
     addFinding(findings, "error", "LIST_EXPORT_ITEM_LISTMODEL_MISSING", "ListExportItem.ListModel is required for generated app/list resources.", { list: title });
   } else {
     if (list.ListModel.Flags !== 1) {
-      addFinding(findings, "error", "LISTMODEL_FLAGS_INVALID", "Product schema v2 requires CustomListModel.Flags = 1; missing or different values can fail import.", { list: title, value: list.ListModel.Flags });
+      addFinding(findings, "error", "LISTMODEL_FLAGS_MISSING_OR_INVALID", "Product schema v2 requires CustomListModel.Flags = 1 on generated root and child list resources; missing or different values can fail import.", { list: title, value: list.ListModel.Flags });
     }
     if (list.ListModel.Status !== undefined && list.ListModel.Status !== 1) {
       addFinding(findings, "error", "LISTMODEL_STATUS_INVALID", "Product schema v2 fixes CustomListModel.Status to 1 when present.", { list: title, value: list.ListModel.Status });

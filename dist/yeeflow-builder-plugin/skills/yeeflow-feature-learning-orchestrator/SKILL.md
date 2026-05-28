@@ -7,6 +7,8 @@ description: orchestrate end-to-end Yeeflow feature learning from real exports b
 
 Business Travel runtime-practice lesson: preserve separate proof gates for schema validation, import, workflow publish, and workflow execution. The Business Travel package import became user-proven only after `ListModel.Flags = 1`; later approval workflow publish errors were fixed through validator-backed variable and assignee repairs. Do not promote publish fixes to workflow execution/routing proof without a focused runtime test.
 
+YAPK-from-scratch hardening lesson: when studying generated `.yapk` output, split content correctness from signing correctness. Promote only reusable rules that are safe and redacted: root/child `Flags = 1`, declared workflow variables for sequence flows / Set Variable / task assignments / form bindings, no stale renamed variables, no tenant-specific assignment placeholders, content validators before signing, and narrow proof-boundary wording. Do not commit generated packages, decoded payloads, raw `Resource`, raw `Sign`, API responses, screenshots, tenant IDs, or private data.
+
 Use this skill when the user asks to study a new Yeeflow feature, learn dashboard or document-library structure from exported files, analyze an exported `.yap` and build a test package, create a generator skill for a feature area, run the full learning cycle, or use the Yeeflow feature learning process.
 
 This is a learning orchestration skill. It does not replace:

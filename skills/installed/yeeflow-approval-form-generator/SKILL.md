@@ -7,6 +7,8 @@ description: generate, inspect, validate, package, and improve yeeflow approval 
 
 Business Travel workflow-publish practice: import success and approval workflow publish success are separate gates. The fixed Business Travel package is user-proven for import, app open, workflow open, and workflow publish. Before packaging new approval forms, ensure every variable referenced by form controls, sub-list summaries, sequence-flow `conditioninfo`, Set Variable `variablesetting[]`, and assignment `usertaskassignment[]` expressions exists in `DefResource.variables`. Sequence flows must not reference deleted variables. Set Variable targets must exist and use the target variable's `idx`, `id`, `name`, and `type`. Direct job-position assignments require numeric position IDs; placeholders like `__POSITION_ID_REQUIRED_*__` are blocking errors. If a real tenant position ID is unavailable, stop for mapping or document a user-approved fallback. Do not claim workflow execution, routing, request submission, data mutation, or true Finance Manager assignment from publish proof alone.
 
+YAPK-from-scratch approval workflow rule: if an approval workflow will be packaged inside a generated `.yapk`, apply the same workflow publish-readiness gate before signing. Do not sign while sequence flows reference stale renamed variables, Set Variable targets are undeclared, assignment expressions reference undeclared variables, or tenant-specific position/user/group placeholders remain. Signing/verifysign is not workflow publish proof.
+
 ## Application Navigation References
 
 When an approval form is included in application navigation, reference it from the root app `Data.Item.ListModel.LayoutView.sort[]` using `Type = 105` and `ListID = Data.Forms[].Key`. App-level approval forms in generated packages keep `ListID = 0` on the form record; the navigation item points to the form key, not a child data-list ID.
@@ -19,7 +21,7 @@ Data Filter controls can be used in approval forms at the product level, but the
 
 Pivot Table is a Data Analytics control and is not supported on Approval Forms. Keep Pivot Table generation on Dashboard pages, and only use Data List forms when a product-backed design explicitly calls for it and validation can prove the host/source/field references. If a user asks for approval analytics, place the Pivot Table on a dashboard or supported reporting surface instead of the submission, task, or approval form page.
 
-When approval-form changes target an existing imported app, confirm whether the user wants a new cloned `.yap` or an upgrade `.yapk`. For `.yapk`, start from a Version management baseline and preserve existing form/workflow IDs; do not regenerate fresh IDs for existing objects. The first studied `.yapk` resource is opaque and signature-like, so offline app-content form mutation inside `.yapk` is not generation-safe until Yeeflow encoding/signing is proven.
+When approval-form changes target an existing imported app, confirm whether the user wants a new cloned `.yap` or an upgrade `.yapk`. For `.yapk`, start from a Version management baseline and preserve existing form/workflow IDs; do not regenerate fresh IDs for existing objects unless the workflow is explicitly a generated-new-content experiment. Offline app-content mutation inside `.yapk` remains proof-boundary-sensitive: content validation, signing, verification, and focused runtime upgrade proof are all separate gates.
 
 ## Core Workflow
 

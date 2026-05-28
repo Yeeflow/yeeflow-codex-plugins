@@ -100,6 +100,12 @@ const PIVOT_TABLE_COUNT_AGGREGATIONS = new Set(["COUNT", "COUNT_DISTINCT"]);
 const PIVOT_TABLE_NUMERIC_AGGREGATIONS = new Set(["SUM", "AVG", "MIN", "MAX"]);
 const PIVOT_TABLE_NUMERIC_FIELD_TYPES = new Set(["input_number", "currency", "percent", "rate", "calculated-column", "Decimal", "Int", "Bigint", "Number"]);
 const PIVOT_TABLE_DATE_FIELD_TYPES = new Set(["datepicker", "time", "Datetime", "DateTime", "Date", "Time"]);
+const DYNAMIC_DISPLAY_CONTROL_TYPES = new Set(["dynamic-field", "dynamic-user", "dynamic-image", "dynamic-file"]);
+const DYNAMIC_USER_FIELD_TYPES = new Set(["identity-picker", "signer", "user", "users", "person"]);
+const DYNAMIC_IMAGE_FIELD_TYPES = new Set(["icon-upload", "image", "picture"]);
+const DYNAMIC_FILE_FIELD_TYPES = new Set(["file-upload", "file-upload-merge", "attachment", "file"]);
+const DASHBOARD_ITEM_CONTEXT_CONTROL_TYPES = new Set(["collection", "kanban", "timeline-v", "timeline-h"]);
+const DASHBOARD_TIMELINE_CONTROL_TYPES = new Set(["timeline-v", "timeline-h"]);
 const CUSTOM_FORM_OPEN_MODE_LABELS = {
   modal: "Pop-up window",
   slide: "Slide in",
@@ -1504,19 +1510,42 @@ function validateDashboardFunctionalQuality(page, title, layoutId, report) {
   }
 }
 
+function dynamicFieldTypeIssue(controlType) {
+  if (controlType === "dynamic-user") return { code: "DYNAMIC_USER_FIELD_TYPE_MISMATCH", message: "Dynamic user controls should bind to user/person fields.", allowed: DYNAMIC_USER_FIELD_TYPES };
+  if (controlType === "dynamic-image") return { code: "DYNAMIC_IMAGE_FIELD_TYPE_MISMATCH", message: "Dynamic image controls should bind to image fields.", allowed: DYNAMIC_IMAGE_FIELD_TYPES };
+  if (controlType === "dynamic-file") return { code: "DYNAMIC_FILE_FIELD_TYPE_MISMATCH", message: "Dynamic file controls should bind to attachment/file fields.", allowed: DYNAMIC_FILE_FIELD_TYPES };
+  return null;
+}
+
+function fieldControlType(field) {
+  return safeString(field && (field.Type || field.FieldType));
+}
+
+function validateDynamicFieldType(controlType, field, report, severity, context) {
+  if (!field) return;
+  const mismatch = dynamicFieldTypeIssue(controlType);
+  const sourceType = fieldControlType(field);
+  if (mismatch && sourceType && !mismatch.allowed.has(sourceType)) {
+    issue(report, severity, mismatch.code, mismatch.message, { ...context, sourceType, fieldName: safeString(field.FieldName), fieldDisplayName: safeString(field.DisplayName) });
+  }
+  if (controlType === "dynamic-field" && sourceType && (DYNAMIC_USER_FIELD_TYPES.has(sourceType) || DYNAMIC_IMAGE_FIELD_TYPES.has(sourceType) || DYNAMIC_FILE_FIELD_TYPES.has(sourceType))) {
+    issue(report, "warning", "DYNAMIC_FIELD_SPECIALIZED_CONTROL_RECOMMENDED", "Dynamic field can display general values; for user/image/file fields prefer the specialized Dynamic user/image/file control when generating new layouts.", { ...context, sourceType, fieldName: safeString(field.FieldName), fieldDisplayName: safeString(field.DisplayName) });
+  }
+}
+
 function validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report) {
   const severity = generatorFinalSeverity(report);
   const seenControlIds = new Set();
-  function validateExpressionNode(node, pointer, collection) {
+  function validateExpressionNode(node, pointer, itemContext) {
     if (!isObject(node)) return;
-    if (node.exprType === "variable_ctx" && node.ctx === "__ctx_coll") {
-      if (!collection) {
-        issue(report, severity, "DASHBOARD_COLLECTION_CONTEXT_EXPR_OUTSIDE_COLLECTION", "Collection item expressions should be nested inside a collection item template.", { title, layoutId, pointer, field: safeString(node.id) });
+    if (node.exprType === "variable_ctx" && (node.ctx === "__ctx_coll" || node.ctx === "__ctx_kanban" || node.ctx === "__ctx_timeline")) {
+      if (!itemContext) {
+        issue(report, severity, "DASHBOARD_ITEM_CONTEXT_EXPR_OUTSIDE_TEMPLATE", "Collection/Kanban/Timeline item expressions should be nested inside an item template.", { title, layoutId, pointer, ctx: safeString(node.ctx), field: safeString(node.id) });
         return;
       }
       const fieldName = safeString(node.id);
-      if (fieldName && !collection.fields.has(fieldName)) {
-        issue(report, severity, "DASHBOARD_COLLECTION_EXPR_FIELD_UNRESOLVED", "Collection item expression references a field not present on the collection source list.", { title, layoutId, pointer, listId: collection.listId, fieldName });
+      if (fieldName && fieldName !== "_cate" && !itemContext.fields.has(fieldName)) {
+        issue(report, severity, "DASHBOARD_ITEM_EXPR_FIELD_UNRESOLVED", "Collection/Kanban/Timeline item expression references a field not present on the source list.", { title, layoutId, pointer, host: itemContext.host, listId: itemContext.listId, fieldName });
       }
     }
     if (node.exprType === "variable" && safeString(node.id).startsWith("__filter_")) {
@@ -1531,9 +1560,9 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
     }
   }
 
-  function validateControlDisplay(control, pointer, collection) {
+  function validateControlDisplay(control, pointer, itemContext) {
     for (const [index, rule] of asArray(control.attrs && control.attrs.control_display).entries()) {
-      walk(rule.formulas, (node, formulaPointer) => validateExpressionNode(node, `${pointer}.attrs.control_display[${index}].formulas${formulaPointer.slice(1)}`, collection));
+      walk(rule.formulas, (node, formulaPointer) => validateExpressionNode(node, `${pointer}.attrs.control_display[${index}].formulas${formulaPointer.slice(1)}`, itemContext));
       const ruleControlId = safeString(rule.controlId);
       const controlId = safeString(control.id);
       if (ruleControlId && controlId && ruleControlId !== controlId) {
@@ -1562,7 +1591,22 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
     }
   }
 
-  function visit(control, pointer, collection) {
+  function collectVariableCtxFieldIds(value) {
+    const fields = [];
+    const visit = (node) => {
+      if (Array.isArray(node)) {
+        node.forEach(visit);
+        return;
+      }
+      if (!isObject(node)) return;
+      if (node.exprType === "variable_ctx" && safeString(node.id)) fields.push(safeString(node.id));
+      Object.values(node).forEach(visit);
+    };
+    visit(value);
+    return fields;
+  }
+
+  function visit(control, pointer, itemContext) {
     if (!isObject(control)) return;
     const controlId = safeString(control.id);
     if (controlId) {
@@ -1590,18 +1634,46 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
         issue(report, severity, "DASHBOARD_FILTER_CONTROL_BINDING_UNRESOLVED", "Dashboard filter control binding should resolve to page.filterVars.", { title, layoutId, pointer, controlId, binding, filterVar });
       }
     }
-    let activeCollection = collection;
-    if (control.type === "collection") {
+    let activeContext = itemContext;
+    if (DASHBOARD_ITEM_CONTEXT_CONTROL_TYPES.has(control.type)) {
       const listId = safeString(control.attrs && control.attrs.data && control.attrs.data.list && control.attrs.data.list.ListID);
       if (!listId) {
-        issue(report, severity, "DASHBOARD_COLLECTION_LIST_MISSING", "Collection control should include attrs.data.list.ListID.", { title, layoutId, pointer });
+        const code = control.type === "kanban" ? "DASHBOARD_KANBAN_LIST_MISSING" : DASHBOARD_TIMELINE_CONTROL_TYPES.has(control.type) ? "DASHBOARD_TIMELINE_LIST_MISSING" : "DASHBOARD_COLLECTION_LIST_MISSING";
+        issue(report, severity, code, "Kanban/Collection/Timeline control should include attrs.data.list.ListID.", { title, layoutId, pointer, controlType: control.type });
       } else if (!listsById.has(listId)) {
-        issue(report, severity, "DASHBOARD_COLLECTION_LIST_REFERENCE_UNRESOLVED", "Collection control data source should resolve to a list included in the package.", { title, layoutId, pointer, listId });
+        const code = control.type === "kanban" ? "DASHBOARD_KANBAN_LIST_REFERENCE_UNRESOLVED" : DASHBOARD_TIMELINE_CONTROL_TYPES.has(control.type) ? "DASHBOARD_TIMELINE_LIST_REFERENCE_UNRESOLVED" : "DASHBOARD_COLLECTION_LIST_REFERENCE_UNRESOLVED";
+        issue(report, severity, code, "Kanban/Collection/Timeline control data source should resolve to a list included in the package.", { title, layoutId, pointer, listId });
       }
       const fields = fieldsByList.get(listId) || new Map();
-      activeCollection = { listId, fields };
+      activeContext = { host: control.type, listId, fields };
+      if (control.type === "kanban") {
+        const categoryField = safeString(control.attrs && control.attrs.data && control.attrs.data.cateField);
+        if (!categoryField) {
+          issue(report, severity, "DASHBOARD_KANBAN_CATEGORY_FIELD_MISSING", "Kanban control should include attrs.data.cateField for grouping.", { title, layoutId, pointer, listId });
+        } else if (!fields.has(categoryField)) {
+          issue(report, severity, "DASHBOARD_KANBAN_CATEGORY_FIELD_UNRESOLVED", "Kanban category/group-by field should resolve to a source list field.", { title, layoutId, pointer: `${pointer}.attrs.data.cateField`, listId, fieldName: categoryField });
+        }
+      }
+      if (DASHBOARD_TIMELINE_CONTROL_TYPES.has(control.type)) {
+        const sortFields = asArray(control.attrs && control.attrs.data && control.attrs.data.sort).map((sort) => safeString(sort && sort.SortName)).filter(Boolean);
+        const titleFields = collectVariableCtxFieldIds(control.attrs && control.attrs.data && control.attrs.data.title);
+        if (!sortFields.length && !titleFields.length) {
+          issue(report, severity, "DASHBOARD_TIMELINE_DATE_FIELD_MISSING", "Timeline controls should include a resolvable date/time field in attrs.data.title or attrs.data.sort so timeline points can be ordered/labeled.", { title, layoutId, pointer, controlType: control.type, listId });
+        }
+        for (const [index, fieldName] of sortFields.entries()) {
+          if (!fields.has(fieldName)) {
+            issue(report, severity, "DASHBOARD_TIMELINE_SORT_FIELD_UNRESOLVED", "Timeline sort/date field should resolve to the source list fields.", { title, layoutId, pointer: `${pointer}.attrs.data.sort[${index}].SortName`, controlType: control.type, listId, fieldName });
+          }
+        }
+        for (const fieldName of titleFields) {
+          if (!fields.has(fieldName)) {
+            issue(report, severity, "DASHBOARD_TIMELINE_TITLE_FIELD_UNRESOLVED", "Timeline title/date expression should resolve to a source list field.", { title, layoutId, pointer: `${pointer}.attrs.data.title`, controlType: control.type, listId, fieldName });
+          }
+        }
+      }
       if (!asArray(control.children).length) {
-        issue(report, severity, "DASHBOARD_COLLECTION_ITEM_TEMPLATE_MISSING", "Collection control should include one item-template child.", { title, layoutId, pointer, listId });
+        const code = control.type === "kanban" ? "DASHBOARD_KANBAN_ITEM_TEMPLATE_MISSING" : DASHBOARD_TIMELINE_CONTROL_TYPES.has(control.type) ? "DASHBOARD_TIMELINE_ITEM_TEMPLATE_MISSING" : "DASHBOARD_COLLECTION_ITEM_TEMPLATE_MISSING";
+        issue(report, severity, code, "Kanban/Collection/Timeline control should include an item-template child.", { title, layoutId, pointer, listId });
       }
       for (const [fulltextIndex, item] of asArray(control.attrs && control.attrs.data && control.attrs.data.fulltext).entries()) {
         for (const [fieldIndex, fieldName] of asArray(item.fields).map(safeString).entries()) {
@@ -1609,22 +1681,25 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
             issue(report, severity, "DASHBOARD_COLLECTION_FULLTEXT_FIELD_UNRESOLVED", "Collection fulltext search references a field not present on the collection source list.", { title, layoutId, pointer: `${pointer}.attrs.data.fulltext[${fulltextIndex}].fields[${fieldIndex}]`, listId, fieldName });
           }
         }
-        walk(item.value, (node, valuePointer) => validateExpressionNode(node, `${pointer}.attrs.data.fulltext[${fulltextIndex}].value${valuePointer.slice(1)}`, activeCollection));
+        walk(item.value, (node, valuePointer) => validateExpressionNode(node, `${pointer}.attrs.data.fulltext[${fulltextIndex}].value${valuePointer.slice(1)}`, activeContext));
       }
     }
-    if (control.type === "dynamic-field" && safeString(control.attrs && control.attrs.source) === "3") {
-      if (!activeCollection) {
-        issue(report, severity, "DASHBOARD_COLLECTION_DYNAMIC_FIELD_OUTSIDE_COLLECTION", "Dynamic field source 3 should be nested inside a collection item template.", { title, layoutId, pointer, fieldName: safeString(control.attrs && control.attrs["obj-f"]) });
+    if (DYNAMIC_DISPLAY_CONTROL_TYPES.has(safeString(control.type)) && safeString(control.attrs && control.attrs.source) === "3") {
+      if (!activeContext) {
+        issue(report, severity, "DASHBOARD_DYNAMIC_CONTROL_OUTSIDE_ITEM_CONTEXT", "Dynamic controls with source 3 should be nested inside a Kanban/Collection/Timeline item template.", { title, layoutId, pointer, controlType: control.type, fieldName: safeString(control.attrs && control.attrs["obj-f"]) });
       } else {
         const fieldName = safeString(control.attrs && control.attrs["obj-f"]);
-        if (fieldName && !activeCollection.fields.has(fieldName)) {
-          issue(report, severity, "DASHBOARD_COLLECTION_DYNAMIC_FIELD_UNRESOLVED", "Dynamic field source 3 references a field not present on the collection source list.", { title, layoutId, pointer, listId: activeCollection.listId, fieldName });
+        const field = activeContext.fields.get(fieldName);
+        if (fieldName && !field) {
+          issue(report, severity, "DASHBOARD_DYNAMIC_CONTROL_FIELD_UNRESOLVED", "Dynamic control source 3 references a field not present on the Kanban/Collection/Timeline source list.", { title, layoutId, pointer, host: activeContext.host, controlType: control.type, listId: activeContext.listId, fieldName });
+        } else {
+          validateDynamicFieldType(safeString(control.type), field, report, severity, { title, layoutId, pointer, host: activeContext.host, controlType: control.type });
         }
       }
     }
-    validateControlDisplay(control, pointer, activeCollection);
-    if (control.attrs) walk(control.attrs, (node, attrPointer) => validateExpressionNode(node, `${pointer}.attrs${attrPointer.slice(1)}`, activeCollection));
-    asArray(control.children).forEach((child, index) => visit(child, `${pointer}.children[${index}]`, activeCollection));
+    validateControlDisplay(control, pointer, activeContext);
+    if (control.attrs) walk(control.attrs, (node, attrPointer) => validateExpressionNode(node, `${pointer}.attrs${attrPointer.slice(1)}`, activeContext));
+    asArray(control.children).forEach((child, index) => visit(child, `${pointer}.children[${index}]`, activeContext));
   }
 
   asArray(page.children).forEach((child, index) => visit(child, `$.children[${index}]`, null));
@@ -1902,7 +1977,7 @@ function validateListExportItemSchema(item, pathPrefix, report) {
     issue(report, generatorFinalSeverity(report), "LIST_EXPORT_ITEM_LISTMODEL_MISSING", "Generated app/list resources should include ListExportItem.ListModel.", { path: `${pathPrefix}.ListModel` });
   } else {
     if (item.ListModel.Flags !== 1) {
-      issue(report, generatorFinalSeverity(report), "LISTMODEL_FLAGS_INVALID", "Product schema v2 requires CustomListModel.Flags = 1; missing or different values can fail import.", { path: `${pathPrefix}.ListModel.Flags`, value: item.ListModel.Flags });
+      issue(report, generatorFinalSeverity(report), "LISTMODEL_FLAGS_MISSING_OR_INVALID", "Product schema v2 requires CustomListModel.Flags = 1 on generated root and child list resources; missing or different values can fail import.", { path: `${pathPrefix}.ListModel.Flags`, value: item.ListModel.Flags });
     }
     if (item.ListModel.Status !== undefined && item.ListModel.Status !== 1) {
       issue(report, generatorFinalSeverity(report), "LISTMODEL_STATUS_INVALID", "Product schema v2 fixes CustomListModel.Status to 1 when present.", { path: `${pathPrefix}.ListModel.Status`, value: item.ListModel.Status });
@@ -2235,7 +2310,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
       if (viewUrl) viewUrls.add(viewUrl);
       validateDataListViewLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report, resourceType);
     }
-    if (Number(layout.Type) === 1) validateCustomFormLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report);
+    if (Number(layout.Type) === 1) validateCustomFormLayout(layout, fieldsByName, `${pathPrefix}.Layouts[${layoutIndex}]`, report, new Map(layouts.map((item) => [safeString(item.LayoutID), item]).filter(([id]) => Boolean(id))));
     if (Number(layout.Type) === 103 && isRoot) report.summary.dashboards += 1;
   });
   if (!isRoot && resourceType === "data list") validatePublicForms(item, fieldsByName, pathPrefix, report);
@@ -2465,7 +2540,7 @@ function validateViewExtField(ext, key, fieldsByName, layout, report, severity) 
   }
 }
 
-function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
+function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report, layoutsById = new Map()) {
   if (layout.LayoutView !== null && layout.LayoutView !== undefined) {
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "CUSTOM_FORM_LAYOUTVIEW_NOT_NULL", "Custom form LayoutView should be null.", { path: `${pathPrefix}.LayoutView`, title: layout.Title });
   }
@@ -2487,7 +2562,7 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
   for (const key of ["children", "attrs", "title", "filterVars", "ver", "tempVars"]) {
     if (form[key] === undefined) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_REQUIRED_KEY_MISSING", `Custom form Resource missing ${key}.`, { title: layout.Title, key });
   }
-  validateCustomFormActions(form, fieldsByName, pathPrefix, report, layout.Title);
+  validateCustomFormActions(form, fieldsByName, pathPrefix, report, layout.Title, layoutsById);
   validateUiStandardFormRoot(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix });
   validateUiStandardContainers(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix, requireFormBody: false });
   if (!asArray(form.children).length) {
@@ -2505,6 +2580,18 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report) {
     }
     if (control.fieldID && !fieldsByName.has(String(control.fieldID))) {
       issue(report, "warning", "CUSTOM_FORM_FIELDID_NOT_FOUND", "Custom form control fieldID does not resolve to a field.", { title: layout.Title, fieldID: control.fieldID });
+    }
+    if (DYNAMIC_DISPLAY_CONTROL_TYPES.has(safeString(control.type)) && safeString(control.attrs && control.attrs.source) === "4") {
+      const fieldName = safeString(control.attrs && control.attrs["obj-f"]);
+      const field = fieldsByName.get(fieldName);
+      const controlPath = `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}`;
+      if (!fieldName) {
+        issue(report, generatorFinalSeverity(report), "CUSTOM_FORM_DYNAMIC_FIELD_BINDING_MISSING", "Dynamic controls on Data List custom forms should include attrs.obj-f for the current list item field.", { title: layout.Title, path: controlPath, controlType: control.type });
+      } else if (!field) {
+        issue(report, generatorFinalSeverity(report), "CUSTOM_FORM_DYNAMIC_FIELD_BINDING_UNRESOLVED", "Dynamic controls on Data List custom forms should bind to a field on the current list item.", { title: layout.Title, path: controlPath, controlType: control.type, fieldName });
+      } else {
+        validateDynamicFieldType(safeString(control.type), field, report, generatorFinalSeverity(report), { title: layout.Title, path: controlPath, host: "data-list-custom-form", controlType: control.type });
+      }
     }
     if (safeString(control.type) === "list") validateCustomFormSubListControl(control, fieldsByName, report, { title: layout.Title, path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}` });
   }));
@@ -2594,7 +2681,7 @@ function collectCustomFormActionRefs(value) {
   return refs;
 }
 
-function validateCustomFormActions(form, fieldsByName, pathPrefix, report, title) {
+function validateCustomFormActions(form, fieldsByName, pathPrefix, report, title, layoutsById = new Map()) {
   if (form.tempVars !== undefined && !Array.isArray(form.tempVars)) {
     issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_TEMPVARS_NOT_ARRAY", "Custom form tempVars must be an array.", { title, path: `${pathPrefix}.LayoutInResources[0].Resource.tempVars` });
   }
@@ -2628,8 +2715,23 @@ function validateCustomFormActions(form, fieldsByName, pathPrefix, report, title
     }
     asArray(action && action.steps).forEach((step, stepIndex) => {
       if (!step || !step.type) issue(report, "warning", "CUSTOM_FORM_ACTION_STEP_TYPE_MISSING", "Custom form action step should include type.", { title, actionName: action.name || null, stepIndex });
-      if (step && step.type && !["setvar", "submit", "submit_form", "save", "close", "open", "message"].includes(String(step.type))) {
+      if (step && step.type && !["setvar", "submit", "submit_form", "save", "close", "open", "message", "print"].includes(String(step.type))) {
         issue(report, "warning", "CUSTOM_FORM_ACTION_STEP_UNKNOWN", "Custom form action step type is not yet export-learned.", { title, actionName: action.name || null, stepIndex, stepType: step.type });
+      }
+      if (safeString(step && step.type) === "print") {
+        const attrs = step.attrs || {};
+        const layoutId = safeString(attrs.layout);
+        if (!layoutId) {
+          issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_PRINT_ACTION_LAYOUT_MISSING", "Print page action step should include attrs.layout pointing to the target Print Page custom form.", { title, actionName: action.name || null, stepIndex });
+        } else if (!layoutsById.has(layoutId)) {
+          issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_PRINT_ACTION_LAYOUT_UNRESOLVED", "Print page action target layout must resolve to an existing custom form on the current list.", { title, actionName: action.name || null, stepIndex, layoutId });
+        } else {
+          const target = layoutsById.get(layoutId);
+          const targetName = safeString(target.Title || target.Name || target.LayoutName);
+          if (!/print/i.test(targetName)) issue(report, "warning", "CUSTOM_FORM_PRINT_ACTION_TARGET_NOT_PRINT_NAMED", "Print page action target resolves, but target form name does not indicate a print page; verify this is intentional.", { title, actionName: action.name || null, stepIndex, targetName });
+        }
+        if (safeString(attrs.printtype) && safeString(attrs.printtype) !== "select") issue(report, "warning", "CUSTOM_FORM_PRINT_ACTION_PRINTTYPE_UNSTUDIED", "The studied Print page action uses attrs.printtype = \"select\".", { title, actionName: action.name || null, stepIndex, printtype: attrs.printtype });
+        if (!asArray(attrs.listdataid).length) issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_PRINT_ACTION_LISTDATAID_MISSING", "Print page action should pass current record context through attrs.listdataid.", { title, actionName: action.name || null, stepIndex });
       }
       const refs = collectCustomFormActionRefs(step);
       refs.fields.forEach((fieldRef) => {
@@ -2656,9 +2758,11 @@ function validateCustomFormActions(form, fieldsByName, pathPrefix, report, title
 function validateCustomFormSubListControl(control, fieldsByName, report, context) {
   const variables = asArray(control.attrs && control.attrs["list-variables"]);
   const listFields = asArray(control.attrs && control.attrs["list-fields"]);
+  const layout = safeString(control.attrs && control.attrs["list-display-preference"]);
   if (!variables.length) issue(report, "warning", "CUSTOM_FORM_SUBLIST_VARIABLES_MISSING", "Sub-list custom form control should include attrs.list-variables.", context);
   if (!listFields.length) issue(report, "warning", "CUSTOM_FORM_SUBLIST_FIELDS_MISSING", "Sub-list custom form control should include attrs.list-fields.", context);
   const variableNames = new Set(variables.map((item) => safeString(item && item.name)).filter(Boolean));
+  const variableIds = new Set(variables.map((item) => safeString(item && item.id)).filter(Boolean));
   listFields.forEach((entry, index) => {
     const name = safeString(entry && entry.name);
     if (name && !variableNames.has(name)) issue(report, "warning", "CUSTOM_FORM_SUBLIST_FIELD_VARIABLE_NOT_FOUND", "Sub-list attrs.list-fields entry should resolve to attrs.list-variables by name.", { ...context, index, name });
@@ -2674,6 +2778,63 @@ function validateCustomFormSubListControl(control, fieldsByName, report, context
   if (boundField && ruleVariables.length && variables.length !== ruleVariables.length) {
     issue(report, "warning", "CUSTOM_FORM_SUBLIST_VARIABLE_COUNT_DIFFERS_FROM_FIELD_RULES", "Sub-list form control variable count differs from the parent field Rules.list-variables count.", { ...context, controlVariables: variables.length, fieldRuleVariables: ruleVariables.length });
   }
+  asArray(control.attrs && control.attrs["list-fields-summary"]).forEach((summary, index) => {
+    const fieldId = safeString(summary && summary.field);
+    if (fieldId && !variableIds.has(fieldId) && !variableNames.has(fieldId)) {
+      issue(report, "warning", "CUSTOM_FORM_SUBLIST_SUMMARY_FIELD_UNRESOLVED", "Sub-list summary field should resolve to the control's row variables. Data List custom-form Sub List summaries are product-understanding-backed unless separately export-proven.", { ...context, index, fieldId });
+    }
+  });
+  if (layout === "dynamic") {
+    const body = asArray(control.children).find((child) => child && child.type === "list-body");
+    if (!body) {
+      issue(report, "warning", "CUSTOM_FORM_SUBLIST_DYNAMIC_BODY_MISSING", "Dynamic content Sub List should include a list-body item template. Data List custom-form dynamic Sub List support is product-understanding-backed unless separately export-proven.", context);
+    } else {
+      let childCount = 0;
+      walkControls(body, (node) => {
+        if (node !== body && node.type) childCount += 1;
+        if (!node.attrs || node.attrs.list_field !== true) return;
+        const fieldBinding = safeString(node.binding);
+        if (fieldBinding && !variableIds.has(fieldBinding) && !variableNames.has(fieldBinding)) {
+          issue(report, "warning", "CUSTOM_FORM_SUBLIST_DYNAMIC_FIELD_UNRESOLVED", "Dynamic Sub List item-template field binding should resolve to a row variable.", { ...context, fieldBinding });
+        }
+        if (safeString(node.attrs.list_field_binding) !== safeString(control.binding)) {
+          issue(report, "warning", "CUSTOM_FORM_SUBLIST_DYNAMIC_PARENT_BINDING_MISMATCH", "Dynamic Sub List item-template field control should keep attrs.list_field_binding equal to the parent Sub List binding.", { ...context, fieldBinding });
+        }
+      });
+      if (!childCount) issue(report, "warning", "CUSTOM_FORM_SUBLIST_DYNAMIC_TEMPLATE_EMPTY", "Dynamic content Sub List should include child controls inside list-body.", context);
+    }
+    const actionLabels = [];
+    walkControls(control, (node) => {
+      if (node.type === "action_button") actionLabels.push(safeString(node.label || node.nv_label));
+    });
+    if (/print/i.test(safeString(context.title)) && actionLabels.some((label) => /add|import|delete|duplicate|insert|move/i.test(label))) {
+      issue(report, "warning", "CUSTOM_FORM_PRINT_SUBLIST_ACTIONS_PRESENT", "Print Page read-only Dynamic Sub Lists usually should not expose Add/Import/Edit row actions unless intentionally configured.", { ...context, buttons: actionLabels.filter(Boolean) });
+    }
+  } else if (layout && !["default", "responsive", "table", "table-view", "card", "card-view", "dynamic"].includes(layout)) {
+    issue(report, "warning", "CUSTOM_FORM_SUBLIST_LAYOUT_MODE_UNSTUDIED", "Sub-list custom form layout mode is not covered by current export-backed validation.", { ...context, layout });
+  }
+  const actions = control.attrs && control.attrs.actions;
+  if (actions !== undefined && !Array.isArray(actions)) {
+    issue(report, "warning", "CUSTOM_FORM_SUBLIST_ACTIONS_NOT_ARRAY", "Sub List list actions should be stored as attrs.actions[] when configured.", context);
+  }
+  const allowedStepTypes = new Set(["list_new", "list_import", "list_dup", "list_del", "list_move", "list_update"]);
+  asArray(actions).forEach((action, actionIndex) => {
+    if (!action || typeof action !== "object") {
+      issue(report, "warning", "CUSTOM_FORM_SUBLIST_ACTION_BAD_SHAPE", "Sub List list action entries should be objects.", { ...context, actionIndex });
+      return;
+    }
+    if (safeString(action.type) && safeString(action.type) !== "list") {
+      issue(report, "warning", "CUSTOM_FORM_SUBLIST_ACTION_TYPE_UNEXPECTED", "Approval Form export-proven Sub List actions use type = \"list\"; verify Data List custom-form variants separately.", { ...context, actionIndex, type: safeString(action.type) });
+    }
+    asArray(action.steps).forEach((step, stepIndex) => {
+      const stepType = safeString(step && step.type);
+      if (!stepType) {
+        issue(report, "warning", "CUSTOM_FORM_SUBLIST_ACTION_STEP_TYPE_MISSING", "Sub List list action steps should include type.", { ...context, actionIndex, stepIndex });
+      } else if (!allowedStepTypes.has(stepType)) {
+        issue(report, "warning", "CUSTOM_FORM_SUBLIST_ACTION_STEP_TYPE_UNSTUDIED", "Sub List list action step type is not export-proven by the current study.", { ...context, actionIndex, stepIndex, stepType });
+      }
+    });
+  });
 }
 
 function validateCustomFormDocLibraryControls(data, listsById, fieldsByList, report) {
@@ -2849,7 +3010,7 @@ function validateWorkflowDesignerCompatibility(form, def, report) {
   if (def.graphver === undefined) issue(report, severity, "WORKFLOW_DEF_GRAPHVER_MISSING", "Workflow designer expects DefResource.graphver metadata.", { form: formName, key });
 
   const shapes = collectShapes(def);
-  const workflowVariableIds = collectWorkflowVariableIds(def);
+  const workflowVariables = collectWorkflowVariables(def);
   shapes.forEach((shape, index) => {
     const type = shapeType(shape);
     const id = safeString(shape.id);
@@ -2864,35 +3025,47 @@ function validateWorkflowDesignerCompatibility(form, def, report) {
       if (!shape.target || !safeString(shape.target.id) || !safeString(shape.target.resourceid)) {
         issue(report, severity, "WORKFLOW_SEQUENCE_TARGET_INVALID", "SequenceFlow target should include id and resourceid.", { form: formName, key, index });
       }
-      validateSequenceFlowConditionVariables(shape, workflowVariableIds, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.conditioninfo` });
+      validateSequenceFlowConditionVariables(shape, workflowVariables, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.conditioninfo` });
     } else if (type === "SetVariableTask") {
-      validateSetVariableTaskTargets(shape, workflowVariableIds, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.variablesetting` });
+      validateSetVariableTaskTargets(shape, workflowVariables, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.variablesetting` });
     } else if (type === "MultiAssignmentTask" || type === "CandidateTask") {
-      validateTaskAssignmentVariables(shape, workflowVariableIds, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.usertaskassignment` });
+      validateTaskAssignmentVariables(shape, workflowVariables, report, { form: formName, key, index, path: `Data.Forms[].DefResource.childshapes[${index}].properties.usertaskassignment` });
     } else if (!isObject(shape.position)) {
       issue(report, severity, "WORKFLOW_NODE_POSITION_MISSING", "Workflow designer expects non-sequence workflow nodes to include position metadata.", { form: formName, key, index, type });
     }
   });
 }
 
-function collectWorkflowVariableIds(def) {
+function collectWorkflowVariables(def) {
   const ids = new Set();
+  const keys = new Set();
+  const byId = new Map();
+  function addVariable(variable) {
+    if (!isObject(variable)) return;
+    const id = safeString(variable.id);
+    const idx = safeString(variable.idx);
+    const name = safeString(variable.name);
+    if (id) {
+      ids.add(id);
+      keys.add(id);
+      byId.set(id, { id, idx, name });
+    }
+    if (idx) keys.add(idx);
+    if (name) keys.add(name);
+  }
   for (const variable of asArray(def && def.variables && def.variables.basic)) {
-    const id = safeString(variable && variable.id);
-    if (id) ids.add(id);
+    addVariable(variable);
   }
   for (const listref of asArray(def && def.variables && def.variables.listref)) {
-    const id = safeString(listref && listref.id);
-    if (id) ids.add(id);
+    addVariable(listref);
     for (const field of asArray(listref && listref.fields)) {
-      const fieldId = safeString(field && field.id);
-      if (fieldId) ids.add(fieldId);
+      addVariable(field);
     }
   }
-  return ids;
+  return { ids, keys, byId };
 }
 
-function validateSequenceFlowConditionVariables(shape, workflowVariableIds, report, context) {
+function validateSequenceFlowConditionVariables(shape, workflowVariables, report, context) {
   const conditions = asArray(shape && shape.properties && shape.properties.conditioninfo);
   conditions.forEach((condition, conditionIndex) => {
     for (const side of ["left", "right"]) {
@@ -2900,41 +3073,55 @@ function validateSequenceFlowConditionVariables(shape, workflowVariableIds, repo
       const token = isObject(operand) && isObject(operand.value) ? operand.value : null;
       if (!token || token.exprType !== "variable") continue;
       const id = safeString(token.id);
-      if (id && !workflowVariableIds.has(id)) {
+      const name = safeString(token.name);
+      const key = id || name;
+      if (key && !workflowVariables.keys.has(key)) {
         issue(report, generatorFinalSeverity(report), "WORKFLOW_SEQUENCE_CONDITION_VARIABLE_UNRESOLVED", "SequenceFlow condition references a workflow variable that is not present in DefResource.variables.", {
           ...context,
-          path: `${context.path}[${conditionIndex}].${side}.value.id`,
+          path: `${context.path}[${conditionIndex}].${side}.value`,
           node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
-          variableId: id,
+          variableId: id || null,
+          variableName: name || null,
         });
       }
     }
   });
 }
 
-function validateSetVariableTaskTargets(shape, workflowVariableIds, report, context) {
+function validateSetVariableTaskTargets(shape, workflowVariables, report, context) {
   asArray(shape && shape.properties && shape.properties.variablesetting).forEach((setting, settingIndex) => {
     const id = safeString(setting && setting.id);
-    if (id && !workflowVariableIds.has(id)) {
+    const idx = safeString(setting && setting.idx);
+    const declared = workflowVariables.byId.get(id);
+    if (id && !workflowVariables.ids.has(id)) {
       issue(report, generatorFinalSeverity(report), "SETVARIABLE_UNKNOWN_VARIABLE", "SetVariableTask references a workflow variable that is not present in DefResource.variables.", {
         ...context,
         path: `${context.path}[${settingIndex}].id`,
         node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
         variableId: id,
       });
+    } else if (declared && idx && declared.idx && idx !== declared.idx) {
+      issue(report, generatorFinalSeverity(report), "SETVARIABLE_UNKNOWN_VARIABLE", "SetVariableTask target idx does not match the declared workflow variable idx.", {
+        ...context,
+        path: `${context.path}[${settingIndex}].idx`,
+        node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
+        variableId: id,
+        variableIdx: idx,
+        declaredIdx: declared.idx,
+      });
     }
   });
 }
 
-function validateTaskAssignmentVariables(shape, workflowVariableIds, report, context) {
+function validateTaskAssignmentVariables(shape, workflowVariables, report, context) {
   asArray(shape && shape.properties && shape.properties.usertaskassignment).forEach((assignment, assignmentIndex) => {
     const text = JSON.stringify(assignment || {});
     const variableIds = [...text.matchAll(/\\"id\\":\\"([^"\\]+)\\"|"id":"([^"]+)"/g)]
       .map((match) => safeString(match[1] || match[2]))
       .filter((id) => id && !["FlowNo"].includes(id));
     for (const id of variableIds) {
-      if (workflowVariableIds.has(id)) continue;
-      issue(report, generatorFinalSeverity(report), "TASK_ASSIGNMENT_VARIABLE_UNRESOLVED", "Task assignment references a workflow variable that is not present in DefResource.variables.", {
+      if (workflowVariables.keys.has(id)) continue;
+      issue(report, generatorFinalSeverity(report), "ASSIGNMENT_TASK_VARIABLE_UNRESOLVED", "Task assignment references a workflow variable that is not present in DefResource.variables.", {
         ...context,
         path: `${context.path}[${assignmentIndex}]`,
         node: safeString(shape && shape.properties && shape.properties.name) || shapeId(shape),
@@ -3088,6 +3275,7 @@ function validateApprovalDef(def, form, report, listsById = new Map(), fieldsByL
       validateUiStandardFormRoot(formdef, report, { surface: "approval form page", title: page.title || page.name || page.id, form: form.Name });
       validateUiStandardContainers(formdef, report, { surface: "approval form page", title: page.title || page.name || page.id, form: form.Name, requireFormBody: true });
       validateApprovalFormLayoutQuality(formdef, page, form, report, index);
+      validateApprovalSubListControls(def, formdef, page, form, report, index);
       asArray(formdef.children).forEach((child, childIndex) => {
         walkControls(child, (control, pointer) => {
           validateEmbeddedControlSchema(control, report, {
@@ -3103,6 +3291,193 @@ function validateApprovalDef(def, form, report, listsById = new Map(), fieldsByL
     }
   });
   validateApprovalTaskPageReferences(def, form, report, pageById, taskPageIds, requestPageIds);
+}
+
+function validateApprovalSubListControls(def, formdef, page, form, report, pageIndex) {
+  const severity = generatorFinalSeverity(report, "warning");
+  const formName = safeString(form.Name || form.Key);
+  const pageName = safeString(page.title || page.name || page.id || pageIndex);
+  const basicVars = new Map(asArray(def.variables && def.variables.basic).map((variable) => [safeString(variable && variable.id), variable]));
+  const listrefs = new Map(asArray(def.variables && def.variables.listref).map((listref) => [safeString(listref && listref.id), listref]));
+
+  asArray(formdef.children).forEach((child, childIndex) => {
+    walkControls(child, (control, pointer) => {
+      if (control.type !== "list" || !control.attrs) return;
+      const path = `Data.Forms[${formName}].pageurls[${pageIndex}].formdef.children[${childIndex}]${pointer.slice(1)}`;
+      const binding = safeString(control.binding);
+      const listVar = basicVars.get(binding);
+      const listref = listVar ? listrefs.get(safeString(listVar.value)) : null;
+      if (!binding || !listVar || listVar.type !== "list" || !listref) {
+        issue(report, severity, "SUBLIST_ASSOCIATED_VARIABLE_UNRESOLVED", "Sub List control must bind to a variables.basic list variable whose value resolves to variables.listref.", { form: formName, page: pageName, path, binding });
+        return;
+      }
+
+      const fields = new Set(asArray(listref.fields).map((field) => safeString(field && field.id)).filter(Boolean));
+      const listFields = asArray(control.attrs["list-fields"]);
+      const listVariables = asArray(control.attrs["list-variables"]);
+      if (!listFields.length) issue(report, severity, "SUBLIST_FIELDS_MISSING", "Sub List should include attrs[\"list-fields\"] entries for the displayed row fields.", { form: formName, page: pageName, path });
+      if (!listVariables.length) issue(report, severity, "SUBLIST_VARIABLES_MISSING", "Sub List should include attrs[\"list-variables\"] entries for the row schema.", { form: formName, page: pageName, path });
+
+      for (const field of listFields) {
+        const fieldId = safeString(field && field.id);
+        if (fieldId && !fields.has(fieldId)) issue(report, severity, "SUBLIST_FIELD_UNRESOLVED", "Sub List displayed field does not resolve to the associated listref field set.", { form: formName, page: pageName, path, fieldId });
+      }
+
+      validateApprovalSubListSummaries(control, fields, formName, pageName, path, report);
+      validateApprovalSubListDynamicTemplate(control, fields, binding, formName, pageName, path, report, severity);
+      validateApprovalSubListActions(control, formName, pageName, path, report, severity);
+    });
+  });
+}
+
+function validateApprovalSubListSummaries(control, fields, formName, pageName, path, report) {
+  asArray(control.attrs && control.attrs["list-fields-summary"]).forEach((summary, index) => {
+    const fieldId = safeString(summary && summary.field);
+    if (!fieldId || !fields.has(fieldId)) {
+      issue(report, generatorFinalSeverity(report, "warning"), "SUBLIST_SUMMARY_FIELD_UNRESOLVED", "Sub List summary field must resolve to a row field in the associated listref.", { form: formName, page: pageName, path: `${path}.attrs.list-fields-summary[${index}]`, fieldId });
+    }
+  });
+}
+
+function validateApprovalSubListDynamicTemplate(control, fields, binding, formName, pageName, path, report, severity) {
+  const layout = safeString(control.attrs && control.attrs["list-display-preference"]);
+  if (layout && !["default", "responsive", "table", "table-view", "card", "card-view", "dynamic"].includes(layout)) {
+    issue(report, "warning", "SUBLIST_LAYOUT_MODE_UNSTUDIED", "Sub List layout mode is not covered by current export-backed validation.", { form: formName, page: pageName, path: `${path}.attrs.list-display-preference`, layout });
+  }
+  if (layout !== "dynamic") return;
+
+  const body = asArray(control.children).find((child) => child && child.type === "list-body");
+  if (!body) {
+    issue(report, severity, "SUBLIST_DYNAMIC_BODY_MISSING", "Dynamic content Sub List must include a list-body template container.", { form: formName, page: pageName, path: `${path}.children` });
+    return;
+  }
+  let childControlCount = 0;
+  const bodyGrids = [];
+  walkControls(body, (node, pointer) => {
+    if (node !== body && node.type) childControlCount += 1;
+    if (node.type === "flex_grid" || node.type === "grid") bodyGrids.push({ node, pointer });
+    if (!node.attrs || node.attrs.list_field !== true) return;
+    const nodePath = `${path}.children[list-body]${pointer.slice(1)}`;
+    if (safeString(node.attrs.list_field_binding) !== binding) {
+      issue(report, severity, "SUBLIST_DYNAMIC_FIELD_BINDING_MISMATCH", "Dynamic Sub List field controls must keep attrs.list_field_binding equal to the parent Sub List binding.", { form: formName, page: pageName, path: `${nodePath}.attrs.list_field_binding`, expected: binding, actual: safeString(node.attrs.list_field_binding) });
+    }
+    const fieldBinding = safeString(node.binding);
+    if (fieldBinding && !fields.has(fieldBinding)) {
+      issue(report, severity, "SUBLIST_DYNAMIC_FIELD_UNRESOLVED", "Dynamic Sub List item template field binding does not resolve to the associated listref fields.", { form: formName, page: pageName, path: `${nodePath}.binding`, fieldBinding });
+    }
+  });
+  if (!childControlCount) issue(report, severity, "SUBLIST_DYNAMIC_TEMPLATE_EMPTY", "Dynamic content Sub List should include child controls inside list-body.", { form: formName, page: pageName, path: `${path}.children` });
+  if (!displayLabelDisabled(control.displayLabel) && !displayLabelDisabled(control.attrs && control.attrs.displayLabel)) {
+    issue(report, "warning", "SUBLIST_DYNAMIC_CAPTION_VISIBLE", "Generated table-style Dynamic Sub Lists should turn off Display caption with displayLabel = [null,false].", { form: formName, page: pageName, path: `${path}.displayLabel` });
+  }
+  if (asArray(control.attrs && control.attrs["list-fields"]).length >= 3 && !bodyGrids.length) {
+    issue(report, "warning", "SUBLIST_DYNAMIC_TABLE_BODY_GRID_MISSING", "Generated table-style Dynamic Sub Lists should use a grid/flex_grid as the first list-body layout control so header and row columns align.", { form: formName, page: pageName, path: `${path}.children[list-body]` });
+  }
+  for (const { node, pointer } of bodyGrids) {
+    if (!displayLabelDisabled(node.displayLabel) && !displayLabelDisabled(node.attrs && node.attrs.displayLabel)) {
+      issue(report, "warning", "SUBLIST_DYNAMIC_BODY_GRID_CAPTION_VISIBLE", "Grid/flex_grid controls inside Dynamic Sub List bodies should turn off Display caption unless a visible grid title is intentional.", { form: formName, page: pageName, path: `${path}.children[list-body]${pointer.slice(1)}.displayLabel` });
+    }
+    const columns = node.attrs && node.attrs.columns;
+    const columnCount = isObject(columns)
+      ? Math.max(0, ...Object.keys(columns).map((key) => Number(key)).filter(Number.isFinite))
+      : asArray(columns).length;
+    if (columnCount && asArray(node.children).length && asArray(node.children).length < columnCount) {
+      issue(report, "warning", "SUBLIST_DYNAMIC_BODY_GRID_COLUMN_CHILDREN_MISMATCH", "Dynamic Sub List body grid has fewer child controls than configured column tracks; Designer/render alignment may be fragile.", { form: formName, page: pageName, path: `${path}.children[list-body]${pointer.slice(1)}.children` });
+    }
+  }
+
+  const css = safeString(control.attrs && control.attrs.common && control.attrs.common.css);
+  if (css.includes(".dynamic-list .list-footer") && !css.includes("position: absolute")) {
+    issue(report, "warning", "SUBLIST_DYNAMIC_FOOTER_CSS_UNEXPECTED", "A .dynamic-list .list-footer custom CSS rule is present but differs from the export-proven fixed-footer pattern; preserve intentionally but verify layout.", { form: formName, page: pageName, path: `${path}.attrs.common.css` });
+  }
+}
+
+function validateApprovalSubListActions(control, formName, pageName, path, report, severity) {
+  const actions = control.attrs && control.attrs.actions;
+  if (actions === undefined) return;
+  if (!Array.isArray(actions)) {
+    issue(report, severity, "SUBLIST_ACTIONS_NOT_ARRAY", "Sub List attrs.actions must be an array when list actions are configured.", { form: formName, page: pageName, path: `${path}.attrs.actions` });
+    return;
+  }
+  const allowedStepTypes = new Set(["list_new", "list_import", "list_dup", "list_del", "list_move", "list_update"]);
+  const actionIds = new Set(actions.map((action) => safeString(action && action.id)).filter(Boolean));
+  const actionById = new Map(actions.map((action) => [safeString(action && action.id), action]).filter(([id]) => Boolean(id)));
+  actions.forEach((action, actionIndex) => {
+    const actionPath = `${path}.attrs.actions[${actionIndex}]`;
+    if (!isObject(action)) {
+      issue(report, severity, "SUBLIST_ACTION_BAD_SHAPE", "Sub List action entries must be objects.", { form: formName, page: pageName, path: actionPath });
+      return;
+    }
+    if (safeString(action.type) !== "list") issue(report, "warning", "SUBLIST_ACTION_TYPE_UNEXPECTED", "Export-proven Sub List actions use type = \"list\".", { form: formName, page: pageName, path: `${actionPath}.type`, type: safeString(action.type) });
+    if (!safeString(action.id)) issue(report, "warning", "SUBLIST_ACTION_ID_MISSING", "Sub List action should include an id so action_button.attrs.control_action can resolve.", { form: formName, page: pageName, path: `${actionPath}.id` });
+    if (!safeString(action.name)) issue(report, "warning", "SUBLIST_ACTION_NAME_MISSING", "Sub List action should include a readable name.", { form: formName, page: pageName, path: `${actionPath}.name` });
+    const steps = asArray(action.steps);
+    if (!steps.length) {
+      issue(report, severity, "SUBLIST_ACTION_STEPS_EMPTY", "Sub List action must include at least one step definition.", { form: formName, page: pageName, path: `${actionPath}.steps` });
+      return;
+    }
+    steps.forEach((step, stepIndex) => {
+      const stepPath = `${actionPath}.steps[${stepIndex}]`;
+      if (!isObject(step)) {
+        issue(report, severity, "SUBLIST_ACTION_STEP_BAD_SHAPE", "Sub List action steps must be objects.", { form: formName, page: pageName, path: stepPath });
+        return;
+      }
+      const stepType = safeString(step.type);
+      if (!stepType) issue(report, severity, "SUBLIST_ACTION_STEP_TYPE_MISSING", "Sub List action steps must include type.", { form: formName, page: pageName, path: `${stepPath}.type` });
+      else if (!allowedStepTypes.has(stepType)) issue(report, "warning", "SUBLIST_ACTION_STEP_TYPE_UNSTUDIED", "Sub List action step type is not export-proven by the current study.", { form: formName, page: pageName, path: `${stepPath}.type`, stepType });
+      if (stepType === "list_new" && step.attrs && step.attrs.position !== undefined && !["0", "1"].includes(String(step.attrs.position))) {
+        issue(report, "warning", "SUBLIST_ACTION_INSERT_POSITION_UNEXPECTED", "Insert-before/after Sub List actions use list_new with attrs.position \"0\" or \"1\" in the studied export.", { form: formName, page: pageName, path: `${stepPath}.attrs.position`, position: step.attrs.position });
+      }
+      if (stepType === "list_move" && step.attrs && step.attrs.moveMode !== undefined && String(step.attrs.moveMode) !== "2") {
+        issue(report, "warning", "SUBLIST_ACTION_MOVE_MODE_UNEXPECTED", "Move-down Sub List actions use list_move with attrs.moveMode \"2\" in the studied export; move-up uses list_move without attrs.", { form: formName, page: pageName, path: `${stepPath}.attrs.moveMode`, moveMode: step.attrs.moveMode });
+      }
+    });
+  });
+
+  walkControls(control, (node, pointer) => {
+    const ref = safeString(node.attrs && node.attrs.control_action);
+    if (ref && !actionIds.has(ref)) {
+      issue(report, severity, "SUBLIST_ACTION_BUTTON_TARGET_UNRESOLVED", "Action buttons inside a Sub List item/footer template should resolve to attrs.actions[].id on the same Sub List.", { form: formName, page: pageName, path: `${path}${pointer.slice(1)}.attrs.control_action` });
+    }
+  });
+
+  const dropbars = [];
+  walkControls(control, (node, pointer) => {
+    if (node.type === "dropbar") dropbars.push({ node, pointer });
+  });
+  dropbars.forEach(({ node: dropbar, pointer: dropbarPointer }) => {
+    const menuLabels = [];
+    const menuStepTypes = [];
+    walkControls(dropbar, (node, pointer) => {
+      if (node.type !== "action_button") return;
+      const label = safeString(node.label || node.nv_label);
+      const action = actionById.get(safeString(node.attrs && node.attrs.control_action));
+      const stepTypes = asArray(action && action.steps).map((step) => safeString(step && step.type)).filter(Boolean);
+      menuLabels.push(label);
+      menuStepTypes.push(...stepTypes);
+      if (!action) {
+        issue(report, severity, "SUBLIST_ROW_MENU_ACTION_TARGET_UNRESOLVED", "Row operation menu action buttons should bind to local Sub List attrs.actions[] entries.", { form: formName, page: pageName, path: `${path}${dropbarPointer.slice(1)}${pointer.slice(1)}.attrs.control_action`, label });
+      }
+    });
+    const duplicated = menuLabels.filter((label, index) => label && menuLabels.indexOf(label) !== index);
+    if (duplicated.length) {
+      issue(report, "warning", "SUBLIST_ROW_MENU_DUPLICATE_LABELS", "Row operation menu contains duplicate labels; verify the intended menu action list.", { form: formName, page: pageName, path: `${path}${dropbarPointer.slice(1)}`, labels: [...new Set(duplicated)] });
+    }
+    if (menuLabels.includes("Delete")) {
+      const visibleDeleteOutsideMenu = [];
+      walkControls(control, (node, pointer) => {
+        if (pointer.startsWith(dropbarPointer)) return;
+        if (node.type === "action_button" && safeString(node.label || node.nv_label) === "Delete") visibleDeleteOutsideMenu.push(pointer);
+        if (node.attrs && actionById.get(safeString(node.attrs.control_action))?.name === "Delete item" && !pointer.startsWith(dropbarPointer)) visibleDeleteOutsideMenu.push(pointer);
+      });
+      if (visibleDeleteOutsideMenu.length) {
+        issue(report, "warning", "SUBLIST_ROW_MENU_DELETE_DUPLICATES_VISIBLE_DELETE", "Delete is available both in the row operation menu and as a visible row action; the generated table pattern usually keeps Delete visible and omits it from the menu.", { form: formName, page: pageName, path: `${path}${dropbarPointer.slice(1)}` });
+      }
+    }
+    if (menuLabels.some((label) => /^Insert |^Move /i.test(label)) && !menuStepTypes.some((type) => type === "list_new" || type === "list_move")) {
+      issue(report, "warning", "SUBLIST_ROW_MENU_ORDER_ACTION_STEPS_MISSING", "Insert/move row operation menu labels should resolve to list_new position or list_move action steps.", { form: formName, page: pageName, path: `${path}${dropbarPointer.slice(1)}`, labels: menuLabels });
+    }
+  });
 }
 
 function validateApprovalPublishFlags(def, form, report) {

@@ -258,6 +258,16 @@ Source evidence:
 
 Redaction note: this follow-up records only safe statistics and synthetic normalized references. It does not preserve raw `.yapk` files, raw `Resource` values, `Sign` values, tenant IDs, app/list/package IDs, private URLs, API keys, or raw API responses.
 
+## From-Scratch Generation Hardening Follow-up
+
+Follow-up date: 2026-05-28
+
+The Business Travel generated-app/YAPK-from-scratch attempt added a stricter boundary: signing a generated `.yapk` is not enough. The inner generated `AppPackageInfo` must pass app-creation, package, graph, workflow publish-readiness, and placeholder checks before Brotli/base64/sign.
+
+Reusable hardening rules are captured in `docs/studies/yapk-from-scratch-generation-hardening.md` with safe normalized references under `docs/studies/normalized/yapk-from-scratch-generation-hardening/`.
+
+Content validators should block generated-final packages before signing when root or child list flags are missing/non-1, sequence-flow conditions reference stale variables, Set Variable targets are undeclared, assignment expressions reference undeclared variables, direct position assignments contain placeholders or non-numeric IDs, or any required placeholders remain unresolved.
+
 ### API Findings
 
 The product-provided utility endpoints establish three relevant operations:

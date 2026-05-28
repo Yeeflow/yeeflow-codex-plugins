@@ -6,6 +6,7 @@ const DEFAULT_REFERENCE_PATH = path.join(__dirname, "workflow-action-configurati
 const SECRET_KEY_RE = /(token|secret|password|credential|clientsecret|api[_-]?key|accesskey|authorization|bearer|pwd)/i;
 const UNSAFE_ACTION_RE = /^(AI|AzureOpenAI|Connector|HttpRequest|AcrobatSign|DocuSign|PandaDoc)$/i;
 const EMAIL_RE = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i;
+const REQUIRED_PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
 
 let cachedReference = null;
 
@@ -311,7 +312,14 @@ function validateMultiAssignmentTaskAssignees(issues, shape, pointer, options) {
         method,
       });
     }
-    if (type === "position" && method === "position" && !valueMissing(assignment.position) && !/^\d+$/.test(safeString(assignment.position))) {
+    if (type === "position" && !valueMissing(assignment.position) && REQUIRED_PLACEHOLDER_RE.test(safeString(assignment.position))) {
+      issue(issues, severity, "ASSIGNMENT_TASK_POSITION_ID_INVALID", "Position assignment must not contain required-ID placeholders; use a real numeric tenant position ID or a post-import binding/fallback.", {
+        path: `${itemPath}.position`,
+        nodeId: shapeId(shape),
+        method,
+        value: safeString(assignment.position),
+      });
+    } else if (type === "position" && method === "position" && !valueMissing(assignment.position) && !/^\d+$/.test(safeString(assignment.position))) {
       issue(issues, severity, "ASSIGNMENT_TASK_POSITION_ID_INVALID", "Direct position assignment should use a numeric position ID; placeholders or labels can block workflow publish.", {
         path: `${itemPath}.position`,
         nodeId: shapeId(shape),
@@ -451,6 +459,14 @@ function validateCandidateTaskReceivers(issues, shape, pointer, options) {
         path: `${itemPath}.position`,
         nodeId: shapeId(shape),
         method,
+      });
+    }
+    if (type === "position" && !valueMissing(receiver.position) && REQUIRED_PLACEHOLDER_RE.test(safeString(receiver.position))) {
+      issue(issues, severity, "CLAIM_TASK_POSITION_ID_INVALID", "Position-based Claim Task receiver must not contain required-ID placeholders; use a real numeric tenant position ID or a post-import binding/fallback.", {
+        path: `${itemPath}.position`,
+        nodeId: shapeId(shape),
+        method,
+        value: safeString(receiver.position),
       });
     }
     if (["direct", "positionorg", "positionloc"].includes(method) && valueMissing(receiver.value)) {

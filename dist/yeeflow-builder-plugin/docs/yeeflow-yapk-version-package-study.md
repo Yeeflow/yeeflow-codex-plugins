@@ -2,8 +2,8 @@
 
 ## Source
 
-- Input package: `<downloads>/Employee Family Implant Query Filter Expression Fix 20260517-Employee Family Implant v1.0.yapk`
-- Related new-application package used for comparison: `<downloads>/Employee Family Implant Query Filter Expression Fix 20260517.yap`
+- Input package: `/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517-Employee Family Implant v1.0.yapk`
+- Related new-application package used for comparison: `/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517.yap`
 - Study date: 2026-05-17
 
 ## Summary
@@ -78,7 +78,7 @@ Current limitation: the observed `.yapk` app resource is opaque. Codex can inspe
 
 Output:
 
-`<downloads>/Employee Family Implant v1.1 upgrade test.yapk`
+`/Users/Renger/Downloads/Employee Family Implant v1.1 upgrade test.yapk`
 
 This is a metadata-only proof package. It preserves:
 
@@ -126,7 +126,7 @@ Runtime test date: 2026-05-17
 
 Tested package:
 
-`<downloads>/Employee Family Implant v1.1 upgrade test.yapk`
+`/Users/Renger/Downloads/Employee Family Implant v1.1 upgrade test.yapk`
 
 Target application:
 
@@ -163,8 +163,8 @@ For `.yapk`, do not edit wrapper metadata, `Resource`, or `Sign` unless the pack
 
 Additional Yeeflow-generated packages from the same application lineage were compared:
 
-- `<downloads>/Employee Family Implant Query Filter Expression Fix 20260517-Employee Family Implant v1.2.yapk`
-- `<downloads>/Employee Family Implant Query Filter Expression Fix 20260517-Employee Family Implant v1.3.yapk`
+- `/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517-Employee Family Implant v1.2.yapk`
+- `/Users/Renger/Downloads/Employee Family Implant Query Filter Expression Fix 20260517-Employee Family Implant v1.3.yapk`
 
 Comparison output:
 
@@ -257,6 +257,16 @@ Source evidence:
   - Yeeflow-generated follow-up version package: `Application Settings Runtime Baseline - onheader-Mena Test.yapk`
 
 Redaction note: this follow-up records only safe statistics and synthetic normalized references. It does not preserve raw `.yapk` files, raw `Resource` values, `Sign` values, tenant IDs, app/list/package IDs, private URLs, API keys, or raw API responses.
+
+## From-Scratch Generation Hardening Follow-up
+
+Follow-up date: 2026-05-28
+
+The Business Travel generated-app/YAPK-from-scratch attempt added a stricter boundary: signing a generated `.yapk` is not enough. The inner generated `AppPackageInfo` must pass app-creation, package, graph, workflow publish-readiness, and placeholder checks before Brotli/base64/sign.
+
+Reusable hardening rules are captured in `docs/studies/yapk-from-scratch-generation-hardening.md` with safe normalized references under `docs/studies/normalized/yapk-from-scratch-generation-hardening/`.
+
+Content validators should block generated-final packages before signing when root or child list flags are missing/non-1, sequence-flow conditions reference stale variables, Set Variable targets are undeclared, assignment expressions reference undeclared variables, direct position assignments contain placeholders or non-numeric IDs, or any required placeholders remain unresolved.
 
 ### API Findings
 

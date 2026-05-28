@@ -7,11 +7,13 @@ description: Standardize Yeeflow package validation before import or runtime tes
 
 Business Travel runtime-practice update: `yap-v1-schema_v2.json` and the Business Travel repair pass make `ListModel.Flags = 1` mandatory for generated root and child list-like resources. `ListModel.Status` is schema-fixed to `1` when present, and `ListModel.Type` must be one of `1`, `16`, `32`, `64`, `128`, or `1024`. Import, app open, workflow open, and workflow publish are user-proven for the fixed Business Travel package only. Workflow publish blockers must still be caught separately for new packages: sequence-flow conditions, Set Variable targets, task-assignment expressions, form bindings, and summaries must reference declared workflow variables; direct position assignees require numeric position IDs and must never use placeholders such as `__POSITION_ID_REQUIRED_*__`. Workflow execution, request submission, routing, data mutation, and true Finance Manager assignment remain unproven.
 
+YAPK-from-scratch validation update: validate generated `.yapk` content before signing. Decoded `AppPackageInfo` must pass package/app creation checks, graph checks, workflow publish-readiness checks, and placeholder scans before Brotli/base64/sign. Treat `YAPK_CONTENT_VALIDATION_FAILED_BEFORE_SIGNING` as blocking. `setsign` and `verifysign` prove wrapper/resource integrity only; they do not prove generated-app correctness, workflow publish-readiness, workflow execution, or tenant-specific routing.
+
 ## Core Rule
 
 Validate before import. Do not runtime-test a package with blocking structural, graph, wrapper, workflow, list, field, materialization, FlowKey, or unsafe `.yapk` issues.
 
-New application creation may output `.yap`. Existing app upgrade `.yapk` validation should defer to `yeeflow-yapk-package-generator`. Product schema defines `.yapk` as `AppExportPackageInfo` with `Resource` described as Brotli-compressed `AppPackageInfo`, but readable historical artifacts did not verify that decode path in the current study. Treat `.yapk` content generation as unsupported until Resource decode/edit/encode/sign/verify/runtime-upgrade is proven.
+New application creation may output `.yap`. Existing app upgrade `.yapk` validation should defer to `yeeflow-yapk-package-generator`. Product schema defines `.yapk` as `AppExportPackageInfo` with `Resource` described as Brotli-compressed `AppPackageInfo`. Treat `.yapk` content generation as proof-boundary-sensitive until the exact generated content type passes Resource decode/edit/encode/sign/verify/runtime-upgrade.
 
 Validation is not runtime proof. When validating a newly learned capability, report whether the package is export-proven, validator-backed, import-proven, configuration-visible, render-only, partial, or runtime-proven. Use validator hard errors only for proven invalid generated shapes; otherwise prefer warnings/dependencies and require a focused runtime baseline before broad runtime claims.
 
