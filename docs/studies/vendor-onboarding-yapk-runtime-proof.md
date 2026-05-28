@@ -10,6 +10,8 @@ This study records the local generation and validation status for the Vendor Onb
 - V1.2 install-compatibility output package: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.2-install-compatible.yapk`
 - V1.3 export-shape output package: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.3-export-shape.yapk`
 - YAP fallback output package: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.yap`
+- YAP numeric `MainListType` candidate: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.1-mainlisttype.yap`
+- YAP data-model isolation candidate: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.2-data-model.yap`
 - Generator: `generate-vendor-onboarding-compliance-yapk.mjs`
 - Install-compatibility generator: `generate-vendor-onboarding-install-compatible-yapk.mjs`
 - Branch: `codex/vendor-onboarding-yapk-runtime-proof`
@@ -19,6 +21,8 @@ This study records the local generation and validation status for the Vendor Onb
 - V1.2 generated status: server-signed install-compatibility candidate using API-issued IDs and Yeeflow-style Brotli flush encoding; Yeeflow created an application tile but marked the install failed during materialization
 - V1.3 generated status: server-signed export-shape candidate that keeps the V1.2 accepted wrapper/signing/encoding pattern and restores export-like list, field, and layout metadata
 - YAP fallback status: generated from the same decoded application resource for normal application import testing after the YAPK path failed materialization
+- YAP V1.1 status: same full generated application as V1 YAP with `Resource.MainListType` normalized from string `classes` to numeric `1024`
+- YAP V1.2 data-model status: import-isolation candidate that removes the rich dashboard/custom-page surfaces and app groups, keeping the five data lists, fields, simple list forms, list views, and a minimal Home page
 
 ## Implemented Data Lists
 
@@ -164,6 +168,22 @@ After the V1.3 YAPK still showed `Install failed`, the same generated applicatio
 
 This `.yap` package is the recommended next manual import candidate because the `.yapk` path is now known to fail during application materialization.
 
+The first `.yap` import test also failed with `Created failed`. Inspection found that the wrapper was accepted into the import dialog but the create step still rejected the generated application resource. Two follow-up `.yap` candidates were generated:
+
+- `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.1-mainlisttype.yap`
+  - Changes only `Resource.MainListType` from string `classes` to numeric `1024`.
+  - Keeps the full rich UI payload.
+  - Use this only to test whether the root app type encoding was the blocker.
+- `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.2-data-model.yap`
+  - Recommended next test.
+  - Uses numeric `MainListType = 1024`.
+  - Removes the rich dashboard, rich custom forms, advanced UI controls, and app groups.
+  - Keeps 5 data lists, 59 fields, lookup relationships, simple list views/forms, and one minimal Home page.
+  - Import-readiness suite passed with warnings and 0 errors.
+  - Inspection summary: 5 child lists, 0 app groups, 1 root layout, 15 child layouts, 79 replace IDs.
+
+If V1.2 data-model imports, the failure is isolated to the rich UI/dashboard/custom-form layer rather than the core data model.
+
 ## Signing And Verification
 
 The generator uses the standard Yeeflow API base URL behavior through `scripts/yeeflow-env-utils.mjs`.
@@ -181,7 +201,7 @@ The generator uses the standard Yeeflow API base URL behavior through `scripts/y
 - V1.3 server signature shape: 32-byte base64 value
 - V1.3 `verifysign` status: passed
 
-The V1 package remains the locally validated baseline. The V1.1 package proved signing and verification but failed package install. The V1.2 package proved wrapper/upload acceptance but failed materialization. The V1.3 package preserved the accepted wrapper pattern and restored export-like metadata but still failed materialization. The `.yap` fallback is the current recommended application-import candidate generated from the same approved Vendor Onboarding app graph.
+The V1 package remains the locally validated baseline. The V1.1 package proved signing and verification but failed package install. The V1.2 package proved wrapper/upload acceptance but failed materialization. The V1.3 package preserved the accepted wrapper pattern and restored export-like metadata but still failed materialization. The full `.yap` fallback also reached the import dialog but failed create. The `.yap` V1.2 data-model isolation package is the current recommended application-import candidate.
 
 ## Known Gaps
 
@@ -189,20 +209,21 @@ The V1 package remains the locally validated baseline. The V1.1 package proved s
 - No runtime page-open proof has been performed yet.
 - V1.2 reached application-tile creation but failed materialization.
 - V1.3 reached the same materialization-failure state.
-- The `.yap` fallback must be manually import-tested before being treated as import-proven.
+- The full `.yap` fallback reached the import dialog but failed create.
+- The `.yap` V1.2 data-model isolation package must be manually import-tested before being treated as import-proven.
 - Collection/Kanban action steps are safe local placeholders and should be connected to tenant-specific workflows after import if needed.
 - Advanced controls such as Document embed, QR Code, Barcode, timeline, and print layout require runtime visual confirmation.
 - Custom CSS polish is represented as layout/style intent in generated controls; final visual polish must be checked in Yeeflow after import.
 
 ## Proof Boundary
 
-This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. The `.yapk` variants showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. The `.yap` fallback is generated for direct application import testing.
+This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. The `.yapk` variants showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. The full `.yap` fallback showed that direct app import can still fail when the rich generated UI payload is present. The `.yap` V1.2 data-model isolation package is generated to test the core data model separately from the rich UI layer.
 
 It does not prove live import success, runtime rendering, or end-user workflow behavior. Those require a focused manual import and runtime proof in a Yeeflow tenant.
 
 ## Manual Test Checklist
 
-1. Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.yap`.
+1. Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.2-data-model.yap`.
 2. Open the Vendor Management Dashboard.
 3. Check dashboard padding, cards, KPI layout, alert, and quick links.
 4. Verify dashboard Data tables show configured columns.
