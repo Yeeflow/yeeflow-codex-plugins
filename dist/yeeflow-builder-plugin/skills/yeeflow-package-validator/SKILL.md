@@ -27,6 +27,8 @@ LayoutView add-form readiness: `docs/studies/data-list-layoutview-add-form-runti
 
 Collection/Kanban action validation: use `docs/studies/collection-kanban-actions.md` and `scripts/inspect-collection-kanban-actions.mjs` for dashboard Collection/Kanban local item actions. Generated-final validation should hard-error unresolved item-template `attrs.control_action` references, unresolved page/temp variable references, unresolved current-item fields, unresolved `listitem` target layouts, and unresolved `setdatalist` fields. Validate local `attrs.actions[]` as arrays, prefer local action `type = "coll"`, require nonempty steps, allow export-proven step types (`listitem`, `deleteitem`, `setdatalist`, `setvar`, `confirm`, `otheraction`) and keep unstudied/screenshot-only step types warning-first until export-proven. Bulk selection patterns should validate declared selected IDs/count variables, dynamic display references, and page-level bulk actions without claiming runtime mutation proof.
 
+Collection/Kanban runtime-proof validation note: `docs/studies/collection-kanban-actions-runtime-proof.md` records a generated package that passes package, graph, materialization, import-readiness, Collection/Kanban action inspection, dynamic control inspection, and wrapper round-trip checks with zero errors. Keep the validator gate strict on action bindings, variable references, target layouts, and update fields. Do not turn successful local validation into runtime proof until the user confirms import and action execution.
+
 ## Validation Workflow
 
 1. Identify the package type and source of truth. Preserve generated `.yap` files unless the task explicitly asks to regenerate them.

@@ -100,6 +100,8 @@ Collection/Kanban actions learning: `Company Overview (2).yap` export-proves loc
 
 Collection selection/bulk pattern: `Collection of activity` export-proves a generated dashboard pattern for selected item IDs and count. Use dashboard `tempVars[]` for selected IDs and selected count, an absolute-positioned item-template container as the click target, checked/unchecked icon controls with dynamic display rules, and a bulk toolbar whose display rule checks selected count greater than zero. Bulk update/delete can be page-level `actions[]` using `setdatalist` with `ListDataID` and selected ID arrays, followed by `setvar` cleanup and optional `confirm` result messages. Treat runtime execution of edit/delete/update/select/bulk actions as unproven until a focused generated runtime package tests it.
 
+Collection/Kanban actions runtime proof package: `docs/studies/collection-kanban-actions-runtime-proof.md` records the focused generated package `collection-kanban-actions-runtime-proof.v1.yap`. The package is manual-test-ready and validator-backed for one Data List, one Dashboard Collection, one Dashboard Kanban, local item actions, checked/unchecked selection icons, selected count, and bulk update/delete actions. Do not mark this capability runtime-proven until the user confirms import/open/action execution. Preserve the narrow proof boundary for this package only.
+
 For app-shell navigation around dashboards, keep the menu readable by inverting the root header colors: `navigator-menu.bgc` should equal `appearance.color`, and `navigator-menu.color` should equal `appearance.bgc`.
 
 ## Doc Library Controls On Dashboards

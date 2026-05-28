@@ -27,6 +27,8 @@ Data List LayoutView runtime boundary: `docs/studies/data-list-layoutview-add-fo
 
 Collection/Kanban action runtime boundary: `Company Overview (2).yap` export-proves Collection/Kanban local action schema, current item context, item selection variables, dynamic display rules, and bulk operation configuration, but not executed runtime behavior. A focused runtime baseline should test item edit form opening, item delete confirmation/removal, current item update fields, selection toggle state, selected count, bulk toolbar visibility, bulk update, bulk delete, cleanup/reset variables, and any Trigger list workflow step separately. Do not claim collection action mutation, workflow triggering, or bulk operation execution from local validation or export inspection alone.
 
+Manual-test package: `docs/studies/collection-kanban-actions-runtime-proof.md` points to `/Users/Renger/Downloads/collection-kanban-actions-runtime-proof.v1.yap`. Use it to test dashboard open, Collection render, Kanban render, item buttons, edit item modal/form opening, current item delete, current item update to `Completed`, checked/unchecked selection icon toggle, selected count, bulk toolbar display, bulk mark completed, and bulk delete. Keep Trigger list workflow, Barcode, NFC, AI assistant, cross-host variable access, and unrelated action step families out of the proof claim.
+
 ## Runtime Workflow
 
 1. Confirm local validation completed first. If package/materialization validation failed, classify runtime as blocked by package/materialization and do not import.
