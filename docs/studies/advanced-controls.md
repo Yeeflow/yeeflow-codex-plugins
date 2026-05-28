@@ -1,6 +1,6 @@
 # Advanced Controls Export Study
 
-Proof boundary: this branch is export-backed learning from `/Users/Renger/Downloads/Company Overview (3).yap`. The raw export was decoded read-only; raw `.yap`, screenshots, decoded full payloads, `Resource`, `Sign`, API responses, private IDs, private URLs, sample records, generated packages, and secrets are not committed.
+Proof boundary: the schema study is export-backed learning from `/Users/Renger/Downloads/Company Overview (3).yap`. The focused generated runtime package `/Users/Renger/Downloads/advanced-controls-runtime-proof.v1.yap` was later user-confirmed for import/open/render and basic interaction checks for the included controls. Raw `.yap`, screenshots, decoded full payloads, `Resource`, `Sign`, API responses, private IDs, private URLs, sample records, generated packages, and secrets are not committed.
 
 ## Source And Scope
 
@@ -138,5 +138,6 @@ For generated-final packages, unresolved required bindings, invalid URLs, nonnum
 - Toggle control usage is export-proven from dashboard Toggle controls.
 - Timer, Icon list, Divider, Alert, Progress bar, Spacer, Progress circle, Steps bar, and QR Code dashboard usage are export-proven from dashboard Additional controls where observed.
 - Steps bar, QR Code, Barcode, Embed, and Document embed data list form usage are export-proven from Company Overview / View page where observed.
+- The focused generated package `/Users/Renger/Downloads/advanced-controls-runtime-proof.v1.yap` is user-confirmed runtime-proven for package import, dashboard open, rendering/basic interactions for Tab and Toggle, rendering for Timer, Icon list, Divider, Alert, Progress bar, Spacer, Progress circle, Steps bar, QR Code, Barcode, Embed safe render, Document embed empty state, and absence of missing binding/render/action errors.
 - Approval Form/Public Form support is product-understanding-backed unless separately export-proven in this branch.
-- Runtime rendering, link navigation, QR/barcode scan behavior, iframe loading, document preview behavior, and dynamic variable/value changes are not proven unless later tested.
+- QR scan behavior, Barcode scan behavior, external iframe content loading beyond safe render, non-empty document preview, dynamic value changes, and Approval Form/Public Form host behavior are not proven by the runtime package.

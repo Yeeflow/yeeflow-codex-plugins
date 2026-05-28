@@ -1,6 +1,6 @@
 # Advanced Controls Runtime Proof
 
-Runtime status: pending user test. This document records local generation and validation only. It does not claim Yeeflow import/open/render success until the generated package is manually imported and tested.
+Runtime status: passed for the focused generated package. The user confirmed that `/Users/Renger/Downloads/advanced-controls-runtime-proof.v1.yap` imported successfully, opened the Advanced Controls Runtime Dashboard, rendered the included advanced controls, and showed no missing binding, render, action, or page-break error.
 
 ## Generated Package
 
@@ -76,9 +76,31 @@ Warnings intentionally retained:
 - The package has no approval/workflow resources by design.
 - UI-style warnings do not block this focused proof because the package is a compact control test harness, not a production app shell.
 
+## User Runtime Result
+
+The user confirmed the generated package imported successfully and the `Advanced Controls Runtime Dashboard` opened.
+
+Passed runtime checks:
+
+1. Tab rendered and tab switching worked.
+2. Toggle rendered and expand/collapse worked.
+3. Timer rendered.
+4. Icon list rendered and links appeared.
+5. Divider rendered.
+6. Alert variants rendered.
+7. Progress bar rendered.
+8. Spacer created spacing.
+9. Progress circle rendered.
+10. Steps bar rendered.
+11. QR Code rendered.
+12. Barcode rendered.
+13. Embed rendered safely without breaking the page.
+14. Document embed rendered a safe empty state.
+15. No missing binding, render, action, or page-break error appeared.
+
 ## Manual Runtime Test Instructions
 
-Import `/Users/Renger/Downloads/advanced-controls-runtime-proof.v1.yap` into Yeeflow, then verify:
+The following checklist is the completed runtime scope for `/Users/Renger/Downloads/advanced-controls-runtime-proof.v1.yap` and can be reused for future retests:
 
 1. The app imports successfully.
 2. `Advanced Controls Runtime Dashboard` opens.
@@ -102,11 +124,12 @@ Import `/Users/Renger/Downloads/advanced-controls-runtime-proof.v1.yap` into Yee
 
 ## Proof Boundary
 
-- Runtime proof is limited to `/Users/Renger/Downloads/advanced-controls-runtime-proof.v1.yap` after manual user testing.
-- Local validation is not import/runtime proof.
-- Do not claim QR scan behavior unless it is explicitly tested.
-- Do not claim Barcode scan behavior unless it is explicitly tested.
-- Do not claim external iframe content loads unless it is explicitly tested; iframe safe failure still counts only as safe non-breaking render behavior.
-- Do not claim document preview for non-empty files unless a safe uploaded file is tested.
-- Do not claim dynamic value changes unless tested.
-- Do not claim Approval Form/Public Form host behavior because this package does not include those hosts.
+- Runtime proof is limited to `/Users/Renger/Downloads/advanced-controls-runtime-proof.v1.yap`.
+- Runtime proof covers rendering and basic interactions for Tab, Toggle, Timer, Icon list, Divider, Alert, Progress bar, Spacer, Progress circle, Steps bar, QR Code, Barcode, Embed safe render, and Document embed empty state.
+- Local validation remains a separate readiness gate and is not a substitute for runtime proof on future packages.
+- This proof does not claim QR scan behavior.
+- This proof does not claim Barcode scan behavior.
+- This proof does not claim external iframe content loading beyond safe render.
+- This proof does not claim document preview for non-empty files.
+- This proof does not claim dynamic value changes.
+- This proof does not claim Approval Form/Public Form host behavior because this package does not include those hosts.

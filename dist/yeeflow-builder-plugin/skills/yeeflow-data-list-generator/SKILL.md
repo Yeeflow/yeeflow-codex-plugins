@@ -523,7 +523,7 @@ Proof boundary: Tab and Toggle dashboard usage, Additional-controls dashboard us
 <!-- advanced-controls-runtime-proof:start -->
 ## Advanced Controls Runtime Proof Pattern
 
-Use docs/studies/advanced-controls-runtime-proof.md and generate-advanced-controls-runtime-proof.mjs as the focused generated package pattern for advanced Yeeflow controls. The generated manual-test package is /Users/Renger/Downloads/advanced-controls-runtime-proof.v1.yap and is intentionally uncommitted. The proof status is pending user runtime test until import/open/render checks are completed.
+Use docs/studies/advanced-controls-runtime-proof.md and generate-advanced-controls-runtime-proof.mjs as the focused generated package pattern for advanced Yeeflow controls. The generated manual-test package is /Users/Renger/Downloads/advanced-controls-runtime-proof.v1.yap and is intentionally uncommitted. The user-confirmed runtime result passed for package import, dashboard open, rendering and basic interactions for the included controls, Embed safe render, Document embed empty state, and absence of missing binding/render/action errors.
 
 Safe minimal generation pattern:
 
@@ -550,6 +550,15 @@ Control-specific safe patterns:
 - Barcode: barcode with attrs.value.value and attrs.type; prefer CODE128 for generated runtime smoke tests.
 - Embed: embed with attrs.code containing a safe iframe to a public URL; iframe load success is not guaranteed until runtime-tested.
 - Document embed: document-embed with attrs.doc-source bound to a file-upload field; empty-field rendering is a separate proof from non-empty document preview.
+
+User-confirmed runtime result for the focused package:
+
+- The package imported successfully and Advanced Controls Runtime Dashboard opened.
+- Tab switching and Toggle expand/collapse worked.
+- Timer, Icon list, Divider, Alert variants, Progress bar, Spacer, Progress circle, Steps bar, QR Code, Barcode, Embed, and Document embed rendered in the tested scope.
+- Embed rendered safely without breaking the page.
+- Document embed rendered a safe empty state.
+- No missing binding, render, or action error appeared.
 
 Validation and proof boundaries:
 
