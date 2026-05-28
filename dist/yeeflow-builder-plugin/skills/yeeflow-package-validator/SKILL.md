@@ -15,6 +15,20 @@ description: Standardize Yeeflow package validation before import or runtime tes
 - Validate and redact environment variables before API calls and never print API keys, raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, or generated runtime packages.
 - Keep generated examples tenant-neutral unless the user explicitly requests a target-tenant-specific package and provides safe mappings.
 
+## Generated UI Quality Validation
+
+Generated application validation must include UI quality checks before import or handoff. Run `scripts/inspect-generated-ui-quality.mjs` and the aggregate import-readiness gate when available. Treat Data table controls with a data source but zero display columns as generated-final errors. Display columns must resolve to fields on the selected source list.
+
+Dashboard pages and Data List custom forms should have safe left/right padding through a root or near-root container/section. Missing safe padding is at least a warning and can block handoff when the generated page visibly places major content against the window edge. Major dashboard controls directly under the page root without a wrapper container/section should warn.
+
+Empty dynamic item templates, unresolved data-bound controls, missing progress/steps values, and buttons/actions without valid bindings should be reported before runtime testing. Do not classify a generated package as ready when table, form, dashboard, or data-binding quality checks fail.
+
+## Plan-To-Package Validation
+
+For full application generation, validate against the saved Markdown app plan when available. Use `scripts/inspect-generated-app-quality.mjs --package <package> --plan <plan.md>` to combine plan presence, package inventory, and generated UI quality checks. Planned data lists, important fields, forms, dashboards/pages, major controls, workflows/actions, Data table columns, layout padding, and bindings must be present or explicitly documented as deferred with a reason and workaround.
+
+Do not mark a package ready when it implements only a simple/MVP subset of a full-scope plan. Missing plan coverage is a generated-final error when the plan has machine-readable checklist items or when a human review clearly shows planned features were omitted. If the plan is prose-only, report coverage gaps as warnings and require manual review before handoff.
+
 Business Travel runtime-practice update: `yap-v1-schema_v2.json` and the Business Travel repair pass make `ListModel.Flags = 1` mandatory for generated root and child list-like resources. `ListModel.Status` is schema-fixed to `1` when present, and `ListModel.Type` must be one of `1`, `16`, `32`, `64`, `128`, or `1024`. Import, app open, workflow open, and workflow publish are user-proven for the fixed Business Travel package only. Workflow publish blockers must still be caught separately for new packages: sequence-flow conditions, Set Variable targets, task-assignment expressions, form bindings, and summaries must reference declared workflow variables; direct position assignees require numeric position IDs and must never use placeholders such as `__POSITION_ID_REQUIRED_*__`. Workflow execution, request submission, routing, data mutation, and true Finance Manager assignment remain unproven.
 
 YAPK-from-scratch validation update: validate generated `.yapk` content before signing. Decoded `AppPackageInfo` must pass package/app creation checks, graph checks, workflow publish-readiness checks, and placeholder scans before Brotli/base64/sign. Treat `YAPK_CONTENT_VALIDATION_FAILED_BEFORE_SIGNING` as blocking. `setsign` and `verifysign` prove wrapper/resource integrity only; they do not prove generated-app correctness, workflow publish-readiness, workflow execution, or tenant-specific routing.

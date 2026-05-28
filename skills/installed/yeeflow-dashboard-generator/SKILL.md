@@ -17,6 +17,22 @@ When dashboard changes target an existing imported application, route package-ty
 
 For unproven dashboard areas, use this with `yeeflow-feature-learning-orchestrator`: study real exports first, then generate the smallest importable test.
 
+## Plan-To-Dashboard Generation
+
+For full application generation, dashboard work must come from the application plan. Confirm each planned dashboard/page, business question, source list, control type, displayed fields, actions, filters, and proof boundary before generating controls. If dashboard requirements are unclear and the dashboard is central to the app, ask focused questions; otherwise document assumptions in the plan.
+
+Do not substitute a static or minimal dashboard for a planned functional dashboard. Generate the full planned dashboard scope when it is inside proven patterns: source lists, KPI summaries, queues, charts, Data tables, Collection/Kanban/Timeline views, actions, and filters as appropriate. Staged/minimal dashboard packages are only for explicit MVP requests or focused runtime proof.
+
+## Generated Dashboard Quality Gate
+
+Before generating a dashboard, create a compact page plan with major sections, data sources, controls, displayed fields, and padding/container choices. Use fewer polished sections instead of many incomplete widgets.
+
+Every generated dashboard should use safe horizontal page padding through a root or near-root section/container. Recommended default desktop padding is 24px to 32px, with smaller responsive padding where supported. Do not place major tables, charts, KPI groups, cards, Collection/Kanban/Timeline controls, or action panels directly against the page edge.
+
+Every Data table control (`type = "data-list"`) must configure `attrs.data.list` and nonempty `attrs.listarr` display columns. Include 3 to 5 meaningful columns when fields exist, prioritizing title/name, status, date, owner, amount, and progress fields. If the source fields are not known, do not generate a Data table; use a card, Collection, or clear empty-state message instead. Empty Data table columns are a generated-final error.
+
+Collection, Kanban, and Timeline controls must include meaningful item-template dynamic fields. Progress controls must have numeric values or valid bindings. Steps bars must have steps or valid field bindings. QR/barcode/embed/document controls need safe configuration or should be omitted. Run the generated UI quality inspector before handoff and fix dashboard warnings/errors that indicate missing padding, empty controls, or unresolved data bindings.
+
 ## What To Load
 
 - For the proven minimal dashboard shell, read `references/minimal-dashboard-pattern.md`.

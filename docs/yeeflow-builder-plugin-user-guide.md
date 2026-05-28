@@ -141,6 +141,16 @@ When the plan is accepted:
 Generate the Yeeflow application package and validate it before import.
 ```
 
+## Getting Better Application Generation Results
+
+For stronger generated applications, include the business goal, target users/roles, required data lists and fields if known, required forms, dashboards, workflows, important actions, preferred layout style, and validation expectations. Ask Codex to create an app plan first, confirm assumptions or ask clarifying questions, generate the full planned application instead of a simple version, and validate data tables, field bindings, layout padding, and plan-to-package coverage before returning the package.
+
+High-quality generation prompt:
+
+```text
+Generate a complete Yeeflow YAPK application for [business process]. Before generating the package, create a detailed app plan in Markdown and ask me clarifying questions if any core requirement is unclear. Do not build a simple/MVP version unless I explicitly ask for it. Implement the full planned app in one package where feasible, including data lists, fields, forms, dashboards, actions/workflows, and validation. Use padded dashboard/form layouts, configure all Data table display columns, and validate the package against the plan before returning the final file.
+```
+
 ## Working With YAP And YAPK Packages
 
 Use `.yap` for new application packages. Use `.yapk` for existing application upgrade packages and treat signing as a separate proof boundary.

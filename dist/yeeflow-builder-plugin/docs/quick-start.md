@@ -121,15 +121,15 @@ Expected version:
 ## Run A Basic Prompt
 
 ```text
-Use Yeeflow Builder to plan a small issue intake application with one data list, one dashboard, and a validation plan.
+Use Yeeflow Builder to plan a complete issue intake application. Before generating any package, create a Markdown app plan, ask clarifying questions if core requirements are unclear, and include the data lists, forms, dashboards, workflows, layout approach, validation checklist, and proof boundary.
 ```
 
-Review the plan before asking Codex to generate a package.
+Review the plan before asking Codex to generate a package. Unless you explicitly want a simple/MVP package, ask Codex to implement the full planned application.
 
-## Generate And Validate A Small Application Package
+## Generate And Validate The Planned Application Package
 
 ```text
-Generate the small issue intake Yeeflow application package and validate it before import. Keep all tenant-specific values out of the generated package.
+Generate the complete planned issue intake Yeeflow application package and validate it before import. Keep all tenant-specific values out of the generated package. Validate Data table display columns, field bindings, dashboard/form padding, and package coverage against the app plan before returning the final file.
 ```
 
 Expected validation should include package checks, graph checks, wrapper checks, and a proof-boundary summary.

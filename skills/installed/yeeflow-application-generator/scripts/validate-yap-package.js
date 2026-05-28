@@ -178,6 +178,12 @@ const PUBLIC_FORM_KNOWN_CONTROL_TYPES = new Set([
   "img",
   "total",
 ]);
+const ADVANCED_CONTROL_TYPES = new Set(["aktabs", "toggle", "timer", "icon_list", "line", "alert", "progress", "gap", "progress-circle", "steps-bar", "list-qrcode", "qrcode", "barcode", "embed", "document-embed"]);
+const ADVANCED_CONTAINER_CHILD_TYPES = new Map([["aktabs", "ak-tabs-tab"], ["toggle", "toggle-panel"]]);
+const ADVANCED_NUMERIC_FIELD_TYPES = new Set(["input_number", "currency", "percent", "rate", "calculated-column", "Decimal", "Int", "Bigint", "Number"]);
+const ADVANCED_SINGLE_SELECT_FIELD_TYPES = new Set(["radio", "select", "flowstatus", "status"]);
+const ADVANCED_FILE_FIELD_TYPES = new Set(["file-upload", "file-upload-merge", "icon-upload", "file", "image"]);
+const ADVANCED_BARCODE_TYPES = new Set(["CODE128", "CODE128A", "CODE128B", "CODE128C", "EAN13", "EAN8", "UPC", "CODE39", "ITF14", "MSI", "pharmacode", "codabar"]);
 
 function usage(exitCode = 1) {
   const text = [
@@ -309,6 +315,56 @@ function zeroPadding(padding) {
   const value = Array.isArray(padding) ? padding[1] : padding;
   if (!isObject(value)) return false;
   return ["top", "right", "bottom", "left"].every((side) => value[side] === "--sp--s0" || value[side] === 0 || value[side] === "0" || value[side] === "");
+}
+
+function hasSafeHorizontalPaddingValue(value) {
+  if (value === undefined || value === null || value === "") return false;
+  if (typeof value === "number") return value >= 16;
+  if (typeof value === "string") {
+    if (/--sp--s([3-9]|[1-9]\d+)/.test(value)) return true;
+    const numeric = Number(value.trim().replace(/px$/, ""));
+    return Number.isFinite(numeric) && numeric >= 16;
+  }
+  if (Array.isArray(value)) return value.some(hasSafeHorizontalPaddingValue);
+  if (!isObject(value)) return false;
+  return ["left", "right", "x", "horizontal"].some((key) => hasSafeHorizontalPaddingValue(value[key]));
+}
+
+function controlPaddingCandidates(control) {
+  const attrs = control && control.attrs || {};
+  const common = attrs.common || {};
+  return [
+    attrs.padding,
+    attrs.container && attrs.container.padding,
+    attrs.style && attrs.style.padding,
+    common.padding,
+    common.positioning && common.positioning.padding,
+    control && control.padding,
+  ];
+}
+
+function hasSafeHorizontalPaddingNearRoot(root) {
+  if (!isObject(root)) return false;
+  if (controlPaddingCandidates(root).some(hasSafeHorizontalPaddingValue)) return true;
+  let found = false;
+  asArray(root.children).forEach((child, index) => {
+    walkControls(child, (control, pointer) => {
+      if (found) return;
+      const depth = pointer.split(".children[").length - 1 + pointer.split(".columns[").length - 1;
+      if (depth > 2) return;
+      if (controlPaddingCandidates(control).some(hasSafeHorizontalPaddingValue)) found = true;
+    }, `$.children[${index}]`);
+  });
+  return found;
+}
+
+function displayColumnFieldName(column) {
+  if (!isObject(column)) return safeString(column);
+  for (const candidate of [column.FieldName, column.fieldName, column.field, column.Name, column.name, column.SortName, column.id, column.FieldID, column.fieldID, column.value]) {
+    const value = safeString(candidate);
+    if (value) return value;
+  }
+  return "";
 }
 
 function findControlByLabel(root, label) {
@@ -1165,8 +1221,12 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
   if (page.attrs && page.attrs.hideHeaderAll !== true) {
     uiStandardWarning(report, "UI_STANDARD_DASHBOARD_HEADER_NOT_HIDDEN", "UI/UX standard dashboards should set attrs.hideHeaderAll to true.", { title, layoutId });
   }
-  if (!zeroPadding(page.attrs && page.attrs.container && page.attrs.container.padding)) {
-    uiStandardWarning(report, "UI_STANDARD_DASHBOARD_PADDING_NOT_ZERO", "UI/UX standard dashboards should use zero page padding: attrs.container.padding with --sp--s0 on all sides.", { title, layoutId });
+  const dashboardRootPadding = page.attrs && page.attrs.container && page.attrs.container.padding;
+  if (!zeroPadding(dashboardRootPadding) && !hasSafeHorizontalPaddingValue(dashboardRootPadding)) {
+    uiStandardWarning(report, "UI_STANDARD_DASHBOARD_PADDING_UNUSUAL", "Dashboard page root padding should be either zero with padded inner sections or safe horizontal page padding.", { title, layoutId });
+  }
+  if (!hasSafeHorizontalPaddingNearRoot(page)) {
+    uiStandardWarning(report, "UI_QUALITY_DASHBOARD_SAFE_PADDING_MISSING", "Generated dashboards should include safe left/right padding on an outer page section or container so controls do not touch window edges.", { title, layoutId });
   }
   validateUiStandardContainers(page, report, { surface: "dashboard", title, layoutId, requireFormBody: false });
   if (page.filterVars !== undefined && !Array.isArray(page.filterVars)) {
@@ -1205,6 +1265,8 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
       dataFilterControls.push({ pointer, controlId, controlType, binding: safeString(node.binding), attrs: node.attrs || {} });
     } else if (controlType === "remove-filters" || controlType === "remove-filers") {
       removeFilterControls.push({ pointer, controlId, controlType, attrs: node.attrs || {} });
+    } else if (controlType === "data-list") {
+      validateDashboardDataTableControl(node, title, layoutId, pointer, listsById, fieldsByList, report);
     } else if (controlType && /filter/i.test(controlType) && !isKnownNonDataFilterControlType(controlType)) {
       issue(report, "warning", "DASHBOARD_DATA_FILTER_TYPE_UNKNOWN", "Dashboard contains an unknown filter-like control type. Treat this as unproven until an export maps the schema.", { title, layoutId, pointer, controlType });
     }
@@ -1233,6 +1295,12 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
     if (safeString(node.type) === "pivot-table") {
       pivotTableControls.push({ pointer, controlId, control: node });
     }
+    validateAdvancedControl(node, report, {
+      surface: "dashboard",
+      title,
+      path: pointer,
+      fieldsByName: null,
+    });
     validateContainerButtonActionControl(node, title, layoutId, pointer, listsById, fieldsByList, rootPageLayouts, approvalFormsByKey, layoutsById, report);
     const dataForm = node.attrs && node.attrs.data && node.attrs.data.form;
     if (dataForm && safeString(dataForm.ListSetID) && safeString(dataForm.ListSetID) !== safeString(resource.ListSetID || (resource.Item && resource.Item.ListID)) && !listsById.has(safeString(dataForm.ListSetID))) {
@@ -1274,6 +1342,88 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
   validateDashboardPivotTableControls(title, layoutId, pivotTableControls, pivotExtByControlId, listsById, fieldsByList, filterVars, report);
   validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report);
   validateDashboardFunctionalQuality(page, title, layoutId, report);
+}
+
+function validateAdvancedControl(control, report, context) {
+  const type = safeString(control && control.type);
+  if (!ADVANCED_CONTROL_TYPES.has(type)) return;
+  const attrs = control.attrs && isObject(control.attrs) ? control.attrs : {};
+  const severity = generatorFinalSeverity(report);
+  const base = { surface: context.surface, title: context.title, path: context.path, controlType: type };
+  const childType = ADVANCED_CONTAINER_CHILD_TYPES.get(type);
+  if (childType) {
+    const children = asArray(control.children).filter((child) => safeString(child.type) === childType);
+    if (!children.length) issue(report, severity, `ADVANCED_${type === "aktabs" ? "TAB" : "TOGGLE"}_ITEMS_MISSING`, `${type === "aktabs" ? "Tab" : "Toggle"} controls should include ${childType} child containers.`, base);
+    children.forEach((child, index) => {
+      if (!safeString(child.id)) issue(report, severity, "ADVANCED_CONTAINER_ITEM_ID_MISSING", "Advanced Tab/Toggle child containers need stable ids.", { ...base, item: index + 1, childType });
+      if (type === "aktabs" && !safeString(child.label)) issue(report, severity, "ADVANCED_TAB_ITEM_TITLE_MISSING", "Tab items should include a title/label.", { ...base, item: index + 1 });
+      if (type === "toggle" && !safeString(child.attrs && child.attrs.title && child.attrs.title.value)) issue(report, severity, "ADVANCED_TOGGLE_SECTION_TITLE_MISSING", "Toggle sections should include attrs.title.value.", { ...base, item: index + 1 });
+      if (!asArray(child.children).length) issue(report, "warning", "ADVANCED_CONTAINER_ITEM_EMPTY", "Advanced Tab/Toggle child containers should include nested controls.", { ...base, item: index + 1, childType });
+    });
+  }
+  if (type === "timer" && !attrs.set && !attrs.date && !attrs.value && !attrs["obj-f"]) {
+    issue(report, severity, "ADVANCED_TIMER_DATE_MISSING", "Timer controls should include static date settings or a dynamic date binding.", base);
+  }
+  if (type === "icon_list" && !advancedIconListItems(attrs).length) {
+    issue(report, "warning", "ADVANCED_ICON_LIST_ITEMS_UNOBSERVED", "Icon list controls should include item configuration when generated; this export may store variants opaquely.", base);
+  }
+  if (type === "progress" || type === "progress-circle") {
+    const value = attrs.value || attrs.per || attrs.percent || attrs.progress || attrs["current-value"];
+    if (value === undefined || value === null || value === "") issue(report, severity, "ADVANCED_PROGRESS_VALUE_MISSING", "Progress bar/circle controls should include a static numeric value or dynamic numeric binding.", base);
+    validateAdvancedFieldBinding(value, context.fieldsByName, ADVANCED_NUMERIC_FIELD_TYPES, report, base, "ADVANCED_PROGRESS_FIELD_TYPE_UNPROVEN", "Progress bar/circle bindings should resolve to numeric-compatible fields.");
+  }
+  if (type === "steps-bar") {
+    if (!asArray(attrs["steps-options"]).length) issue(report, severity, "ADVANCED_STEPS_ITEMS_MISSING", "Steps bar controls should include steps-options entries.", base);
+    const fieldBinding = attrs["obj-f"] || attrs["current-step"];
+    validateAdvancedFieldBinding(fieldBinding, context.fieldsByName, ADVANCED_SINGLE_SELECT_FIELD_TYPES, report, base, "ADVANCED_STEPS_FIELD_TYPE_UNPROVEN", "Field-bound Steps bar controls should resolve to single-select/status fields.");
+  }
+  if ((type === "list-qrcode" || type === "qrcode") && !attrs.value && !attrs.url && !attrs.source && !attrs["qr-source"] && !attrs["qr-code-link"]) {
+    issue(report, "warning", "ADVANCED_QR_VALUE_IMPLICIT", "QR Code has no explicit URL/value; treat current page/form/item URL behavior as host-sensitive until runtime-proven.", base);
+  }
+  if (type === "barcode") {
+    if (!attrs.value) issue(report, severity, "ADVANCED_BARCODE_VALUE_MISSING", "Barcode controls should include a static value or dynamic value binding.", base);
+    const barcodeType = safeString(attrs.type);
+    if (barcodeType && !ADVANCED_BARCODE_TYPES.has(barcodeType)) issue(report, "warning", "ADVANCED_BARCODE_TYPE_UNPROVEN", "Barcode type is not in the export-backed supported set.", { ...base, barcodeType });
+  }
+  if (type === "embed" && !attrs.code && !attrs.src && !attrs.url) {
+    issue(report, severity, "ADVANCED_EMBED_SOURCE_MISSING", "Embed controls should include iframe/code/src/url configuration.", base);
+  }
+  if (type === "document-embed") {
+    if (!attrs["doc-source"]) issue(report, severity, "ADVANCED_DOCUMENT_EMBED_SOURCE_MISSING", "Document embed controls should bind to an attachment/file field.", base);
+    validateAdvancedFieldBinding(attrs["doc-source"], context.fieldsByName, ADVANCED_FILE_FIELD_TYPES, report, base, "ADVANCED_DOCUMENT_EMBED_FIELD_TYPE_UNPROVEN", "Document embed controls should bind to file/image attachment fields.");
+  }
+}
+
+function validateAdvancedFieldBinding(value, fieldsByName, allowedTypes, report, context, code, message) {
+  if (!fieldsByName || value === undefined || value === null || value === "") return;
+  const fieldName = advancedFieldName(value);
+  if (!fieldName) return;
+  const field = fieldsByName.get(fieldName);
+  if (!field) {
+    issue(report, generatorFinalSeverity(report), "ADVANCED_FIELD_BINDING_UNRESOLVED", "Advanced control field binding should resolve to a field on the host form/list.", { ...context, fieldName });
+    return;
+  }
+  const fieldType = safeString(field.Type);
+  if (fieldType && !allowedTypes.has(fieldType)) issue(report, generatorFinalSeverity(report), code, message, { ...context, fieldName, fieldType });
+}
+
+function advancedIconListItems(attrs) {
+  if (Array.isArray(attrs.items)) return attrs.items;
+  if (Array.isArray(attrs.options)) return attrs.options;
+  if (Array.isArray(attrs.data)) return attrs.data;
+  if (attrs.data && Array.isArray(attrs.data.links)) return attrs.data.links;
+  return [];
+}
+
+function advancedFieldName(value) {
+  if (typeof value === "string") return value;
+  let found = "";
+  walk(value, (node) => {
+    if (found || !isObject(node) || safeString(node.type) !== "expr") return;
+    if (safeString(node.exprType) !== "list_field") return;
+    found = safeString(node.prop || node.id);
+  });
+  return found;
 }
 
 function validateContainerButtonActionControl(node, title, layoutId, pointer, listsById, fieldsByList, rootPageLayouts, approvalFormsByKey, layoutsById, report) {
@@ -1536,6 +1686,17 @@ function validateDynamicFieldType(controlType, field, report, severity, context)
 function validateDashboardCollectionControls(page, title, layoutId, listsById, fieldsByList, filterVars, report) {
   const severity = generatorFinalSeverity(report);
   const seenControlIds = new Set();
+  const pageTempVars = new Set(asArray(page && page.tempVars).map((variable) => safeString(variable && variable.id)).filter(Boolean));
+  const pageActionIds = new Set(asArray(page && page.actions).map((action) => safeString(action && action.id)).filter(Boolean));
+  const hostContexts = [];
+  function isDeclaredPageVariable(id, name) {
+    const rawId = safeString(id);
+    const rawName = safeString(name);
+    if (!rawId && !rawName) return true;
+    if (rawId.startsWith("__filter_")) return filterVars.has(rawId.slice("__filter_".length)) || filterVars.has(rawName);
+    if (rawId.startsWith("__temp_")) return pageTempVars.has(rawId.slice("__temp_".length)) || pageTempVars.has(rawName);
+    return pageTempVars.has(rawId) || pageTempVars.has(rawName) || filterVars.has(rawId) || filterVars.has(rawName);
+  }
   function validateExpressionNode(node, pointer, itemContext) {
     if (!isObject(node)) return;
     if (node.exprType === "variable_ctx" && (node.ctx === "__ctx_coll" || node.ctx === "__ctx_kanban" || node.ctx === "__ctx_timeline")) {
@@ -1544,7 +1705,7 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
         return;
       }
       const fieldName = safeString(node.id);
-      if (fieldName && fieldName !== "_cate" && !itemContext.fields.has(fieldName)) {
+      if (fieldName && fieldName !== "_cate" && fieldName !== "ListDataID" && !itemContext.fields.has(fieldName)) {
         issue(report, severity, "DASHBOARD_ITEM_EXPR_FIELD_UNRESOLVED", "Collection/Kanban/Timeline item expression references a field not present on the source list.", { title, layoutId, pointer, host: itemContext.host, listId: itemContext.listId, fieldName });
       }
     }
@@ -1557,6 +1718,8 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
       if (expectedId && safeString(node.id) !== expectedId) {
         issue(report, severity, "DASHBOARD_COLLECTION_FILTER_VARIABLE_ID_MISMATCH", "Collection filter expression id should use the __filter_ prefix plus the filter variable name.", { title, layoutId, pointer, id: safeString(node.id), expected: expectedId });
       }
+    } else if (node.exprType === "variable" && safeString(node.id).startsWith("__temp_") && !isDeclaredPageVariable(node.id, node.name)) {
+      issue(report, severity, "DASHBOARD_PAGE_VARIABLE_UNRESOLVED", "Dashboard action or dynamic display expression references a temp/page variable not declared on the page.", { title, layoutId, pointer, id: safeString(node.id), name: safeString(node.name) });
     }
   }
 
@@ -1606,6 +1769,126 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
     return fields;
   }
 
+  function makeHostContext(host, listId) {
+    const fields = fieldsByList.get(listId) || new Map();
+    const sourceList = listsById.get(listId);
+    const layouts = new Set(asArray(sourceList && sourceList.item && sourceList.item.Layouts).map((layout) => safeString(layout.LayoutID)).filter(Boolean));
+    return { host, listId, fields, layouts };
+  }
+
+  function actionStepContext(step, fallbackContext) {
+    const listId = safeString(step && step.attrs && step.attrs.data && step.attrs.data.list && step.attrs.data.list.ListID);
+    if (listId && listsById.has(listId)) return makeHostContext("page-action", listId);
+    return fallbackContext;
+  }
+
+  function validateCollectionActionStep(step, stepPath, hostContext, localActionIds) {
+    if (!isObject(step)) {
+      issue(report, severity, "DASHBOARD_COLLECTION_ACTION_STEP_BAD_SHAPE", "Collection/Kanban action steps should be objects.", { title, layoutId, pointer: stepPath });
+      return;
+    }
+    const stepType = safeString(step.type);
+    const allowedStepTypes = new Set(["listitem", "deleteitem", "setdatalist", "setvar", "confirm", "otheraction", "redirect", "close", "aiassistant", "barcode", "nfc"]);
+    if (!stepType) {
+      issue(report, severity, "DASHBOARD_COLLECTION_ACTION_STEP_TYPE_MISSING", "Collection/Kanban action steps should include type.", { title, layoutId, pointer: `${stepPath}.type` });
+    } else if (!allowedStepTypes.has(stepType)) {
+      issue(report, "warning", "DASHBOARD_COLLECTION_ACTION_STEP_TYPE_UNSTUDIED", "Collection/Kanban action step type is not covered by current export-backed validation.", { title, layoutId, pointer: `${stepPath}.type`, stepType });
+    }
+    const stepContext = stepType === "otheraction" ? null : hostContext;
+    walk(step, (node, pointer) => validateExpressionNode(node, `${stepPath}${pointer.slice(1)}`, stepContext));
+    const attrs = step.attrs || {};
+    if (stepType === "listitem") {
+      const opType = safeString(attrs.op_type);
+      if (!["view", "edit"].includes(opType)) issue(report, "warning", "DASHBOARD_COLLECTION_LISTITEM_OP_UNSTUDIED", "Collection item Open item form step is export-proven for edit in this study; view is UI-reference-backed.", { title, layoutId, pointer: `${stepPath}.attrs.op_type`, opType });
+      const listDataIdTokens = asArray(attrs.listdataid);
+      if (!listDataIdTokens.some((token) => isObject(token) && token.exprType === "variable_ctx" && token.ctx === "__ctx_coll" && token.id === "ListDataID")) {
+        issue(report, severity, "DASHBOARD_COLLECTION_LISTITEM_ID_CONTEXT_MISSING", "Collection item open/edit step should pass current item ListDataID through __ctx_coll.", { title, layoutId, pointer: `${stepPath}.attrs.listdataid` });
+      }
+      const layout = safeString(attrs.layout);
+      if (layout && hostContext && !hostContext.layouts.has(layout)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_LISTITEM_LAYOUT_UNRESOLVED", "Collection item open/edit step references a layout not present on the source list.", { title, layoutId, pointer: `${stepPath}.attrs.layout`, targetLayout: layout });
+      }
+    }
+    if (stepType === "setdatalist") {
+      const opType = safeString(attrs.type);
+      if (!["edit", "remove", "add"].includes(opType)) issue(report, "warning", "DASHBOARD_COLLECTION_SETDATALIST_OP_UNSTUDIED", "Collection action Set data list step uses an unstudied operation type.", { title, layoutId, pointer: `${stepPath}.attrs.type`, opType });
+      for (const [index, where] of asArray(attrs.wheres).entries()) {
+        const left = safeString(where && where.left);
+        if (left && left !== "ListDataID" && hostContext && !hostContext.fields.has(left)) {
+          issue(report, severity, "DASHBOARD_COLLECTION_SETDATALIST_WHERE_FIELD_UNRESOLVED", "Collection action Set data list filter field does not resolve on the source list.", { title, layoutId, pointer: `${stepPath}.attrs.wheres[${index}].left`, fieldName: left });
+        }
+      }
+      for (const [index, row] of asArray(attrs.listdatas).entries()) {
+        const fieldName = safeString(row && row.Columns);
+        if (fieldName && hostContext && !hostContext.fields.has(fieldName)) {
+          issue(report, severity, "DASHBOARD_COLLECTION_UPDATE_FIELD_UNRESOLVED", "Collection action Update fields target does not resolve on the source list.", { title, layoutId, pointer: `${stepPath}.attrs.listdatas[${index}].Columns`, fieldName });
+        }
+      }
+      if (attrs.totalcount && !isDeclaredPageVariable(attrs.totalcount, attrs.totalcount)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_TOTALCOUNT_VARIABLE_UNRESOLVED", "Collection bulk Set data list totalcount target should resolve to a declared page temp variable.", { title, layoutId, pointer: `${stepPath}.attrs.totalcount`, totalcount: safeString(attrs.totalcount) });
+      }
+    }
+    if (stepType === "setvar") {
+      const entries = attrs.setvar_multi === true ? asArray(attrs.setvar_array) : [{ var: attrs.setvar_var, value: attrs.setvar_val }];
+      entries.forEach((entry, index) => {
+        const target = entry && entry.var;
+        if (!isObject(target) || !isDeclaredPageVariable(target.id, target.name)) {
+          issue(report, severity, "DASHBOARD_COLLECTION_SETVAR_TARGET_UNRESOLVED", "Collection action Set variables target should resolve to a declared dashboard/page variable.", { title, layoutId, pointer: `${stepPath}.attrs.setvar${attrs.setvar_multi === true ? `_array[${index}]` : "_var"}` });
+        }
+      });
+    }
+    if (stepType === "otheraction") {
+      const target = safeString(attrs.control_action);
+      if (target && !localActionIds.has(target) && !pageActionIds.has(target)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_OTHERACTION_TARGET_UNRESOLVED", "Collection action Start another action step should resolve to a local Collection/Kanban action or page action.", { title, layoutId, pointer: `${stepPath}.attrs.control_action` });
+      }
+    }
+  }
+
+  function validateCollectionActions(control, pointer, hostContext) {
+    const actions = control.attrs && control.attrs.actions;
+    if (actions === undefined) return;
+    if (!Array.isArray(actions)) {
+      issue(report, severity, "DASHBOARD_COLLECTION_ACTIONS_NOT_ARRAY", "Collection/Kanban local actions should be stored as attrs.actions[].", { title, layoutId, pointer: `${pointer}.attrs.actions`, controlType: control.type });
+      return;
+    }
+    const localActionIds = new Set(actions.map((action) => safeString(action && action.id)).filter(Boolean));
+    actions.forEach((action, actionIndex) => {
+      const actionPath = `${pointer}.attrs.actions[${actionIndex}]`;
+      if (!isObject(action)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_ACTION_BAD_SHAPE", "Collection/Kanban local action entries should be objects.", { title, layoutId, pointer: actionPath });
+        return;
+      }
+      if (safeString(action.type) !== "coll") issue(report, "warning", "DASHBOARD_COLLECTION_ACTION_TYPE_UNEXPECTED", "Collection/Kanban local actions are export-proven with type = coll.", { title, layoutId, pointer: `${actionPath}.type`, actionType: safeString(action.type) });
+      if (!safeString(action.id)) issue(report, severity, "DASHBOARD_COLLECTION_ACTION_ID_MISSING", "Collection/Kanban local actions should include id for item-template binding.", { title, layoutId, pointer: `${actionPath}.id` });
+      if (!safeString(action.name)) issue(report, "warning", "DASHBOARD_COLLECTION_ACTION_NAME_MISSING", "Collection/Kanban local actions should include a readable name.", { title, layoutId, pointer: `${actionPath}.name` });
+      if (!asArray(action.steps).length) issue(report, severity, "DASHBOARD_COLLECTION_ACTION_STEPS_EMPTY", "Collection/Kanban local actions should include at least one step.", { title, layoutId, pointer: `${actionPath}.steps` });
+      asArray(action.steps).forEach((step, stepIndex) => validateCollectionActionStep(step, `${actionPath}.steps[${stepIndex}]`, hostContext, localActionIds));
+    });
+    walkControls(control, (node, nodePointer) => {
+      const ref = safeString(node.attrs && node.attrs.control_action);
+      if (!ref) return;
+      if (!localActionIds.has(ref)) {
+        issue(report, severity, "DASHBOARD_COLLECTION_ACTION_BINDING_UNRESOLVED", "Item-template buttons/containers/icons inside Collection/Kanban should bind to local attrs.actions[].id.", { title, layoutId, pointer: `${pointer}${nodePointer.slice(1)}.attrs.control_action`, controlType: node.type, label: safeString(node.label || node.nv_label) });
+      }
+    });
+  }
+
+  function validateDashboardPageActions() {
+    const fallbackContext = hostContexts[0] || null;
+    asArray(page && page.actions).forEach((action, actionIndex) => {
+      const actionPath = `$.actions[${actionIndex}]`;
+      if (!isObject(action)) return;
+      asArray(action.steps).forEach((step, stepIndex) => {
+        validateCollectionActionStep(step, `${actionPath}.steps[${stepIndex}]`, actionStepContext(step, fallbackContext), new Set());
+      });
+    });
+    const onLoad = safeString(page && page.formAction && page.formAction.onLoad);
+    if (onLoad && !pageActionIds.has(onLoad)) {
+      issue(report, severity, "DASHBOARD_PAGE_ONLOAD_ACTION_UNRESOLVED", "Dashboard page onLoad action should resolve to a page-level action id.", { title, layoutId, pointer: "$.formAction.onLoad" });
+    }
+  }
+
   function visit(control, pointer, itemContext) {
     if (!isObject(control)) return;
     const controlId = safeString(control.id);
@@ -1644,8 +1927,9 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
         const code = control.type === "kanban" ? "DASHBOARD_KANBAN_LIST_REFERENCE_UNRESOLVED" : DASHBOARD_TIMELINE_CONTROL_TYPES.has(control.type) ? "DASHBOARD_TIMELINE_LIST_REFERENCE_UNRESOLVED" : "DASHBOARD_COLLECTION_LIST_REFERENCE_UNRESOLVED";
         issue(report, severity, code, "Kanban/Collection/Timeline control data source should resolve to a list included in the package.", { title, layoutId, pointer, listId });
       }
-      const fields = fieldsByList.get(listId) || new Map();
-      activeContext = { host: control.type, listId, fields };
+      activeContext = makeHostContext(control.type, listId);
+      if (control.type === "collection" || control.type === "kanban") hostContexts.push(activeContext);
+      const fields = activeContext.fields;
       if (control.type === "kanban") {
         const categoryField = safeString(control.attrs && control.attrs.data && control.attrs.data.cateField);
         if (!categoryField) {
@@ -1683,6 +1967,9 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
         }
         walk(item.value, (node, valuePointer) => validateExpressionNode(node, `${pointer}.attrs.data.fulltext[${fulltextIndex}].value${valuePointer.slice(1)}`, activeContext));
       }
+      if (control.type === "collection" || control.type === "kanban") {
+        validateCollectionActions(control, pointer, activeContext);
+      }
     }
     if (DYNAMIC_DISPLAY_CONTROL_TYPES.has(safeString(control.type)) && safeString(control.attrs && control.attrs.source) === "3") {
       if (!activeContext) {
@@ -1703,6 +1990,36 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
   }
 
   asArray(page.children).forEach((child, index) => visit(child, `$.children[${index}]`, null));
+  validateDashboardPageActions();
+}
+
+function validateDashboardDataTableControl(control, title, layoutId, pointer, listsById, fieldsByList, report) {
+  const severity = generatorFinalSeverity(report);
+  const listId = safeString(control.attrs && control.attrs.data && control.attrs.data.list && control.attrs.data.list.ListID);
+  const columns = asArray(control.attrs && control.attrs.listarr);
+  if (!listId) {
+    issue(report, severity, "DASHBOARD_DATA_TABLE_SOURCE_MISSING", "Generated dashboard Data table controls must configure attrs.data.list.", { title, layoutId, pointer });
+    return;
+  }
+  if (!listsById.has(listId)) {
+    issue(report, severity, "DASHBOARD_DATA_TABLE_SOURCE_UNRESOLVED", "Generated dashboard Data table controls must reference a packaged data list.", { title, layoutId, pointer, listId });
+  }
+  if (!columns.length) {
+    issue(report, severity, "DASHBOARD_DATA_TABLE_DISPLAY_COLUMNS_MISSING", "Generated dashboard Data table controls must include attrs.listarr display fields. Empty table field configuration is not handoff-ready.", { title, layoutId, pointer, listId });
+    return;
+  }
+  if (columns.length < 3) {
+    issue(report, "warning", "DASHBOARD_DATA_TABLE_DISPLAY_COLUMNS_THIN", "Generated dashboard Data table controls should include 3 to 5 meaningful display columns when source fields are available.", { title, layoutId, pointer, listId, columnCount: columns.length });
+  }
+  const fields = fieldsByList.get(listId) || new Map();
+  columns.forEach((column, index) => {
+    const fieldName = displayColumnFieldName(column);
+    if (!fieldName) {
+      issue(report, severity, "DASHBOARD_DATA_TABLE_DISPLAY_FIELD_MISSING", "Data table display column entries must identify a source field.", { title, layoutId, pointer: `${pointer}.attrs.listarr[${index}]`, listId });
+    } else if (fieldsByList.has(listId) && !fields.has(fieldName)) {
+      issue(report, severity, "DASHBOARD_DATA_TABLE_DISPLAY_FIELD_UNRESOLVED", "Data table display column must resolve to the selected source list fields.", { title, layoutId, pointer: `${pointer}.attrs.listarr[${index}]`, listId, fieldName });
+    }
+  });
 }
 
 function validateDashboardExtFieldRefs(title, layoutId, pointer, attr, fieldsByList, filterVars, report) {
@@ -2564,6 +2881,9 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report, layo
   }
   validateCustomFormActions(form, fieldsByName, pathPrefix, report, layout.Title, layoutsById);
   validateUiStandardFormRoot(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix });
+  if (!hasSafeHorizontalPaddingNearRoot(form)) {
+    uiStandardWarning(report, "UI_QUALITY_CUSTOM_FORM_SAFE_PADDING_MISSING", "Generated Data List custom forms should include safe left/right padding on an outer section or container so fields do not touch page edges.", { title: layout.Title, path: pathPrefix });
+  }
   validateUiStandardContainers(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix, requireFormBody: false });
   if (!asArray(form.children).length) {
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "CUSTOM_FORM_EMPTY_CHILDREN", "Assigned custom form has no controls.", { title: layout.Title });
@@ -2573,6 +2893,12 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report, layo
       title: layout.Title,
       path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}`,
       surface: "custom list form",
+    });
+    validateAdvancedControl(control, report, {
+      surface: "data-list-custom-form",
+      title: layout.Title,
+      path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}`,
+      fieldsByName,
     });
     const binding = control.binding;
     if (binding && !(control.attrs && control.attrs.list_field === true) && !fieldsByName.has(String(binding))) {
@@ -3577,8 +3903,9 @@ function validateUiStandardFormRoot(form, report, context = {}) {
   if (container && container.cw !== "2") {
     uiStandardWarning(report, "UI_STANDARD_CONTENT_WIDTH_NOT_FULL", "UI/UX standard forms should use full-width content area: attrs.container.cw = \"2\".", context);
   }
-  if (!zeroPadding(container && container.padding)) {
-    uiStandardWarning(report, "UI_STANDARD_FORM_PADDING_NOT_ZERO", "UI/UX standard forms should use zero page padding: attrs.container.padding with --sp--s0 on all sides.", context);
+  const rootPadding = container && container.padding;
+  if (!zeroPadding(rootPadding) && !hasSafeHorizontalPaddingValue(rootPadding)) {
+    uiStandardWarning(report, "UI_STANDARD_FORM_PADDING_UNUSUAL", "Form root padding should be either zero with padded inner sections or safe horizontal page padding.", context);
   }
 }
 

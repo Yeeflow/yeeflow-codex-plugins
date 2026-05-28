@@ -15,6 +15,28 @@ description: build real Yeeflow business applications from requirements, process
 - Validate and redact environment variables before API calls and never print API keys, raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, or generated runtime packages.
 - Keep generated examples tenant-neutral unless the user explicitly requests a target-tenant-specific package and provides safe mappings.
 
+## Plan-First Full-Scope Generation
+
+For application-generation requests, create an application plan Markdown file before building a `.yap` or `.yapk` package unless the user explicitly says to skip planning. Save safe plans under `docs/generated-app-plans/<safe-app-name>-plan.md` when the plan is suitable for git. If the plan contains tenant-specific, private, or runtime-generated details that should not be committed, save it outside git and clearly report the path.
+
+The app plan must cover the application purpose, target users/roles, business process overview, data lists and fields, document libraries when needed, New/Edit/View forms, Print Page when needed, approval forms when needed, dashboards/pages, controls selected for each page, actions/workflows, automation logic, permissions/roles, integration/API needs, layout/design approach, validation checklist, assumptions, exclusions/deferred items, and proof boundary.
+
+Ask focused clarification questions before generation when blocking details are missing: app purpose, roles, data lists, important fields, statuses, approval flow, dashboards/reports, required actions/workflows, integrations, package type, or target output. Ask only the minimum needed to avoid a bad package. If uncertainty is not blocking, state assumptions in the plan and proceed.
+
+Do not default to a simple, MVP, basic, or small v1 package. The default is the complete functional application described in the plan, including all core data lists, fields, forms, dashboards, actions, workflows, and major controls that are safe to generate. Staged generation is allowed only when the user requests it, the app is too large for one safe package, critical information is missing and the user accepts assumptions, or the task is explicitly a focused runtime proof package.
+
+After generation, compare the package against the plan. Do not return the final package until planned data lists, important fields, forms, dashboards/pages, major controls, workflows/actions, Data table display columns, padding/layout quality, and required bindings are present or explicitly documented as deferred with a reason and workaround.
+
+## Generated Application UI Quality Gate
+
+Before package generation, create a short UI plan that names the pages, major sections, data sources, controls per page, fields shown in every data-bound control, and the padding/container approach. Prefer fewer well-configured controls over a broad unfinished dashboard.
+
+Default generated dashboards and Data List custom forms must use safe outer spacing. Use an outer page section/container with desktop left/right padding around 24px to 32px when the schema supports it, with smaller responsive padding for tablet/mobile. Do not place major controls directly against the page or window edge. Group important content in sections, cards, or containers with readable row and section spacing.
+
+Do not generate empty or unconfigured controls. Every generated Data table must configure a data source and at least 3 to 5 meaningful display columns when fields are available, including title/name plus status, date, owner, amount, or progress fields where relevant. If suitable fields are unavailable, use cards, Collection, or a simple message instead. Empty Data table display configuration is a generated-final hard error.
+
+Every data-bound control must resolve its source and field bindings before handoff. Collection, Kanban, and Timeline templates need meaningful dynamic fields; progress, steps, QR/barcode, embed, document embed, and buttons/actions need valid values, bindings, or actions. Run the generated UI quality gate together with package validation and do not claim the package is ready when table, dashboard, or form quality checks fail.
+
 Use this skill when the user provides business requirements, process documents, forms, screenshots, SOPs, sample exports, workflow requirements, or app ideas and asks Codex to build, implement, create, generate, test, or output a Yeeflow application package, `.yap`, or `.yapk`.
 
 YAPK-from-scratch rule: when the requested deliverable is a generated `.yapk`, the builder must still treat the inner application as the first deliverable. Build and validate `AppPackageInfo` content before Brotli/base64/sign. Do not sign if package/app creation validators, graph validators, workflow publish-readiness checks, or placeholder scans fail. `setsign` and `verifysign` prove wrapper/resource integrity, not generated-app correctness or tenant-specific routing. Preserve the proof boundary and write generated `.yapk` output outside git.
@@ -127,10 +149,10 @@ When an existing script is used in an app package, coordinate with `yeeflow-cust
 Think like an experienced business consultant and Yeeflow solution architect:
 
 - understand the business goal before designing fields
-- identify mandatory core business capabilities before proposing v1 scope
-- do not defer a feature that is central to the stated business process merely because it is technically sensitive; mark it as a required v1 runtime proof item with fallback behavior instead
+- identify mandatory core business capabilities before proposing generation scope
+- do not defer a feature that is central to the stated business process merely because it is technically sensitive; mark it as a required generation item, required focused runtime proof item, or explicit exclusion with fallback behavior instead
 - recommend the best Yeeflow-native application structure
-- separate v1 must-have scope from v2/v3 enhancements
+- separate full-scope must-haves from true future enhancements without defaulting to a simple/MVP first package
 - separate business decision gates from technical runtime assumptions
 - ask the user/business owner to confirm business decision gates before generation, unless they explicitly approve default assumptions
 - present unanswered business decision gates directly in the Codex chat and stop before generation until the user answers or explicitly approves defaults
@@ -141,11 +163,11 @@ Think like an experienced business consultant and Yeeflow solution architect:
 - when requirements imply multiple selectable business items, evaluate a sublist/listref design early instead of forcing a single lookup field
 - when requirements include requester/applicant/employee identity, decide whether proxy submission is allowed; if the applicant field is editable, its change action must rerun profile snapshot and dependent policy/quota calculations
 - when requirements include quota, benefit eligibility, or tenure rules, decide the quota cycle, occupation timing, release behavior, and eligibility source before generation
-- every generated data list must have an active runtime purpose in v1 or be explicitly deferred out of the package
+- every generated data list must have an active runtime purpose in the planned application or be explicitly deferred out of the package
 - master/reference data lists named in requirements must be real active generated lists with fields, views, current-standard custom forms, and sample/reference rows when forms, lookups, dashboards, or workflows depend on them; do not leave them as placeholder concepts
 - line-item planning must explicitly choose one persistence model: workflow sublist summary only, direct child-row persistence, or a separate transaction item list with its own runtime proof and reporting purpose
 - availability, stock, booking, quota, or capacity logic must be labeled honestly as manual review only, query-based availability, or inventory/reservation based; never present review routing as true stock control
-- generated dashboards must be meaningful enough for the app's v1 workflow while staying inside runtime-proven dashboard patterns
+- generated dashboards must be meaningful enough for the planned application workflow while staying inside runtime-proven dashboard patterns
 - dashboard KPIs, summaries, report sections, queues, analytics, trends, and charts must be implemented with data-bound dashboard controls, not static Text mockups. Use Summary controls for counts/totals, data-list or proven Collection controls for queues/report tables, and chart controls when the chart model is known/proven. Do not remove planned chart controls merely because the initial source list is empty; seed or confirm representative records before deciding chart validity. Use functional list/table fallbacks only for structural chart failures, or as complementary drill-down/reporting views beside working charts
 - do not mark dashboard runtime proof as passed only because a page renders; verify source-list bindings, dashboard `exts`, ReportIds, and at least one value/list/empty-state coming from the expected data source
 - runtime-unproven features must be marked as required focused proof items or deferred with fallback behavior before final package claims
@@ -159,10 +181,10 @@ For requirement-to-application requests, load `references/requirement-to-yap-gen
 
 1. Requirement intake
 2. Initial business analysis
-3. Initial app plan/spec
+3. Initial app plan/spec Markdown file
 4. Business clarification gate
 5. Wait for user answers when business-critical decisions are missing
-6. Apply confirmed answers to plan/spec
+6. Apply confirmed answers to plan/spec and update the saved Markdown plan
 7. Generation-readiness review
 8. Generate the correct package type only if ready: `.yap` for new applications, `.yapk` for existing-app upgrades when a safe baseline exists
 9. Local validation
@@ -245,7 +267,7 @@ Examples:
 - mandatory approval roles
 - pricing ownership and manual override policy
 - exact attachment requirements by scenario
-- whether dashboard surfaces belong in v1
+- whether dashboard surfaces belong in the full planned package or a later explicit phase
 - status lifecycle
 - compliance/audit handling
 - integration responsibility
@@ -269,12 +291,12 @@ App specs should record decision gates using this shape:
 ]
 ```
 
-## Mandatory V1 Capability Rule
+## Mandatory Full-Scope Capability Rule
 
-Do not incorrectly move core business capabilities to v2. If a capability is essential to the requested business process, keep it in v1 as either:
+Do not incorrectly move core business capabilities to a later phase. If a capability is essential to the requested business process, keep it in the planned package as either:
 
 - a proven implementation item, or
-- a required v1 runtime proof item with a documented fallback.
+- a required runtime proof item with a documented fallback.
 
 Only defer true enhancements, integrations, advanced analytics, admin configurability, scheduled automation, or optional polish.
 
@@ -346,14 +368,14 @@ Use the current Yeeflow generation foundation by default:
 
 ## Stop And Defer
 
-Do not blindly implement every requested detail in v1. Defer features when they are optional, integration-heavy, advanced, unclear, or likely to make the first package hard to import and test.
+Do not blindly implement every requested detail if it would make the package unsafe, unimportable, or dependent on unavailable tenant data. Defer features only when they are optional, integration-heavy, advanced, unclear, explicitly moved to a later phase by the user, or likely to make the full planned package hard to import and test.
 
 Do not use "runtime-sensitive" alone as a reason to defer a core business capability. For core capabilities, require focused runtime proof and fallback behavior.
 
 Stop before generation when:
 
 - mandatory business decision gates are unanswered
-- required v1 capabilities have been misclassified as v2 enhancements
+- required full-scope capabilities have been misclassified as future-phase enhancements
 - approval form design quality gates are not represented in the plan/spec
 - generated form structure lacks grid-based field layout or Form bottom action/history placement
 

@@ -25,6 +25,14 @@ Collection/Kanban item actions are currently export-proven on Dashboard pages fr
 
 When approval-form changes target an existing imported app, confirm whether the user wants a new cloned `.yap` or an upgrade `.yapk`. For `.yapk`, start from a Version management baseline and preserve existing form/workflow IDs; do not regenerate fresh IDs for existing objects unless the workflow is explicitly a generated-new-content experiment. Offline app-content mutation inside `.yapk` remains proof-boundary-sensitive: content validation, signing, verification, and focused runtime upgrade proof are all separate gates.
 
+## Plan-To-Approval Generation
+
+For full application generation, approval forms and workflows must come from the application plan. Confirm requester experience, New/Submit page fields, task/review pages, print page needs, approval stages, assignee strategy, status transitions, ContentList persistence, notifications/email, and workflow proof boundary before generating the package.
+
+Ask focused clarification questions when approval routing, roles, conditions, required fields, line items, or persistence requirements are unclear. Do not guess tenant-specific users, groups, departments, locations, or positions. Use requester/current-user expressions, safe placeholders, or post-import configuration unless the user provides approved mappings.
+
+Do not downgrade a planned approval process to a simple one-step or static form unless the user explicitly asks for a simple/MVP package. Implement the full planned approval flow where safe, and document any excluded/deferred workflow behavior with a reason, fallback, and validation/runtime proof boundary.
+
 ## Core Workflow
 
 Always work in stages:

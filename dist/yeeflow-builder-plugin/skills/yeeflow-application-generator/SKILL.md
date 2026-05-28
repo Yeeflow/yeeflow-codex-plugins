@@ -15,6 +15,26 @@ description: generate, inspect, validate, package, debug, and improve small yeef
 - Validate and redact environment variables before API calls and never print API keys, raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, or generated runtime packages.
 - Keep generated examples tenant-neutral unless the user explicitly requests a target-tenant-specific package and provides safe mappings.
 
+## Plan-First Full-Scope Generation
+
+Do not generate a `.yap` or `.yapk` package directly from a broad app request unless the user explicitly skips planning. Start from a saved or visible Markdown app plan that names the purpose, users/roles, data lists and fields, forms, dashboards/pages, controls, actions/workflows, permissions, integrations, layout/design approach, validation checklist, assumptions, exclusions, and proof boundary.
+
+Ask focused clarification questions when blocking details are missing, especially purpose, roles, required lists/fields, status model, approval flow, dashboards, actions/workflows, integrations, package type, or output format. Ask only enough to prevent a bad package. For non-blocking gaps, document assumptions in the plan and proceed.
+
+Default to the full functional application described in the plan, not a simple/MVP/basic v1 build. Implement all planned core lists, fields, forms, dashboards, actions, workflows, and major controls in one package when feasible. If something cannot be generated safely, document it as excluded/deferred with a reason and workaround; do not silently omit planned features.
+
+After generation, compare the package against the plan before handoff. Planned data lists, important fields, forms, dashboards/pages, Data table columns, actions/workflows, padding/layout standards, and data bindings must exist or be explicitly marked deferred. Do not mark the package ready when the implementation is a smaller version than the plan.
+
+## Generated Application UI Quality Gate
+
+Before package generation, write a short UI plan covering pages, sections, data sources, controls, displayed fields, and safe spacing. Use the plan to avoid broad unfinished dashboards and to prefer fewer, complete controls.
+
+Generated dashboards and Data List custom forms must have safe left/right padding through a root or near-root page section/container. Aim for 24px to 32px desktop horizontal padding when supported, with smaller responsive padding on narrower surfaces. Major dashboard cards, tables, charts, and form sections should sit inside sections, cards, or containers rather than directly against page edges.
+
+Every dashboard Data table (`type = "data-list"`) must resolve its source list and include nonempty `attrs.listarr` display columns. Use 3 to 5 meaningful columns when fields are available, including the primary title/name field and useful status/date/owner/amount/progress fields. Empty Data table columns, unresolved source lists, and unresolved display fields are generated-final blockers.
+
+Data-bound controls are not complete until sources and field bindings resolve. Collection/Kanban/Timeline item templates need dynamic fields; progress and steps controls need valid values or bindings; action buttons must reference valid actions. Run `scripts/inspect-generated-ui-quality.mjs` as part of final package validation and do not hand off packages that fail the generated UI quality gate.
+
 Business Travel runtime-practice rule: every generated root app/listset and child list-like resource must emit `ListModel.Flags = 1`. Emit `ListModel.Status = 1` when including Status, keep `ListModel.Type` inside the schema-v2 enum `1`, `16`, `32`, `64`, `128`, `1024`, and keep `Defs`/`Layouts` arrays. Before package handoff, validate that workflow variables are declared before use in controls, summaries, sequence-flow conditions, Set Variable targets, task-assignment expressions, and ContentList mappings. Do not emit placeholder user/group/position IDs into final packages; direct `method="position"` assignees require real numeric position IDs or a user-approved fallback. The fixed Business Travel package is user-proven for import/open/workflow publish only; do not infer workflow execution, routing, data mutation, or true Finance Manager assignment.
 
 YAPK-from-scratch hardening addendum: if the requested output is `.yapk` instead of `.yap`, keep the same generated-app correctness gate before encoding/signing. The inner `AppPackageInfo` must pass package, app-creation, graph, workflow publish-readiness, and placeholder checks before Brotli/base64/sign. Signing/verifysign is not a substitute for generated-app validation.
@@ -118,9 +138,9 @@ Before generating a package, self-check:
 - Did it include validation and runtime-test boundaries?
 - Did it avoid real users, emails, tenant IDs, raw exports, decoded payloads, credentials, tokens, private files, and generated package artifacts in commit scope?
 
-## Supported v1 Package Shape
+## Supported Full Application Package Shape
 
-Use v1 for apps like `Department Access Management`:
+For full application generation, use the proven app-level structures below as building blocks, but do not restrict the output to a minimal v1 when the plan requires more. A complete planned app may include:
 
 - root app/listset shell
 - child data lists in `Data.Childs[]`
@@ -236,9 +256,8 @@ Navigation contrast rule: when root `LayoutView.attrs.appearance` defines a head
 
 Theme color rule: generated `Data.AppThemes[].Config.neutral.lightmodel` should be `"Luminance"`, not `"Lightness"`.
 
-Keep these out of scope in v1 unless the user asks for research only:
+Keep these out of a generated package only when they are not in the app plan, are explicitly deferred, or require a focused research/runtime-proof branch before safe generation:
 
-- dashboards beyond a minimal Type `103` shell page
 - data reports and form reports
 - AI Agents, Copilots, Connections, Knowledges
 - document generation and templates
@@ -425,13 +444,13 @@ When generating approval workflows:
 
 ## Generated List Runtime Purpose Rule
 
-Every generated v1 data list should have at least one active purpose:
+Every generated data list should have at least one active purpose:
 
 - maintained as master/config data and read by form/workflow/dashboard logic
 - written as transaction/usage/audit data by workflow or ContentList
 - read for quota, routing, reporting, search, dashboard, or export
 
-Do not include unused configuration lists in v1. If a list is only intended for v2, mark it deferred and omit it unless the user explicitly asks for a placeholder.
+Do not include unused configuration lists. If a list is only intended for a future phase, mark it deferred and omit it unless the user explicitly asks for a placeholder.
 - use `arraySum` over the query result collection for used amount
 - use the top-level total variable from sublist summaries/recalculation for quota checks, workflow routing, and ContentList persistence
 - preserve safe FlowKey rules so summary binding keys such as `prefix` cannot be corrupted by import replacement
