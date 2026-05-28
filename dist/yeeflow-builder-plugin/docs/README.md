@@ -177,6 +177,18 @@ Generate a complete Yeeflow application for [business process]. Think like a web
 
 Generated dashboards and Data List custom forms should use safe left/right padding, section/card/container grouping, and fully configured data-bound controls. Prefer fewer well-configured controls over many incomplete controls.
 
+## Using UI Mockups Or Screenshots As Design References
+
+You can ask Codex to design app UI images first, or provide your own mockups/screenshots, before asking it to generate a Yeeflow package. For best results, ask Codex to convert the visuals into a Yeeflow UI implementation spec first. The spec should map every visible page section to Yeeflow controls, data bindings, actions, style settings, custom CSS, or Custom code if needed.
+
+Sample prompt:
+
+```text
+I have UI mockup images for a Yeeflow application. Use them as design references. First extract a Yeeflow UI implementation spec in Markdown. For every visible page section, map the UI to Yeeflow controls, data bindings, actions, style settings, custom CSS, or Custom code if needed. Do not simplify the design. Then generate the full YAPK package from the spec and validate the package against the spec before returning it.
+```
+
+This workflow helps preserve design quality and reduces underbuilt/simple output. Pixel-perfect reproduction is not guaranteed, but generated packages should preserve the mockup's structure, major controls, padding, cards, tables, item templates, actions, and print layout intent.
+
 ## Common Workflows
 
 - Plan a Yeeflow application from requirements.

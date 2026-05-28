@@ -59,6 +59,24 @@ Use Custom code control only when standard Yeeflow controls plus style settings/
 
 Each app plan must include a `UI/UX and Control Mapping` section. For each page/form/dashboard, list the user goal, chosen layout pattern, selected Yeeflow controls, rationale, data bindings, actions, styling approach, custom CSS/custom code needs, alternatives considered when relevant, and validation checks.
 
+## Visual Design To Implementation Workflow
+
+When the user provides UI mockup images, screenshots, generated design images, wireframes, or asks Codex to design images first, treat those visuals as implementation references, not decoration. Before package generation, extract a Markdown UI implementation spec from the visual design.
+
+Suggested safe path:
+
+```text
+docs/generated-app-plans/<safe-app-name>-ui-implementation-spec.md
+```
+
+If the spec would include private image references, tenant data, customer names, raw payloads, or private IDs, save it outside git and report the path.
+
+The UI implementation spec should capture pages, sections, layout hierarchy, Yeeflow controls per section, data list bindings, fields displayed, form fields, Data table columns, Collection/Kanban/Timeline item template fields, actions, workflow/form actions, style settings, custom CSS requirements, responsive considerations, print-page formatting, and validation checklist.
+
+Preserve design quality during generation. Do not simplify a rich mockup-backed design into a blank/simple page or minimal app unless the user explicitly asks. Do not omit major pages or visible controls from the mockup. Do not generate Data tables without columns, Collection/Kanban/Timeline controls without meaningful item templates, or forms without safe padding and card/section layout.
+
+After generation, validate against both the app plan and UI implementation spec with `scripts/inspect-generated-app-quality.mjs --package <package> --plan <plan.md> --spec <ui-implementation-spec.md>` when available.
+
 ## Generated Application UI Quality Gate
 
 Before package generation, create a short UI plan that names the pages, major sections, data sources, controls per page, fields shown in every data-bound control, and the padding/container approach. Prefer fewer well-configured controls over a broad unfinished dashboard.

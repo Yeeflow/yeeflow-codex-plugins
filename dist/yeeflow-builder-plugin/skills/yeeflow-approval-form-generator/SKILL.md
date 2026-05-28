@@ -39,6 +39,8 @@ Use intentional control combinations: request form sections, Dynamic Sub List fo
 
 The app plan's `UI/UX and Control Mapping` section should explain each approval page's user goal, selected controls, rationale, data bindings, actions, styling approach, custom CSS/custom code needs, and validation checks.
 
+When approval-form mockups or screenshots are provided, extract submission pages, task pages, print pages, section cards, Dynamic Sub List areas, policy alerts, decision/action panels, timelines, document previews, and custom CSS needs into the UI implementation spec before generation. Preserve the mockup intent unless the user explicitly asks for a simpler approval experience.
+
 ## Core Workflow
 
 Always work in stages:

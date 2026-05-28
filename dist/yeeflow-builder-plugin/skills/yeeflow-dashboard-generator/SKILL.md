@@ -38,6 +38,8 @@ Use dashboard control combinations intentionally:
 
 Use styling capabilities for padded sections, card/container spacing, grid columns, section backgrounds, typography hierarchy, status colors, icons, border radius, borders/shadows where supported, and responsive layout. Use scoped custom CSS only for safe spacing/alignment, scrollable/fixed-width tables, card polish, conditional visual states, or dashboard grouping when standard style settings are insufficient. Use Custom code control only for true custom dashboard UI needs that standard controls cannot satisfy.
 
+When dashboard mockups or screenshots are provided, extract dashboard sections into the UI implementation spec before generation. Map each visible dashboard block to Yeeflow controls: KPI cards, Summary/Text/Dynamic fields, Progress circle/bar, Alert, Data table, Collection, Kanban, Timeline, Icon list, filters, action buttons, containers/grids, and custom CSS only where needed for layout polish. Do not replace a high-quality dashboard mockup with an empty shell or static placeholder page.
+
 ## Generated Dashboard Quality Gate
 
 Before generating a dashboard, create a compact page plan with major sections, data sources, controls, displayed fields, and padding/container choices. Use fewer polished sections instead of many incomplete widgets.

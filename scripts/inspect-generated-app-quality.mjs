@@ -19,12 +19,26 @@ const REQUIRED_PLAN_SECTIONS = [
   "proof boundary",
 ];
 
+const REQUIRED_SPEC_SECTIONS = [
+  "page list",
+  "purpose",
+  "layout structure",
+  "yeeflow controls",
+  "data list bindings",
+  "fields displayed",
+  "table columns",
+  "actions",
+  "style settings",
+  "custom css",
+  "validation checklist",
+];
+
 function usage(exitCode = 1) {
   const text = [
     "Usage:",
-    "  node scripts/inspect-generated-app-quality.mjs --package <app.yap|decoded-data.json> [--plan <plan.md>] [--json-out <report.json>]",
+    "  node scripts/inspect-generated-app-quality.mjs --package <app.yap|decoded-data.json> [--plan <plan.md>] [--spec <ui-implementation-spec.md>] [--json-out <report.json>]",
     "",
-    "Combines app-plan presence checks, package inventory, and generated UI quality checks.",
+    "Combines app-plan presence checks, optional UI implementation spec checks, package inventory, and generated UI quality checks.",
   ].join("\n");
   (exitCode === 0 ? console.log : console.error)(text);
   process.exit(exitCode);
@@ -32,11 +46,12 @@ function usage(exitCode = 1) {
 
 function parseArgs(argv) {
   if (argv.includes("--help") || argv.includes("-h")) usage(0);
-  const args = { packagePath: "", planPath: "", jsonOut: "" };
+  const args = { packagePath: "", planPath: "", specPath: "", jsonOut: "" };
   for (let index = 2; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--package") args.packagePath = argv[++index] || "";
     else if (arg === "--plan") args.planPath = argv[++index] || "";
+    else if (arg === "--spec") args.specPath = argv[++index] || "";
     else if (arg === "--json-out") args.jsonOut = argv[++index] || "";
     else usage();
   }
@@ -127,6 +142,60 @@ function inspectPlan(planPath) {
   return { exists: true, path: planPath, bytes: Buffer.byteLength(text), sections, findings };
 }
 
+function inspectSpec(specPath) {
+  const findings = [];
+  if (!specPath) {
+    findings.push({
+      level: "warning",
+      code: "UI_IMPLEMENTATION_SPEC_NOT_SUPPLIED",
+      message: "Provide --spec <ui-implementation-spec.md> to validate visual-design-to-package structural fidelity.",
+    });
+    return { exists: false, sections: {}, expected: {}, findings };
+  }
+  if (!fs.existsSync(specPath)) {
+    findings.push({
+      level: "error",
+      code: "UI_IMPLEMENTATION_SPEC_FILE_MISSING",
+      message: "The supplied UI implementation spec file does not exist.",
+      path: specPath,
+    });
+    return { exists: false, sections: {}, expected: {}, findings };
+  }
+  const text = fs.readFileSync(specPath, "utf8");
+  const sections = {};
+  for (const section of REQUIRED_SPEC_SECTIONS) {
+    sections[section] = includesSection(text, section);
+    if (!sections[section]) {
+      findings.push({
+        level: "warning",
+        code: "UI_IMPLEMENTATION_SPEC_SECTION_MISSING",
+        message: "UI implementation specs should include the standard design-to-control mapping sections.",
+        section,
+      });
+    }
+  }
+  const lower = text.toLowerCase();
+  const expected = {
+    dashboards: /\bdashboard\b/.test(lower),
+    customForms: /\b(new|edit|view|print) (form|page)\b|\bcustom form\b|\bapproval form\b/.test(lower),
+    dataTables: /\bdata table\b|\badmin table\b|\bdata grid\b/.test(lower),
+    itemTemplates: /\bcollection\b|\bkanban\b|\btimeline\b/.test(lower),
+    printPage: /\bprint page\b|\bprintable\b/.test(lower),
+    documentEmbed: /\bdocument embed\b/.test(lower),
+    qrBarcode: /\bqr code\b|\bbarcode\b/.test(lower),
+    customCss: /\bcustom css\b/.test(lower),
+    customCode: /\bcustom code\b/.test(lower),
+  };
+  if (!/mockup|screenshot|image|visual design|design reference/i.test(text)) {
+    findings.push({
+      level: "warning",
+      code: "UI_IMPLEMENTATION_SPEC_REFERENCE_CONTEXT_MISSING",
+      message: "The spec should identify the mockup/image/design reference it was extracted from when applicable.",
+    });
+  }
+  return { exists: true, path: specPath, bytes: Buffer.byteLength(text), sections, expected, findings };
+}
+
 function packageInventory(validationReport) {
   const inventories = validationReport?.inventories || {};
   const resources = Array.isArray(inventories.resources) ? inventories.resources : [];
@@ -149,16 +218,49 @@ function packageInventory(validationReport) {
   };
 }
 
+function compareSpecToPackage(spec, inventory, uiQualityReport) {
+  if (!spec.exists) return [];
+  const findings = [];
+  const expected = spec.expected || {};
+  const summary = inventory.summary || {};
+  const uiSummary = uiQualityReport?.summary || {};
+  if (expected.dashboards && Number(summary.dashboards || 0) === 0) {
+    findings.push({ level: "warning", code: "SPEC_EXPECTED_DASHBOARD_MISSING", message: "The UI implementation spec references dashboard pages, but package inventory found none." });
+  }
+  if (expected.customForms && Number(uiSummary.customForms || 0) === 0 && Number(summary.forms || 0) === 0) {
+    findings.push({ level: "warning", code: "SPEC_EXPECTED_FORM_SURFACES_MISSING", message: "The UI implementation spec references form/view/print surfaces, but package inventory found no matching form surfaces." });
+  }
+  if (expected.dataTables && Number(uiSummary.dataTables || 0) === 0) {
+    findings.push({ level: "warning", code: "SPEC_EXPECTED_DATA_TABLE_MISSING", message: "The UI implementation spec references Data table/grid surfaces, but UI inspection found no Data table controls." });
+  }
+  if (expected.itemTemplates && Number(uiSummary.itemTemplateControls || 0) === 0) {
+    findings.push({ level: "warning", code: "SPEC_EXPECTED_COLLECTION_KANBAN_TIMELINE_MISSING", message: "The UI implementation spec references Collection/Kanban/Timeline surfaces, but UI inspection found no item-template controls." });
+  }
+  if (expected.printPage) {
+    findings.push({ level: "warning", code: "SPEC_PRINT_PAGE_MANUAL_REVIEW", message: "The UI implementation spec references a Print Page. Verify print layout, QR/barcode, page breaks, and read-only field formatting manually." });
+  }
+  if (expected.documentEmbed || expected.qrBarcode || expected.customCss || expected.customCode) {
+    findings.push({ level: "warning", code: "SPEC_ADVANCED_VISUAL_ELEMENTS_MANUAL_REVIEW", message: "The UI implementation spec references advanced visual elements. Verify Document embed, QR/Barcode, custom CSS, or Custom code placement manually." });
+  }
+  return findings;
+}
+
 function main() {
   const args = parseArgs(process.argv);
   const repoRoot = process.cwd();
   const packagePath = path.resolve(args.packagePath);
   const planPath = args.planPath ? path.resolve(args.planPath) : "";
+  const specPath = args.specPath ? path.resolve(args.specPath) : "";
   const plan = inspectPlan(planPath);
+  const spec = inspectSpec(specPath);
   const validation = runJsonStep("package-validation", process.execPath, [path.join(repoRoot, "validate-yap-package.js"), packagePath, "--mode", "compatibility"]);
   const uiQuality = runJsonStep("generated-ui-quality", process.execPath, [path.join(repoRoot, "scripts/inspect-generated-ui-quality.mjs"), packagePath]);
+  const inventory = packageInventory(validation.report);
+  const specPackageFindings = compareSpecToPackage(spec, inventory, uiQuality.report);
   const findings = [
     ...plan.findings,
+    ...spec.findings,
+    ...specPackageFindings,
     ...((validation.report.findings || validation.report.errors || []).map((finding) => ({ ...finding, source: "package-validation" }))),
     ...((uiQuality.report.findings || []).map((finding) => ({ ...finding, source: "generated-ui-quality" }))),
   ];
@@ -168,7 +270,8 @@ function main() {
     status: errors ? "fail" : warnings ? "pass_with_warnings" : "pass",
     package: packagePath,
     plan,
-    inventory: packageInventory(validation.report),
+    spec,
+    inventory,
     steps: [
       { name: validation.name, status: validation.status, errors: validation.errors, warnings: validation.warnings },
       { name: uiQuality.name, status: uiQuality.status, errors: uiQuality.errors, warnings: uiQuality.warnings },

@@ -134,6 +134,12 @@ Example:
 Generate a complete Yeeflow application for [business process]. Think like a web application product designer first. Create a detailed app plan with a UI/UX and Control Mapping section before building. Choose the best combination of Yeeflow controls for each page, such as Data table, Collection, Kanban, Timeline, Tabs, Toggle, Steps bar, Progress controls, Sub List Dynamic content, QR Code, Barcode, Embed, Document embed, custom CSS, or Custom code if needed. Do not build a simple MVP unless I ask for one. Implement the full planned application in one package where feasible, and validate that every data-bound control has fields, every page has good padding/layout, and the generated package matches the plan.
 ```
 
+If you already have UI mockups or screenshots, use them as design references:
+
+```text
+I have UI mockup images for a Yeeflow application. Use them as design references. First extract a Yeeflow UI implementation spec in Markdown. For every visible page section, map the UI to Yeeflow controls, data bindings, actions, style settings, custom CSS, or Custom code if needed. Do not simplify the design. Then generate the full YAPK package from the spec and validate the package against the spec before returning it.
+```
+
 ## Generate And Validate The Planned Application Package
 
 ```text

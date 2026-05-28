@@ -35,6 +35,14 @@ Map web-app patterns to Yeeflow controls intentionally: admin grids to Data tabl
 
 Do not emit isolated controls without a product-design rationale. Combine controls into useful page patterns such as overview dashboard, record detail page, approval experience, or operations board. Use styling capabilities for padding, spacing, grid columns, section backgrounds, border radius, borders/shadows where supported, typography, status colors, icons, responsiveness, and safe custom CSS when needed.
 
+## Visual Design To Implementation Workflow
+
+If the user provides UI mockup images, screenshots, wireframes, or a rich UI design description, first extract a UI implementation spec before generating package JSON. Treat the visual reference as the source for page structure, section hierarchy, Yeeflow control mapping, data bindings, table columns, item templates, actions, style settings, custom CSS, and custom code decisions.
+
+Use `docs/generated-app-plans/ui-implementation-spec-template.md` when available. Do not generate a package from visual references until the spec identifies each major visible region and maps it to supported Yeeflow controls or to documented custom CSS/Custom code when standard controls are insufficient.
+
+When the spec is available, run `scripts/inspect-generated-app-quality.mjs --package <package> --spec <spec.md>` as part of final validation. Treat gaps between the visual spec and package as blockers or manual review warnings depending on confidence.
+
 ## Generated Application UI Quality Gate
 
 Before package generation, write a short UI plan covering pages, sections, data sources, controls, displayed fields, and safe spacing. Use the plan to avoid broad unfinished dashboards and to prefer fewer, complete controls.
