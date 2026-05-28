@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository publishes official Yeeflow Codex plugin packages for builders who use Codex to plan, generate, validate, and test Yeeflow application work. The current release candidate is the Yeeflow Builder Plugin v0.6.1 RC1.
+This repository publishes official Yeeflow Codex plugin packages for builders who use Codex to plan, generate, validate, and test Yeeflow application work. The current final release is the Yeeflow Builder Plugin v0.6.1.
 
 The repository is safe to share publicly: it is designed to contain plugin metadata, bundled skills, validators, sanitized documentation, and release artifacts. It must not contain tenant credentials, raw Yeeflow exports, decoded payloads, runtime screenshots, private tenant URLs, or generated runtime packages.
 
@@ -10,7 +10,7 @@ The repository is safe to share publicly: it is designed to contain plugin metad
 
 - `.agents/plugins/marketplace.json` for Codex marketplace installation.
 - `dist/yeeflow-builder-plugin` with the bundled Yeeflow Builder Plugin.
-- `dist/yeeflow-builder-plugin-0.6.1.zip` as the current release-candidate archive.
+- `dist/yeeflow-builder-plugin-0.6.1.zip` as the current release archive.
 - Public installation and usage documentation in `docs/`.
 - Sanitized validators, generation helpers, and proof-boundary notes.
 
@@ -38,12 +38,42 @@ Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.1-rc1
+yeeflow-builder-plugin-v0.6.1
 
 Sparse paths:
 .agents/plugins/marketplace.json
 dist/yeeflow-builder-plugin
 ```
+
+Expected marketplace: `Yeeflow Internal`
+Expected plugin: `Yeeflow Builder`
+Expected version: `0.6.1`
+Expected bundled skills: `21`
+
+## macOS Git Prerequisite
+
+Codex installs the marketplace by running `git clone`. On macOS, Git may require Apple Command Line Tools. If installation fails with an `xcode-select` message saying no developer tools were found, install Command Line Tools first:
+
+```sh
+xcode-select --install
+git --version
+```
+
+If tools are already installed but Git still fails, try:
+
+```sh
+sudo xcode-select --reset
+git --version
+```
+
+If full Xcode is installed and reset does not work, switch developer tools to Xcode:
+
+```sh
+sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+git --version
+```
+
+After `git --version` works, retry adding the plugin marketplace in Codex. This error happens before the Yeeflow plugin is downloaded, so it is not caused by the plugin package.
 
 ## Recommended Install Source
 
@@ -65,7 +95,7 @@ https://<yourdomain>.yeeflow.com
 
 Do not use an internal test tenant URL as a default. API calls use the shared Yeeflow API endpoint, while tenant/app links use the tenant URL.
 
-For a full setup guide, see [Environment Configuration](environment-configuration.md).
+For a full setup guide, see [Environment Configuration](docs/environment-configuration.md).
 
 ## Environment Variables
 
@@ -138,13 +168,13 @@ Validate this YAP package and report import blockers without overclaiming runtim
 
 ## Versioning And Releases
 
-The current release candidate is:
+The current final release is:
 
 ```text
-yeeflow-builder-plugin-v0.6.1-rc1
+yeeflow-builder-plugin-v0.6.1
 ```
 
-Latest final release: `yeeflow-builder-plugin-v0.6.0`. Do not move published release tags. The final `yeeflow-builder-plugin-v0.6.1` tag should be created only after review and install smoke testing.
+Latest final release: `yeeflow-builder-plugin-v0.6.1`. Do not move published release tags.
 
 ## Support / Feedback
 

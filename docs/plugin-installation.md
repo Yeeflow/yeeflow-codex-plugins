@@ -54,6 +54,71 @@ Sparse paths:
 dist/yeeflow-builder-plugin
 ```
 
+## macOS Git / Command Line Tools Prerequisite
+
+Codex installs the marketplace by running `git clone`. On macOS, Git may require Apple Command Line Tools. If Git or Apple Command Line Tools are not installed, Codex can fail before it downloads the Yeeflow plugin repository.
+
+The common error looks like:
+
+```text
+xcode-select: note: No developer tools were found, requesting install.
+```
+
+This is a local macOS Git prerequisite issue, not a Yeeflow plugin package problem.
+
+Install Command Line Tools and verify Git:
+
+```sh
+xcode-select --install
+git --version
+```
+
+Accept the macOS installation dialog and wait for it to finish. Then retry adding the plugin marketplace in Codex.
+
+If tools are already installed but Git still fails:
+
+```sh
+sudo xcode-select --reset
+git --version
+```
+
+If full Xcode is installed and reset does not work:
+
+```sh
+sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+git --version
+```
+
+After `git --version` works, retry the marketplace install with the v0.6.1 values above.
+
+## Prompt To Ask Codex On macOS
+
+Users who prefer not to type Terminal commands manually can paste this into Codex. This prompt is for the user's local Codex/macOS environment only; it does not belong inside the plugin runtime.
+
+```text
+I’m using Codex on macOS and adding a plugin marketplace failed with an xcode-select error saying no developer tools were found. Please help me fix the local Git prerequisite.
+
+Please check whether git is available by running:
+git --version
+
+If Git is missing because Apple Command Line Tools are not installed, run:
+xcode-select --install
+
+Then tell me to accept the macOS installation dialog and wait for it to finish.
+
+After installation, verify again:
+git --version
+
+If Git still fails but Command Line Tools or Xcode are installed, try:
+sudo xcode-select --reset
+git --version
+
+If full Xcode is installed and reset does not work, help me switch developer tools to:
+/Applications/Xcode.app/Contents/Developer
+
+Do not change my Yeeflow plugin files. Only help fix the local macOS Git / Command Line Tools prerequisite so Codex can run git clone.
+```
+
 v0.6.0 RC install smoke test result:
 
 - RC tag tested: `yeeflow-builder-plugin-v0.6.0-rc1`

@@ -7,6 +7,7 @@ Yeeflow Builder is for Yeeflow users, partners, and solution builders who use Co
 ## Prerequisites
 
 - Codex with plugin marketplace installation support.
+- Git available locally. On macOS, this may require Apple Command Line Tools.
 - Access to a Yeeflow tenant when runtime import or API-backed checks are needed.
 - A Yeeflow API key only for workflows that explicitly need API access.
 - A local working copy where `.env.local` is gitignored.
@@ -20,7 +21,7 @@ Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.1-rc1
+yeeflow-builder-plugin-v0.6.1
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -28,6 +29,57 @@ dist/yeeflow-builder-plugin
 ```
 
 After installation, ask Codex to confirm the installed Yeeflow Builder Plugin version. The expected version is `0.6.1`.
+
+## macOS Git Prerequisite
+
+Codex adds the marketplace by running `git clone`. On macOS, Git may require Apple Command Line Tools. If the marketplace add fails with an `xcode-select` error saying no developer tools were found, fix Git first:
+
+```sh
+xcode-select --install
+git --version
+```
+
+If tools are already installed but Git still fails:
+
+```sh
+sudo xcode-select --reset
+git --version
+```
+
+If full Xcode is installed and reset does not work:
+
+```sh
+sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+git --version
+```
+
+After `git --version` works, retry adding the plugin marketplace in Codex. This error happens before the plugin repository is cloned, so it is not caused by the Yeeflow plugin package.
+
+Prompt to ask Codex on macOS:
+
+```text
+I’m using Codex on macOS and adding a plugin marketplace failed with an xcode-select error saying no developer tools were found. Please help me fix the local Git prerequisite.
+
+Please check whether git is available by running:
+git --version
+
+If Git is missing because Apple Command Line Tools are not installed, run:
+xcode-select --install
+
+Then tell me to accept the macOS installation dialog and wait for it to finish.
+
+After installation, verify again:
+git --version
+
+If Git still fails but Command Line Tools or Xcode are installed, try:
+sudo xcode-select --reset
+git --version
+
+If full Xcode is installed and reset does not work, help me switch developer tools to:
+/Applications/Xcode.app/Contents/Developer
+
+Do not change my Yeeflow plugin files. Only help fix the local macOS Git / Command Line Tools prerequisite so Codex can run git clone.
+```
 
 ## Configuring Tenant URL And API Key
 
@@ -142,7 +194,8 @@ Runtime proof must state exactly what was tested, what passed, and what remains 
 ## Troubleshooting
 
 - Plugin does not appear: re-add the marketplace and verify sparse paths.
-- Wrong version: check the Git ref is `yeeflow-builder-plugin-v0.6.1-rc1`.
+- Plugin marketplace add fails on macOS with `xcode-select`: install or reset Apple Command Line Tools, verify `git --version`, then retry the marketplace add.
+- Wrong version: check the Git ref is `yeeflow-builder-plugin-v0.6.1`.
 - API check fails: verify `.env.local`, `YEEFLOW_API_BASE_URL`, `YEEFLOW_API_KEY`, and any active `YEEFLOW_PROFILE`; do not paste secrets into chat.
 - Import fails: run validators first and inspect blocking errors before retrying.
 - Runtime behavior differs by tenant: replace tenant-specific users, groups, positions, or external connections with safe placeholders or explicit post-import configuration.

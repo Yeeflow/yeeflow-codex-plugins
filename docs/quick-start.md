@@ -9,11 +9,67 @@ Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.1-rc1
+yeeflow-builder-plugin-v0.6.1
 
 Sparse paths:
 .agents/plugins/marketplace.json
 dist/yeeflow-builder-plugin
+```
+
+Expected marketplace: `Yeeflow Internal`
+Expected plugin: `Yeeflow Builder`
+Expected version: `0.6.1`
+Expected bundled skills: `21`
+
+### macOS Git Prerequisite
+
+Codex installs the marketplace by running `git clone`. On macOS, Git may require Apple Command Line Tools. If Codex shows an `xcode-select` error saying no developer tools were found, install Command Line Tools and verify Git:
+
+```sh
+xcode-select --install
+git --version
+```
+
+If Git still fails after the tools are installed:
+
+```sh
+sudo xcode-select --reset
+git --version
+```
+
+If full Xcode is installed and reset does not work:
+
+```sh
+sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+git --version
+```
+
+After `git --version` works, retry adding the plugin marketplace in Codex. This failure happens before the Yeeflow plugin is downloaded, so it is not a plugin package issue.
+
+Prompt to ask Codex on macOS:
+
+```text
+I’m using Codex on macOS and adding a plugin marketplace failed with an xcode-select error saying no developer tools were found. Please help me fix the local Git prerequisite.
+
+Please check whether git is available by running:
+git --version
+
+If Git is missing because Apple Command Line Tools are not installed, run:
+xcode-select --install
+
+Then tell me to accept the macOS installation dialog and wait for it to finish.
+
+After installation, verify again:
+git --version
+
+If Git still fails but Command Line Tools or Xcode are installed, try:
+sudo xcode-select --reset
+git --version
+
+If full Xcode is installed and reset does not work, help me switch developer tools to:
+/Applications/Xcode.app/Contents/Developer
+
+Do not change my Yeeflow plugin files. Only help fix the local macOS Git / Command Line Tools prerequisite so Codex can run git clone.
 ```
 
 ## Configure `.env.local`
@@ -91,7 +147,8 @@ Record whether import, open, rendering, save, submit, workflow, or other runtime
 ## Troubleshooting Checklist
 
 - Confirm the install source is the official Yeeflow repo.
-- Confirm the Git ref is `yeeflow-builder-plugin-v0.6.1-rc1`.
+- Confirm the Git ref is `yeeflow-builder-plugin-v0.6.1`.
+- On macOS, confirm `git --version` works before adding the marketplace.
 - Confirm sparse paths include both marketplace and plugin folder paths.
 - Confirm `.env.local` is present only locally and is gitignored.
 - Confirm `YEEFLOW_API_BASE_URL` is `https://api.yeeflow.com/v1`.
