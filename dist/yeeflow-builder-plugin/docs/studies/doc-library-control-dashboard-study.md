@@ -115,7 +115,7 @@ Do not add dashboard control UUID ids to `ReplaceIds`. The folder IDs referenced
 
 Generated package: `enterprise-document-center-doc-library-control-v3.yap` (ignored/uncommitted).
 
-Runtime-tested in `https://codex.yeeflow.com/` on 2026-05-18.
+Runtime-tested in `https://<yourdomain>.yeeflow.com/` on 2026-05-18.
 
 Status: dashboard Doc library controls are runtime-proven for root-library display, static root-folder display, caption/search/add enabled settings, and target `New file` modal launch.
 

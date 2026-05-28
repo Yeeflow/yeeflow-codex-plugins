@@ -86,7 +86,7 @@ Do not remap tenant/user metadata such as `TenantID`, `CreatedBy`, or `ModifiedB
 
 ## Runtime Results
 
-Tested at `https://codex.yeeflow.com/`.
+Tested at `https://<yourdomain>.yeeflow.com/`.
 
 - import metadata dialog parsed name, description, and icon
 - import completed

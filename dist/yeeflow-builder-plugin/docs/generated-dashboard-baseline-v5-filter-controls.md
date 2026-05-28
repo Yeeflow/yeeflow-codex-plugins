@@ -114,7 +114,7 @@ Do not include UUID-like filter controls, chart controls, summary controls, or p
 
 ## Runtime Results
 
-Runtime environment: `https://codex.yeeflow.com/`
+Runtime environment: `https://<yourdomain>.yeeflow.com/`
 
 Tested package: `generated-dashboard-filter-controls-v5.yap`
 

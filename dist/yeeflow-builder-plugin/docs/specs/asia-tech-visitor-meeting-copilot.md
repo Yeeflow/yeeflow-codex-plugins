@@ -4,7 +4,7 @@
 
 Yeeflow will attend Asia Tech x Singapore 2026 from May 20 to May 22, 2026. The event team needs a lightweight Yeeflow application to capture booth visitors, scheduled meetings, ad hoc discussions, name-card or badge images, AI extraction results, lead-fit analysis, follow-up tasks, and email drafts.
 
-The application is a new `.yap` app package named `Asia Tech Visitor & Meeting Copilot`. It is designed for import into `https://codex.yeeflow.com/` as a sandbox/runtime-test app first.
+The application is a new `.yap` app package named `Asia Tech Visitor & Meeting Copilot`. It is designed for import into `https://<yourdomain>.yeeflow.com/` as a sandbox/runtime-test app first.
 
 ## V1 Scope
 
@@ -339,7 +339,7 @@ Run:
 
 ## Runtime Test Plan
 
-Target: `https://codex.yeeflow.com/`
+Target: `https://<yourdomain>.yeeflow.com/`
 
 Safe-first checks:
 

@@ -114,7 +114,7 @@ Before runtime testing:
 
 When explicitly requested:
 
-1. Import the package into `https://codex.yeeflow.com/`.
+1. Import the package into `https://<yourdomain>.yeeflow.com/`.
 2. Confirm the app opens.
 3. Confirm dashboard renders.
 4. Confirm data list opens.

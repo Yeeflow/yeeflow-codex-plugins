@@ -6,7 +6,7 @@ Runtime app: `Custom Code Smart Lookup Picker Test`
 
 Generated package: `/Users/Renger/Documents/Codex Projects/AI Agent and Copilot templates/custom-code-smart-lookup-picker-test.v1.yap`
 
-Sandbox: `https://codex.yeeflow.com/`
+Sandbox: `https://<yourdomain>.yeeflow.com/`
 
 ## Validation Summary
 

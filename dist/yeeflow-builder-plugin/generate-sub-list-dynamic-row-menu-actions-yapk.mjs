@@ -2,6 +2,7 @@ import fs from "node:fs";
 import zlib from "node:zlib";
 import crypto from "node:crypto";
 import { execFileSync } from "node:child_process";
+import { loadDotenvFile, resolveYeeflowEnvironment } from "./scripts/yeeflow-env-utils.mjs";
 
 const BROTLI_PREFIX = "::brotli::";
 const SOURCE_YAPK = process.env.YEEFLOW_SOURCE_YAPK || "/Users/Renger/Downloads/Sub List Dynamic Runtime Proof-V1.4-row-menu-actions.yapk";
@@ -13,31 +14,9 @@ function readJsonFile(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8").replace(/^\uFEFF/, ""));
 }
 
-function loadDotenv(filePath = ".env.local") {
-  if (!fs.existsSync(filePath)) return;
+function assertEnvReadable(filePath) {
   const flags = execFileSync("ls", ["-lO", filePath], { encoding: "utf8" });
   if (/\bdataless\b/.test(flags)) throw new Error(`${filePath} is marked dataless and cannot be read for signing.`);
-  for (const rawLine of fs.readFileSync(filePath, "utf8").split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith("#")) continue;
-    const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
-    if (!match || process.env[match[1]] !== undefined) continue;
-    let value = match[2].trim();
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) value = value.slice(1, -1);
-    process.env[match[1]] = value;
-  }
-}
-
-function normalizeBaseUrl(value) {
-  return String(value || "").replace(/\/+$/, "");
-}
-
-function candidateBaseUrls(value) {
-  const normalized = normalizeBaseUrl(value);
-  const candidates = normalized ? [{ url: normalized, variant: "env" }] : [];
-  if (normalized && !/\/v1$/i.test(normalized)) candidates.push({ url: `${normalized}/v1`, variant: "env-plus-v1" });
-  candidates.push({ url: "https://api.yeeflow.com/v1", variant: "documented-default" });
-  return candidates.filter((candidate, index, all) => all.findIndex((item) => item.url === candidate.url) === index);
 }
 
 function postJsonWithCurl(url, apiKey, body) {
@@ -56,29 +35,29 @@ function postJsonWithCurl(url, apiKey, body) {
 }
 
 async function signYapkWrapper(wrapper) {
-  loadDotenv();
-  const apiKey = process.env.YEEFLOW_API_KEY;
+  loadDotenvFile(fs, ".env.local", { assertReadable: assertEnvReadable });
+  const env = resolveYeeflowEnvironment(process.env);
+  const apiKey = env.apiKey;
   if (!apiKey) throw new Error("YEEFLOW_API_KEY is required for YAPK signing.");
   const unsigned = { ...wrapper };
   delete unsigned.Sign;
   let sign = null;
   let selectedBase = null;
   let lastStatus = null;
-  for (const candidate of candidateBaseUrls(process.env.YEEFLOW_BASE_URL)) {
-    try {
-      const result = postJsonWithCurl(`${candidate.url}/utils/apppackage/setsign`, apiKey, unsigned);
-      lastStatus = result.status;
-      if (result.status < 200 || result.status > 299) continue;
+  const baseVariant = env.usedLegacyBaseUrl ? "legacy-api-base-alias" : "api-base";
+  try {
+    const result = postJsonWithCurl(`${env.apiBaseUrl}/utils/apppackage/setsign`, apiKey, unsigned);
+    lastStatus = result.status;
+    if (result.status >= 200 && result.status <= 299) {
       const json = JSON.parse(result.body);
       sign = json?.Data ?? json?.data ?? json?.Sign ?? json?.sign ?? (typeof json === "string" ? json : null);
       if (typeof sign !== "string" || Buffer.from(sign, "base64").length !== 32) throw new Error("setsign did not return a 32-byte signature.");
-      selectedBase = candidate;
-      break;
-    } catch {
-      continue;
+      selectedBase = { url: env.apiBaseUrl, variant: baseVariant };
     }
+  } catch {
+    sign = null;
   }
-  if (!sign || !selectedBase) throw new Error(`setsign failed for all base variants; last HTTP status ${lastStatus ?? "none"}.`);
+  if (!sign || !selectedBase) throw new Error(`setsign failed for configured API base; last HTTP status ${lastStatus ?? "none"}.`);
   const signed = { ...wrapper, Sign: sign };
   const verify = postJsonWithCurl(`${selectedBase.url}/utils/apppackage/verifysign`, apiKey, signed);
   if (verify.status < 200 || verify.status > 299) throw new Error(`verifysign failed with HTTP ${verify.status}.`);

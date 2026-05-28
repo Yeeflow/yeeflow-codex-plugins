@@ -33,7 +33,7 @@ The final patched package uses ID family `462` and form key `ERT1B`.
 
 Runtime status: passed for the patched v1 package.
 
-Verified in `https://codex.yeeflow.com/`:
+Verified in `https://<yourdomain>.yeeflow.com/`:
 
 - app imported successfully
 - app opened successfully

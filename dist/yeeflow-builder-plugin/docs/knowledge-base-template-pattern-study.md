@@ -126,7 +126,7 @@ Standalone `.ydl` validation was not used as the authoritative check because the
 
 ## Runtime Result
 
-Runtime import was tested at `https://codex.yeeflow.com/`.
+Runtime import was tested at `https://<yourdomain>.yeeflow.com/`.
 
 Observed for v1:
 
@@ -188,7 +188,7 @@ Included:
 - `Articles.Text4` kept as a plain input slot
 - sample category, section, and article records
 
-Runtime result at `https://codex.yeeflow.com/`:
+Runtime result at `https://<yourdomain>.yeeflow.com/`:
 
 - import passed
 - app tile appeared as `Knowledge Base Phase 1 Full`

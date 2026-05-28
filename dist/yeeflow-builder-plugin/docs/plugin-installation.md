@@ -51,14 +51,33 @@ Sparse paths:
 dist/yeeflow-builder-plugin
 ```
 
-For API-backed workflows, configure your own tenant root locally:
+For API-backed workflows, configure the shared API base URL and your tenant URL locally:
 
 ```env
-YEEFLOW_BASE_URL=https://<yourdomain>.yeeflow.com
+YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
 YEEFLOW_API_KEY=<your Yeeflow API key>
+YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com
+YEEFLOW_TENANT_ID=<optional tenant id if required>
 ```
 
-Current helper scripts try the configured tenant root first and append `/v1` when a v1 API endpoint is required. Never commit `.env.local`, API keys, tenant IDs, raw API responses, or private tenant URLs.
+`YEEFLOW_API_BASE_URL` is for API calls and should normally be `https://api.yeeflow.com/v1`. `YEEFLOW_TENANT_URL` is for tenant/app links and should be the tenant root, such as `https://<yourdomain>.yeeflow.com`. `YEEFLOW_BASE_URL` is a legacy API base URL alias only and must not mean tenant URL going forward. Never commit `.env.local`, API keys, tenant IDs, raw API responses, or private tenant URLs.
+
+Optional profile mode lets users keep multiple tenants in one local `.env.local` and select one active tenant per script run:
+
+```env
+YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
+YEEFLOW_PROFILE=dev
+
+YEEFLOW_DEV_API_KEY=<dev API key>
+YEEFLOW_DEV_TENANT_URL=https://<devdomain>.yeeflow.com
+YEEFLOW_DEV_TENANT_ID=<optional>
+
+YEEFLOW_PROD_API_KEY=<prod API key>
+YEEFLOW_PROD_TENANT_URL=https://<proddomain>.yeeflow.com
+YEEFLOW_PROD_TENANT_ID=<optional>
+```
+
+`YEEFLOW_PROFILE` is a local selector, not a Yeeflow server-side setting. If it is set to `prod`, scripts read `YEEFLOW_PROD_API_KEY`, `YEEFLOW_PROD_TENANT_URL`, and `YEEFLOW_PROD_TENANT_ID`; other profiles are inactive for that run.
 
 Smoke-test question:
 

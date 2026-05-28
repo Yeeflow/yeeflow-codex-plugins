@@ -6,7 +6,7 @@ Source of truth: `Generated Dashboard Data Bound v3.yap`.
 
 Proven generated package: `generated-dashboard-chart-widgets-v4.yap`.
 
-Runtime result: imported into `https://codex.yeeflow.com/`, opened as `Dashboard | Generated Dashboard Chart Widgets v4`, rendered summaries, a data table, one pie chart, one column chart, one line chart, and opened the local `Event Planning` list without a visible query failure.
+Runtime result: imported into `https://<yourdomain>.yeeflow.com/`, opened as `Dashboard | Generated Dashboard Chart Widgets v4`, rendered summaries, a data table, one pie chart, one column chart, one line chart, and opened the local `Event Planning` list without a visible query failure.
 
 ## App Shape
 

@@ -86,7 +86,7 @@
   },
   "runtimeValidation": {
     "status": "final_runtime_baseline_accepted",
-    "target": "https://codex.yeeflow.com/",
+    "target": "https://<yourdomain>.yeeflow.com/",
     "evidence": [
       "User manually added representative dashboard source data and confirmed the real v3 dashboard chart controls render: pie charts, column charts, and monthly trend chart sections load/display when source data exists.",
       "Runtime observation in the v3 dashboard repair app showed Applications by Status pie, Self vs Family pie, Applications by Product Type column, Custom vs Standard column, and Monthly Application Trend chart sections loading with source records present.",

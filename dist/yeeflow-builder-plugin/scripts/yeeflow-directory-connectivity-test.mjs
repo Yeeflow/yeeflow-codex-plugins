@@ -2,6 +2,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { environmentPresence, loadDotenvFile, resolveYeeflowEnvironment } from "./yeeflow-env-utils.mjs";
 
 // Read-only Yeeflow directory API smoke test.
 // Do not add create, update, delete, assignment, enable, disable, or remove endpoints here.
@@ -10,48 +11,6 @@ import path from "node:path";
 const PRIVATE_KEY_RE =
   /(^|_)(id|accountid|userid|tenantid|departmentid|locationid|manager|linemanager|createdby|modifiedby|email|mail|mobile|phone|telephone|name|address|account|code|employeeno|photo|jobtitle|officeaddress|remark|lastlogintime|servicestartdate)$/i;
 const PRIVATE_VALUE_RE = /@|\+?\d[\d\s().-]{6,}/;
-
-function loadDotenv(filePath) {
-  const content = fs.readFileSync(filePath, "utf8");
-  for (const rawLine of content.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith("#")) continue;
-    const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
-    if (!match) continue;
-    const [, key, rawValue] = match;
-    if (process.env[key] !== undefined) continue;
-    process.env[key] = parseDotenvValue(rawValue);
-  }
-}
-
-function parseDotenvValue(value) {
-  const trimmed = value.trim();
-  if (
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  ) {
-    return trimmed.slice(1, -1);
-  }
-  return trimmed;
-}
-
-function normalizeBaseUrl(value) {
-  return value.replace(/\/+$/, "");
-}
-
-function candidateBaseUrls(value) {
-  const normalized = normalizeBaseUrl(value);
-  const candidates = [{ url: normalized, variant: "env" }];
-  if (!/\/v1$/i.test(normalized)) {
-    candidates.push({ url: `${normalized}/v1`, variant: "env-plus-v1" });
-  }
-  // YEEFLOW_BASE_URL may be an app/site URL. Directory endpoints are documented under
-  // the Yeeflow developer API base, so this safe read-only fallback is tested last.
-  candidates.push({ url: "https://api.yeeflow.com/v1", variant: "documented-default" });
-  return candidates.filter(
-    (candidate, index, all) => all.findIndex((item) => item.url === candidate.url) === index,
-  );
-}
 
 function asArray(data) {
   if (Array.isArray(data)) return data;
@@ -148,18 +107,17 @@ if (!fs.existsSync(envPath)) {
   process.exit(1);
 }
 
-loadDotenv(envPath);
+loadDotenvFile(fs, envPath);
 
-const hasApiKey = Boolean(process.env.YEEFLOW_API_KEY);
-const hasBaseUrl = Boolean(process.env.YEEFLOW_BASE_URL);
+const resolvedEnv = resolveYeeflowEnvironment(process.env);
+const envPresence = environmentPresence(resolvedEnv);
 
 console.log(
   JSON.stringify(
     {
       environment: {
         envFile: ".env.local",
-        YEEFLOW_API_KEY_PRESENT: hasApiKey,
-        YEEFLOW_BASE_URL_PRESENT: hasBaseUrl,
+        ...envPresence,
       },
     },
     null,
@@ -167,11 +125,12 @@ console.log(
   ),
 );
 
-if (!hasApiKey || !hasBaseUrl) {
+if (!resolvedEnv.apiKey || !resolvedEnv.apiBaseUrl) {
   process.exit(2);
 }
 
-const baseUrls = candidateBaseUrls(process.env.YEEFLOW_BASE_URL);
+const baseUrl = resolvedEnv.apiBaseUrl;
+const baseVariant = resolvedEnv.usedLegacyBaseUrl ? "legacy-api-base-alias" : "api-base";
 const endpoints = [
   {
     label: "users",
@@ -186,41 +145,15 @@ const endpoints = [
 ];
 
 const results = [];
-let selectedBase = null;
-let selectedVariant = "env";
-const baseProbes = [];
-for (let index = 0; index < baseUrls.length; index += 1) {
-  const probe = await requestJson(
-    baseUrls[index].url,
-    process.env.YEEFLOW_API_KEY,
-    endpoints[0],
-    baseUrls[index].variant,
-  ).catch((error) => ({
-    ok: false,
-    error: safeError(error),
-  }));
-  baseProbes.push({
-    variant: baseUrls[index].variant,
-    httpStatus: probe.httpStatus ?? null,
-    ok: Boolean(probe.ok),
-  });
-  if (probe.httpStatus && probe.httpStatus !== 404) {
-    selectedBase = baseUrls[index].url;
-    selectedVariant = baseUrls[index].variant;
-    break;
-  }
-}
-
-selectedBase ??= baseUrls[0].url;
 
 for (const endpoint of endpoints) {
   try {
     results.push(
       await requestJson(
-        selectedBase,
-        process.env.YEEFLOW_API_KEY,
+        baseUrl,
+        resolvedEnv.apiKey,
         endpoint,
-        selectedVariant,
+        baseVariant,
       ),
     );
   } catch (error) {
@@ -228,7 +161,7 @@ for (const endpoint of endpoints) {
       label: endpoint.label,
       method: endpoint.method,
       path: endpoint.path,
-      baseVariant: selectedVariant,
+      baseVariant,
       ok: false,
       error: safeError(error),
     });
@@ -238,11 +171,7 @@ for (const endpoint of endpoints) {
 console.log(
   JSON.stringify(
     {
-      baseSelection: {
-        candidateCount: baseUrls.length,
-        selectedVariant,
-        probes: baseProbes,
-      },
+      baseSelection: { selectedVariant: baseVariant },
       results,
     },
     null,

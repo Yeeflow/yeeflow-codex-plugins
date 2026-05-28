@@ -88,21 +88,19 @@ Important implementation note: the decoded JSON contains 64-bit numeric IDs, so 
 Local `.env.local` was later added with these variables present:
 
 - `YEEFLOW_API_KEY`
-- `YEEFLOW_BASE_URL`
+- `YEEFLOW_API_BASE_URL`
 - `YEEFLOW_TENANT_ID`
 
 Values were not printed or committed.
 
-The configured `YEEFLOW_BASE_URL` returned 404 for the signing utility path as-is, but the repo's existing API helper pattern of appending `/v1` succeeded.
+The current signing helper uses the shared API base URL, normally `https://api.yeeflow.com/v1`, and keeps tenant/app URLs separate as `YEEFLOW_TENANT_URL`. Older notes that used `YEEFLOW_BASE_URL` as an app or site base are historical; going forward `YEEFLOW_BASE_URL` is a legacy API base URL alias only.
 
 Safe API results against the original unmodified package:
 
 | Call | Base variant | Result |
 | --- | --- | --- |
-| `setsign` on original wrapper without `Sign` | `env` | 404 HTML response |
-| `verifysign` on original wrapper with original `Sign` | `env` | 404 HTML response |
-| `setsign` on original wrapper without `Sign` | `env-plus-v1` | 200 OK, returned 32-byte sign |
-| `verifysign` on wrapper with regenerated in-memory `Sign` | `env-plus-v1` | 200 OK |
+| `setsign` on original wrapper without `Sign` | `api-base` | 200 OK, returned 32-byte sign |
+| `verifysign` on wrapper with regenerated in-memory `Sign` | `api-base` | 200 OK |
 | `verifysign` on original wrapper with original `Sign` | `env-plus-v1` | 200 OK |
 
 No raw API responses, `Sign` values, `Resource` values, or generated packages were saved.

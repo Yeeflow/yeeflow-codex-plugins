@@ -82,14 +82,29 @@ Each Yeeflow tenant has a unique URL:
 https://<yourdomain>.yeeflow.com
 ```
 
-Use this tenant root in local configuration:
+Use this tenant root for app/browser links, and use the shared Yeeflow API endpoint for API calls:
 
 ```env
-YEEFLOW_BASE_URL=https://<yourdomain>.yeeflow.com
+YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
 YEEFLOW_API_KEY=<your Yeeflow API key>
+YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com
+YEEFLOW_TENANT_ID=<optional tenant id if required>
 ```
 
-Helper scripts append `/v1` when they need a v1 API endpoint. Keep `.env.local`, API keys, tenant IDs, private URLs, raw API responses, raw `Resource`, raw `Sign`, decoded payloads, and generated runtime packages out of Git.
+`YEEFLOW_API_BASE_URL` should normally be `https://api.yeeflow.com/v1`; scripts normalize trailing slashes and avoid double `/v1`. `YEEFLOW_TENANT_URL` should be the tenant root, such as `https://<yourdomain>.yeeflow.com`, and must not be used as the API base. `YEEFLOW_BASE_URL` is a legacy API base URL alias only. Keep `.env.local`, API keys, tenant IDs, private URLs, raw API responses, raw `Resource`, raw `Sign`, decoded payloads, and generated runtime packages out of Git.
+
+For multiple tenants, use profile variables:
+
+```env
+YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
+YEEFLOW_PROFILE=client_a
+
+YEEFLOW_CLIENT_A_API_KEY=<client A API key>
+YEEFLOW_CLIENT_A_TENANT_URL=https://<client-a-domain>.yeeflow.com
+YEEFLOW_CLIENT_A_TENANT_ID=<optional>
+```
+
+`YEEFLOW_PROFILE` selects one active local profile per script run and is not a Yeeflow server-side setting.
 
 ## Starting a Learning Pass
 

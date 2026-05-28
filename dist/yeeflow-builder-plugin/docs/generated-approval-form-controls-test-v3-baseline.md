@@ -55,7 +55,7 @@ Wrapper build and round-trip validation:
 
 ## Runtime Result
 
-Runtime testing was completed in `https://codex.yeeflow.com/`.
+Runtime testing was completed in `https://<yourdomain>.yeeflow.com/`.
 
 Verified:
 

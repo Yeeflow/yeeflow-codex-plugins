@@ -65,7 +65,7 @@ The remaining warnings are non-blocking generation evidence warnings: schema-sup
 
 ## Runtime Result
 
-Runtime site: `https://codex.yeeflow.com/`
+Runtime site: `https://<yourdomain>.yeeflow.com/`
 
 Imported runtime display name: `Design System Request Tracker DSX`.
 

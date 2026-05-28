@@ -40,11 +40,36 @@ https://<yourdomain>.yeeflow.com
 For local API-backed workflows, create `.env.local` in the project root:
 
 ```env
-YEEFLOW_BASE_URL=https://<yourdomain>.yeeflow.com
+YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
 YEEFLOW_API_KEY=<your Yeeflow API key>
+YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com
+YEEFLOW_TENANT_ID=<optional tenant id if required>
 ```
 
-Use the tenant root for `YEEFLOW_BASE_URL`. Current helper scripts try the configured root and append `/v1` when a v1 API endpoint is needed. Do not paste API keys into chat, documentation, commits, or generated packages.
+`YEEFLOW_API_BASE_URL` is for API calls and should normally be `https://api.yeeflow.com/v1`. `YEEFLOW_TENANT_URL` is for tenant/app links and should be the tenant root, such as `https://<yourdomain>.yeeflow.com`. Do not use a tenant URL as the API base URL. `YEEFLOW_BASE_URL` is supported only as a legacy API base URL alias for older scripts; do not use it to mean tenant URL going forward. Do not paste API keys into chat, documentation, commits, or generated packages.
+
+For multiple tenants, define profiles and select one active tenant per run:
+
+```env
+YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
+
+# Local selector only; not a Yeeflow server-side setting.
+YEEFLOW_PROFILE=dev
+
+YEEFLOW_DEV_API_KEY=<dev API key>
+YEEFLOW_DEV_TENANT_URL=https://<devdomain>.yeeflow.com
+YEEFLOW_DEV_TENANT_ID=<optional>
+
+YEEFLOW_PROD_API_KEY=<prod API key>
+YEEFLOW_PROD_TENANT_URL=https://<proddomain>.yeeflow.com
+YEEFLOW_PROD_TENANT_ID=<optional>
+
+YEEFLOW_CLIENT_A_API_KEY=<client A API key>
+YEEFLOW_CLIENT_A_TENANT_URL=https://<client-a-domain>.yeeflow.com
+YEEFLOW_CLIENT_A_TENANT_ID=<optional>
+```
+
+If `YEEFLOW_PROFILE=prod`, scripts read only `YEEFLOW_PROD_API_KEY`, `YEEFLOW_PROD_TENANT_URL`, and `YEEFLOW_PROD_TENANT_ID` for that run. Other profiles remain available but inactive. Users can define any number of unique profiles using letters, numbers, and underscores.
 
 ## Generating Applications
 
@@ -91,7 +116,7 @@ Runtime proof should be focused and scoped. A small proof package is preferred o
 Example prompt:
 
 ```text
-Create a focused runtime-test plan for Advanced Controls in my Yeeflow tenant. Use my configured YEEFLOW_BASE_URL and do not include tenant-specific IDs in committed files.
+Create a focused runtime-test plan for Advanced Controls in my Yeeflow tenant. Use my configured YEEFLOW_TENANT_URL for links and YEEFLOW_API_BASE_URL for API calls. Do not include tenant-specific IDs in committed files.
 ```
 
 Runtime proof must state exactly what was tested, what passed, and what remains unproven.
@@ -99,7 +124,7 @@ Runtime proof must state exactly what was tested, what passed, and what remains 
 ## Avoiding Tenant-Specific Output
 
 - Use `https://<yourdomain>.yeeflow.com` in documentation.
-- Use environment variables for tenant URLs and API keys.
+- Use `YEEFLOW_TENANT_URL` for tenant URLs and `YEEFLOW_API_BASE_URL` for API calls.
 - Prefer requester/current-user expressions or post-import configuration for assignments.
 - Do not hardcode user, group, department, location, position, app, list, package, tenant, or private URL values unless the user explicitly requires a target-tenant-specific package.
 - Never commit raw API responses or decoded payloads.
@@ -116,6 +141,6 @@ Runtime proof must state exactly what was tested, what passed, and what remains 
 
 - Plugin does not appear: re-add the marketplace and verify sparse paths.
 - Wrong version: check the Git ref is `yeeflow-builder-plugin-v0.6.0`.
-- API check fails: verify `.env.local`, `YEEFLOW_BASE_URL`, and `YEEFLOW_API_KEY`; do not paste secrets into chat.
+- API check fails: verify `.env.local`, `YEEFLOW_API_BASE_URL`, `YEEFLOW_API_KEY`, and any active `YEEFLOW_PROFILE`; do not paste secrets into chat.
 - Import fails: run validators first and inspect blocking errors before retrying.
 - Runtime behavior differs by tenant: replace tenant-specific users, groups, positions, or external connections with safe placeholders or explicit post-import configuration.

@@ -32,7 +32,7 @@ Safe baseline should use:
 
 ## Runtime Cases
 
-Test at `https://codex.yeeflow.com/` only after local validation passes:
+Test at `https://<yourdomain>.yeeflow.com/` only after local validation passes:
 
 - package imports
 - app opens

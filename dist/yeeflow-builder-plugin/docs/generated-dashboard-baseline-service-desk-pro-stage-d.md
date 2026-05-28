@@ -52,7 +52,7 @@ No external dependency IDs are introduced in Stage D.
 
 ## Runtime Results
 
-Runtime target: `https://codex.yeeflow.com/`
+Runtime target: `https://<yourdomain>.yeeflow.com/`
 
 Result: pass.
 

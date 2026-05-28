@@ -57,7 +57,7 @@ When runtime proof is needed:
 - use fresh generated IDs
 - validate locally before building
 - build only after validation passes
-- import into `https://codex.yeeflow.com/` only after local validation passes and the user has requested runtime testing
+- import into `https://<yourdomain>.yeeflow.com/` only after local validation passes and the user has requested runtime testing
 - test safe runtime behavior only
 - avoid real email, live AI calls, external APIs, destructive updates, private users, private images, private documents, and credentials unless the safe test scope is explicit
 
@@ -135,7 +135,7 @@ Validation checks:
 - Do not runtime-test before local validation passes.
 
 Runtime steps:
-- Import only into https://codex.yeeflow.com/.
+- Import only into https://<yourdomain>.yeeflow.com/.
 - Confirm app imports and opens.
 - Test only the learned capability and required host/resource surfaces.
 - Do not execute live AI, send email, call external APIs, mutate real records, or upload private files unless explicitly scoped and safe.

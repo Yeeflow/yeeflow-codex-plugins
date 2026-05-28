@@ -6,7 +6,7 @@
 - Generated package: `data-list-custom-form-runtime-proof.v1.yap`
 - Downloads copy: `<downloads>/data-list-custom-form-runtime-proof.v1.yap`
 - Package strategy: focused generated package, not the full `Data Lists (3).yap` export
-- Runtime site: `https://codex.yeeflow.com/`
+- Runtime site: `https://<yourdomain>.yeeflow.com/`
 - Test date: 2026-05-25
 
 This pass proves a narrow generated Data List custom list form import/open/render baseline. It does not broaden the earlier export-learning proof for `Data Lists (3).yap` into exhaustive runtime proof.

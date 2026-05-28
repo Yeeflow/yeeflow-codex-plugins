@@ -6,7 +6,7 @@ Source export studied: `/Users/Renger/Downloads/Service Desk Pro (1).yap`
 
 Proven generated package: `service-desk-pro-dashboard-stage-b-or-c.generated.yap`
 
-Runtime result: imported into `https://codex.yeeflow.com/`, appeared in Shared Workspace, opened as `Executive Dashboard | Service Desk Pro Dashboard Stage C`, and rendered the static Executive Dashboard content.
+Runtime result: imported into `https://<yourdomain>.yeeflow.com/`, appeared in Shared Workspace, opened as `Executive Dashboard | Service Desk Pro Dashboard Stage C`, and rendered the static Executive Dashboard content.
 
 ## Scope
 

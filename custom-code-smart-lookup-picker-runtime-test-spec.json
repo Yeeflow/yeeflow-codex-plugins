@@ -1,16 +1,16 @@
 {
   "name": "Smart Lookup Picker Custom Code Runtime Test",
   "status": "passed_with_unexecuted_negative_and_public_cases",
-  "evidenceBoundary": "Runtime import and positive dashboard, approval-form, and data-list custom-form tests completed on 2026-05-18 in codex.yeeflow.com. Public-form, negative missing-config, no-result, and full reviewer-task tests were not executed.",
+  "evidenceBoundary": "Runtime import and positive dashboard, approval-form, and data-list custom-form tests completed on 2026-05-18 in <yourdomain>.yeeflow.com. Public-form, negative missing-config, no-result, and full reviewer-task tests were not executed.",
   "sourceExport": "/Users/Renger/Downloads/Demo (Custom Code).yap",
   "generatedPackage": "/Users/Renger/Documents/Codex Projects/AI Agent and Copilot templates/custom-code-smart-lookup-picker-test.v1.yap",
   "runtimeApp": {
     "name": "Custom Code Smart Lookup Picker Test",
-    "urlBase": "https://codex.yeeflow.com/",
+    "urlBase": "https://<yourdomain>.yeeflow.com/",
     "importedAppId": "2056064146070061056",
-    "dashboardUrl": "https://codex.yeeflow.com/#/list-set/41/2056064146070061056/2056064152719212545",
-    "dataListUrl": "https://codex.yeeflow.com/#/list-set/41/2056064146070061056/2056064152719212546",
-    "approvalFormUrl": "https://codex.yeeflow.com/#/list-set/41/2056064146070061056/f/SLPTEST"
+    "dashboardUrl": "https://<yourdomain>.yeeflow.com/#/list-set/<workspace-id>/<app-id>/<resource-id>",
+    "dataListUrl": "https://<yourdomain>.yeeflow.com/#/list-set/<workspace-id>/<app-id>/<resource-id>",
+    "approvalFormUrl": "https://<yourdomain>.yeeflow.com/#/list-set/<workspace-id>/<app-id>/<resource-id>"
   },
   "script": "/Users/Renger/Documents/Codex Projects/Yeeflow Custom Code_26/templates/smart-lookup-picker/smart-lookup-picker.tsx",
   "contexts": [

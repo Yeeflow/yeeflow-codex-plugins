@@ -3,12 +3,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
+import { environmentPresence, loadDotenvFile, resolveYeeflowEnvironment } from "./yeeflow-env-utils.mjs";
 
 // Read-only Yeeflow Assignment Task routing API coverage probe.
 // Do not add create, update, delete, assignment, enable, disable, remove, or workflow execution calls here.
 // The script prints only env presence, endpoint status, counts, and redacted shapes.
 const GZIP_PREFIX = "[______gizp______]";
-const DOCUMENTED_DEFAULT_BASE = "https://api.yeeflow.com/v1";
 const PRIVATE_KEY_RE =
   /(^|_)(id|accountid|userid|tenantid|departmentid|locationid|positionid|groupid|manager|linemanager|createdby|modifiedby|email|mail|mobile|phone|telephone|name|address|account|code|employeeno|photo|jobtitle|officeaddress|remark|description|lastlogintime|servicestartdate)$/i;
 const PRIVATE_VALUE_RE = /@|\+?\d[\d\s().-]{6,}/;
@@ -29,30 +29,6 @@ function parseArgs(argv) {
   if (argv.includes("--help") || argv.includes("-h")) usage(0);
   const input = argv.slice(2).find((arg) => !arg.startsWith("-")) || null;
   return { input };
-}
-
-function loadDotenv(filePath) {
-  const content = fs.readFileSync(filePath, "utf8");
-  for (const rawLine of content.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith("#")) continue;
-    const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
-    if (!match) continue;
-    const [, key, rawValue] = match;
-    if (process.env[key] !== undefined) continue;
-    process.env[key] = parseDotenvValue(rawValue);
-  }
-}
-
-function parseDotenvValue(value) {
-  const trimmed = value.trim();
-  if (
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  ) {
-    return trimmed.slice(1, -1);
-  }
-  return trimmed;
 }
 
 function quoteLargeIntegers(jsonText) {
@@ -94,23 +70,6 @@ function quoteLargeIntegers(jsonText) {
 
 function parseJsonPreservingLargeInts(text) {
   return JSON.parse(quoteLargeIntegers(text));
-}
-
-function normalizeBaseUrl(value) {
-  return String(value || "").replace(/\/+$/, "");
-}
-
-function candidateBaseUrls(value) {
-  const normalized = normalizeBaseUrl(value);
-  if (!normalized) return [{ url: DOCUMENTED_DEFAULT_BASE, variant: "documented-default" }];
-  const candidates = [{ url: normalized, variant: "env" }];
-  if (!/\/v1$/i.test(normalized)) {
-    candidates.push({ url: `${normalized}/v1`, variant: "env-plus-v1" });
-  }
-  candidates.push({ url: DOCUMENTED_DEFAULT_BASE, variant: "documented-default" });
-  return candidates.filter(
-    (candidate, index, all) => all.findIndex((item) => item.url === candidate.url) === index,
-  );
 }
 
 function decodeYap(inputPath) {
@@ -306,10 +265,10 @@ if (!fs.existsSync(envPath)) {
   console.error("Missing .env.local in current working directory.");
   process.exit(1);
 }
-loadDotenv(envPath);
+loadDotenvFile(fs, envPath);
 
-const hasApiKey = Boolean(process.env.YEEFLOW_API_KEY);
-const hasBaseUrl = Boolean(process.env.YEEFLOW_BASE_URL);
+const resolvedEnv = resolveYeeflowEnvironment(process.env);
+const envPresence = environmentPresence(resolvedEnv);
 const refs = collectAssignmentReferences(args.input);
 
 console.log(
@@ -317,8 +276,7 @@ console.log(
     {
       environment: {
         envFile: ".env.local",
-        YEEFLOW_API_KEY_PRESENT: hasApiKey,
-        YEEFLOW_BASE_URL_PRESENT: hasBaseUrl,
+        ...envPresence,
       },
       exportReferenceSummary: {
         source: args.input ? path.basename(args.input) : null,
@@ -335,9 +293,10 @@ console.log(
   ),
 );
 
-if (!hasApiKey || !hasBaseUrl) process.exit(2);
+if (!resolvedEnv.apiKey || !resolvedEnv.apiBaseUrl) process.exit(2);
 
-const baseUrls = candidateBaseUrls(process.env.YEEFLOW_BASE_URL);
+const baseUrl = resolvedEnv.apiBaseUrl;
+const baseVariant = resolvedEnv.usedLegacyBaseUrl ? "legacy-api-base-alias" : "api-base";
 const endpoints = [
   {
     label: "users-search",
@@ -399,35 +358,9 @@ for (const binding of refs.positionBindings.slice(0, 3)) {
 }
 
 const results = [];
-let selectedBase = null;
-let selectedVariant = "env";
-const baseProbes = [];
-for (let index = 0; index < baseUrls.length; index += 1) {
-  const probe = await requestJson(
-    baseUrls[index].url,
-    process.env.YEEFLOW_API_KEY,
-    endpoints[0],
-  ).catch((error) => ({
-    ok: false,
-    error: safeError(error),
-  }));
-  baseProbes.push({
-    variant: baseUrls[index].variant,
-    httpStatus: probe.httpStatus ?? null,
-    ok: Boolean(probe.ok),
-  });
-  if (probe.httpStatus && probe.httpStatus !== 404) {
-    selectedBase = baseUrls[index].url;
-    selectedVariant = baseUrls[index].variant;
-    break;
-  }
-}
-
-selectedBase ??= baseUrls[0].url;
-
 for (const endpoint of endpoints) {
   try {
-    results.push(await requestJson(selectedBase, process.env.YEEFLOW_API_KEY, endpoint));
+    results.push(await requestJson(baseUrl, resolvedEnv.apiKey, endpoint));
   } catch (error) {
     results.push({
       label: endpoint.label,
@@ -439,4 +372,4 @@ for (const endpoint of endpoints) {
   }
 }
 
-console.log(JSON.stringify({ baseVariant: selectedVariant, baseProbes, results }, null, 2));
+console.log(JSON.stringify({ baseVariant, results }, null, 2));

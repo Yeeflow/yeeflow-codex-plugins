@@ -36,7 +36,7 @@ This package proves the Service Desk Pro dashboard rebuild can resume safely fro
 
 ## Runtime Result
 
-Environment: `https://codex.yeeflow.com/`
+Environment: `https://<yourdomain>.yeeflow.com/`
 
 Result: pass.
 

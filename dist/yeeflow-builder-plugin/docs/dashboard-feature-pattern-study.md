@@ -40,7 +40,7 @@ Generated proof package:
 
 Runtime result:
 
-- imported into `https://codex.yeeflow.com/`
+- imported into `https://<yourdomain>.yeeflow.com/`
 - appeared in Shared Workspace after refresh
 - opened as `Dashboard | Generated Dashboard Minimal v1`
 - rendered the empty dashboard page shell with `OPEN PAGE DESIGNER`
@@ -77,7 +77,7 @@ Generated proof package:
 
 Runtime result:
 
-- imported into `https://codex.yeeflow.com/`
+- imported into `https://<yourdomain>.yeeflow.com/`
 - appeared in Shared Workspace after refresh
 - opened as `Dashboard | Generated Dashboard Simple Elements v2`
 - rendered hero text, static buttons, rich text, icon/link tiles, pictures, and gallery cards
@@ -408,7 +408,7 @@ Validation results:
 
 Runtime results:
 
-- imported successfully into `https://codex.yeeflow.com/`
+- imported successfully into `https://<yourdomain>.yeeflow.com/`
 - app appeared as `Generated Dashboard Data Bound v3`
 - dashboard opened successfully
 - two summary controls rendered: `SGD 142500.00` and `20`
@@ -485,7 +485,7 @@ Validation results:
 
 Runtime results:
 
-- imported successfully into `https://codex.yeeflow.com/`
+- imported successfully into `https://<yourdomain>.yeeflow.com/`
 - app appeared as `Generated Dashboard Chart Widgets v4`
 - dashboard opened successfully
 - two summary controls rendered
@@ -591,7 +591,7 @@ Known gaps after v5:
 
 Runtime import evidence:
 
-- `generated-dashboard-filter-controls-v5.yap` imported successfully into `https://codex.yeeflow.com/`
+- `generated-dashboard-filter-controls-v5.yap` imported successfully into `https://<yourdomain>.yeeflow.com/`
 - import metadata parsed the expected app name: `Generated Dashboard Filter Controls v5`
 - imported app appeared in Shared Workspace and opened
 - dashboard page rendered the filter container with `Search filter`, `Radio filter`, and `Range filter`
@@ -645,7 +645,7 @@ Validation:
 
 Runtime import evidence:
 
-- imported into `https://codex.yeeflow.com/`
+- imported into `https://<yourdomain>.yeeflow.com/`
 - appeared in Shared Workspace as `Service Desk Pro Dashboard Stage C`
 - opened as `Executive Dashboard | Service Desk Pro Dashboard Stage C`
 - rendered `Executive Dashboard`, `Dashboard filters`, `KPI Cards`, `Total Submitted`, `Resolved Tickets`, `Open Tickets`, `Critical Open`, chart placeholders, `SLA Compliance`, and `Drill-down Tickets List`
@@ -699,7 +699,7 @@ Validation:
 
 Runtime import evidence:
 
-- imported into `https://codex.yeeflow.com/`
+- imported into `https://<yourdomain>.yeeflow.com/`
 - appeared in Shared Workspace as `Service Desk Pro Dashboard Stage D`
 - opened as `Executive Dashboard | Service Desk Pro Dashboard Stage D`
 - rendered the static Executive Dashboard and the Stage D source-list note
@@ -735,7 +735,7 @@ Generated artifacts:
 
 Runtime evidence:
 
-- imported into `https://codex.yeeflow.com/`
+- imported into `https://<yourdomain>.yeeflow.com/`
 - appeared in Shared Workspace as `Service Desk Pro Dashboard Stage E`
 - opened as `Executive Dashboard | Service Desk Pro Dashboard Stage E`
 - `Total Submitted` rendered `6`, matching the six local `Support Tickets` rows
@@ -752,7 +752,7 @@ Generated artifacts:
 
 Runtime evidence:
 
-- imported into `https://codex.yeeflow.com/`
+- imported into `https://<yourdomain>.yeeflow.com/`
 - appeared in Shared Workspace as `Service Desk Pro Dashboard Stage F1`
 - opened as `Executive Dashboard | Service Desk Pro Dashboard Stage F1`
 - KPI values rendered:
@@ -794,7 +794,7 @@ Runtime status:
 
 Runtime evidence:
 
-- imported into `https://codex.yeeflow.com/`
+- imported into `https://<yourdomain>.yeeflow.com/`
 - appeared in Shared Workspace as `Service Desk Pro Dashboard Stage F2`
 - opened as `Executive Dashboard | Service Desk Pro Dashboard Stage F2`
 - KPI cards rendered `6`, `2`, `4`, and `0`
@@ -830,7 +830,7 @@ Validation:
 
 Runtime evidence:
 
-- imported into `https://codex.yeeflow.com/`
+- imported into `https://<yourdomain>.yeeflow.com/`
 - appeared in Shared Workspace as `Service Desk Pro Dashboard Stage G`
 - opened as `Executive Dashboard | Service Desk Pro Dashboard Stage G`
 - Executive Dashboard still rendered with the proven KPI and chart patterns
@@ -865,7 +865,7 @@ Validation:
 
 Runtime evidence:
 
-- imported into `https://codex.yeeflow.com/`
+- imported into `https://<yourdomain>.yeeflow.com/`
 - appeared in Shared Workspace as `Service Desk Pro Dashboard Stage H`
 - opened as `Executive Dashboard | Service Desk Pro Dashboard Stage H`
 - navigation rendered `Executive Dashboard`, `Settings`, `Drill-down Tickets List`, `Help Guide`, and `Support Tickets`
@@ -895,7 +895,7 @@ Generated artifacts:
 
 Runtime evidence:
 
-- imported into `https://codex.yeeflow.com/`
+- imported into `https://<yourdomain>.yeeflow.com/`
 - opened as `Executive Dashboard | Service Desk Pro Dashboard Stage I`
 - `Executive Dashboard` rendered the local `Support Teams` select filter and submitted-period staged control
 - team dropdown rendered the local support team rows
@@ -919,7 +919,7 @@ Generated artifacts:
 
 Runtime evidence:
 
-- imported into `https://codex.yeeflow.com/`
+- imported into `https://<yourdomain>.yeeflow.com/`
 - opened as `Executive Dashboard | Service Desk Pro Dashboard Stage J`
 - clicking the operational `Drill-down Tickets List` placeholder opened the local Drill-down Type `103` page in a modal
 - URL included the staged query param `?Title=Open+Tickets`
@@ -944,7 +944,7 @@ Generated artifacts:
 
 Runtime evidence:
 
-- imported into `https://codex.yeeflow.com/`
+- imported into `https://<yourdomain>.yeeflow.com/`
 - opened as `Executive Dashboard | Service Desk Pro Dashboard Stage K`
 - direct Drill-down navigation rendered a dashboard `data-list` control bound to local `Support Tickets`
 - modal opened from the Executive Dashboard action and rendered the same bound table
@@ -969,7 +969,7 @@ Generated artifacts:
 
 Runtime evidence:
 
-- imported into `https://codex.yeeflow.com/`
+- imported into `https://<yourdomain>.yeeflow.com/`
 - opened as `Executive Dashboard | Service Desk Pro Dashboard Stage L`
 - Drill-down table rendered only `T-1001` and `T-1006`
 - both rendered rows had `Priority = High`
@@ -1036,7 +1036,7 @@ Stage M applied the same variable-bound date condition to all Service Desk Pro K
 
 Runtime evidence:
 
-- imported into `https://codex.yeeflow.com/`
+- imported into `https://<yourdomain>.yeeflow.com/`
 - appeared in Shared Workspace as `Service Desk Pro Dashboard Stage M`
 - opened as `Executive Dashboard | Service Desk Pro Dashboard Stage M`
 - default Executive Dashboard rendered KPI values `6`, `2`, `4`, and `0`
@@ -1098,7 +1098,7 @@ Validation evidence:
 
 Runtime evidence:
 
-- imported into `https://codex.yeeflow.com/`
+- imported into `https://<yourdomain>.yeeflow.com/`
 - appeared in Shared Workspace as `Service Desk Pro Dashboard Stage N`
 - opened as `Executive Dashboard | Service Desk Pro Dashboard Stage N`
 - helper copy rendered the active submitted-period binding message
@@ -1183,7 +1183,7 @@ It combines:
 - flat article/category/section Collections bound to local lists
 - meaningful `nv_label` values for generated dashboard controls
 
-Runtime evidence at `https://codex.yeeflow.com/`:
+Runtime evidence at `https://<yourdomain>.yeeflow.com/`:
 
 - import passed and app tile appeared as `Knowledge Base Phase 1 Full`
 - Home dashboard opened and rendered article/category/section Collections

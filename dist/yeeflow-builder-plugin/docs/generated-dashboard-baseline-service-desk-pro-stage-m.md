@@ -55,7 +55,7 @@ Apply this once per relevant local Support Tickets dashboard binding. Do not dup
 
 ## Runtime Results
 
-Runtime environment: `https://codex.yeeflow.com/`
+Runtime environment: `https://<yourdomain>.yeeflow.com/`
 
 Stage M imported and opened successfully. Executive Dashboard rendered the KPI cards and the submitted-period control. Clicking `Today` changed the four KPI values from `6`, `2`, `4`, `0` to `0`, `0`, `0`, `0`, confirming the period filter affected related summary controls.
 

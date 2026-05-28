@@ -220,7 +220,7 @@ Validator summary:
 - Wrapper round trip: `decodedEqualsSource: true`
 - Remaining placeholders: `0`
 
-Runtime result on `https://codex.yeeflow.com/`:
+Runtime result on `https://<yourdomain>.yeeflow.com/`:
 
 - Import succeeded for the first v9 package.
 - App opened.

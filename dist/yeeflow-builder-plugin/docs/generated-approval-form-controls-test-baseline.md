@@ -109,7 +109,7 @@ The remaining warnings are expected for this proof package because it intentiona
 
 ## Runtime Result
 
-Runtime testing was completed in `https://codex.yeeflow.com/`.
+Runtime testing was completed in `https://<yourdomain>.yeeflow.com/`.
 
 Verified:
 

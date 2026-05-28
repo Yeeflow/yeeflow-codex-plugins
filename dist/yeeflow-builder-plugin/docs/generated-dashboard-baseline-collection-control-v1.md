@@ -13,7 +13,7 @@ This baseline proves two generated Yeeflow dashboard Collection patterns from th
 - inline/grow dashboard header action layout for a Collection page
 - per-item dynamic show rules inside a Collection item template
 
-Both packages were validated, wrapped, imported into `https://codex.yeeflow.com/`, opened, and checked in runtime.
+Both packages were validated, wrapped, imported into `https://<yourdomain>.yeeflow.com/`, opened, and checked in runtime.
 
 ## Packages
 

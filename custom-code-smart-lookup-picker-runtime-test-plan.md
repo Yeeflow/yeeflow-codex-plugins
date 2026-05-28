@@ -2,7 +2,7 @@
 
 Scope: validate `smart-lookup-picker.tsx` when used through Yeeflow Custom Code controls in dashboard, approval-form, and data-list custom-form contexts.
 
-Runtime baseline executed on 2026-05-18 in `https://codex.yeeflow.com/` using generated package `custom-code-smart-lookup-picker-test.v1.yap`.
+Runtime baseline executed on 2026-05-18 in `https://<yourdomain>.yeeflow.com/` using generated package `custom-code-smart-lookup-picker-test.v1.yap`.
 
 Result: dashboard, approval-form submit/detail, and data-list custom-form contexts passed. Public-form support remains unclaimed because no public form was generated or tested.
 

@@ -5,6 +5,14 @@ description: Standardize runtime testing for generated or modified Yeeflow appli
 
 # Yeeflow Runtime Test Orchestrator
 
+## Public Tenant Safety
+
+- Use `YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1` for live API calls.
+- Use `YEEFLOW_TENANT_URL` only for tenant/app links, for example `https://<yourdomain>.yeeflow.com`; never use a tenant URL as the API base.
+- Treat `YEEFLOW_BASE_URL` as a legacy API base URL alias only, not as a tenant URL.
+- When `YEEFLOW_PROFILE` is set, use only the selected local profile for that run and keep all other profiles inactive.
+- Never hardcode internal test tenant domains, commit `.env.local`, print API keys, or persist raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, screenshots, or generated runtime packages.
+
 Business Travel runtime-practice checkpoint: when a generated package imports, continue with a separate workflow designer publish check before claiming workflow readiness. The fixed `business-travel-budget-control.schema-fixed.v1.yap` package is user-proven for import, app open, workflow open, and workflow publish after schema/variable/assignee repairs. Keep workflow execution, routing, request submission, email, ContentList/data mutation, and true Finance Manager assignment unproven until explicitly tested. A package that imports after `ListModel.Flags = 1` is not automatically workflow-publish-proven.
 
 YAPK-from-scratch runtime checkpoint: a signed and verified `.yapk` is not runtime proof. Before runtime upgrade testing, confirm that decoded `AppPackageInfo` passed content validators, graph checks, workflow publish-readiness checks, and placeholder scans before signing. Classify signing/verifysign as integrity proof only; classify upgrade/import, app open, workflow publish, workflow execution, assignment routing, and data mutation separately.

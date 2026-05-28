@@ -7,7 +7,7 @@
 - Downloads copy: `<downloads>/data-filter-controls-runtime-proof.v1.yap`
 - App: `Data Filter Runtime Proof`
 - Dashboard: `Dashboard`
-- Runtime tenant: `https://codex.yeeflow.com/`
+- Runtime tenant: `https://<yourdomain>.yeeflow.com/`
 
 This is a focused runtime proof for a generated dashboard package. It does not attempt exhaustive behavior coverage for all 12 Data Filter controls or every operator/value shape.
 

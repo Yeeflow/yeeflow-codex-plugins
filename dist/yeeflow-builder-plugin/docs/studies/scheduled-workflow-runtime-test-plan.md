@@ -14,7 +14,7 @@ Generated app: `Scheduled Workflow Safe Runtime Baseline`
 
 Runtime test date: 2026-05-19
 
-Runtime environment: `https://codex.yeeflow.com/`
+Runtime environment: `https://<yourdomain>.yeeflow.com/`
 
 Generated resources:
 

@@ -40,7 +40,10 @@ Public sharing hardening:
 
 - Public install docs must use the official repo `https://github.com/Yeeflow/yeeflow-codex-plugins.git`.
 - Tenant-specific URLs must be placeholders such as `https://<yourdomain>.yeeflow.com`.
-- API scripts should read `YEEFLOW_BASE_URL` from local environment and append `/v1` only when a v1 endpoint is needed.
+- API scripts should prefer `YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1` for live API calls.
+- Tenant/app links should use `YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com`.
+- `YEEFLOW_BASE_URL` is a legacy API base URL alias only and must not mean tenant URL going forward.
+- Multi-tenant `.env.local` profiles may use `YEEFLOW_PROFILE` plus `YEEFLOW_<PROFILE>_API_KEY`, `YEEFLOW_<PROFILE>_TENANT_URL`, and `YEEFLOW_<PROFILE>_TENANT_ID`; only one profile is active per script run.
 - Do not commit `.env.local`, API keys, tokens, raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, screenshots, or generated runtime packages.
 
 Verified marketplace install values:

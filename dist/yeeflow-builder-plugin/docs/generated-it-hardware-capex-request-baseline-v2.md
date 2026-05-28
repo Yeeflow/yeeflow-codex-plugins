@@ -38,7 +38,7 @@ V2 keeps the same app/form/list scope and adds:
 
 ## UI Runtime Result
 
-Runtime import testing on `https://codex.yeeflow.com/` confirmed:
+Runtime import testing on `https://<yourdomain>.yeeflow.com/` confirmed:
 
 - app imports successfully
 - app opens from Shared Workspace

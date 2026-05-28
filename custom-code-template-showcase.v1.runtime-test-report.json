@@ -3,7 +3,7 @@
   "phase": "Focused configuration repair runtime smoke",
   "runtimeStatus": "materialized and component smoke tested",
   "runtimeAppNameObserved": "Enterprise Service Request & Complian r4ce Review",
-  "runtimeUrlObserved": "https://codex.yeeflow.com/#/list-set/41/2056240203582685185/2056240213344006145",
+  "runtimeUrlObserved": "https://<yourdomain>.yeeflow.com/#/list-set/<workspace-id>/<app-id>/<resource-id>",
   "publicFormSupport": "not claimed",
   "generatedPackage": "custom-code-template-showcase.v1.yap",
   "generatedPackagePath": "/Users/Renger/Documents/Codex Projects/AI Agent and Copilot templates/custom-code-template-showcase.v1.yap",

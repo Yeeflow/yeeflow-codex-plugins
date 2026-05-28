@@ -23,7 +23,7 @@ Before Yeeflow import:
 
 ## Runtime Test Steps
 
-Import into `https://codex.yeeflow.com/` only after local validation passes.
+Import into `https://<yourdomain>.yeeflow.com/` only after local validation passes.
 
 App-level checks:
 
@@ -68,7 +68,7 @@ It is not intended to prove:
 
 ## Runtime Result
 
-Runtime-tested in `https://codex.yeeflow.com/` on 2026-05-18.
+Runtime-tested in `https://<yourdomain>.yeeflow.com/` on 2026-05-18.
 
 Status: runtime-proven for dashboard root-bound and static root-folder-bound Doc library controls.
 

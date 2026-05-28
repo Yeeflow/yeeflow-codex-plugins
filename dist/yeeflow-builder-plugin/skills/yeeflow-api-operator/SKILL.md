@@ -8,9 +8,11 @@ description: Safely use Yeeflow REST APIs from Codex when local credentials are 
 ## Public Tenant Safety
 
 - Never hardcode a tenant-specific Yeeflow URL. Use `https://<yourdomain>.yeeflow.com` in docs and examples.
-- For live API calls, require local configuration through `YEEFLOW_BASE_URL` and `YEEFLOW_API_KEY`; do not ask users to paste secrets into chat.
-- Treat `YEEFLOW_BASE_URL` as the tenant root by default, for example `https://<yourdomain>.yeeflow.com`; helper scripts may append `/v1` when a v1 API endpoint is needed.
-- Validate environment variables before API calls and never print API keys, raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, or generated runtime packages.
+- For live API calls, prefer `YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1` and `YEEFLOW_API_KEY`; do not ask users to paste secrets into chat.
+- Use `YEEFLOW_TENANT_URL` only for tenant/app links, for example `https://<yourdomain>.yeeflow.com`; never use a tenant URL as the API base.
+- Treat `YEEFLOW_BASE_URL` as a legacy API base URL alias only, not as a tenant URL.
+- Support `YEEFLOW_PROFILE` where scripts support profiles. It selects one active local tenant profile per run using `YEEFLOW_<PROFILE>_API_KEY`, `YEEFLOW_<PROFILE>_TENANT_URL`, and `YEEFLOW_<PROFILE>_TENANT_ID`.
+- Validate and redact environment variables before API calls and never print API keys, raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, or generated runtime packages.
 - Keep generated examples tenant-neutral unless the user explicitly requests a target-tenant-specific package and provides safe mappings.
 
 ## Purpose
@@ -45,18 +47,22 @@ Use the API only when local credentials are available and the user has asked for
 The workspace should provide credentials locally, preferably in `.env.local` at the project root:
 
 ```env
+YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
 YEEFLOW_API_KEY=<your Yeeflow API key>
-YEEFLOW_BASE_URL=https://<yourdomain>.yeeflow.com
+YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com
+YEEFLOW_TENANT_ID=<optional tenant id>
 ```
 
 Rules:
 
-- Load the key only from `process.env.YEEFLOW_API_KEY`.
+- Load the API base from `YEEFLOW_API_BASE_URL`, with `YEEFLOW_BASE_URL` supported only as a legacy API base URL alias.
+- Load the key from `YEEFLOW_API_KEY` or, when `YEEFLOW_PROFILE` is set, from `YEEFLOW_<PROFILE>_API_KEY`.
+- Load tenant/app links from `YEEFLOW_TENANT_URL` or, when `YEEFLOW_PROFILE` is set, from `YEEFLOW_<PROFILE>_TENANT_URL`.
 - Never print the key or include it in logs, docs, commits, or final answers.
 - Ensure `.env.local` is gitignored before running API checks.
 - If `.env.local` or the key is missing, explain setup steps and ask the user to store the key locally, not in chat.
 
-Use the tenant root for `YEEFLOW_BASE_URL`. The current helpers try the configured root first, append `/v1` when a v1 endpoint is needed, and may try the documented developer API base as a read-only fallback for directory probes. Do not include `/v1` unless a specific script says it expects the API base.
+Use `YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1` for live API calls. Use `YEEFLOW_TENANT_URL` for tenant/app links such as `https://<yourdomain>.yeeflow.com`. Do not use a tenant URL as the API base. `YEEFLOW_PROFILE` is a local script selector, not a Yeeflow server-side setting; it activates exactly one profile for a run.
 
 ## Supported Read-Only Operations
 
@@ -141,7 +147,7 @@ For assignment-routing coverage, read `docs/studies/yeeflow-api-operator-assignm
 - Missing `.env.local`: explain where to create it and what variables are required.
 - Missing `YEEFLOW_API_KEY`: ask the user to store the key locally; do not ask them to paste it.
 - Authentication/authorization failure: report HTTP/API status and likely causes such as expired key, wrong tenant/account, insufficient permission, or wrong base; do not echo credentials.
-- `404` on `YEEFLOW_BASE_URL`: try the known documented developer API base only for these read-only directory endpoints.
+- `404` on the configured API base: verify `YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1`; do not substitute the tenant URL as the API base.
 - Non-JSON or unexpected responses: report status and response shape only; do not dump body content.
 
 ## Coordination With App Work

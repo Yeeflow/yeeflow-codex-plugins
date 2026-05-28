@@ -62,20 +62,44 @@ Each Yeeflow tenant has a unique URL:
 https://<yourdomain>.yeeflow.com
 ```
 
-Do not use an internal test tenant URL as a default. When a prompt, script, or runtime test needs tenant access, configure the tenant root through `YEEFLOW_BASE_URL`.
+Do not use an internal test tenant URL as a default. API calls use the shared Yeeflow API endpoint, while tenant/app links use the tenant URL.
 
 ## Environment Variables
 
-For local API-backed checks, create a gitignored `.env.local` file in your working copy:
+For local API-backed checks, create a gitignored `.env.local` file in your working copy. For a single tenant:
 
 ```env
-YEEFLOW_BASE_URL=https://<yourdomain>.yeeflow.com
+YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
 YEEFLOW_API_KEY=<your Yeeflow API key>
+YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com
+YEEFLOW_TENANT_ID=<optional tenant id if required>
 ```
 
-Use the tenant root for `YEEFLOW_BASE_URL`. Current helper scripts try the configured value first and append `/v1` when a v1 API endpoint is required. Some read-only directory probes may also try the documented developer API base as a fallback. Scripts must not print API keys or raw API responses.
+For users managing multiple Yeeflow tenants, keep one shared API base and select one active profile per script run:
 
-If a future script explicitly requires `YEEFLOW_TENANT_ID`, document the source and scope before use. Do not commit tenant IDs.
+```env
+YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
+
+# Select the active tenant for this run. This is a local script/plugin selector,
+# not a Yeeflow server-side setting.
+YEEFLOW_PROFILE=dev
+
+YEEFLOW_DEV_API_KEY=<dev API key>
+YEEFLOW_DEV_TENANT_URL=https://<devdomain>.yeeflow.com
+YEEFLOW_DEV_TENANT_ID=<optional>
+
+YEEFLOW_PROD_API_KEY=<prod API key>
+YEEFLOW_PROD_TENANT_URL=https://<proddomain>.yeeflow.com
+YEEFLOW_PROD_TENANT_ID=<optional>
+
+YEEFLOW_CLIENT_A_API_KEY=<client A API key>
+YEEFLOW_CLIENT_A_TENANT_URL=https://<client-a-domain>.yeeflow.com
+YEEFLOW_CLIENT_A_TENANT_ID=<optional>
+```
+
+`YEEFLOW_PROFILE` selects only one active profile for the current run. If `YEEFLOW_PROFILE=prod`, scripts read `YEEFLOW_PROD_API_KEY`, `YEEFLOW_PROD_TENANT_URL`, and `YEEFLOW_PROD_TENANT_ID`; other profiles remain inactive. Profile names may contain letters, numbers, and underscores. Users can define any number of unique profiles.
+
+Use `YEEFLOW_API_BASE_URL` for API calls. The recommended value is `https://api.yeeflow.com/v1`; helper scripts normalize trailing slashes and avoid double `/v1`. Use `YEEFLOW_TENANT_URL` for app links such as `https://<yourdomain>.yeeflow.com`. `YEEFLOW_BASE_URL` is a legacy API base URL alias only and must not mean tenant URL going forward. Scripts must not print API keys or raw API responses.
 
 ## Basic Usage Examples
 
