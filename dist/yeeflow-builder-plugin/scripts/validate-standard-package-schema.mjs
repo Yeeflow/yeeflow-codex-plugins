@@ -531,6 +531,27 @@ function normalizeYapkDecodedForSchema(decoded) {
   return { ...decoded, PortalInfo: {} };
 }
 
+function normalizeYapDecodedForSchema(decoded) {
+  if (!isObject(decoded)) return decoded;
+  if (decoded.SimplePortal !== null) return decoded;
+  return { ...decoded, SimplePortal: {} };
+}
+
+function inspectYapSimplePortal(decoded) {
+  const errors = [];
+  if (!isObject(decoded)) return errors;
+  if (decoded.SimplePortal === null) return errors;
+  const actualType = Array.isArray(decoded.SimplePortal) ? "array" : decoded.SimplePortal === undefined ? "missing" : typeof decoded.SimplePortal;
+  errors.push({
+    scope: "decodedResource",
+    path: "$.SimplePortal",
+    code: isObject(decoded.SimplePortal) && Object.keys(decoded.SimplePortal).length === 0 ? "YAP_SIMPLEPORTAL_EMPTY_OBJECT_INVALID" : "YAP_SIMPLEPORTAL_NOT_NULL",
+    message: "Product import feedback requires SimplePortal to be null when no portal is included; do not emit an empty object or other value.",
+    actualType,
+  });
+  return errors;
+}
+
 function inspectYapkPortalInfo(decoded) {
   const errors = [];
   if (!isObject(decoded)) return errors;
@@ -557,6 +578,27 @@ function inspectYapkPortalInfo(decoded) {
       message: "PortalInfo must be null for no portal or a portal object when a portal is included.",
       actualType: typeof decoded.PortalInfo,
     });
+  }
+  return errors;
+}
+
+function inspectYapkDashboards(decoded) {
+  const errors = [];
+  if (!isObject(decoded)) return errors;
+  for (const [index, page] of asArray(decoded.Pages).entries()) {
+    if (Number(page?.Type) !== 103) continue;
+    const ext2 = safeParseJson(page.Ext2);
+    if (!ext2 || ext2.src !== true) {
+      errors.push({
+        scope: "decodedResource",
+        path: `$.Pages[${index}].Ext2`,
+        code: "DASHBOARD_CURRENT_VERSION_MARKER_MISSING",
+        message: "YAPK Type 103 dashboard pages must include Ext2 {\"src\":true}; otherwise Yeeflow opens the retired legacy dashboard renderer.",
+        title: page.Title || null,
+        layoutId: page.LayoutID || null,
+        hasInlineResource: asArray(page.LayoutInResources).length > 0,
+      });
+    }
   }
   return errors;
 }
@@ -602,7 +644,7 @@ async function main() {
     return;
   }
   const decodedRef = schema["x-decodedResourceSchema"] || (type === "yapk" && schema.$defs?.AppPackageInfo ? { $ref: "#/$defs/AppPackageInfo" } : undefined);
-  const decodedForSchema = type === "yapk" ? normalizeYapkDecodedForSchema(decoded) : decoded;
+  const decodedForSchema = type === "yapk" ? normalizeYapkDecodedForSchema(decoded) : type === "yap" ? normalizeYapDecodedForSchema(decoded) : decoded;
   const decodedErrors = validate(decodedForSchema, decodedRef, schema);
   let contentErrors = [];
   let categoryTarget = decoded;
@@ -617,8 +659,10 @@ async function main() {
   }
   const categoryErrors = inspectFieldCategories(categoryTarget, type);
   const idErrors = type === "yap" && categoryTarget ? inspectYapIds(categoryTarget) : type === "yapk" ? inspectYapkIds(decoded) : [];
+  const simplePortalErrors = type === "yap" ? inspectYapSimplePortal(decoded) : [];
   const portalErrors = type === "yapk" ? inspectYapkPortalInfo(decoded) : [];
-  const errors = [...wrapperErrors.map((error) => ({ scope: "wrapper", ...error })), ...decodedErrors.map((error) => ({ scope: "decodedResource", ...error })), ...contentErrors, ...categoryErrors, ...idErrors, ...portalErrors];
+  const dashboardErrors = type === "yapk" ? inspectYapkDashboards(decoded) : [];
+  const errors = [...wrapperErrors.map((error) => ({ scope: "wrapper", ...error })), ...decodedErrors.map((error) => ({ scope: "decodedResource", ...error })), ...contentErrors, ...categoryErrors, ...idErrors, ...simplePortalErrors, ...portalErrors, ...dashboardErrors];
 
   console.log(JSON.stringify({
     input: path.basename(input),

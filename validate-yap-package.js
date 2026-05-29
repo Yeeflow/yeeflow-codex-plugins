@@ -2341,8 +2341,11 @@ function validateBasicStructure(data, resource, report) {
     } else if (!isSchemaDirectYap(report) && report.mode === "generator" && report.stage === "final" && safeString(resource.AppID) !== "41") {
       issue(report, "error", "RESOURCE_APPID_NOT_FIXED_41", "Generated YAP Resource.AppID must stay fixed at 41; do not request this ID from the generate-unique-ids API.", { appId: resource.AppID });
     }
-    if (isDocumentLibraryOnlyPackage(data) && resource.SimplePortal !== null) {
-      issue(report, "warning", "DOCUMENT_LIBRARY_SIMPLEPORTAL_NOT_NULL", "Known-good document-library exports use Resource.SimplePortal = null. Generated [] wrappers failed Yeeflow create in v1/v2.", { simplePortalType: Array.isArray(resource.SimplePortal) ? "array" : typeof resource.SimplePortal });
+    if (resource.SimplePortal !== null) {
+      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "YAP_SIMPLEPORTAL_NOT_NULL", "Product import feedback requires Resource.SimplePortal = null when no portal is included. Empty object SimplePortal {} failed Vendor Onboarding full UI YAP import.", {
+        simplePortalType: Array.isArray(resource.SimplePortal) ? "array" : resource.SimplePortal === undefined ? "missing" : typeof resource.SimplePortal,
+        documentLibraryOnly: isDocumentLibraryOnlyPackage(data),
+      });
     }
   }
 }

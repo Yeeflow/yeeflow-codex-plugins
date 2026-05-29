@@ -44,6 +44,8 @@ YAPK-from-scratch validation update: validate generated `.yapk` content before s
 
 YAPK schema v2 validation rule from Vendor Onboarding v1.13-v1.15: validate `.yapk` as `AppExportPackageInfo`, decode `Resource` as base64 Brotli JSON, and require decoded `AppPackageInfo`. Fail YAPK packages that decode to YAP `ListExportResult` with `YAPK_RESOURCE_NOT_APP_PACKAGE_INFO`. Require `Childs[].Fields` rather than `Defs`, preserve `LongAsString` fields as numeric strings, keep generated package `AppID = 41` where applicable, and fail missing dashboard Data table `attrs.listarr[].Field` source bindings with `DASHBOARD_DATA_TABLE_DISPLAY_FIELD_BINDING_MISSING`. For no-portal generated packages, product import feedback requires `PortalInfo: null`; fail empty-object `PortalInfo: {}` with `YAPK_PORTALINFO_EMPTY_OBJECT_INVALID` and empty-array `PortalInfo: []` with `YAPK_PORTALINFO_ARRAY_INVALID`.
 
+YAP no-portal import rule from Vendor Onboarding full UI v2: `ListExportResult.SimplePortal` must be `null`. Do not emit `{}`, `[]`, or any other value. Product feedback confirmed `SimplePortal: {}` fails import even when schema validation accepts it. Generated-final validation must fail this with `YAP_SIMPLEPORTAL_NOT_NULL` or `YAP_SIMPLEPORTAL_EMPTY_OBJECT_INVALID`.
+
 ## Core Rule
 
 Validate before import. Do not runtime-test a package with blocking structural, graph, wrapper, workflow, list, field, materialization, FlowKey, or unsafe `.yapk` issues.

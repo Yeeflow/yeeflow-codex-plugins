@@ -354,6 +354,15 @@ function inspectOtherModules(data, findings, summary) {
   }
 }
 
+function inspectSimplePortal(resource, findings) {
+  if (!isObject(resource)) return;
+  if (resource.SimplePortal === null) return;
+  add(findings, "error", isObject(resource.SimplePortal) && Object.keys(resource.SimplePortal).length === 0 ? "YAP_SIMPLEPORTAL_EMPTY_OBJECT_INVALID" : "YAP_SIMPLEPORTAL_NOT_NULL", "Product import feedback requires SimplePortal to be null when no portal is included; do not emit an empty object or other value.", {
+    path: "Resource.SimplePortal",
+    actualType: Array.isArray(resource.SimplePortal) ? "array" : resource.SimplePortal === undefined ? "missing" : typeof resource.SimplePortal,
+  });
+}
+
 function main() {
   if (process.argv.includes("--help") || process.argv.includes("-h") || process.argv.length < 3) usage(process.argv.length < 3 ? 1 : 0);
   const input = process.argv[2];
@@ -372,6 +381,7 @@ function main() {
     permissionEntries: 0,
     largeNumericIdsPreserved: largeNumbers.size,
   };
+  inspectSimplePortal(decoded.resource, findings);
   if (decoded.data) {
     if (!isObject(decoded.data.Item)) add(findings, "error", "LIST_EXPORT_INFO_ITEM_MISSING", "ListExportInfo.Item is required.", { path: "Data.Item" });
     else inspectListExportItem(decoded.data.Item, "Data.Item", findings, summary);

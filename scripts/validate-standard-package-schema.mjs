@@ -531,6 +531,27 @@ function normalizeYapkDecodedForSchema(decoded) {
   return { ...decoded, PortalInfo: {} };
 }
 
+function normalizeYapDecodedForSchema(decoded) {
+  if (!isObject(decoded)) return decoded;
+  if (decoded.SimplePortal !== null) return decoded;
+  return { ...decoded, SimplePortal: {} };
+}
+
+function inspectYapSimplePortal(decoded) {
+  const errors = [];
+  if (!isObject(decoded)) return errors;
+  if (decoded.SimplePortal === null) return errors;
+  const actualType = Array.isArray(decoded.SimplePortal) ? "array" : decoded.SimplePortal === undefined ? "missing" : typeof decoded.SimplePortal;
+  errors.push({
+    scope: "decodedResource",
+    path: "$.SimplePortal",
+    code: isObject(decoded.SimplePortal) && Object.keys(decoded.SimplePortal).length === 0 ? "YAP_SIMPLEPORTAL_EMPTY_OBJECT_INVALID" : "YAP_SIMPLEPORTAL_NOT_NULL",
+    message: "Product import feedback requires SimplePortal to be null when no portal is included; do not emit an empty object or other value.",
+    actualType,
+  });
+  return errors;
+}
+
 function inspectYapkPortalInfo(decoded) {
   const errors = [];
   if (!isObject(decoded)) return errors;
@@ -623,7 +644,7 @@ async function main() {
     return;
   }
   const decodedRef = schema["x-decodedResourceSchema"] || (type === "yapk" && schema.$defs?.AppPackageInfo ? { $ref: "#/$defs/AppPackageInfo" } : undefined);
-  const decodedForSchema = type === "yapk" ? normalizeYapkDecodedForSchema(decoded) : decoded;
+  const decodedForSchema = type === "yapk" ? normalizeYapkDecodedForSchema(decoded) : type === "yap" ? normalizeYapDecodedForSchema(decoded) : decoded;
   const decodedErrors = validate(decodedForSchema, decodedRef, schema);
   let contentErrors = [];
   let categoryTarget = decoded;
@@ -638,9 +659,10 @@ async function main() {
   }
   const categoryErrors = inspectFieldCategories(categoryTarget, type);
   const idErrors = type === "yap" && categoryTarget ? inspectYapIds(categoryTarget) : type === "yapk" ? inspectYapkIds(decoded) : [];
+  const simplePortalErrors = type === "yap" ? inspectYapSimplePortal(decoded) : [];
   const portalErrors = type === "yapk" ? inspectYapkPortalInfo(decoded) : [];
   const dashboardErrors = type === "yapk" ? inspectYapkDashboards(decoded) : [];
-  const errors = [...wrapperErrors.map((error) => ({ scope: "wrapper", ...error })), ...decodedErrors.map((error) => ({ scope: "decodedResource", ...error })), ...contentErrors, ...categoryErrors, ...idErrors, ...portalErrors, ...dashboardErrors];
+  const errors = [...wrapperErrors.map((error) => ({ scope: "wrapper", ...error })), ...decodedErrors.map((error) => ({ scope: "decodedResource", ...error })), ...contentErrors, ...categoryErrors, ...idErrors, ...simplePortalErrors, ...portalErrors, ...dashboardErrors];
 
   console.log(JSON.stringify({
     input: path.basename(input),

@@ -21,6 +21,8 @@ Do not generate a `.yap` or `.yapk` package directly from a broad app request un
 
 For generated YAP root dashboards, use the current dashboard shell learned from the Vendor Onboarding v1.93 export: `Type = 103`, `LayoutView = null`, `Ext2 = "{\"src\":true}"`, and `LayoutInResources = []` for an empty/current shell, with root navigation pointing to the dashboard `LayoutID`. Current dashboards can include inline page resources; Vendor Onboarding v1.12 proves a simple current-dashboard Data table import path when `attrs.listarr[].Field` is the source field and `FieldName` is the label. Preserve the import-learned YAP rules: `AppID = 41`, API-issued IDs, populated `ReplaceIds`, integer `Field.Category`, unique IDs, product-schema `ListExportResult`, and child `CustomType = ListSite_<root ListID>`.
 
+For no-portal YAP packages, emit `ListExportResult.SimplePortal = null`. Do not emit `{}` or `[]`; product feedback confirmed `SimplePortal: {}` fails import even when schema validation can normalize it for compatibility.
+
 Ask focused clarification questions when blocking details are missing, especially purpose, roles, required lists/fields, status model, approval flow, dashboards, actions/workflows, integrations, package type, or output format. Ask only enough to prevent a bad package. For non-blocking gaps, document assumptions in the plan and proceed.
 
 Default to the full functional application described in the plan, not a simple/MVP/basic v1 build. Implement all planned core lists, fields, forms, dashboards, actions, workflows, and major controls in one package when feasible. If something cannot be generated safely, document it as excluded/deferred with a reason and workaround; do not silently omit planned features.

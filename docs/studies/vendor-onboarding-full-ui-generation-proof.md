@@ -23,6 +23,7 @@ The generated package files are intentionally kept outside the repository and ar
 - YAP output uses `Title`, `Description`, `IconUrl`, `IsListSet`, and `Resource`.
 - YAP `Resource` is `[______gizp______]` plus gzip JSON for `ListExportResult`.
 - YAP decoded resource is `ListExportResult`; `Data` is a JSON string containing `ListExportInfo`.
+- YAP no-portal output uses `SimplePortal: null`. The earlier `SimplePortal: {}` shape failed import per product-team feedback.
 - YAPK output uses schema v2 `AppExportPackageInfo`.
 - YAPK `Resource` is base64 Brotli JSON for `AppPackageInfo`.
 - YAPK decoded resource is `AppPackageInfo`, not YAP `ListExportResult`.
@@ -101,6 +102,7 @@ YAP fallback:
 
 - `scripts/validate-standard-package-schema.mjs` with product-team YAP schema: pass, 0 errors
 - Decoded YAP root dashboard marker check: both dashboards have `Ext2 = "{\"src\":true}"` and one inline resource
+- Decoded YAP SimplePortal check: `SimplePortal = null`
 - `scripts/inspect-yap-schema-standard.mjs`: pass, 0 errors, 0 warnings
 - `validate-yap-package.js --mode generator --stage final`: pass with warnings
 - `validate-yap-graph.js`: pass with warnings, 0 errors

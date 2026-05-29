@@ -360,7 +360,7 @@ function hasSafeHorizontalPaddingNearRoot(root) {
 
 function displayColumnFieldName(column) {
   if (!isObject(column)) return safeString(column);
-  for (const candidate of [column.FieldName, column.fieldName, column.field, column.Name, column.name, column.SortName, column.id, column.FieldID, column.fieldID, column.value]) {
+  for (const candidate of [column.Field, column.field, column.FieldName, column.fieldName, column.Name, column.name, column.SortName, column.id, column.FieldID, column.fieldID, column.value]) {
     const value = safeString(candidate);
     if (value) return value;
   }
@@ -1068,13 +1068,11 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
     const layoutId = safeString(layout.LayoutID);
     const ext2 = tryParseJson(layout.Ext2);
     const resources = asArray(layout.LayoutInResources);
-    if (!resources.length) {
-      if (layout.LayoutView !== null || !ext2 || ext2.src !== true) {
-        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DASHBOARD_USES_LEGACY_SCHEMA", "Generated Type 103 dashboard shell should use the current export-proven shape: LayoutView null, Ext2 {\"src\":true}, and empty LayoutInResources.", { title: layout.Title, layoutId, layoutViewType: layout.LayoutView === null ? "null" : typeof layout.LayoutView, ext2 });
-      }
-      if (!ext2 || ext2.src !== true) {
-        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DASHBOARD_CURRENT_VERSION_MARKER_MISSING", "Generated dashboard shell is missing the current-version Ext2 {\"src\":true} marker.", { title: layout.Title, layoutId });
-      }
+    if (!ext2 || ext2.src !== true) {
+      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DASHBOARD_CURRENT_VERSION_MARKER_MISSING", "Generated Type 103 dashboard is missing the current-version Ext2 {\"src\":true} marker. Yeeflow routes pages without this marker through the retired legacy dashboard renderer.", { title: layout.Title, layoutId, hasInlineResource: resources.length > 0 });
+    }
+    if (!resources.length && (layout.LayoutView !== null || !ext2 || ext2.src !== true)) {
+      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DASHBOARD_USES_LEGACY_SCHEMA", "Generated Type 103 dashboard shell should use the current export-proven shape: LayoutView null, Ext2 {\"src\":true}, and empty LayoutInResources.", { title: layout.Title, layoutId, layoutViewType: layout.LayoutView === null ? "null" : typeof layout.LayoutView, ext2 });
     }
     if (layout.LayoutView !== null && layout.LayoutView !== undefined) {
       if (!(isSchemaDirectYap(report) && layout.LayoutView === "")) {
@@ -2079,7 +2077,11 @@ function validateDashboardDataTableControl(control, title, layoutId, pointer, li
   }
   const fields = fieldsByList.get(listId) || new Map();
   columns.forEach((column, index) => {
-    const fieldName = displayColumnFieldName(column);
+    const explicitField = isObject(column) ? safeString(column.Field) : "";
+    if (isObject(column) && !explicitField) {
+      issue(report, severity, "DASHBOARD_DATA_TABLE_DISPLAY_FIELD_BINDING_MISSING", "Dashboard Data table display columns must include export-proven Field bindings. FieldName is the visible label and is not enough for the query configuration.", { title, layoutId, pointer: `${pointer}.attrs.listarr[${index}]`, listId });
+    }
+    const fieldName = explicitField || displayColumnFieldName(column);
     if (!fieldName) {
       issue(report, severity, "DASHBOARD_DATA_TABLE_DISPLAY_FIELD_MISSING", "Data table display column entries must identify a source field.", { title, layoutId, pointer: `${pointer}.attrs.listarr[${index}]`, listId });
     } else if (fieldsByList.has(listId) && !fields.has(fieldName)) {
@@ -2339,8 +2341,11 @@ function validateBasicStructure(data, resource, report) {
     } else if (!isSchemaDirectYap(report) && report.mode === "generator" && report.stage === "final" && safeString(resource.AppID) !== "41") {
       issue(report, "error", "RESOURCE_APPID_NOT_FIXED_41", "Generated YAP Resource.AppID must stay fixed at 41; do not request this ID from the generate-unique-ids API.", { appId: resource.AppID });
     }
-    if (isDocumentLibraryOnlyPackage(data) && resource.SimplePortal !== null) {
-      issue(report, "warning", "DOCUMENT_LIBRARY_SIMPLEPORTAL_NOT_NULL", "Known-good document-library exports use Resource.SimplePortal = null. Generated [] wrappers failed Yeeflow create in v1/v2.", { simplePortalType: Array.isArray(resource.SimplePortal) ? "array" : typeof resource.SimplePortal });
+    if (resource.SimplePortal !== null) {
+      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "YAP_SIMPLEPORTAL_NOT_NULL", "Product import feedback requires Resource.SimplePortal = null when no portal is included. Empty object SimplePortal {} failed Vendor Onboarding full UI YAP import.", {
+        simplePortalType: Array.isArray(resource.SimplePortal) ? "array" : resource.SimplePortal === undefined ? "missing" : typeof resource.SimplePortal,
+        documentLibraryOnly: isDocumentLibraryOnlyPackage(data),
+      });
     }
   }
 }

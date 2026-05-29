@@ -1234,7 +1234,7 @@ function writeYapPackage(data, output) {
     ReportIds: [],
     FormKeys: [],
     Data: listExportInfoText,
-    SimplePortal: {},
+    SimplePortal: null,
   };
   const resourceText = unquoteIntegerProperties(JSON.stringify(listExportResult));
   const wrapper = {
