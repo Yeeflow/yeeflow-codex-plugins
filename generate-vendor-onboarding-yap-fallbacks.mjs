@@ -229,14 +229,14 @@ async function main() {
   ];
   const apiIdsNoLookups = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[0]), { dashboard: "minimal" });
   const apiIdsNoLookupsWithoutLookupFields = removeLookupRelationships(apiIdsNoLookups);
-  const apiIdsNoLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.6-api-ids-no-lookups.yap";
+  const apiIdsNoLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.7-fixed-appid-api-ids-no-lookups.yap";
   writeSchemaResultYap(apiIdsNoLookupsWithoutLookupFields, apiIdsNoLookupsPath);
   const apiIdsWithLookups = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[1]), { dashboard: "minimal" });
-  const apiIdsWithLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.6-api-ids-with-lookups.yap";
+  const apiIdsWithLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.7-fixed-appid-api-ids-with-lookups.yap";
   writeSchemaResultYap(apiIdsWithLookups, apiIdsWithLookupsPath);
   const apiIdsSimpleDashboard = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[2]), { dashboard: "simple-data-table" });
   const apiIdsSimpleDashboardNoLookups = removeLookupRelationships(apiIdsSimpleDashboard);
-  const apiIdsSimpleDashboardPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.6-api-ids-simple-dashboard.yap";
+  const apiIdsSimpleDashboardPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.7-fixed-appid-api-ids-simple-dashboard.yap";
   writeSchemaResultYap(apiIdsSimpleDashboardNoLookups, apiIdsSimpleDashboardPath);
 
   console.log(JSON.stringify({
@@ -312,7 +312,7 @@ async function main() {
       },
       {
         path: apiIdsNoLookupsPath,
-        purpose: "ListExportResult YAP with API-issued IDs, no lookup relationships",
+        purpose: "ListExportResult YAP with fixed AppID 41 plus API-issued list/field/layout IDs, no lookup relationships",
         buildStatus: "written",
         apiIds: summarizeIds(apiIdBatches[0]),
         dataLists: apiIdsNoLookupsWithoutLookupFields.Childs.length,
@@ -322,7 +322,7 @@ async function main() {
       },
       {
         path: apiIdsWithLookupsPath,
-        purpose: "ListExportResult YAP with API-issued IDs and lookup relationships",
+        purpose: "ListExportResult YAP with fixed AppID 41 plus API-issued list/field/layout IDs and lookup relationships",
         buildStatus: "written",
         apiIds: summarizeIds(apiIdBatches[1]),
         dataLists: apiIdsWithLookups.Childs.length,
@@ -332,7 +332,7 @@ async function main() {
       },
       {
         path: apiIdsSimpleDashboardPath,
-        purpose: "ListExportResult YAP with API-issued IDs, no lookups, and one simple dashboard data table",
+        purpose: "ListExportResult YAP with fixed AppID 41 plus API-issued list/field/layout IDs, no lookups, and one simple dashboard data table",
         buildStatus: "written",
         apiIds: summarizeIds(apiIdBatches[2]),
         dataLists: apiIdsSimpleDashboardNoLookups.Childs.length,
@@ -633,12 +633,12 @@ function assignSafeSchemaIds(source) {
 }
 
 function countSchemaIds(source) {
-  return 1 + 1 + (source.Item?.Layouts || []).length + (source.Childs || []).reduce((total, child) => total + 1 + (child.Defs || []).length + (child.Layouts || []).length, 0);
+  return 1 + (source.Item?.Layouts || []).length + (source.Childs || []).reduce((total, child) => total + 1 + (child.Defs || []).length + (child.Layouts || []).length, 0);
 }
 
 function assignApiSchemaIds(source, allocator, options = {}) {
   const data = structuredClone(source);
-  const appId = allocator.next("AppID");
+  const appId = 41;
   const rootListId = allocator.next("root ListID");
   const listIdByTitle = new Map();
 

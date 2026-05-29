@@ -250,6 +250,10 @@ function inspectIdUniqueness(data, findings, largeNumbers = new Set()) {
   asArray(data?.Childs).forEach((child, index) => items.push({ item: child, path: `Data.Childs[${index}]`, title: child.ListModel?.Title || null }));
   for (const { item, path: itemPath, title } of items) {
     const listId = item?.ListModel?.ListID;
+    const appId = item?.ListModel?.AppID;
+    if (appId !== undefined && String(appId) !== "41") {
+      add(findings, "error", "LISTMODEL_APPID_NOT_FIXED_41", "Generated YAP ListModel.AppID must stay fixed at 41; use API-issued IDs for list/field/layout IDs only.", { path: `${itemPath}.ListModel.AppID`, list: title, appId });
+    }
     if (listId !== undefined) addDuplicateFinding(findings, "DUPLICATE_LIST_ID", "ListID values must be globally unique across generated ListExportItem resources.", listIds, listId, { path: `${itemPath}.ListModel.ListID`, list: title });
 
     const fieldIndexes = new Map();

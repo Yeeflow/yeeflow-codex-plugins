@@ -2331,6 +2331,8 @@ function validateBasicStructure(data, resource, report) {
     if (!isSchemaDirectYap(report) && !Array.isArray(resource.ReplaceIds)) issue(report, "error", "REPLACEIDS_NOT_ARRAY", "Resource.ReplaceIds must be an array.");
     if (!isSchemaDirectYap(report) && (resource.AppID === undefined || resource.AppID === null || resource.AppID === "")) {
       issue(report, "error", "RESOURCE_APPID_MISSING", "Resource.AppID is required in wrapped .yap packages.");
+    } else if (!isSchemaDirectYap(report) && report.mode === "generator" && report.stage === "final" && safeString(resource.AppID) !== "41") {
+      issue(report, "error", "RESOURCE_APPID_NOT_FIXED_41", "Generated YAP Resource.AppID must stay fixed at 41; do not request this ID from the generate-unique-ids API.", { appId: resource.AppID });
     }
     if (isDocumentLibraryOnlyPackage(data) && resource.SimplePortal !== null) {
       issue(report, "warning", "DOCUMENT_LIBRARY_SIMPLEPORTAL_NOT_NULL", "Known-good document-library exports use Resource.SimplePortal = null. Generated [] wrappers failed Yeeflow create in v1/v2.", { simplePortalType: Array.isArray(resource.SimplePortal) ? "array" : typeof resource.SimplePortal });
@@ -2354,6 +2356,9 @@ function validateListExportItemSchema(item, pathPrefix, report) {
   if (!isObject(item.ListModel)) {
     issue(report, generatorFinalSeverity(report), "LIST_EXPORT_ITEM_LISTMODEL_MISSING", "Generated app/list resources should include ListExportItem.ListModel.", { path: `${pathPrefix}.ListModel` });
   } else {
+    if (report.mode === "generator" && report.stage === "final" && item.ListModel.AppID !== undefined && safeString(item.ListModel.AppID) !== "41") {
+      issue(report, "error", "LISTMODEL_APPID_NOT_FIXED_41", "Generated YAP ListModel.AppID must stay fixed at 41; use API-issued IDs for list/field/layout IDs only.", { path: `${pathPrefix}.ListModel.AppID`, appId: item.ListModel.AppID });
+    }
     if (item.ListModel.Flags !== 1) {
       issue(report, generatorFinalSeverity(report), "LISTMODEL_FLAGS_MISSING_OR_INVALID", "Product schema v2 requires CustomListModel.Flags = 1 on generated root and child list resources; missing or different values can fail import.", { path: `${pathPrefix}.ListModel.Flags`, value: item.ListModel.Flags });
     }

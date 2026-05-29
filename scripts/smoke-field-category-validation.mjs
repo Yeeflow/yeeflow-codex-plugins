@@ -30,7 +30,7 @@ function makeLayout(id = 3001, listId = 2001) {
     Type: 0,
     Title: `View ${id}`,
     LayoutView: "",
-    AppID: 8001,
+    AppID: 41,
     TenantID: 0,
     Created: "2026-05-29T00:00:00Z",
     Modified: "2026-05-29T00:00:00Z",
@@ -52,7 +52,7 @@ function makeListExportInfo(category, overrides = {}) {
   const child = {
     ListModel: {
       ListID: 2001,
-      AppID: 8001,
+      AppID: 41,
       Title: "Vendors",
       Type: 1,
       Flags: 1,
@@ -64,7 +64,7 @@ function makeListExportInfo(category, overrides = {}) {
     Item: {
       ListModel: {
         ListID: 9001,
-        AppID: 8001,
+        AppID: 41,
         Title: "Synthetic Field Category Smoke App",
         Type: 1024,
         Flags: 1,
@@ -80,7 +80,7 @@ function makeAppPackageInfo(category) {
   return {
     ListSet: {
       ListID: "9001",
-      AppID: "8001",
+      AppID: "41",
       Title: "Synthetic Field Category Smoke App",
       Type: 103,
       Flags: 1,
@@ -103,7 +103,7 @@ function makeAppPackageInfo(category) {
       {
         List: {
           ListID: "2001",
-          AppID: "8001",
+          AppID: "41",
           Title: "Vendors",
           Type: 1,
           Flags: 1,
@@ -134,7 +134,7 @@ function writeYap(file, category, overrides = {}, dataMode = "string") {
   const info = makeListExportInfo(category, overrides);
   const result = {
     MainListType: 1024,
-    AppID: 8001,
+    AppID: 41,
     ReplaceIds: [],
     ReportIds: [],
     FormKeys: [],
@@ -193,7 +193,7 @@ function writeYapk(file, category) {
   const wrapper = {
     PackageId: "00000000-0000-0000-0000-000000000001",
     TenantID: "1",
-    AppID: "8001",
+    AppID: "41",
     ListID: "9001",
     Title: "Synthetic Field Category Smoke App",
     Description: "Temporary validator smoke package.",
@@ -245,6 +245,7 @@ try {
   const duplicateFieldYap = path.join(dir, "duplicate-field-id.yap");
   const rawLargeIdYap = path.join(dir, "raw-large-api-id.yap");
   const localIdSourceYap = path.join(dir, "local-id-source.yap");
+  const generatedAppIdYap = path.join(dir, "generated-app-id.yap");
   const uniqueIdsYap = path.join(dir, "unique-ids.yap");
   const badYapk = path.join(dir, "field-category-string.yapk");
   const goodYapk = path.join(dir, "field-category-int.yapk");
@@ -271,6 +272,12 @@ try {
       ListModel: { ...makeListExportInfo(0).Childs[0].ListModel, ListID: 760100000000002 },
       Defs: [{ ...makeField(0), FieldID: 760100000000001, ListID: 760100000000002 }],
       Layouts: [makeLayout(760100000000003, 760100000000002)],
+    }],
+  });
+  writeYap(generatedAppIdYap, 0, {
+    childs: [{
+      ...makeListExportInfo(0).Childs[0],
+      ListModel: { ...makeListExportInfo(0).Childs[0].ListModel, AppID: 9345000000000000001 },
     }],
   });
   writeYap(uniqueIdsYap, 0, { field: { FieldID: 1002 }, layouts: [makeLayout(3002)] });
@@ -367,6 +374,11 @@ try {
       label: "validate-yap-package local ID source",
       result: run("node", ["validate-yap-package.js", localIdSourceYap, "--mode", "generator", "--stage", "final"]),
       expectNeedle: "ID_SOURCE_NOT_API",
+    },
+    {
+      label: "validate-yap-package generated AppID",
+      result: run("node", ["validate-yap-package.js", generatedAppIdYap, "--mode", "generator", "--stage", "final"]),
+      expectNeedle: "LISTMODEL_APPID_NOT_FIXED_41",
     },
     {
       label: "standard schema unique IDs",
