@@ -747,6 +747,13 @@ V1.12 fixes the Data table column binding shape:
 - The six table columns use `Field` bindings: `Text0`, `Text1`, `Text2`, `Text3`, `Text4`, and `Text5`.
 - The visible labels remain `Vendor Name`, `Vendor Type`, `Country / Region`, `Primary Contact`, `Email`, and `Phone`.
 
+Runtime result:
+
+- User confirmed the V1.12 YAP imported successfully.
+- User confirmed `Home` uses the new/current dashboard version.
+- User confirmed the Data table no longer shows the deleted-fields/query-configuration error after using `Field` for the real source field names and `FieldName` for labels.
+- This upgrades the focused Vendor Onboarding V1.12 package from local-validation-only to import-proven and current-dashboard/Data-table-binding runtime-confirmed for this package.
+
 Validator hardening:
 
 - `validate-yap-package.js` and `scripts/inspect-generated-ui-quality.mjs` now flag generated dashboard Data table columns that omit the export-proven `Field` binding.
@@ -795,8 +802,8 @@ The V1 package remains the locally validated baseline. The V1.1 package proved s
 - The YAP V1.6 API-ID product-schema result candidates failed because `AppID` was generated instead of fixed at `41`.
 - The YAP V1.7 fixed-AppID plus API-ID product-schema result candidates failed because `ReplaceIds` was empty.
 - The YAP V1.8 ReplaceIds-fixed product-schema result candidates failed because child `CustomType` values still used stale `ListSite_` IDs.
-- The YAP V1.9 CustomType-fixed product-schema result candidates have not yet been manually import-tested after applying the product-team ListSite correction.
-- The YAP V1.12 current-dashboard Data table field-binding fix has not yet been manually import-tested.
+- The YAP V1.9 CustomType-fixed product-schema result candidates imported successfully after applying the product-team ListSite correction.
+- The YAP V1.12 current-dashboard Data table field-binding fix imported successfully and fixed the current-dashboard Data table query error.
 - The full `.yap` fallback reached the import dialog but failed create.
 - The `.yap` V1.3 schema-direct package must be manually import-tested before being treated as import-proven.
 - Collection/Kanban action steps are safe local placeholders and should be connected to tenant-specific workflows after import if needed.
@@ -805,9 +812,9 @@ The V1 package remains the locally validated baseline. The V1.1 package proved s
 
 ## Proof Boundary
 
-This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. It also proves that the product-team-reported `Field.Category` integer typing issue is fixed in both generated YAPK and YAP candidates, and that local validators now catch the regression. After product corrected the YAP schema, this branch also proves the generated YAP now decodes `Resource` to `ListExportResult`, with `Data` parsed and validated as `ListExportInfo`. After product identified a duplicate `LayoutID`, this branch proves local validators catch duplicate/unsafe ID regressions. After product recommended the generate-unique-ids API, this branch proves generated YAP candidates can use API-issued IDs while preserving 19-digit raw integer tokens without JavaScript rounding. After product clarified AppID handling, this branch proves generated YAP candidates keep `AppID = 41` and use API-issued IDs only for list/field/layout/resource identities. After product clarified ReplaceIds/FormKeys handling, this branch proves generated YAP candidates collect all generated IDs into `ReplaceIds` and keep `FormKeys` empty when no process forms exist. After product clarified ListSite CustomType handling, this branch proves V1.9 generated YAP candidates set child `CustomType` to `ListSite_<generated root ListID>`. The `.yapk` variants before V1.4 showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. Earlier `.yap` fallbacks showed that direct app import can still fail when the resource shape is wrong, IDs are unsafe/duplicated, AppID is incorrectly generated, ReplaceIds is empty, CustomType points to stale IDs, or lookup shape is not importer-compatible.
+This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. It also proves that the product-team-reported `Field.Category` integer typing issue is fixed in both generated YAPK and YAP candidates, and that local validators now catch the regression. After product corrected the YAP schema, this branch also proves the generated YAP now decodes `Resource` to `ListExportResult`, with `Data` parsed and validated as `ListExportInfo`. After product identified a duplicate `LayoutID`, this branch proves local validators catch duplicate/unsafe ID regressions. After product recommended the generate-unique-ids API, this branch proves generated YAP candidates can use API-issued IDs while preserving 19-digit raw integer tokens without JavaScript rounding. After product clarified AppID handling, this branch proves generated YAP candidates keep `AppID = 41` and use API-issued IDs only for list/field/layout/resource identities. After product clarified ReplaceIds/FormKeys handling, this branch proves generated YAP candidates collect all generated IDs into `ReplaceIds` and keep `FormKeys` empty when no process forms exist. After product clarified ListSite CustomType handling, this branch proves V1.9 generated YAP candidates set child `CustomType` to `ListSite_<generated root ListID>`. The V1.12 generated YAP is user-confirmed import-proven; it opens with the current dashboard version and fixes the Data table query error by using `attrs.listarr[].Field` for source bindings and `attrs.listarr[].FieldName` for labels. The `.yapk` variants before V1.4 showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. Earlier `.yap` fallbacks showed that direct app import can still fail when the resource shape is wrong, IDs are unsafe/duplicated, AppID is incorrectly generated, ReplaceIds is empty, CustomType points to stale IDs, lookup shape is not importer-compatible, or dashboard Data table `Field` bindings are missing.
 
-It does not prove live import success, runtime rendering, or end-user workflow behavior. Those require a focused manual import and runtime proof in a Yeeflow tenant.
+It does not prove full rich UI runtime behavior, lookup runtime behavior, workflow execution, record creation, action execution, or end-user process behavior. Those require additional focused manual runtime proof in a Yeeflow tenant.
 
 ## Manual Test Checklist
 

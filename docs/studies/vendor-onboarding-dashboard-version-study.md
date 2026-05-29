@@ -39,7 +39,24 @@ This shape imports but does not represent the current dashboard shell created by
 - `Ext2`: `{"src": true}`
 - `LayoutInResources`: empty array
 
-This is export-proven from the user-created dashboard in the imported application. The export proves the current blank dashboard shell, not yet the storage shape for rich current-version dashboard controls.
+This is export-proven from the user-created dashboard in the imported application. The export proves the current blank dashboard shell.
+
+## Current Dashboard With Inline Content
+
+The generated V1.10 YAP proved that a generated `Home` dashboard can use the current dashboard shell and import successfully. V1.10 was intentionally blank.
+
+The generated V1.11 YAP proved that the current dashboard shell can include inline `LayoutInResources` page content, but the Data table query configuration was wrong. The visible column labels appeared in the designer, but the canvas showed:
+
+`Field(s) ,,,,, have been deleted. Please check the query configuration.`
+
+The generated V1.12 YAP fixed the Data table binding and was user-confirmed to import successfully. It opens with the new/current dashboard version and the Data table no longer shows the deleted-fields error.
+
+Runtime-confirmed Data table rule:
+
+- `attrs.data.list` should include `AppID`, `ListID`, `Type`, `Title`, and `ListSetID`.
+- `attrs.listarr[].Field` is the real source field binding, for example `Text0`, `Text1`, or `Text2`.
+- `attrs.listarr[].FieldName` is the visible column label, for example `Vendor Name`.
+- Omitting `Field` while using only labels or IDs can leave the designer sidebar readable but make the runtime query treat the selected fields as deleted.
 
 ## Structural Diff
 
@@ -78,7 +95,8 @@ Root navigation should still include a `LayoutView.sort[]` item:
 
 ## Generator Implications
 
-- Generate new application dashboards with `LayoutView: null`, `Ext2: "{\"src\":true}"`, and empty `LayoutInResources`.
+- Generate new application dashboards with `LayoutView: null`, `Ext2: "{\"src\":true}"`, and empty `LayoutInResources` when the dashboard has no inline content.
+- Current dashboards can include inline `LayoutInResources` page content; generated Data table controls inside that content must follow the runtime-confirmed `Field` / `FieldName` binding rule.
 - Preserve the prior import-learned rules: `AppID = 41`, API-issued IDs, populated `ReplaceIds`, correct `ListSite_<root ListID>` `CustomType`, integer `Field.Category`, unique IDs, and `ListExportResult` resource shape.
 - Do not assume rich current-dashboard control content can be embedded using the older inline page-resource model until a current-dashboard-with-controls export proves the content shape.
 
@@ -89,9 +107,13 @@ Generated-final validators should report:
 - `DASHBOARD_USES_LEGACY_SCHEMA` when a generated empty Type 103 dashboard uses blank `LayoutView` or lacks the `Ext2` current marker.
 - `DASHBOARD_CURRENT_VERSION_MARKER_MISSING` when `Ext2` does not parse to `{ "src": true }`.
 - Existing dashboard resource checks still apply when a dashboard includes inline page resources.
+- `DASHBOARD_DATA_TABLE_DISPLAY_FIELD_BINDING_MISSING` when a generated dashboard Data table column omits `attrs.listarr[].Field`.
+- `DASHBOARD_DATA_TABLE_DISPLAY_FIELD_UNRESOLVED` when `attrs.listarr[].Field` does not resolve to a source list field.
 
 The supplied product-team JSON schema still declares dashboard `LayoutView` as a string. The v1.93 export itself uses `LayoutView: null` on `New Dashboard`, so strict schema validation reports that single type mismatch for the export-proven current shell. The current branch therefore treats this as a schema/export drift note rather than a generator regression.
 
 ## Proof Boundary
 
-`New Dashboard` structure is export-proven from the user-edited v1.93 export. The exact runtime behavior is proven only by the user-created dashboard existing in the imported app. Generated-current-dashboard behavior must be proven by importing a new generated candidate and confirming that `Home` opens with the current dashboard version.
+`New Dashboard` structure is export-proven from the user-edited v1.93 export. Generated current-dashboard shell behavior is import-proven by V1.10. Current-dashboard inline content with a simple Data table is import-proven and query-error-fixed by V1.12 for the focused Vendor Onboarding package.
+
+The proof does not yet cover the full rich Vendor Onboarding mockup scope, lookup runtime behavior, workflow execution, record creation, or advanced controls such as Document embed, QR Code, Barcode, Timeline, and Print Page.
