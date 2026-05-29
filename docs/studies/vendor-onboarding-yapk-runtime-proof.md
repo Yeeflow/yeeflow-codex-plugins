@@ -887,10 +887,11 @@ V1.15 validation:
 - Generated UI quality inspector: pass.
 - Regression smoke: pass, including `PortalInfo: {}` failing with `YAPK_PORTALINFO_EMPTY_OBJECT_INVALID` and `PortalInfo: []` failing with `YAPK_PORTALINFO_ARRAY_INVALID`.
 - Signing: `setsign` returned a 32-byte signature and `verifysign` returned HTTP 200.
+- Runtime install proof: user confirmed the V1.15 YAPK installed successfully in Yeeflow.
 
 ## Known Gaps
 
-- No complete live Yeeflow import proof has been performed yet.
+- No complete end-to-end live Yeeflow runtime proof has been performed yet.
 - No runtime page-open proof has been performed yet.
 - V1.2 reached application-tile creation but failed materialization.
 - V1.3 reached the same materialization-failure state.
@@ -907,14 +908,14 @@ V1.15 validation:
 - The `.yap` V1.3 schema-direct package must be manually import-tested before being treated as import-proven.
 - The YAPK V1.13 schema v2 package is server-signed, verified, schema-valid, and locally content-validated, but has not yet been manually install/runtime tested.
 - The YAPK V1.14 PortalInfo array package failed manual install and is superseded by the V1.15 PortalInfo null correction.
-- The YAPK V1.15 PortalInfo null package is server-signed, verified, schema-v2/product-rule validated, and locally content-validated, but has not yet been manually install/runtime tested.
+- The YAPK V1.15 PortalInfo null package is server-signed, verified, schema-v2/product-rule validated, locally content-validated, and user-confirmed to install successfully. App open, dashboard render, child-list inspection, record creation, workflow/action execution, and full UI runtime behavior remain untested.
 - Collection/Kanban action steps are safe local placeholders and should be connected to tenant-specific workflows after import if needed.
 - Advanced controls such as Document embed, QR Code, Barcode, timeline, and print layout require runtime visual confirmation.
 - Custom CSS polish is represented as layout/style intent in generated controls; final visual polish must be checked in Yeeflow after import.
 
 ## Proof Boundary
 
-This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. It also proves that the product-team-reported `Field.Category` integer typing issue is fixed in both generated YAPK and YAP candidates, and that local validators now catch the regression. After product corrected the YAP schema, this branch also proves the generated YAP now decodes `Resource` to `ListExportResult`, with `Data` parsed and validated as `ListExportInfo`. After product identified a duplicate `LayoutID`, this branch proves local validators catch duplicate/unsafe ID regressions. After product recommended the generate-unique-ids API, this branch proves generated YAP candidates can use API-issued IDs while preserving 19-digit raw integer tokens without JavaScript rounding. After product clarified AppID handling, this branch proves generated YAP candidates keep `AppID = 41` and use API-issued IDs only for list/field/layout/resource identities. After product clarified ReplaceIds/FormKeys handling, this branch proves generated YAP candidates collect all generated IDs into `ReplaceIds` and keep `FormKeys` empty when no process forms exist. After product clarified ListSite CustomType handling, this branch proves V1.9 generated YAP candidates set child `CustomType` to `ListSite_<generated root ListID>`. The V1.12 generated YAP is user-confirmed import-proven; it opens with the current dashboard version and fixes the Data table query error by using `attrs.listarr[].Field` for source bindings and `attrs.listarr[].FieldName` for labels. The V1.13 YAPK candidate proves the product-team schema v2 wrapper/resource shape locally: `AppExportPackageInfo` with `Resource` as Brotli-compressed `AppPackageInfo`, `Childs[].Fields`, schema-v2 required arrays, `LongAsString` strings, fixed `AppID = 41`, server signing, and `verifysign`. The V1.14 YAPK candidate applied the superseded product-team feedback that no-portal packages should emit `PortalInfo: []`; manual install showed that was still wrong. The V1.15 YAPK candidate applies the corrected product-team rule that no-portal packages must emit `PortalInfo: null`, while validators reject both `{}` and `[]`. The `.yapk` variants before V1.4 showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. Earlier `.yap` fallbacks showed that direct app import can still fail when the resource shape is wrong, IDs are unsafe/duplicated, AppID is incorrectly generated, ReplaceIds is empty, CustomType points to stale IDs, lookup shape is not importer-compatible, or dashboard Data table `Field` bindings are missing.
+This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. It also proves that the product-team-reported `Field.Category` integer typing issue is fixed in both generated YAPK and YAP candidates, and that local validators now catch the regression. After product corrected the YAP schema, this branch also proves the generated YAP now decodes `Resource` to `ListExportResult`, with `Data` parsed and validated as `ListExportInfo`. After product identified a duplicate `LayoutID`, this branch proves local validators catch duplicate/unsafe ID regressions. After product recommended the generate-unique-ids API, this branch proves generated YAP candidates can use API-issued IDs while preserving 19-digit raw integer tokens without JavaScript rounding. After product clarified AppID handling, this branch proves generated YAP candidates keep `AppID = 41` and use API-issued IDs only for list/field/layout/resource identities. After product clarified ReplaceIds/FormKeys handling, this branch proves generated YAP candidates collect all generated IDs into `ReplaceIds` and keep `FormKeys` empty when no process forms exist. After product clarified ListSite CustomType handling, this branch proves V1.9 generated YAP candidates set child `CustomType` to `ListSite_<generated root ListID>`. The V1.12 generated YAP is user-confirmed import-proven; it opens with the current dashboard version and fixes the Data table query error by using `attrs.listarr[].Field` for source bindings and `attrs.listarr[].FieldName` for labels. The V1.13 YAPK candidate proves the product-team schema v2 wrapper/resource shape locally: `AppExportPackageInfo` with `Resource` as Brotli-compressed `AppPackageInfo`, `Childs[].Fields`, schema-v2 required arrays, `LongAsString` strings, fixed `AppID = 41`, server signing, and `verifysign`. The V1.14 YAPK candidate applied the superseded product-team feedback that no-portal packages should emit `PortalInfo: []`; manual install showed that was still wrong. The V1.15 YAPK candidate applies the corrected product-team rule that no-portal packages must emit `PortalInfo: null`, while validators reject both `{}` and `[]`; the user confirmed this V1.15 YAPK installed successfully in Yeeflow. The `.yapk` variants before V1.4 showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. Earlier `.yap` fallbacks showed that direct app import can still fail when the resource shape is wrong, IDs are unsafe/duplicated, AppID is incorrectly generated, ReplaceIds is empty, CustomType points to stale IDs, lookup shape is not importer-compatible, or dashboard Data table `Field` bindings are missing.
 
 It does not prove full rich UI runtime behavior, lookup runtime behavior, workflow execution, record creation, action execution, or end-user process behavior. Those require additional focused manual runtime proof in a Yeeflow tenant.
 
@@ -926,17 +927,21 @@ It does not prove full rich UI runtime behavior, lookup runtime behavior, workfl
 4. Verify the Vendors Data table no longer shows `Field(s) ,,,,, have been deleted`.
 5. Verify the Data table settings show six display fields and the canvas renders the table area without query-configuration errors.
 6. If V1.12 fails, manually fix the Data table in Yeeflow, publish/save, export the app, and provide the export so the exact current-dashboard Data table binding shape can be compared.
-7. For YAPK retest, install `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.15-yapk-portalinfo-null.yapk`.
-8. Check dashboard padding, cards, KPI layout, alert, and quick links.
-9. Verify dashboard Data tables show configured columns.
-10. Verify Kanban cards show meaningful vendor fields.
-11. Open the Vendor Detail View Page.
-12. Verify tabs, steps bar, progress controls, document embed area, compliance cards, task cards, and timeline.
-13. Open the New Vendor Request Form.
-14. Verify padded sections, toggle section, Dynamic Sub List, file/document fields, and form actions.
-15. Open the Compliance Review Workspace.
-16. Verify Kanban, collection cards, risk score, alert, bulk toolbar pattern, and missing/expired document table.
-17. Open the Vendor Print Page.
-18. Verify print layout, divider spacing, approval timeline, document checklist, QR Code, and Barcode.
-19. Connect placeholder collection/workflow actions to tenant-specific workflows if needed.
+7. V1.15 YAPK install proof is complete for `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.15-yapk-portalinfo-null.yapk`.
+8. Next, open the installed app and confirm no install/materialization error remains.
+9. Confirm the Home dashboard opens.
+10. Verify the Vendors Data table no longer shows `Field(s) ,,,,, have been deleted`.
+11. Verify child lists exist for Vendors, Vendor Documents, Compliance Reviews, Vendor Tasks, and Vendor Activity / History.
+12. Check dashboard padding, cards, KPI layout, alert, and quick links.
+13. Verify dashboard Data tables show configured columns.
+14. Verify Kanban cards show meaningful vendor fields if the richer dashboard scope is enabled in a later package.
+15. Open the Vendor Detail View Page.
+16. Verify tabs, steps bar, progress controls, document embed area, compliance cards, task cards, and timeline.
+17. Open the New Vendor Request Form.
+18. Verify padded sections, toggle section, Dynamic Sub List, file/document fields, and form actions.
+19. Open the Compliance Review Workspace.
+20. Verify Kanban, collection cards, risk score, alert, bulk toolbar pattern, and missing/expired document table.
+21. Open the Vendor Print Page.
+22. Verify print layout, divider spacing, approval timeline, document checklist, QR Code, and Barcode.
+23. Connect placeholder collection/workflow actions to tenant-specific workflows if needed.
 20. Record the live import/runtime result before treating this as runtime-proven.
