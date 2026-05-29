@@ -124,18 +124,24 @@ function decodeInput(inputPath, findings, largeNumbers) {
       return { wrapper: parsed, resource: null, data: null, inputType: "wrapped-yap" };
     }
     if (isObject(resource.Item) || Array.isArray(resource.Childs)) {
-      return { wrapper: parsed, resource, data: resource, inputType: "wrapped-yap-schema-direct" };
+      add(findings, "error", "YAP_RESOURCE_NOT_LIST_EXPORT_RESULT", "Decoded Resource must be ListExportResult with Data, not direct ListExportInfo.", { path: "$.Resource" });
+      return { wrapper: parsed, resource, data: resource, inputType: "wrapped-yap-schema-direct-invalid" };
     }
-    if (typeof resource.Data !== "string") {
-      add(findings, "error", "RESOURCE_DATA_MISSING", "Decoded Resource should be schema-direct ListExportInfo, or legacy Resource.Data must be a JSON string.");
+    if (!isObject(resource) || !("Data" in resource)) {
+      add(findings, "error", "RESOURCE_DATA_MISSING", "Decoded Resource should be ListExportResult with Data.");
       return { wrapper: parsed, resource, data: null, inputType: "wrapped-yap" };
     }
-    try {
-      return { wrapper: parsed, resource, data: parseJson(resource.Data, largeNumbers), inputType: "wrapped-yap" };
-    } catch (error) {
-      add(findings, "error", "RESOURCE_DATA_JSON_INVALID", "Decoded Resource.Data JSON parse failed.", { error: error.message });
-      return { wrapper: parsed, resource, data: null, inputType: "wrapped-yap" };
+    if (typeof resource.Data === "string") {
+      try {
+        return { wrapper: parsed, resource, data: parseJson(resource.Data, largeNumbers), inputType: "wrapped-yap-list-export-result-data-string" };
+      } catch (error) {
+        add(findings, "error", "RESOURCE_DATA_JSON_INVALID", "Decoded Resource.Data JSON parse failed.", { error: error.message });
+        return { wrapper: parsed, resource, data: null, inputType: "wrapped-yap-list-export-result" };
+      }
     }
+    if (isObject(resource.Data)) return { wrapper: parsed, resource, data: resource.Data, inputType: "wrapped-yap-list-export-result-data-object" };
+    add(findings, "error", "RESOURCE_DATA_INVALID", "Decoded Resource.Data must be a JSON string or ListExportInfo object.", { actualType: Array.isArray(resource.Data) ? "array" : resource.Data === null ? "null" : typeof resource.Data });
+    return { wrapper: parsed, resource, data: null, inputType: "wrapped-yap-list-export-result" };
   }
   if (parsed && typeof parsed.Data === "string") {
     try {
@@ -183,6 +189,18 @@ function inspectListExportItem(item, exportPath, findings, summary) {
         field: field?.DisplayName || field?.FieldName || field?.InternalName || null,
         actualType: field?.Category === undefined ? "missing" : Array.isArray(field?.Category) ? "array" : field?.Category === null ? "null" : typeof field?.Category,
       });
+    }
+    if (typeof field?.FieldName === "string" && Number.isInteger(field?.FieldIndex)) {
+      const match = field.FieldName.match(/(\d+)$/);
+      if (!match || Number.parseInt(match[1], 10) !== field.FieldIndex) {
+        add(findings, "error", "FIELD_NAME_SUFFIX_INDEX_MISMATCH", "FieldName trailing digits must equal FieldIndex.", {
+          path: `${exportPath}.Defs[${fieldIndex}].FieldName`,
+          list: item.ListModel?.Title || null,
+          field: field.DisplayName || field.FieldName || field.InternalName || null,
+          fieldName: field.FieldName,
+          fieldIndex: field.FieldIndex,
+        });
+      }
     }
   }
 }

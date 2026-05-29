@@ -400,7 +400,7 @@ function generatorFinalSeverity(report, fallback = "warning") {
 }
 
 function isSchemaDirectYap(report) {
-  return report && report.wrapper && report.wrapper.inputType === "wrapped-yap-schema-direct";
+  return report && report.wrapper && (report.wrapper.inputType === "wrapped-yap-schema-direct" || report.wrapper.inputType === "wrapped-yap-list-export-result");
 }
 
 function validateAppCreationFieldRules(field, report, context = {}) {
@@ -577,6 +577,9 @@ function decodeInput(inputPath, report) {
     } catch (error) {
       issue(report, "error", "RESOURCE_DATA_JSON_INVALID", "Resource.Data JSON is invalid.", { error: error.message });
       return null;
+    }
+    if (Number(resource.MainListType) === 1024 && Object.prototype.hasOwnProperty.call(resource, "Data")) {
+      report.wrapper.inputType = "wrapped-yap-list-export-result";
     }
     return { wrapper, resource, data };
   }

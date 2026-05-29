@@ -228,6 +228,11 @@ function main() {
   writeSchemaDirectYap(schemaDirect, schemaDirectPath);
   const categoryFixedPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-category-fixed.yap";
   writeSchemaDirectYap(schemaDirect, categoryFixedPath);
+  const schemaResultPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result.yap";
+  writeSchemaResultYap(schemaDirect, schemaResultPath);
+  const schemaResultNoLookups = removeLookupRelationships(schemaDirect);
+  const schemaResultNoLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result-no-lookups.yap";
+  writeSchemaResultYap(schemaResultNoLookups, schemaResultNoLookupsPath);
 
   console.log(JSON.stringify({
     status: "generated",
@@ -258,6 +263,24 @@ function main() {
       {
         path: categoryFixedPath,
         purpose: "schema-direct YAP with integer Field.Category values",
+        buildStatus: "written",
+        dataLists: schemaDirect.Childs.length,
+        fields: schemaDirect.Childs.reduce((total, child) => total + child.Defs.length, 0),
+        dashboards: schemaDirect.Item.Layouts.length,
+        layouts: schemaDirect.Childs.reduce((total, child) => total + child.Layouts.length, 0) + schemaDirect.Item.Layouts.length,
+      },
+      {
+        path: schemaResultNoLookupsPath,
+        purpose: "ListExportResult YAP with Data string, no lookup relationships",
+        buildStatus: "written",
+        dataLists: schemaResultNoLookups.Childs.length,
+        fields: schemaResultNoLookups.Childs.reduce((total, child) => total + child.Defs.length, 0),
+        dashboards: schemaResultNoLookups.Item.Layouts.length,
+        layouts: schemaResultNoLookups.Childs.reduce((total, child) => total + child.Layouts.length, 0) + schemaResultNoLookups.Item.Layouts.length,
+      },
+      {
+        path: schemaResultPath,
+        purpose: "ListExportResult YAP with Data string and lookup relationships",
         buildStatus: "written",
         dataLists: schemaDirect.Childs.length,
         fields: schemaDirect.Childs.reduce((total, child) => total + child.Defs.length, 0),
@@ -410,9 +433,43 @@ function normalizeFieldCategory(value) {
   throw new Error(`Field.Category must be an integer; got ${Array.isArray(value) ? "array" : typeof value}.`);
 }
 
+function removeLookupRelationships(data) {
+  const next = structuredClone(data);
+  for (const child of next.Childs || []) {
+    for (const field of child.Defs || []) {
+      if (field.Type === "lookup") {
+        field.Type = "input";
+        field.Rules = null;
+      }
+    }
+  }
+  return next;
+}
+
 function writeSchemaDirectYap(data, output) {
   let resourceText = JSON.stringify(data);
   resourceText = unquoteIntegerProperties(resourceText);
+  const wrapper = {
+    Title: TITLE,
+    Description: DESCRIPTION,
+    IconUrl: ICON_URL,
+    IsListSet: true,
+    Resource: `[______gizp______]${zlib.gzipSync(Buffer.from(resourceText, "utf8")).toString("base64")}`,
+  };
+  fs.writeFileSync(output, `${JSON.stringify(wrapper, null, 2)}\n`);
+}
+
+function writeSchemaResultYap(data, output) {
+  const listExportInfoText = unquoteIntegerProperties(JSON.stringify(data));
+  const listExportResult = {
+    MainListType: 1024,
+    AppID: 41,
+    ReplaceIds: [],
+    ReportIds: [],
+    FormKeys: [],
+    Data: listExportInfoText,
+  };
+  const resourceText = JSON.stringify(listExportResult);
   const wrapper = {
     Title: TITLE,
     Description: DESCRIPTION,

@@ -101,7 +101,8 @@ function loadPackage(inputPath) {
     if (resource && typeof resource === "object" && (resource.Item || Array.isArray(resource.Childs))) {
       return { wrapper: parsed, resource, app: resource, largeNumbers: [...largeNumbers] };
     }
-    return { wrapper: parsed, resource, app: parseJson(resource.Data, largeNumbers), largeNumbers: [...largeNumbers] };
+    const app = typeof resource.Data === "string" ? parseJson(resource.Data, largeNumbers) : resource.Data;
+    return { wrapper: parsed, resource, app, largeNumbers: [...largeNumbers] };
   }
   if (typeof parsed?.Data === "string") {
     return { wrapper: null, resource: parsed, app: parseJson(parsed.Data, largeNumbers), largeNumbers: [...largeNumbers] };
@@ -140,7 +141,10 @@ function inspect(inputPath) {
   const listWorkflows = forms.filter((form) => Number(form?.WorkflowType) === 1);
   const scheduledWorkflows = forms.filter((form) => Number(form?.WorkflowType) === 3);
   const documentLibraryOnlyPackage = childLists.length > 0 && childLists.every((child) => Number(child?.ListModel?.Type) === 16);
-  const schemaDirectPackage = resource && typeof resource === "object" && !Object.prototype.hasOwnProperty.call(resource, "Data") && (resource.Item || Array.isArray(resource.Childs));
+  const schemaDirectPackage = resource && typeof resource === "object" && (
+    (!Object.prototype.hasOwnProperty.call(resource, "Data") && (resource.Item || Array.isArray(resource.Childs))) ||
+    (Number(resource.MainListType) === 1024 && Object.prototype.hasOwnProperty.call(resource, "Data"))
+  );
   const hasRootDashboard = rootLayouts.some((layout) => Number(layout?.Type) === 103);
   const layoutView = readLayoutView(rootModel, errors, { schemaDirect: schemaDirectPackage, hasRootDashboard });
   const nav = Array.isArray(layoutView.sort) ? layoutView.sort : [];

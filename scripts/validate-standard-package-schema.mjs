@@ -5,7 +5,7 @@ import path from "node:path";
 import zlib from "node:zlib";
 
 const GZIP_PREFIX = "[______gizp______]";
-const DEFAULT_YAP_SCHEMA = "/Users/Renger/Downloads/yap-v1-schema_v2.json";
+const DEFAULT_YAP_SCHEMA = "/Users/Renger/Downloads/yap-v1-schema.json";
 const DEFAULT_YAPK_SCHEMA = "/Users/Renger/Downloads/yapk-schema.json";
 
 function usage(exitCode = 1) {
@@ -119,6 +119,45 @@ function decodeYap(wrapper) {
   return JSON.parse(text);
 }
 
+function decodedYapData(decoded, schema) {
+  if (!isObject(decoded) || !("Data" in decoded)) {
+    return {
+      data: null,
+      errors: [{
+        scope: "decodedResource",
+        path: "$.Resource",
+        code: "YAP_RESOURCE_NOT_LIST_EXPORT_RESULT",
+        message: "Decoded YAP Resource must be ListExportResult with Data, not direct ListExportInfo.",
+      }],
+    };
+  }
+  if (typeof decoded.Data === "string") {
+    try {
+      return { data: JSON.parse(decoded.Data), errors: [] };
+    } catch (error) {
+      return {
+        data: null,
+        errors: [{
+          scope: "decodedResource",
+          path: "$.Data",
+          code: "YAP_DATA_JSON_INVALID",
+          message: `ListExportResult.Data string did not parse as JSON: ${error.message}`,
+        }],
+      };
+    }
+  }
+  if (isObject(decoded.Data)) return { data: decoded.Data, errors: [] };
+  return {
+    data: null,
+    errors: [{
+      scope: "decodedResource",
+      path: "$.Data",
+      code: "YAP_DATA_INVALID",
+      message: "ListExportResult.Data must be a JSON string or ListExportInfo object.",
+    }],
+  };
+}
+
 async function decodeYapk(wrapper) {
   if (typeof wrapper.Resource !== "string") throw new Error("YAPK Resource must be a string.");
   const bytes = Buffer.from(wrapper.Resource, "base64");
@@ -165,6 +204,21 @@ function inspectFieldCategories(decoded, type) {
           actualType: field?.Category === undefined ? "missing" : Array.isArray(field?.Category) ? "array" : field?.Category === null ? "null" : typeof field?.Category,
         });
       }
+      if (type === "yap" && typeof field?.FieldName === "string" && Number.isInteger(field?.FieldIndex)) {
+        const match = field.FieldName.match(/(\d+)$/);
+        if (!match || Number.parseInt(match[1], 10) !== field.FieldIndex) {
+          errors.push({
+            scope: "decodedResource.Data",
+            path: `${group.path}[${index}].FieldName`,
+            code: "FIELD_NAME_SUFFIX_INDEX_MISMATCH",
+            message: "FieldName trailing digits must equal FieldIndex.",
+            list: group.list,
+            field: field.DisplayName || field.FieldName || field.InternalName || null,
+            fieldName: field.FieldName,
+            fieldIndex: field.FieldIndex,
+          });
+        }
+      }
     });
   }
   return errors;
@@ -172,11 +226,13 @@ function inspectFieldCategories(decoded, type) {
 
 function summarizeDecoded(decoded, type) {
   if (type === "yap") {
+    const data = isObject(decoded) && "Data" in decoded ? (typeof decoded.Data === "string" ? safeParseJson(decoded.Data) : decoded.Data) : decoded;
     return {
-      decodedType: "ListExportInfo",
-      childLists: Array.isArray(decoded.Childs) ? decoded.Childs.length : 0,
-      fields: Array.isArray(decoded.Childs) ? decoded.Childs.reduce((total, child) => total + (Array.isArray(child?.Defs) ? child.Defs.length : 0), 0) : 0,
-      layouts: Array.isArray(decoded.Childs) ? decoded.Childs.reduce((total, child) => total + (Array.isArray(child?.Layouts) ? child.Layouts.length : 0), Array.isArray(decoded.Item?.Layouts) ? decoded.Item.Layouts.length : 0) : 0,
+      decodedType: isObject(decoded) && "Data" in decoded ? "ListExportResult" : "ListExportInfo",
+      dataShape: typeof decoded?.Data === "string" ? "json-string" : isObject(decoded?.Data) ? "object" : null,
+      childLists: Array.isArray(data?.Childs) ? data.Childs.length : 0,
+      fields: Array.isArray(data?.Childs) ? data.Childs.reduce((total, child) => total + (Array.isArray(child?.Defs) ? child.Defs.length : 0), 0) : 0,
+      layouts: Array.isArray(data?.Childs) ? data.Childs.reduce((total, child) => total + (Array.isArray(child?.Layouts) ? child.Layouts.length : 0), Array.isArray(data?.Item?.Layouts) ? data.Item.Layouts.length : 0) : 0,
     };
   }
   return {
@@ -185,6 +241,14 @@ function summarizeDecoded(decoded, type) {
     pages: Array.isArray(decoded.Pages) ? decoded.Pages.length : 0,
     forms: Array.isArray(decoded.Forms) ? decoded.Forms.length : 0,
   };
+}
+
+function safeParseJson(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
 }
 
 async function main() {
@@ -219,10 +283,21 @@ async function main() {
     process.exitCode = 1;
     return;
   }
-  const decodedRef = type === "yap" ? schema["x-decodedResourceSchema"] : schema["x-decodedResourceSchema"];
+  const decodedRef = schema["x-decodedResourceSchema"];
   const decodedErrors = validate(decoded, decodedRef, schema);
-  const categoryErrors = inspectFieldCategories(decoded, type);
-  const errors = [...wrapperErrors.map((error) => ({ scope: "wrapper", ...error })), ...decodedErrors.map((error) => ({ scope: "decodedResource", ...error })), ...categoryErrors];
+  let contentErrors = [];
+  let categoryTarget = decoded;
+  if (type === "yap") {
+    const dataResult = decodedYapData(decoded, schema);
+    contentErrors = dataResult.errors;
+    categoryTarget = dataResult.data || {};
+    if (dataResult.data) {
+      const contentRef = schema.$defs?.ListExportInfo ? { $ref: "#/$defs/ListExportInfo" } : decodedRef;
+      contentErrors = contentErrors.concat(validate(dataResult.data, contentRef, schema).map((error) => ({ scope: "decodedResource.Data", ...error })));
+    }
+  }
+  const categoryErrors = inspectFieldCategories(categoryTarget, type);
+  const errors = [...wrapperErrors.map((error) => ({ scope: "wrapper", ...error })), ...decodedErrors.map((error) => ({ scope: "decodedResource", ...error })), ...contentErrors, ...categoryErrors];
 
   console.log(JSON.stringify({
     input: path.basename(input),

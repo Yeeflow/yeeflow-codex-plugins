@@ -137,7 +137,7 @@ function unresolvedLevel(report) {
 }
 
 function isSchemaDirectYap(report) {
-  return report && report.inputType === "wrapped-yap-schema-direct";
+  return report && (report.inputType === "wrapped-yap-schema-direct" || report.inputType === "wrapped-yap-list-export-result");
 }
 
 function tryParseJson(value) {
@@ -200,7 +200,7 @@ function decodeInput(inputPath, report) {
       addIssue(report, "error", "RESOURCE_DATA_JSON_INVALID", "Resource.Data JSON is invalid.", { error: error.message });
       return null;
     }
-    report.inputType = "wrapped-yap";
+    report.inputType = Number(resource.MainListType) === 1024 && Object.prototype.hasOwnProperty.call(resource, "Data") ? "wrapped-yap-list-export-result" : "wrapped-yap";
     return { wrapper: parsed, resource, data };
   }
 

@@ -15,6 +15,8 @@ This study records the local generation and validation status for the Vendor Onb
 - YAP data-model isolation candidate: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.2-data-model.yap`
 - YAP schema-direct candidate: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.3-schema-direct.yap`
 - YAP field-category fixed schema-direct candidate: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-category-fixed.yap`
+- YAP product-schema result candidate without lookups: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result-no-lookups.yap`
+- YAP product-schema result candidate with lookups: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result.yap`
 - Generator: `generate-vendor-onboarding-compliance-yapk.mjs`
 - Install-compatibility generator: `generate-vendor-onboarding-install-compatible-yapk.mjs`
 - Branch: `codex/vendor-onboarding-yapk-runtime-proof`
@@ -24,6 +26,7 @@ This study records the local generation and validation status for the Vendor Onb
 - V1.2 generated status: server-signed install-compatibility candidate using API-issued IDs and Yeeflow-style Brotli flush encoding; Yeeflow created an application tile but marked the install failed during materialization
 - V1.3 generated status: server-signed export-shape candidate that keeps the V1.2 accepted wrapper/signing/encoding pattern and restores export-like list, field, and layout metadata
 - V1.4 generated status: server-signed export-shape YAPK and schema-direct YAP with every `Field.Category` normalized to an integer
+- YAP V1.4 product-schema result status: generated after product team supplied the corrected YAP v1 schema requiring decoded `Resource` to be `ListExportResult`
 - YAP fallback status: generated from the same decoded application resource for normal application import testing after the YAPK path failed materialization
 - YAP V1.1 status: same full generated application as V1 YAP with `Resource.MainListType` normalized from string `classes` to numeric `1024`
 - YAP V1.2 data-model status: import-isolation candidate that removes the rich dashboard/custom-page surfaces and app groups, keeping the five data lists, fields, simple list forms, list views, and a minimal Home page
@@ -269,6 +272,74 @@ Recommended next manual test:
 2. If the YAPK still fails, try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-category-fixed.yap`.
 3. If both still fail, continue with the import isolation matrix to locate the next server-side materialization blocker.
 
+## YAP V1.4 Product Schema Result Fix
+
+After the V1.3 schema-direct YAP failed, product team feedback stated that the previous YAP structure was completely wrong and supplied a corrected schema:
+
+- Schema used: `/Users/Renger/Downloads/yap-v1-schema.json`
+- Wrapper must include: `Title`, `Description`, `IconUrl`, `IsListSet`, `Resource`
+- `Resource` must be `[______gizp______] + Gzip(UTF8 JSON(ListExportResult))`
+- Decoded `Resource` must be `ListExportResult`, not direct `ListExportInfo`
+- `ListExportResult.Data` may be a JSON serialized `ListExportInfo` string or a `ListExportInfo` object
+- For export compatibility, generated candidates use `Data` as a JSON serialized `ListExportInfo` string
+
+Root cause:
+
+- `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.3-schema-direct.yap` decoded `Resource` directly to `ListExportInfo`.
+- The updated product schema requires a `ListExportResult` wrapper around the `ListExportInfo` payload.
+- The older local schema validator accepted the direct shape, so it did not catch the product-side structure issue.
+
+Generator fix:
+
+- `generate-vendor-onboarding-yap-fallbacks.mjs` now writes corrected product-schema YAP candidates with `ListExportResult`.
+- The conservative first candidate removes lookup relationships by converting lookup fields to schema-compatible text inputs and clearing lookup rules.
+- The second candidate preserves the four vendor lookup relationships for follow-up testing after the no-lookup package proves the base import layer.
+
+Validator hardening:
+
+- `scripts/validate-standard-package-schema.mjs` now defaults YAP validation to `/Users/Renger/Downloads/yap-v1-schema.json`.
+- It validates the top-level wrapper, decodes `Resource`, validates decoded `ListExportResult`, parses `Data`, validates `Data` as `ListExportInfo`, and fails direct `ListExportInfo` resources with `YAP_RESOURCE_NOT_LIST_EXPORT_RESULT`.
+- `scripts/inspect-yap-schema-standard.mjs` now treats direct `ListExportInfo` resource shape as invalid for wrapped YAP files and reports `YAP_RESOURCE_NOT_LIST_EXPORT_RESULT`.
+- `validate-yap-package.js`, `validate-yap-graph.js`, and `scripts/inspect-yap-materialization.mjs` now recognize `wrapped-yap-list-export-result` so product-schema packages are not incorrectly failed for schema-incompatible legacy expectations such as `ListModel.ListType` or nonempty `ReplaceIds`.
+
+Regression smoke:
+
+- Direct `Resource -> ListExportInfo` fails with `YAP_RESOURCE_NOT_LIST_EXPORT_RESULT`.
+- `Resource -> ListExportResult` with `Data` as a JSON string is accepted by the standard schema path.
+- `Resource -> ListExportResult` with `Data` as an object is accepted where the schema allows it.
+- `Defs: null` fails.
+- `Layouts: null` fails.
+- `FieldName` suffix mismatch fails.
+- `Field.Category` as a string fails when present.
+
+YAP V1.4 product-schema local proof:
+
+- No-lookup output: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result-no-lookups.yap`
+- Lookup output: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result.yap`
+- Decoded `Resource` shape: `ListExportResult`
+- `ListExportResult.Data` shape: JSON string
+- `Data` payload shape: `ListExportInfo`
+- Child lists: 5
+- Fields: 59
+- Layouts: 16
+- No-lookup candidate lookup fields: 0
+- Lookup candidate lookup fields: 4
+- Standard schema validation using `/Users/Renger/Downloads/yap-v1-schema.json`: pass, 0 errors for both candidates
+- YAP schema-standard inspector: pass, 0 errors, 0 warnings for both candidates
+- Package validator: pass with warnings, 0 errors for both candidates
+- Graph validator: pass with warnings, 0 errors for both candidates
+- Import-readiness suite: pass with warnings, 0 errors for both candidates
+- Field category audit: all 59 fields have integer `Category: 0`
+- Direct `ListExportInfo` resource shape: absent
+- Legacy nested `Resource.Data` envelope inside `ListExportInfo`: absent
+- Hard-coded `codex.yeeflow.com`: none detected
+
+Recommended next manual test for YAP:
+
+1. Try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result-no-lookups.yap` first.
+2. If it imports, try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result.yap` to test lookup materialization.
+3. Do not return to rich UI generation until the schema-correct base import layer succeeds.
+
 ## Signing And Verification
 
 The generator uses the standard Yeeflow API base URL behavior through `scripts/yeeflow-env-utils.mjs`.
@@ -289,7 +360,7 @@ The generator uses the standard Yeeflow API base URL behavior through `scripts/y
 - V1.4 server signature shape: 32-byte base64 value
 - V1.4 `verifysign` status: passed
 
-The V1 package remains the locally validated baseline. The V1.1 package proved signing and verification but failed package install. The V1.2 package proved wrapper/upload acceptance but failed materialization. The V1.3 package preserved the accepted wrapper pattern and restored export-like metadata but still failed materialization. The V1.4 package fixes the product-team-reported `Field.Category` integer typing issue and is now the recommended first retry. The full `.yap` fallback also reached the import dialog but failed create. The `.yap` V1.4 schema-direct package is the fallback retry if the corrected YAPK still fails.
+The V1 package remains the locally validated baseline. The V1.1 package proved signing and verification but failed package install. The V1.2 package proved wrapper/upload acceptance but failed materialization. The V1.3 package preserved the accepted wrapper pattern and restored export-like metadata but still failed materialization. The V1.4 YAPK package fixes the product-team-reported `Field.Category` integer typing issue. The full `.yap` fallback also reached the import dialog but failed create. The `.yap` V1.4 schema-direct package fixed category typing but still used the now-rejected direct `ListExportInfo` resource shape. The `.yap` V1.4 product-schema result packages are now the recommended YAP retry candidates.
 
 ## Known Gaps
 
@@ -298,6 +369,7 @@ The V1 package remains the locally validated baseline. The V1.1 package proved s
 - V1.2 reached application-tile creation but failed materialization.
 - V1.3 reached the same materialization-failure state.
 - V1.4 has not yet been manually import-tested after the field `Category` typing fix.
+- The YAP V1.4 product-schema result candidates have not yet been manually import-tested after the corrected `ListExportResult` wrapper fix.
 - The full `.yap` fallback reached the import dialog but failed create.
 - The `.yap` V1.3 schema-direct package must be manually import-tested before being treated as import-proven.
 - Collection/Kanban action steps are safe local placeholders and should be connected to tenant-specific workflows after import if needed.
@@ -306,25 +378,26 @@ The V1 package remains the locally validated baseline. The V1.1 package proved s
 
 ## Proof Boundary
 
-This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. It also proves that the product-team-reported `Field.Category` integer typing issue is fixed in both the generated YAPK and schema-direct YAP candidates, and that local validators now catch the regression. The `.yapk` variants before V1.4 showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. The full `.yap` fallback showed that direct app import can still fail when the rich generated UI payload is present. The `.yap` V1.2 data-model isolation package created an application tile but still failed materialization. The `.yap` V1.4 schema-direct package aligns the decoded `Resource` shape with the supplied standard YAP schema and fixes field category typing.
+This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. It also proves that the product-team-reported `Field.Category` integer typing issue is fixed in both generated YAPK and YAP candidates, and that local validators now catch the regression. After product corrected the YAP schema, this branch also proves the generated YAP now decodes `Resource` to `ListExportResult`, with `Data` parsed and validated as `ListExportInfo`. The `.yapk` variants before V1.4 showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. Earlier `.yap` fallbacks showed that direct app import can still fail when the resource shape is wrong or the rich generated UI payload is present.
 
 It does not prove live import success, runtime rendering, or end-user workflow behavior. Those require a focused manual import and runtime proof in a Yeeflow tenant.
 
 ## Manual Test Checklist
 
-1. Install `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-category-fixed.yapk`.
-2. If the YAPK still fails, import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-category-fixed.yap`.
-3. Open the Vendor Management Dashboard.
-4. Check dashboard padding, cards, KPI layout, alert, and quick links.
-5. Verify dashboard Data tables show configured columns.
-6. Verify Kanban cards show meaningful vendor fields.
-7. Open the Vendor Detail View Page.
-8. Verify tabs, steps bar, progress controls, document embed area, compliance cards, task cards, and timeline.
-9. Open the New Vendor Request Form.
-10. Verify padded sections, toggle section, Dynamic Sub List, file/document fields, and form actions.
-11. Open the Compliance Review Workspace.
-12. Verify Kanban, collection cards, risk score, alert, bulk toolbar pattern, and missing/expired document table.
-13. Open the Vendor Print Page.
-14. Verify print layout, divider spacing, approval timeline, document checklist, QR Code, and Barcode.
-15. Connect placeholder collection/workflow actions to tenant-specific workflows if needed.
-16. Record the live import/runtime result before treating this as runtime-proven.
+1. Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result-no-lookups.yap`.
+2. If the no-lookup YAP imports, import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result.yap`.
+3. If YAP testing is blocked and YAPK retest is desired, install `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-category-fixed.yapk`.
+4. Open the Vendor Management Dashboard.
+5. Check dashboard padding, cards, KPI layout, alert, and quick links.
+6. Verify dashboard Data tables show configured columns.
+7. Verify Kanban cards show meaningful vendor fields.
+8. Open the Vendor Detail View Page.
+9. Verify tabs, steps bar, progress controls, document embed area, compliance cards, task cards, and timeline.
+10. Open the New Vendor Request Form.
+11. Verify padded sections, toggle section, Dynamic Sub List, file/document fields, and form actions.
+12. Open the Compliance Review Workspace.
+13. Verify Kanban, collection cards, risk score, alert, bulk toolbar pattern, and missing/expired document table.
+14. Open the Vendor Print Page.
+15. Verify print layout, divider spacing, approval timeline, document checklist, QR Code, and Barcode.
+16. Connect placeholder collection/workflow actions to tenant-specific workflows if needed.
+17. Record the live import/runtime result before treating this as runtime-proven.
