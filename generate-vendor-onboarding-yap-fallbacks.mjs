@@ -229,14 +229,14 @@ async function main() {
   ];
   const apiIdsNoLookups = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[0]), { dashboard: "minimal" });
   const apiIdsNoLookupsWithoutLookupFields = removeLookupRelationships(apiIdsNoLookups);
-  const apiIdsNoLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.7-fixed-appid-api-ids-no-lookups.yap";
+  const apiIdsNoLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.8-replaceids-fixed-no-lookups.yap";
   writeSchemaResultYap(apiIdsNoLookupsWithoutLookupFields, apiIdsNoLookupsPath);
   const apiIdsWithLookups = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[1]), { dashboard: "minimal" });
-  const apiIdsWithLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.7-fixed-appid-api-ids-with-lookups.yap";
+  const apiIdsWithLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.8-replaceids-fixed-with-lookups.yap";
   writeSchemaResultYap(apiIdsWithLookups, apiIdsWithLookupsPath);
   const apiIdsSimpleDashboard = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[2]), { dashboard: "simple-data-table" });
   const apiIdsSimpleDashboardNoLookups = removeLookupRelationships(apiIdsSimpleDashboard);
-  const apiIdsSimpleDashboardPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.7-fixed-appid-api-ids-simple-dashboard.yap";
+  const apiIdsSimpleDashboardPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.8-replaceids-fixed-simple-dashboard.yap";
   writeSchemaResultYap(apiIdsSimpleDashboardNoLookups, apiIdsSimpleDashboardPath);
 
   console.log(JSON.stringify({
@@ -312,7 +312,7 @@ async function main() {
       },
       {
         path: apiIdsNoLookupsPath,
-        purpose: "ListExportResult YAP with fixed AppID 41 plus API-issued list/field/layout IDs, no lookup relationships",
+        purpose: "ListExportResult YAP with fixed AppID 41, API-issued list/field/layout IDs, and populated ReplaceIds; no lookup relationships",
         buildStatus: "written",
         apiIds: summarizeIds(apiIdBatches[0]),
         dataLists: apiIdsNoLookupsWithoutLookupFields.Childs.length,
@@ -322,7 +322,7 @@ async function main() {
       },
       {
         path: apiIdsWithLookupsPath,
-        purpose: "ListExportResult YAP with fixed AppID 41 plus API-issued list/field/layout IDs and lookup relationships",
+        purpose: "ListExportResult YAP with fixed AppID 41, API-issued list/field/layout IDs, populated ReplaceIds, and lookup relationships",
         buildStatus: "written",
         apiIds: summarizeIds(apiIdBatches[1]),
         dataLists: apiIdsWithLookups.Childs.length,
@@ -332,7 +332,7 @@ async function main() {
       },
       {
         path: apiIdsSimpleDashboardPath,
-        purpose: "ListExportResult YAP with fixed AppID 41 plus API-issued list/field/layout IDs, no lookups, and one simple dashboard data table",
+        purpose: "ListExportResult YAP with fixed AppID 41, API-issued list/field/layout IDs, populated ReplaceIds, no lookups, and one simple dashboard data table",
         buildStatus: "written",
         apiIds: summarizeIds(apiIdBatches[2]),
         dataLists: apiIdsSimpleDashboardNoLookups.Childs.length,
@@ -863,9 +863,9 @@ function writeSchemaResultYap(data, output) {
   const listExportResult = {
     MainListType: 1024,
     AppID: data.Item?.ListModel?.AppID || 41,
-    ReplaceIds: [],
+    ReplaceIds: collectGeneratedReplaceIds(data),
     ReportIds: [],
-    FormKeys: [],
+    FormKeys: collectFormKeys(data),
     Data: listExportInfoText,
   };
   const resourceText = unquoteIntegerProperties(JSON.stringify(listExportResult));
@@ -877,6 +877,59 @@ function writeSchemaResultYap(data, output) {
     Resource: `[______gizp______]${zlib.gzipSync(Buffer.from(resourceText, "utf8")).toString("base64")}`,
   };
   fs.writeFileSync(output, `${JSON.stringify(wrapper, null, 2)}\n`);
+}
+
+function collectGeneratedReplaceIds(data) {
+  const ids = new Set();
+  const add = (value) => {
+    if (value === undefined || value === null || value === "") return;
+    const id = String(value);
+    if (!/^\d+$/.test(id)) return;
+    if (id === "0" || id === "1" || id === "41") return;
+    ids.add(id);
+  };
+  const collectItem = (item) => {
+    if (!item) return;
+    add(item.ListModel?.ListID);
+    for (const field of item.Defs || []) add(field.FieldID);
+    for (const layout of item.Layouts || []) {
+      add(layout.LayoutID);
+      for (const resource of layout.LayoutInResources || []) {
+        add(resource.ID);
+        add(resource.RefId);
+      }
+    }
+    for (const form of item.PublicForms || []) {
+      add(form.ID);
+      add(form.Key);
+    }
+    for (const rule of item.RemindRules || []) add(rule.ID);
+    for (const mapping of item.FlowMappings || []) add(mapping.ID);
+    for (const [recordId, record] of Object.entries(item.ListDatas || {})) {
+      add(recordId);
+      add(record?.ListDataID);
+    }
+  };
+  collectItem(data.Item);
+  for (const child of data.Childs || []) collectItem(child);
+  for (const group of data.AppGroups || []) add(group.ID);
+  for (const tag of data.AppTags || []) add(tag.ID);
+  for (const metadata of data.AppMetadatas || []) add(metadata.ID);
+  for (const theme of data.AppThemes || []) add(theme.ID);
+  for (const component of data.AppComponents || []) add(component.ID);
+  return Array.from(ids);
+}
+
+function collectFormKeys(data) {
+  const keys = new Set();
+  const add = (value) => {
+    if (typeof value === "string" && value.trim()) keys.add(value.trim());
+  };
+  for (const form of data.Forms || []) add(form.Key || form.FormKey || form.ProcKey);
+  for (const item of [data.Item, ...(data.Childs || [])]) {
+    for (const mapping of item?.FlowMappings || []) add(mapping.ProcKey || mapping.FormKey || mapping.Key);
+  }
+  return Array.from(keys);
 }
 
 function unquoteIntegerProperties(jsonText) {

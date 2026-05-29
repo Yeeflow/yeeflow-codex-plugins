@@ -1097,9 +1097,6 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
       if (resourceId && refId && resourceId !== refId) {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_ID_REFID_MISMATCH", "Root Type 103 app page LayoutInResources ID and RefId should match each other.", { title: layout.Title, layoutId, resourceId, refId });
       }
-      if (!usesInlinePageResourceId && (replaceIds.has(resourceId) || replaceIds.has(refId))) {
-        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_ID_IN_REPLACEIDS", "Root Type 103 app page LayoutInResources ID/RefId should not be in ReplaceIds; only the LayoutID is remapped.", { title: layout.Title, layoutId, resourceId, refId });
-      }
       const page = tryParseJson(resource.Resource);
       if (!page) {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_JSON_INVALID", "Root Type 103 app page Resource must be valid page JSON.", { title: layout.Title, layoutId, resourceId });
@@ -2706,8 +2703,12 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
       if (resource && resource.ID !== undefined) {
         validateGeneratedIntegerId(resource.ID, report, { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutInResources[${resourceIndex}].ID`, list: title, layout: layout.Title || null });
         validateUniqueGeneratedId(resource.ID, layoutResourceIdsByApp, report, "DUPLICATE_RESOURCE_ID", "LayoutInResources ID values must be globally unique across layout resources.", { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutInResources[${resourceIndex}].ID`, list: title, name: layout.Title || null });
+        localIds.add(safeString(resource.ID));
       }
-      if (resource && resource.RefId !== undefined) validateGeneratedIntegerId(resource.RefId, report, { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutInResources[${resourceIndex}].RefId`, list: title, layout: layout.Title || null });
+      if (resource && resource.RefId !== undefined) {
+        validateGeneratedIntegerId(resource.RefId, report, { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutInResources[${resourceIndex}].RefId`, list: title, layout: layout.Title || null });
+        localIds.add(safeString(resource.RefId));
+      }
     });
     if (!isRoot && Number(layout.Type) !== 1) {
       viewCount += 1;
