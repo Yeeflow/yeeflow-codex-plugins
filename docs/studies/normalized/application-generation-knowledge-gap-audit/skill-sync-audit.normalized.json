@@ -1,0 +1,66 @@
+{
+  "audit": "application-generation-knowledge-gap-audit",
+  "releaseTag": "yeeflow-builder-plugin-v0.6.2",
+  "releaseTagTarget": "004fcbd1352548aa46250f24ccf4d86a808b3862",
+  "officialMainAtAudit": "1f78390cf3b9eb724bd5ca3812e7956f6be52839",
+  "skillDirectoryCount": 21,
+  "archiveSkillCount": 21,
+  "sourceDistMirrorStatus": "synchronized for audited skills",
+  "auditedSkills": [
+    {
+      "skill": "yeeflow-application-builder",
+      "sourceDistSame": true,
+      "distZipSame": false,
+      "zipMissingLaterQualityGuidance": true
+    },
+    {
+      "skill": "yeeflow-application-generator",
+      "sourceDistSame": true,
+      "distZipSame": false,
+      "zipMissingLaterQualityGuidance": true
+    },
+    {
+      "skill": "yeeflow-dashboard-generator",
+      "sourceDistSame": true,
+      "distZipSame": false,
+      "zipMissingLaterQualityGuidance": true
+    },
+    {
+      "skill": "yeeflow-data-list-generator",
+      "sourceDistSame": true,
+      "distZipSame": false,
+      "zipMissingLaterQualityGuidance": true
+    },
+    {
+      "skill": "yeeflow-yapk-package-generator",
+      "sourceDistSame": true,
+      "distZipSame": false,
+      "zipMissingLaterQualityGuidance": true
+    },
+    {
+      "skill": "yeeflow-package-validator",
+      "sourceDistSame": true,
+      "distZipSame": false,
+      "zipMissingLaterQualityGuidance": true
+    },
+    {
+      "skill": "yeeflow-runtime-test-orchestrator",
+      "sourceDistSame": true,
+      "distZipSame": false,
+      "zipMissingLaterQualityGuidance": true
+    },
+    {
+      "skill": "yeeflow-feature-learning-orchestrator",
+      "sourceDistSame": true,
+      "distZipSame": true,
+      "zipMissingLaterQualityGuidance": false
+    },
+    {
+      "skill": "yeeflow-approval-form-generator",
+      "sourceDistSame": true,
+      "distZipSame": true,
+      "zipMissingLaterQualityGuidance": false
+    }
+  ],
+  "summary": "Current source skills and dist mirrors are synchronized, but the v0.6.2 archive is stale for seven application-generation skills and lacks later strict full-app quality and composition-checklist guidance."
+}

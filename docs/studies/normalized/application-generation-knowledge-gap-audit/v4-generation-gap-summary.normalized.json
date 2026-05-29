@@ -1,0 +1,32 @@
+{
+  "audit": "application-generation-knowledge-gap-audit",
+  "subject": "Vendor Onboarding full UI v4",
+  "observedOutcome": "YAPK installed successfully but generated application quality remained below approved mockups and full-scope expectations.",
+  "notInvestigatedInThisTask": [
+    "v4 YAP import failure",
+    "new package generation",
+    "runtime API debugging"
+  ],
+  "gapFindings": [
+    {
+      "area": "Release boundary",
+      "finding": "v0.6.2 predates later strict visual quality and composition-checklist work."
+    },
+    {
+      "area": "Skill packaging",
+      "finding": "Current dist skill mirrors include newer guidance but the v0.6.2 archive is stale for key application-generation skills."
+    },
+    {
+      "area": "Generator workflow",
+      "finding": "The generator can satisfy section-level requirements with low-quality controls because no reusable high-quality templates are mandatory."
+    },
+    {
+      "area": "Validator",
+      "finding": "Composition and strict visual gates still need template conformance, runtime visual metrics, and screenshot review."
+    },
+    {
+      "area": "Feature knowledge",
+      "finding": "Feature studies prove individual controls and bindings, not automatically composed full-application design quality."
+    }
+  ]
+}

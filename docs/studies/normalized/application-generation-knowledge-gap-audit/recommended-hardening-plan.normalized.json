@@ -1,0 +1,45 @@
+{
+  "audit": "application-generation-knowledge-gap-audit",
+  "recommendation": "Do not generate another broad full application package until reusable templates and a golden reference are ready.",
+  "nextSteps": [
+    {
+      "priority": 1,
+      "action": "Build a reusable Yeeflow UI section template library.",
+      "templates": [
+        "dashboard_header",
+        "kpi_card_row",
+        "alert_card",
+        "action_bar",
+        "kanban_card_template",
+        "collection_card_template",
+        "detail_summary_header",
+        "steps_section",
+        "tabbed_detail_sections",
+        "new_request_form_section_card",
+        "required_document_checklist",
+        "print_page_summary",
+        "timeline_activity_section"
+      ]
+    },
+    {
+      "priority": 2,
+      "action": "Create or study a golden reference full application export for high-quality composition."
+    },
+    {
+      "priority": 3,
+      "action": "Add templateId and style/layout conformance checks to the composition checklist and validator."
+    },
+    {
+      "priority": 4,
+      "action": "Generate future Vendor Onboarding attempts page by page before final assembly."
+    },
+    {
+      "priority": 5,
+      "action": "Add screenshot-based runtime review before marking full app generation successful."
+    },
+    {
+      "priority": 6,
+      "action": "After template and validator hardening, build a v0.6.3 RC with a rebuilt plugin archive."
+    }
+  ]
+}

@@ -1,0 +1,239 @@
+{
+  "application": "Vendor Onboarding & Compliance Management",
+  "audit": "application-generation-knowledge-gap-audit",
+  "capabilities": [
+    {
+      "capability": "Collection control basics",
+      "sourceDocs": [
+        "docs/studies/kanban-collection-dynamic-controls.md",
+        "docs/studies/normalized/kanban-collection-dynamic-controls/"
+      ],
+      "runtimeProofStatus": "focused import/open/render proof with limited runtime boundary",
+      "expectedSkills": [
+        "yeeflow-application-builder",
+        "yeeflow-application-generator",
+        "yeeflow-dashboard-generator",
+        "yeeflow-package-validator"
+      ],
+      "repoSkillIncludes": true,
+      "distSkillIncludes": true,
+      "v062ArchiveIncludes": "partial",
+      "v4AppearedToApply": "weakly",
+      "gap": "No mandatory high-quality Collection card template forced use."
+    },
+    {
+      "capability": "Kanban control basics",
+      "sourceDocs": [
+        "docs/studies/kanban-collection-dynamic-controls.md",
+        "docs/studies/normalized/kanban-collection-dynamic-controls/"
+      ],
+      "runtimeProofStatus": "focused import/open/render proof with limited runtime boundary",
+      "expectedSkills": [
+        "yeeflow-application-builder",
+        "yeeflow-application-generator",
+        "yeeflow-dashboard-generator",
+        "yeeflow-package-validator"
+      ],
+      "repoSkillIncludes": true,
+      "distSkillIncludes": true,
+      "v062ArchiveIncludes": "partial",
+      "v4AppearedToApply": "weakly",
+      "gap": "Generated boards remained underbuilt or placeholder-like."
+    },
+    {
+      "capability": "Collection and Kanban actions",
+      "sourceDocs": [
+        "docs/studies/collection-kanban-actions.md",
+        "docs/studies/collection-kanban-actions-runtime-proof.md",
+        "docs/studies/normalized/collection-kanban-actions/"
+      ],
+      "runtimeProofStatus": "user-confirmed focused runtime proof, limited to tested package",
+      "expectedSkills": [
+        "yeeflow-application-builder",
+        "yeeflow-application-generator",
+        "yeeflow-dashboard-generator",
+        "yeeflow-package-validator",
+        "yeeflow-runtime-test-orchestrator"
+      ],
+      "repoSkillIncludes": true,
+      "distSkillIncludes": true,
+      "v062ArchiveIncludes": "partial",
+      "v4AppearedToApply": "weakly",
+      "gap": "Action validation knowledge exists but generation did not consistently produce rich valid item actions."
+    },
+    {
+      "capability": "Dynamic controls inside item templates",
+      "sourceDocs": [
+        "docs/studies/kanban-collection-dynamic-controls.md",
+        "docs/studies/normalized/kanban-collection-dynamic-controls/"
+      ],
+      "runtimeProofStatus": "export-proven and focused import/open proof",
+      "expectedSkills": [
+        "yeeflow-application-builder",
+        "yeeflow-application-generator",
+        "yeeflow-dashboard-generator",
+        "yeeflow-data-list-generator",
+        "yeeflow-package-validator"
+      ],
+      "repoSkillIncludes": true,
+      "distSkillIncludes": true,
+      "v062ArchiveIncludes": "partial",
+      "v4AppearedToApply": "weakly",
+      "gap": "No reusable item-template composition library forces dynamic fields."
+    },
+    {
+      "capability": "Dynamic Sub List",
+      "sourceDocs": [
+        "docs/studies/data-list-print-page-dynamic-sub-list.md",
+        "docs/studies/normalized/data-list-print-page-dynamic-sub-list/",
+        "docs/studies/normalized/sub-list-dynamic-content/"
+      ],
+      "runtimeProofStatus": "export-proven and focused validation proof",
+      "expectedSkills": [
+        "yeeflow-application-builder",
+        "yeeflow-application-generator",
+        "yeeflow-data-list-generator",
+        "yeeflow-package-validator"
+      ],
+      "repoSkillIncludes": true,
+      "distSkillIncludes": true,
+      "v062ArchiveIncludes": "partial",
+      "v4AppearedToApply": "not meaningfully",
+      "gap": "Vendor forms did not use a strong required-document checklist/sub-list template."
+    },
+    {
+      "capability": "Print Page",
+      "sourceDocs": [
+        "docs/studies/data-list-print-page-dynamic-sub-list.md",
+        "docs/studies/normalized/data-list-print-page-dynamic-sub-list/"
+      ],
+      "runtimeProofStatus": "export-proven print target and print action pattern",
+      "expectedSkills": [
+        "yeeflow-application-builder",
+        "yeeflow-application-generator",
+        "yeeflow-data-list-generator",
+        "yeeflow-package-validator"
+      ],
+      "repoSkillIncludes": true,
+      "distSkillIncludes": true,
+      "v062ArchiveIncludes": "partial",
+      "v4AppearedToApply": "weakly",
+      "gap": "No high-quality print-page layout template is enforced."
+    },
+    {
+      "capability": "Advanced Controls",
+      "sourceDocs": [
+        "docs/studies/advanced-controls.md",
+        "docs/studies/normalized/advanced-controls/"
+      ],
+      "runtimeProofStatus": "export-proven summaries and focused runtime patterns by control",
+      "expectedSkills": [
+        "yeeflow-application-builder",
+        "yeeflow-application-generator",
+        "yeeflow-dashboard-generator",
+        "yeeflow-data-list-generator",
+        "yeeflow-package-validator"
+      ],
+      "repoSkillIncludes": true,
+      "distSkillIncludes": true,
+      "v062ArchiveIncludes": "partial",
+      "v4AppearedToApply": "partly",
+      "gap": "Controls could exist with generic/default content."
+    },
+    {
+      "capability": "Data List custom forms",
+      "sourceDocs": [
+        "docs/studies/data-list-custom-form-fields.md",
+        "docs/studies/normalized/data-list-custom-forms/"
+      ],
+      "runtimeProofStatus": "export-proven custom form layouts and assignments; runtime save/action proof varies",
+      "expectedSkills": [
+        "yeeflow-application-builder",
+        "yeeflow-application-generator",
+        "yeeflow-data-list-generator",
+        "yeeflow-package-validator"
+      ],
+      "repoSkillIncludes": true,
+      "distSkillIncludes": true,
+      "v062ArchiveIncludes": "partial",
+      "v4AppearedToApply": "poorly",
+      "gap": "No mandatory view/new/edit/print form-section templates are enforced."
+    },
+    {
+      "capability": "Current dashboard structure",
+      "sourceDocs": [
+        "docs/studies/vendor-onboarding-dashboard-version-study.md",
+        "docs/studies/normalized/vendor-onboarding-dashboard-version/"
+      ],
+      "runtimeProofStatus": "YAP v1.12 import proof and YAPK v1.15 install proof",
+      "expectedSkills": [
+        "yeeflow-application-generator",
+        "yeeflow-dashboard-generator",
+        "yeeflow-yapk-package-generator",
+        "yeeflow-package-validator"
+      ],
+      "repoSkillIncludes": true,
+      "distSkillIncludes": true,
+      "v062ArchiveIncludes": true,
+      "v4AppearedToApply": true,
+      "gap": "Technical dashboard renderer rule was applied better than visual composition rules."
+    },
+    {
+      "capability": "Data table Field and FieldName binding",
+      "sourceDocs": [
+        "docs/studies/vendor-onboarding-dashboard-version-study.md",
+        "docs/studies/normalized/vendor-onboarding-dashboard-version/current-dashboard-data-table-binding.normalized.json"
+      ],
+      "runtimeProofStatus": "proven by Vendor Onboarding v1.12 import path and later installs",
+      "expectedSkills": [
+        "yeeflow-application-generator",
+        "yeeflow-dashboard-generator",
+        "yeeflow-package-validator"
+      ],
+      "repoSkillIncludes": true,
+      "distSkillIncludes": true,
+      "v062ArchiveIncludes": true,
+      "v4AppearedToApply": true,
+      "gap": "Technical table binding is not a substitute for full app design quality."
+    },
+    {
+      "capability": "YAP and YAPK import rules",
+      "sourceDocs": [
+        "docs/studies/vendor-onboarding-yapk-runtime-proof.md",
+        "docs/studies/normalized/vendor-onboarding-yapk/",
+        "docs/studies/application-creation-quality-hardening.md"
+      ],
+      "runtimeProofStatus": "YAP v1.12 import proof, YAPK v1.15 install proof, later full UI YAPK install proof",
+      "expectedSkills": [
+        "yeeflow-application-generator",
+        "yeeflow-yapk-package-generator",
+        "yeeflow-package-validator"
+      ],
+      "repoSkillIncludes": true,
+      "distSkillIncludes": true,
+      "v062ArchiveIncludes": "mostly",
+      "v4AppearedToApply": "mostly",
+      "gap": "Import rules are stronger than app-quality rules."
+    },
+    {
+      "capability": "Strict visual quality and composition checklist",
+      "sourceDocs": [
+        "docs/studies/vendor-onboarding-full-ui-quality-failure-analysis.md",
+        "docs/generated-app-plans/vendor-onboarding-v4-composition-checklist.md",
+        "docs/generated-app-plans/vendor-onboarding-v4-composition-checklist.normalized.json"
+      ],
+      "runtimeProofStatus": "validator exists on current main; v3 and v4 showed gates still require stronger templates",
+      "expectedSkills": [
+        "yeeflow-application-builder",
+        "yeeflow-application-generator",
+        "yeeflow-package-validator",
+        "yeeflow-runtime-test-orchestrator"
+      ],
+      "repoSkillIncludes": true,
+      "distSkillIncludes": true,
+      "v062ArchiveIncludes": false,
+      "v4AppearedToApply": "structurally",
+      "gap": "Post-v0.6.2 guidance is absent from archive and current gates still need template conformance."
+    }
+  ]
+}

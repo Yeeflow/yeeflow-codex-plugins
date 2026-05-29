@@ -1,0 +1,53 @@
+{
+  "audit": "application-generation-knowledge-gap-audit",
+  "rootCauseCategories": [
+    {
+      "id": "A",
+      "name": "Knowledge missing from bundled skill",
+      "applies": "partly",
+      "finding": "The v0.6.2 archive lacks post-release quality and composition guidance for seven audited application-generation skills."
+    },
+    {
+      "id": "B",
+      "name": "Knowledge present but too vague",
+      "applies": true,
+      "finding": "Current skills describe rules but do not include enough concrete page and control templates to force high-quality output."
+    },
+    {
+      "id": "C",
+      "name": "Knowledge present but workflow does not force use",
+      "applies": true,
+      "finding": "Generation can proceed without proving that every section maps to a concrete, styled, data-bound template."
+    },
+    {
+      "id": "D",
+      "name": "Validator accepts placeholder implementation",
+      "applies": true,
+      "finding": "Earlier gates accepted structural presence even when runtime UI remained visually weak."
+    },
+    {
+      "id": "E",
+      "name": "No reusable high-quality templates",
+      "applies": true,
+      "finding": "There is no canonical template library for dashboard headers, KPI cards, forms, Kanban cards, Collection cards, alerts, action bars, and print pages."
+    },
+    {
+      "id": "F",
+      "name": "No golden reference examples",
+      "applies": true,
+      "finding": "Feature-level studies exist, but no high-quality full app export is used as a golden benchmark."
+    },
+    {
+      "id": "G",
+      "name": "Too much reliance on broad natural-language instruction",
+      "applies": true,
+      "finding": "Natural-language plans are not enough to produce repeatable package JSON and layout quality."
+    },
+    {
+      "id": "H",
+      "name": "Package-generation fixes distracted from app-quality implementation",
+      "applies": true,
+      "finding": "Recent cycles optimized import/install correctness before page composition quality."
+    }
+  ]
+}
