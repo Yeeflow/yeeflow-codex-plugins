@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import zlib from "node:zlib";
-import { spawnSync } from "node:child_process";
+import { createApiIdAllocator, fetchYeeflowUniqueIds, loadYeeflowApiEnvironment, summarizeIds } from "./scripts/yeeflow-id-api-utils.mjs";
 
 const SOURCE_RESOURCE = ".tmp/vendor-onboarding-compliance-management/vendor-onboarding-compliance-management.decoded-resource.json";
 const TMP_DIR = ".tmp/vendor-onboarding-compliance-management";
@@ -22,23 +22,7 @@ function writeResource(name, resource, data) {
 }
 
 function buildYap(input, output) {
-  const result = spawnSync(process.execPath, [
-    "build-yap-wrapper.js",
-    input,
-    output,
-    "--title",
-    TITLE,
-    "--description",
-    DESCRIPTION,
-    "--icon-url",
-    ICON_URL,
-    "--validation-mode",
-    "generator",
-  ], { cwd: process.cwd(), encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
-  if (result.status !== 0) {
-    throw new Error(`build-yap-wrapper failed for ${output}: ${result.stderr || result.stdout}`);
-  }
-  return JSON.parse(result.stdout);
+  throw new Error(`Legacy buildYap is disabled for ${output}; use product-schema ListExportResult generation.`);
 }
 
 function parseJsonMaybe(value, fallback = {}) {
@@ -214,7 +198,7 @@ function makeDataModelOnly(data) {
   return next;
 }
 
-function main() {
+async function main() {
   fs.mkdirSync(TMP_DIR, { recursive: true });
   const { resource, data } = parseResource();
 
@@ -235,6 +219,25 @@ function main() {
   const uniqueIdsNoLookups = removeLookupRelationships(uniqueIds);
   const uniqueIdsNoLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.5-unique-ids-no-lookups.yap";
   writeSchemaResultYap(uniqueIdsNoLookups, uniqueIdsNoLookupsPath);
+  const apiEnv = loadYeeflowApiEnvironment();
+  const apiIdCount = countSchemaIds(schemaDirect);
+  const apiIds = await fetchYeeflowUniqueIds({ apiBaseUrl: apiEnv.apiBaseUrl, apiKey: apiEnv.apiKey, count: apiIdCount * 3 });
+  const apiIdBatches = [
+    apiIds.slice(0, apiIdCount),
+    apiIds.slice(apiIdCount, apiIdCount * 2),
+    apiIds.slice(apiIdCount * 2, apiIdCount * 3),
+  ];
+  const apiIdsNoLookups = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[0]), { dashboard: "minimal" });
+  const apiIdsNoLookupsWithoutLookupFields = removeLookupRelationships(apiIdsNoLookups);
+  const apiIdsNoLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.6-api-ids-no-lookups.yap";
+  writeSchemaResultYap(apiIdsNoLookupsWithoutLookupFields, apiIdsNoLookupsPath);
+  const apiIdsWithLookups = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[1]), { dashboard: "minimal" });
+  const apiIdsWithLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.6-api-ids-with-lookups.yap";
+  writeSchemaResultYap(apiIdsWithLookups, apiIdsWithLookupsPath);
+  const apiIdsSimpleDashboard = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[2]), { dashboard: "simple-data-table" });
+  const apiIdsSimpleDashboardNoLookups = removeLookupRelationships(apiIdsSimpleDashboard);
+  const apiIdsSimpleDashboardPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.6-api-ids-simple-dashboard.yap";
+  writeSchemaResultYap(apiIdsSimpleDashboardNoLookups, apiIdsSimpleDashboardPath);
 
   console.log(JSON.stringify({
     status: "generated",
@@ -307,11 +310,44 @@ function main() {
         dashboards: uniqueIds.Item.Layouts.length,
         layouts: uniqueIds.Childs.reduce((total, child) => total + child.Layouts.length, 0) + uniqueIds.Item.Layouts.length,
       },
+      {
+        path: apiIdsNoLookupsPath,
+        purpose: "ListExportResult YAP with API-issued IDs, no lookup relationships",
+        buildStatus: "written",
+        apiIds: summarizeIds(apiIdBatches[0]),
+        dataLists: apiIdsNoLookupsWithoutLookupFields.Childs.length,
+        fields: apiIdsNoLookupsWithoutLookupFields.Childs.reduce((total, child) => total + child.Defs.length, 0),
+        dashboards: apiIdsNoLookupsWithoutLookupFields.Item.Layouts.length,
+        layouts: apiIdsNoLookupsWithoutLookupFields.Childs.reduce((total, child) => total + child.Layouts.length, 0) + apiIdsNoLookupsWithoutLookupFields.Item.Layouts.length,
+      },
+      {
+        path: apiIdsWithLookupsPath,
+        purpose: "ListExportResult YAP with API-issued IDs and lookup relationships",
+        buildStatus: "written",
+        apiIds: summarizeIds(apiIdBatches[1]),
+        dataLists: apiIdsWithLookups.Childs.length,
+        fields: apiIdsWithLookups.Childs.reduce((total, child) => total + child.Defs.length, 0),
+        dashboards: apiIdsWithLookups.Item.Layouts.length,
+        layouts: apiIdsWithLookups.Childs.reduce((total, child) => total + child.Layouts.length, 0) + apiIdsWithLookups.Item.Layouts.length,
+      },
+      {
+        path: apiIdsSimpleDashboardPath,
+        purpose: "ListExportResult YAP with API-issued IDs, no lookups, and one simple dashboard data table",
+        buildStatus: "written",
+        apiIds: summarizeIds(apiIdBatches[2]),
+        dataLists: apiIdsSimpleDashboardNoLookups.Childs.length,
+        fields: apiIdsSimpleDashboardNoLookups.Childs.reduce((total, child) => total + child.Defs.length, 0),
+        dashboards: apiIdsSimpleDashboardNoLookups.Item.Layouts.length,
+        layouts: apiIdsSimpleDashboardNoLookups.Childs.reduce((total, child) => total + child.Layouts.length, 0) + apiIdsSimpleDashboardNoLookups.Item.Layouts.length,
+      },
     ],
   }, null, 2));
 }
 
-main();
+main().catch((error) => {
+  console.error(JSON.stringify({ status: "fail", error: error.message }, null, 2));
+  process.exit(1);
+});
 
 function makeSchemaDirectData(source) {
   const data = structuredClone(source);
@@ -596,6 +632,195 @@ function assignSafeSchemaIds(source) {
   return data;
 }
 
+function countSchemaIds(source) {
+  return 1 + 1 + (source.Item?.Layouts || []).length + (source.Childs || []).reduce((total, child) => total + 1 + (child.Defs || []).length + (child.Layouts || []).length, 0);
+}
+
+function assignApiSchemaIds(source, allocator, options = {}) {
+  const data = structuredClone(source);
+  const appId = allocator.next("AppID");
+  const rootListId = allocator.next("root ListID");
+  const listIdByTitle = new Map();
+
+  data.Item.ListModel.AppID = appId;
+  data.Item.ListModel.ListID = rootListId;
+  data.Item.ListModel.LayoutView = "";
+
+  for (const layout of data.Item.Layouts || []) {
+    const layoutId = allocator.next(`root layout ${layout.Title || ""}`);
+    layout.AppID = appId;
+    layout.ListID = rootListId;
+    layout.LayoutID = layoutId;
+    layout.LayoutInResources = [{
+      ID: layoutId,
+      RefId: layoutId,
+      Resource: JSON.stringify(minimalSurface("Home")),
+    }];
+  }
+
+  for (const child of data.Childs || []) {
+    const listId = allocator.next(`${child.ListModel?.Title || "child"} ListID`);
+    const title = child.ListModel?.Title || "";
+    if (title) listIdByTitle.set(title, listId);
+    child.ListModel.AppID = appId;
+    child.ListModel.ListID = listId;
+
+    child.Defs.forEach((field, index) => {
+      field.AppID = appId;
+      field.ListID = listId;
+      field.FieldID = allocator.next(`${title || "child"} field ${index}`);
+      field.FieldIndex = index;
+      const prefix = field.FieldType === "DateTime" ? "DateTime" : field.FieldType === "Decimal" ? "Decimal" : field.FieldType === "Bit" ? "Bit" : "Text";
+      field.FieldName = `${prefix}${field.FieldIndex}`;
+      if (!field.InternalName) field.InternalName = field.FieldName;
+      field.Category = normalizeFieldCategory(field.Category);
+    });
+
+    const layoutIds = [];
+    child.Layouts.forEach((layout) => {
+      const layoutId = allocator.next(`${title || "child"} layout ${layout.Title || ""}`);
+      layoutIds.push(layoutId);
+      layout.AppID = appId;
+      layout.ListID = listId;
+      layout.LayoutID = layoutId;
+      if (Number(layout.Type) !== 1) layout.LayoutView = JSON.stringify(makeListViewLayout(child));
+      layout.LayoutInResources = (layout.LayoutInResources || []).map((resource) => ({
+        ...resource,
+        ID: layoutId,
+        RefId: layoutId,
+      }));
+    });
+
+    const editLayout = child.Layouts.find((layout) => Number(layout.Type) === 1 && layout.Title === "Edit Item") || child.Layouts.find((layout) => Number(layout.Type) === 1);
+    const viewLayout = child.Layouts.find((layout) => Number(layout.Type) === 1 && layout.Title === "View Item") || editLayout;
+    child.ListModel.LayoutView = JSON.stringify({
+      add: editLayout?.LayoutID || layoutIds[0] || "default",
+      edit: editLayout?.LayoutID || layoutIds[0] || "default",
+      view: viewLayout?.LayoutID || editLayout?.LayoutID || layoutIds[0] || "default",
+      opentype: { add: "modal" },
+      modalsize: {},
+      sortVer: 1,
+    });
+  }
+
+  const home = data.Item.Layouts[0];
+  if (home && options.dashboard === "simple-data-table") {
+    home.LayoutInResources = [{
+      ID: home.LayoutID,
+      RefId: home.LayoutID,
+      Resource: JSON.stringify(simpleDashboardSurface(data)),
+    }];
+  }
+  data.Item.ListModel.LayoutView = JSON.stringify({
+    add: "default",
+    edit: "default",
+    view: "default",
+    sort: [
+      {
+        AppID: appId,
+        ListID: home?.LayoutID || rootListId,
+        ListSetID: rootListId,
+        Type: 103,
+        IsHidden: false,
+        Title: "Home",
+        Icon: "fa-regular fa-house",
+      },
+      ...(data.Childs || []).map((child) => ({
+        AppID: appId,
+        ListID: child.ListModel.ListID,
+        ListSetID: rootListId,
+        Type: child.ListModel.Type,
+        IsHidden: false,
+        Title: child.ListModel.Title,
+        Icon: "fa-regular fa-list-check",
+      })),
+    ],
+    sortVer: 1,
+  });
+
+  const vendorList = (data.Childs || []).find((child) => child.ListModel?.Title === "Vendors");
+  const vendorListId = vendorList?.ListModel?.ListID || listIdByTitle.get("Vendors");
+  const vendorTitleField = vendorList?.Defs?.[0]?.FieldName || "Text0";
+  for (const child of data.Childs || []) {
+    for (const field of child.Defs || []) {
+      if (field.Type !== "lookup") continue;
+      if (!vendorListId) {
+        field.Type = "input";
+        field.Rules = null;
+        continue;
+      }
+      field.Rules = JSON.stringify({
+        appid: appId,
+        listsetid: rootListId,
+        listid: vendorListId,
+        listfield: vendorTitleField,
+        displayField: vendorTitleField,
+      });
+    }
+  }
+
+  return data;
+}
+
+function simpleDashboardSurface(data) {
+  const vendors = (data.Childs || []).find((child) => child.ListModel?.Title === "Vendors");
+  const columns = (vendors?.Defs || []).slice(0, 6).map((field, index) => ({
+    FieldID: field.FieldID,
+    FieldName: field.FieldName,
+    DisplayName: field.DisplayName,
+    Order: index + 1,
+    Show: true,
+    Type: field.Type || "input",
+  }));
+  return {
+    title: "Vendor Management Dashboard",
+    ver: "2.0",
+    filterVars: [],
+    tempVars: [],
+    attrs: { hideHeaderAll: true },
+    children: [{
+      id: "dashboard-content",
+      type: "container",
+      label: "Container",
+      nv_label: "Content",
+      attrs: {
+        style: { direction: "column", gap: "16px", align_items: "stretch" },
+        common: { padding: { left: 32, right: 32, top: 28, bottom: 28 } },
+      },
+      children: [
+        {
+          id: "dashboard-title",
+          type: "heading",
+          label: "Text",
+          nv_label: "Dashboard Title",
+          attrs: {
+            headc: { title: { value: "Vendor Management Dashboard", variable: null } },
+            heads: { ty: "h3-bold", color: "var(--c--text)" },
+          },
+          children: [],
+        },
+        {
+          id: "vendor-table",
+          type: "data-list",
+          label: "Data table",
+          nv_label: "Vendor Data Table",
+          attrs: {
+            data: {
+              list: {
+                ListID: vendors?.ListModel?.ListID || "",
+                Title: "Vendors",
+              },
+              columns,
+            },
+            listarr: columns,
+          },
+          children: [],
+        },
+      ],
+    }],
+  };
+}
+
 function makeListViewLayout(child) {
   const fields = (child.Defs || []).filter((field) => field.Type !== "textarea").slice(0, 10);
   return {
@@ -637,13 +862,13 @@ function writeSchemaResultYap(data, output) {
   const listExportInfoText = unquoteIntegerProperties(JSON.stringify(data));
   const listExportResult = {
     MainListType: 1024,
-    AppID: 41,
+    AppID: data.Item?.ListModel?.AppID || 41,
     ReplaceIds: [],
     ReportIds: [],
     FormKeys: [],
     Data: listExportInfoText,
   };
-  const resourceText = JSON.stringify(listExportResult);
+  const resourceText = unquoteIntegerProperties(JSON.stringify(listExportResult));
   const wrapper = {
     Title: TITLE,
     Description: DESCRIPTION,

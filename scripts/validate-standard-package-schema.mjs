@@ -6,7 +6,9 @@ import zlib from "node:zlib";
 
 const GZIP_PREFIX = "[______gizp______]";
 const DEFAULT_YAP_SCHEMA = "/Users/Renger/Downloads/yap-v1-schema.json";
+const FALLBACK_YAP_SCHEMA = "/Users/Renger/Downloads/yap-schema_v2.json";
 const DEFAULT_YAPK_SCHEMA = "/Users/Renger/Downloads/yapk-schema.json";
+const LARGE_INTEGER_RE = /^-?\d{16,}$/;
 
 function usage(exitCode = 1) {
   const text = [
@@ -26,7 +28,14 @@ function argValue(name, fallback) {
 }
 
 function readJson(file) {
-  return JSON.parse(fs.readFileSync(file, "utf8").replace(/^\uFEFF/, ""));
+  return parseJsonPreservingLargeInts(fs.readFileSync(file, "utf8").replace(/^\uFEFF/, ""));
+}
+
+function resolveSchemaPath(type) {
+  const requested = type === "yap" ? argValue("--yap-schema", DEFAULT_YAP_SCHEMA) : argValue("--yapk-schema", DEFAULT_YAPK_SCHEMA);
+  if (fs.existsSync(requested)) return requested;
+  if (type === "yap" && requested === DEFAULT_YAP_SCHEMA && fs.existsSync(FALLBACK_YAP_SCHEMA)) return FALLBACK_YAP_SCHEMA;
+  return requested;
 }
 
 function isObject(value) {
@@ -42,12 +51,62 @@ function typeMatches(value, expected) {
   if (Array.isArray(expected)) return expected.some((type) => typeMatches(value, type));
   if (expected === "array") return Array.isArray(value);
   if (expected === "object") return isObject(value);
-  if (expected === "integer") return Number.isInteger(value);
+  if (expected === "integer") return isIntegerLike(value);
   if (expected === "number") return typeof value === "number" && Number.isFinite(value);
   if (expected === "string") return typeof value === "string";
   if (expected === "boolean") return typeof value === "boolean";
   if (expected === "null") return value === null;
   return true;
+}
+
+function quoteLargeIntegers(jsonText) {
+  let out = "";
+  let i = 0;
+  let inString = false;
+  let escaped = false;
+  while (i < jsonText.length) {
+    const ch = jsonText[i];
+    if (inString) {
+      out += ch;
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === "\"") inString = false;
+      i += 1;
+      continue;
+    }
+    if (ch === "\"") {
+      inString = true;
+      out += ch;
+      i += 1;
+      continue;
+    }
+    if (ch === "-" || (ch >= "0" && ch <= "9")) {
+      const start = i;
+      let j = i;
+      if (jsonText[j] === "-") j += 1;
+      while (j < jsonText.length && jsonText[j] >= "0" && jsonText[j] <= "9") j += 1;
+      if (jsonText[j] === "." || jsonText[j] === "e" || jsonText[j] === "E") {
+        while (j < jsonText.length && /[0-9eE+\-.]/.test(jsonText[j])) j += 1;
+        out += jsonText.slice(start, j);
+      } else {
+        const token = jsonText.slice(start, j);
+        out += LARGE_INTEGER_RE.test(token) ? `"${token}"` : token;
+      }
+      i = j;
+      continue;
+    }
+    out += ch;
+    i += 1;
+  }
+  return out;
+}
+
+function parseJsonPreservingLargeInts(text) {
+  return JSON.parse(quoteLargeIntegers(text));
+}
+
+function isIntegerLike(value) {
+  return Number.isInteger(value) || (typeof value === "string" && LARGE_INTEGER_RE.test(value));
 }
 
 function validate(value, schema, root, instancePath = "$", errors = []) {
@@ -116,7 +175,7 @@ function decodeYap(wrapper) {
     throw new Error(`YAP Resource must start with ${GZIP_PREFIX}`);
   }
   const text = zlib.gunzipSync(Buffer.from(wrapper.Resource.slice(GZIP_PREFIX.length), "base64")).toString("utf8");
-  return JSON.parse(text);
+  return parseJsonPreservingLargeInts(text);
 }
 
 function decodedYapData(decoded, schema) {
@@ -133,7 +192,7 @@ function decodedYapData(decoded, schema) {
   }
   if (typeof decoded.Data === "string") {
     try {
-      return { data: JSON.parse(decoded.Data), errors: [] };
+      return { data: parseJsonPreservingLargeInts(decoded.Data), errors: [] };
     } catch (error) {
       return {
         data: null,
@@ -162,10 +221,10 @@ async function decodeYapk(wrapper) {
   if (typeof wrapper.Resource !== "string") throw new Error("YAPK Resource must be a string.");
   const bytes = Buffer.from(wrapper.Resource, "base64");
   try {
-    return JSON.parse(zlib.brotliDecompressSync(bytes).toString("utf8"));
+    return parseJsonPreservingLargeInts(zlib.brotliDecompressSync(bytes).toString("utf8"));
   } catch (syncError) {
     const text = await tolerantBrotliText(bytes);
-    if (text) return JSON.parse(text);
+    if (text) return parseJsonPreservingLargeInts(text);
     throw syncError;
   }
 }
@@ -193,7 +252,7 @@ function inspectFieldCategories(decoded, type) {
   }
   for (const group of groups) {
     group.fields.forEach((field, index) => {
-      if (!Number.isInteger(field?.Category)) {
+      if (!isIntegerLike(field?.Category)) {
         errors.push({
           scope: "decodedResource",
           path: `${group.path}[${index}].Category`,
@@ -204,9 +263,9 @@ function inspectFieldCategories(decoded, type) {
           actualType: field?.Category === undefined ? "missing" : Array.isArray(field?.Category) ? "array" : field?.Category === null ? "null" : typeof field?.Category,
         });
       }
-      if (type === "yap" && typeof field?.FieldName === "string" && Number.isInteger(field?.FieldIndex)) {
+      if (type === "yap" && typeof field?.FieldName === "string" && isIntegerLike(field?.FieldIndex)) {
         const match = field.FieldName.match(/(\d+)$/);
-        if (!match || Number.parseInt(match[1], 10) !== field.FieldIndex) {
+        if (!match || Number.parseInt(match[1], 10) !== Number(field.FieldIndex)) {
           errors.push({
             scope: "decodedResource.Data",
             path: `${group.path}[${index}].FieldName`,
@@ -250,6 +309,7 @@ function inspectYapIds(data) {
   const idKeys = new Set(["AppID", "ListID", "FieldID", "LayoutID", "ID", "RefId", "ReportID", "ProcModelID", "ResourceID"]);
   const assertSafeIntegerId = (value, path) => {
     if (value === undefined || value === null || value === "") return;
+    if (typeof value === "string" && LARGE_INTEGER_RE.test(value)) return;
     if (!Number.isInteger(value)) {
       errors.push({
         scope: "decodedResource.Data",
@@ -263,7 +323,7 @@ function inspectYapIds(data) {
         scope: "decodedResource.Data",
         path,
         code: "UNSAFE_INTEGER_ID",
-        message: "Generated YAP integer IDs must be within Number.MAX_SAFE_INTEGER to avoid JSON rounding duplicates.",
+        message: "Generated YAP integer IDs parsed as JavaScript numbers must be within Number.MAX_SAFE_INTEGER; preserve API-issued 64-bit IDs as raw JSON integer tokens during parsing.",
         value,
       });
     }
@@ -348,7 +408,7 @@ function summarizeDecoded(decoded, type) {
 
 function safeParseJson(value) {
   try {
-    return JSON.parse(value);
+    return parseJsonPreservingLargeInts(value);
   } catch {
     return null;
   }
@@ -360,7 +420,7 @@ async function main() {
   const type = path.extname(input).toLowerCase().replace(".", "");
   if (!["yap", "yapk"].includes(type)) throw new Error("Input must end with .yap or .yapk.");
 
-  const schemaPath = type === "yap" ? argValue("--yap-schema", DEFAULT_YAP_SCHEMA) : argValue("--yapk-schema", DEFAULT_YAPK_SCHEMA);
+  const schemaPath = resolveSchemaPath(type);
   const schema = readJson(schemaPath);
   const wrapper = readJson(input);
   const wrapperErrors = validate(wrapper, schema, schema);

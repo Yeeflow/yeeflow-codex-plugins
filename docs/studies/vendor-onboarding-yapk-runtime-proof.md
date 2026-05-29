@@ -93,7 +93,7 @@ Validation was run on the generated V1.1 signed YAPK, the decoded app resource, 
 | Generated UI quality inspection | Pass | 0 errors, 0 warnings; dashboards, custom forms, data tables, and item templates detected. |
 | Spec coverage inspection | Pass with warnings | 0 errors; manual review warnings remain for print page and advanced visual elements. |
 | Import-readiness suite | Pass with warnings | 0 errors using the temporary validation wrapper; warnings remain for runtime proof boundaries and generated-control caution. |
-| codex.yeeflow.com scan | Pass | No hard-coded internal tenant URL found in generated package or generator. |
+| internal tenant URL scan | Pass | No hard-coded internal tenant URL found in generated package or generator. |
 
 ## Install Failure Follow-Up
 
@@ -157,7 +157,7 @@ V1.3 local proof:
 - Strict sync decode: expected `Z_BUF_ERROR`
 - Counts: 2 pages, 5 child lists, 59 fields, 14 layouts
 - Export-like key check: root list set, child lists, fields, pages, and layouts now include the same key families as the successful fresh-install comparison package
-- Hard-coded `codex.yeeflow.com`: none detected
+- Hard-coded internal tenant URL: none detected
 
 ## YAP Fallback Package
 
@@ -175,7 +175,7 @@ After the V1.3 YAPK still showed `Install failed`, the same generated applicatio
 - Generated UI quality inspection: pass, 0 errors
 - Spec inspection: pass with warnings for manual print-page and advanced visual-element review
 - Inventory: 5 data lists, 59 fields, 2 dashboards, 14 layouts, 4 app user groups
-- Hard-coded `codex.yeeflow.com`: none detected
+- Hard-coded internal tenant URL: none detected
 
 This `.yap` package is the recommended next manual import candidate because the `.yapk` path is now known to fail during application materialization.
 
@@ -267,7 +267,7 @@ V1.4 local proof:
 - YAP import-readiness suite: pass with warnings, 0 errors
 - YAPK package validator: pass, 0 errors
 - Category audit: 59 fields checked in each package; all `Category` values are integer `0`; `Childs[0].Fields[0].Category` is integer `0`
-- Hard-coded `codex.yeeflow.com`: none detected
+- Hard-coded internal tenant URL: none detected
 
 Recommended next manual test:
 
@@ -335,7 +335,7 @@ YAP V1.4 product-schema local proof:
 - Field category audit: all 59 fields have integer `Category: 0`
 - Direct `ListExportInfo` resource shape: absent
 - Legacy nested `Resource.Data` envelope inside `ListExportInfo`: absent
-- Hard-coded `codex.yeeflow.com`: none detected
+- Hard-coded internal tenant URL: none detected
 
 Recommended next manual test for YAP:
 
@@ -404,13 +404,86 @@ YAP V1.5 unique-ID local proof:
 - Graph validator: pass with warnings, 0 errors for both candidates
 - Import-readiness suite: pass with warnings, 0 errors for both candidates
 - Field category audit: all 59 fields have integer `Category: 0`
-- Hard-coded `codex.yeeflow.com`: none detected
+- Hard-coded internal tenant URL: none detected
 
 Recommended next manual test for YAP:
 
 1. Try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.5-unique-ids-no-lookups.yap` first.
 2. If it imports, try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.5-unique-ids.yap` to test lookup materialization.
 3. Keep the V1.4 candidates only as historical failure references; V1.5 is the next recommended retry.
+
+## YAP V1.6 Yeeflow API ID Isolation
+
+After the V1.5 no-lookup package installed successfully and the V1.5 lookup package still failed import, product guidance was to use the Yeeflow admin generate-unique-ids API for generated package IDs, app IDs, list IDs, layout IDs, field IDs, and related app/list/layout structure IDs.
+
+Confirmed runtime input:
+
+- V1.5 no-lookups installed successfully.
+- V1.5 no-lookups showed only one blank/minimal dashboard, which is expected for that isolation package because rich UI was intentionally removed.
+- V1.5 with lookup relationships still failed import.
+- Lookup materialization is therefore the current isolation target.
+
+API use:
+
+- API base URL: `https://api.yeeflow.com/v1`
+- Endpoint: `GET /utils/generate/ids`
+- Query: `count=<number of ids>`
+- Authentication: `apiKey` header loaded from local `.env.local`
+- The helper never prints the API key or raw API response.
+- API responses observed for this run returned 19-digit numeric IDs as strings. These IDs are larger than JavaScript's safe integer range, so the generator preserves them as strings internally and writes them as raw JSON integer tokens in the YAP payload without converting them through JavaScript `Number`.
+
+Generator update:
+
+- Added `scripts/yeeflow-id-api-utils.mjs` for safe environment loading and batched ID requests.
+- `generate-vendor-onboarding-yap-fallbacks.mjs` now uses API-issued IDs for the real import candidates.
+- The local deterministic ID allocator remains only as a historical/offline fallback for V1.5 style isolation candidates.
+- V1.6 creates separate API ID batches for each candidate so the three generated packages do not reuse the same generated IDs.
+
+Validator hardening:
+
+- `scripts/validate-standard-package-schema.mjs` preserves large raw JSON integer tokens during parsing and accepts them as schema integer values.
+- `scripts/inspect-yap-schema-standard.mjs` preserves large raw integer IDs and no longer treats API-issued raw integer tokens as JavaScript unsafe-number failures.
+- `validate-yap-package.js` preserves large raw integer IDs, reports `ID_SOURCE_NOT_API` for generated-final packages using the local fallback ID range, and reports `LOOKUP_TARGET_LIST_UNRESOLVED` plus `LOOKUP_FIELD_SCHEMA_UNPROVEN` for lookup diagnostics.
+- Regression smoke covers Field.Category typing, ListExportResult resource shape, duplicate IDs, raw large API integer tokens, and local fallback ID detection.
+
+Generated V1.6 candidates:
+
+- No-lookups API-ID candidate: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.6-api-ids-no-lookups.yap`
+- Lookup API-ID candidate: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.6-api-ids-with-lookups.yap`
+- Simple-dashboard API-ID candidate: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.6-api-ids-simple-dashboard.yap`
+
+V1.6 local validation:
+
+- API IDs requested/received: 246 total, split into three 82-ID batches.
+- ID shape: 19-digit numeric strings from the API, emitted as raw JSON integer tokens in YAP Resource/Data text.
+- Standard schema validation: pass, 0 errors for all three candidates, using the local product-schema fallback `/Users/Renger/Downloads/yap-schema_v2.json` because `/Users/Renger/Downloads/yap-v1-schema.json` was not present in this session.
+- Decoded Resource shape: `ListExportResult` for all three candidates.
+- `ListExportResult.Data` shape: JSON string parsed to `ListExportInfo` for all three candidates.
+- YAP schema-standard inspector: pass, 0 errors, 0 warnings for all three candidates.
+- Package validator: pass with warnings, 0 errors for all three candidates.
+- Graph validator: pass with warnings, 0 errors for all three candidates.
+- Import-readiness suite: pass with warnings, 0 errors for all three candidates.
+- Generated UI quality inspector: pass with warnings for all three candidates; plan/spec warnings are expected because these are import-isolation packages, not the full rich UI package.
+- Hard-coded internal tenant URL: none detected.
+
+Lookup diagnostics for the V1.6 lookup candidate:
+
+- Lookup fields: 4.
+- Source lists: Vendor Documents, Compliance Reviews, Vendor Tasks, Vendor Activity / History.
+- Target list: Vendors.
+- Lookup fields use `Type = lookup`, `FieldType = Text`, and display field `Text0`.
+- Rule keys present: `appid`, `listsetid`, `listid`, `listfield`, `displayField`.
+- Target list references resolve locally.
+- Display field references resolve locally.
+- Validator warning: `LOOKUP_FIELD_SCHEMA_UNPROVEN`, because this generated lookup structure remains import-experimental until product confirms the correct generated lookup shape.
+- Validator warning: `LOOKUP_TARGET_LIST_EMPTY`, because the isolation package does not include sample vendor records.
+
+Recommended next manual test for YAP:
+
+1. Try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.6-api-ids-no-lookups.yap`.
+2. If it imports, try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.6-api-ids-with-lookups.yap`.
+3. If both import, try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.6-api-ids-simple-dashboard.yap`.
+4. Do not return to the full rich UI package until the API-ID base layer and lookup layer are proven in Yeeflow import.
 
 ## Signing And Verification
 
@@ -432,7 +505,7 @@ The generator uses the standard Yeeflow API base URL behavior through `scripts/y
 - V1.4 server signature shape: 32-byte base64 value
 - V1.4 `verifysign` status: passed
 
-The V1 package remains the locally validated baseline. The V1.1 package proved signing and verification but failed package install. The V1.2 package proved wrapper/upload acceptance but failed materialization. The V1.3 package preserved the accepted wrapper pattern and restored export-like metadata but still failed materialization. The V1.4 YAPK package fixes the product-team-reported `Field.Category` integer typing issue. The full `.yap` fallback also reached the import dialog but failed create. The `.yap` V1.4 schema-direct package fixed category typing but still used the now-rejected direct `ListExportInfo` resource shape. The `.yap` V1.4 product-schema result packages fixed the wrapper shape but still had duplicate/unsafe IDs. The `.yap` V1.5 unique-ID product-schema result packages are now the recommended YAP retry candidates.
+The V1 package remains the locally validated baseline. The V1.1 package proved signing and verification but failed package install. The V1.2 package proved wrapper/upload acceptance but failed materialization. The V1.3 package preserved the accepted wrapper pattern and restored export-like metadata but still failed materialization. The V1.4 YAPK package fixes the product-team-reported `Field.Category` integer typing issue. The full `.yap` fallback also reached the import dialog but failed create. The `.yap` V1.4 schema-direct package fixed category typing but still used the now-rejected direct `ListExportInfo` resource shape. The `.yap` V1.4 product-schema result packages fixed the wrapper shape but still had duplicate/unsafe IDs. The `.yap` V1.5 no-lookup package imported but used locally generated IDs and intentionally minimal UI. The `.yap` V1.6 API-ID product-schema result packages are now the recommended YAP retry candidates.
 
 ## Known Gaps
 
@@ -442,7 +515,9 @@ The V1 package remains the locally validated baseline. The V1.1 package proved s
 - V1.3 reached the same materialization-failure state.
 - V1.4 has not yet been manually import-tested after the field `Category` typing fix.
 - The YAP V1.4 product-schema result candidates have not yet been manually import-tested after the corrected `ListExportResult` wrapper fix.
-- The YAP V1.5 unique-ID product-schema result candidates have not yet been manually import-tested after the duplicate `LayoutID` fix.
+- The YAP V1.5 no-lookup product-schema result candidate imported, but it was intentionally minimal and used local generated IDs rather than product API-issued IDs.
+- The YAP V1.5 lookup product-schema result candidate failed import, so lookup shape remains the active isolation target.
+- The YAP V1.6 API-ID product-schema result candidates have not yet been manually import-tested after switching to the Yeeflow generate-unique-ids API.
 - The full `.yap` fallback reached the import dialog but failed create.
 - The `.yap` V1.3 schema-direct package must be manually import-tested before being treated as import-proven.
 - Collection/Kanban action steps are safe local placeholders and should be connected to tenant-specific workflows after import if needed.
@@ -451,26 +526,27 @@ The V1 package remains the locally validated baseline. The V1.1 package proved s
 
 ## Proof Boundary
 
-This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. It also proves that the product-team-reported `Field.Category` integer typing issue is fixed in both generated YAPK and YAP candidates, and that local validators now catch the regression. After product corrected the YAP schema, this branch also proves the generated YAP now decodes `Resource` to `ListExportResult`, with `Data` parsed and validated as `ListExportInfo`. After product identified a duplicate `LayoutID`, this branch proves the V1.5 generated YAP candidates use safe unique IDs and local validators catch duplicate/unsafe ID regressions. The `.yapk` variants before V1.4 showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. Earlier `.yap` fallbacks showed that direct app import can still fail when the resource shape is wrong or IDs are unsafe/duplicated.
+This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. It also proves that the product-team-reported `Field.Category` integer typing issue is fixed in both generated YAPK and YAP candidates, and that local validators now catch the regression. After product corrected the YAP schema, this branch also proves the generated YAP now decodes `Resource` to `ListExportResult`, with `Data` parsed and validated as `ListExportInfo`. After product identified a duplicate `LayoutID`, this branch proves local validators catch duplicate/unsafe ID regressions. After product recommended the generate-unique-ids API, this branch proves V1.6 generated YAP candidates can use API-issued IDs while preserving 19-digit raw integer tokens without JavaScript rounding, and it isolates lookup materialization separately from the base no-lookup data model. The `.yapk` variants before V1.4 showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. Earlier `.yap` fallbacks showed that direct app import can still fail when the resource shape is wrong, IDs are unsafe/duplicated, or lookup shape is not importer-compatible.
 
 It does not prove live import success, runtime rendering, or end-user workflow behavior. Those require a focused manual import and runtime proof in a Yeeflow tenant.
 
 ## Manual Test Checklist
 
-1. Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.5-unique-ids-no-lookups.yap`.
-2. If the no-lookup YAP imports, import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.5-unique-ids.yap`.
-3. If YAP testing is blocked and YAPK retest is desired, install `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-category-fixed.yapk`.
-4. Open the Vendor Management Dashboard.
-5. Check dashboard padding, cards, KPI layout, alert, and quick links.
-6. Verify dashboard Data tables show configured columns.
-7. Verify Kanban cards show meaningful vendor fields.
-8. Open the Vendor Detail View Page.
-9. Verify tabs, steps bar, progress controls, document embed area, compliance cards, task cards, and timeline.
-10. Open the New Vendor Request Form.
-11. Verify padded sections, toggle section, Dynamic Sub List, file/document fields, and form actions.
-12. Open the Compliance Review Workspace.
-13. Verify Kanban, collection cards, risk score, alert, bulk toolbar pattern, and missing/expired document table.
-14. Open the Vendor Print Page.
-15. Verify print layout, divider spacing, approval timeline, document checklist, QR Code, and Barcode.
-16. Connect placeholder collection/workflow actions to tenant-specific workflows if needed.
-17. Record the live import/runtime result before treating this as runtime-proven.
+1. Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.6-api-ids-no-lookups.yap`.
+2. If the no-lookup YAP imports, import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.6-api-ids-with-lookups.yap`.
+3. If both import, import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.6-api-ids-simple-dashboard.yap`.
+4. If YAP testing is blocked and YAPK retest is desired, install `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-category-fixed.yapk`.
+5. Open the Vendor Management Dashboard.
+6. Check dashboard padding, cards, KPI layout, alert, and quick links.
+7. Verify dashboard Data tables show configured columns.
+8. Verify Kanban cards show meaningful vendor fields.
+9. Open the Vendor Detail View Page.
+10. Verify tabs, steps bar, progress controls, document embed area, compliance cards, task cards, and timeline.
+11. Open the New Vendor Request Form.
+12. Verify padded sections, toggle section, Dynamic Sub List, file/document fields, and form actions.
+13. Open the Compliance Review Workspace.
+14. Verify Kanban, collection cards, risk score, alert, bulk toolbar pattern, and missing/expired document table.
+15. Open the Vendor Print Page.
+16. Verify print layout, divider spacing, approval timeline, document checklist, QR Code, and Barcode.
+17. Connect placeholder collection/workflow actions to tenant-specific workflows if needed.
+18. Record the live import/runtime result before treating this as runtime-proven.

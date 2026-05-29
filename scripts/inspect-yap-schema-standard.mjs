@@ -212,7 +212,7 @@ function addDuplicateFinding(findings, code, message, seen, value, detail) {
   else seen.set(key, detail);
 }
 
-function inspectIdUniqueness(data, findings) {
+function inspectIdUniqueness(data, findings, largeNumbers = new Set()) {
   const listIds = new Map();
   const fieldIds = new Map();
   const layoutIds = new Map();
@@ -220,6 +220,7 @@ function inspectIdUniqueness(data, findings) {
   const idKeys = new Set(["AppID", "ListID", "FieldID", "LayoutID", "ID", "RefId", "ReportID", "ProcModelID", "ResourceID"]);
   const assertSafeInteger = (value, pointer) => {
     if (value === undefined || value === null || value === "") return;
+    if (typeof value === "string" && largeNumbers.has(value)) return;
     if (!Number.isInteger(value)) {
       add(findings, "error", "INVALID_ID_TYPE", "Generated YAP ID values must be JSON integers.", {
         path: pointer,
@@ -371,7 +372,7 @@ function main() {
     if (!isObject(decoded.data.Item)) add(findings, "error", "LIST_EXPORT_INFO_ITEM_MISSING", "ListExportInfo.Item is required.", { path: "Data.Item" });
     else inspectListExportItem(decoded.data.Item, "Data.Item", findings, summary);
     asArray(decoded.data.Childs).forEach((child, index) => inspectListExportItem(child, `Data.Childs[${index}]`, findings, summary));
-    inspectIdUniqueness(decoded.data, findings);
+    inspectIdUniqueness(decoded.data, findings, largeNumbers);
     asArray(decoded.data.Forms).forEach((form, index) => inspectNoRule(form, index, findings, summary));
     inspectOtherModules(decoded.data, findings, summary);
   }

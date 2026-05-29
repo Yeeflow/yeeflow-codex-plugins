@@ -151,6 +151,43 @@ function writeYap(file, category, overrides = {}, dataMode = "string") {
   fs.writeFileSync(file, `${JSON.stringify(wrapper, null, 2)}\n`);
 }
 
+function unquoteIntegerProperties(jsonText) {
+  return jsonText.replace(/"((?:AppID|ListID|FieldID|LayoutID|ID|RefId))":"(\d{16,})"/g, "\"$1\":$2");
+}
+
+function writeRawLargeIdYap(file) {
+  const largeAppId = "9345000000000000001";
+  const largeRootListId = "9345000000000000002";
+  const largeListId = "9345000000000000003";
+  const largeFieldId = "9345000000000000004";
+  const largeLayoutId = "9345000000000000005";
+  const info = makeListExportInfo(0, {
+    field: { FieldID: largeFieldId, ListID: largeListId },
+    layouts: [makeLayout(largeLayoutId, largeListId)],
+  });
+  info.Item.ListModel.AppID = largeAppId;
+  info.Item.ListModel.ListID = largeRootListId;
+  info.Childs[0].ListModel.AppID = largeAppId;
+  info.Childs[0].ListModel.ListID = largeListId;
+  const infoText = unquoteIntegerProperties(JSON.stringify(info));
+  const resultText = unquoteIntegerProperties(JSON.stringify({
+    MainListType: 1024,
+    AppID: largeAppId,
+    ReplaceIds: [],
+    ReportIds: [],
+    FormKeys: [],
+    Data: infoText,
+  }));
+  const wrapper = {
+    Title: "Synthetic Raw Large ID Smoke App",
+    Description: "Temporary validator smoke package.",
+    IconUrl: "",
+    IsListSet: true,
+    Resource: GZIP_PREFIX + zlib.gzipSync(Buffer.from(resultText, "utf8")).toString("base64"),
+  };
+  fs.writeFileSync(file, `${JSON.stringify(wrapper, null, 2)}\n`);
+}
+
 function writeYapk(file, category) {
   const resource = zlib.brotliCompressSync(Buffer.from(JSON.stringify(makeAppPackageInfo(category)), "utf8")).toString("base64");
   const wrapper = {
@@ -206,7 +243,8 @@ try {
   const duplicateLayoutYap = path.join(dir, "duplicate-layout-id.yap");
   const duplicateListYap = path.join(dir, "duplicate-list-id.yap");
   const duplicateFieldYap = path.join(dir, "duplicate-field-id.yap");
-  const unsafeIdYap = path.join(dir, "unsafe-integer-id.yap");
+  const rawLargeIdYap = path.join(dir, "raw-large-api-id.yap");
+  const localIdSourceYap = path.join(dir, "local-id-source.yap");
   const uniqueIdsYap = path.join(dir, "unique-ids.yap");
   const badYapk = path.join(dir, "field-category-string.yapk");
   const goodYapk = path.join(dir, "field-category-int.yapk");
@@ -225,7 +263,16 @@ try {
     ],
   });
   writeYap(duplicateFieldYap, 0, { defs: [makeField(0), { ...makeField(0), FieldName: "VendorCode2", FieldIndex: 2, InternalName: "VendorCode", DisplayName: "Vendor Code" }] });
-  writeYap(unsafeIdYap, 0, { field: { FieldID: Number.MAX_SAFE_INTEGER + 1000 } });
+  writeRawLargeIdYap(rawLargeIdYap);
+  writeYap(localIdSourceYap, 0, {
+    field: { FieldID: 760100000000001, ListID: 760100000000002 },
+    childs: [{
+      ...makeListExportInfo(0).Childs[0],
+      ListModel: { ...makeListExportInfo(0).Childs[0].ListModel, ListID: 760100000000002 },
+      Defs: [{ ...makeField(0), FieldID: 760100000000001, ListID: 760100000000002 }],
+      Layouts: [makeLayout(760100000000003, 760100000000002)],
+    }],
+  });
   writeYap(uniqueIdsYap, 0, { field: { FieldID: 1002 }, layouts: [makeLayout(3002)] });
   writeYapk(badYapk, "0");
   writeYapk(goodYapk, 0);
@@ -307,9 +354,19 @@ try {
       expectNeedle: "DUPLICATE_FIELD_ID",
     },
     {
-      label: "standard schema unsafe integer ID",
-      result: run("node", ["scripts/validate-standard-package-schema.mjs", unsafeIdYap]),
-      expectNeedle: "UNSAFE_INTEGER_ID",
+      label: "standard schema raw large API integer token",
+      result: run("node", ["scripts/validate-standard-package-schema.mjs", rawLargeIdYap]),
+      rejectNeedle: "UNSAFE_INTEGER_ID",
+    },
+    {
+      label: "validate-yap-package raw large API integer token",
+      result: run("node", ["validate-yap-package.js", rawLargeIdYap, "--mode", "generator", "--stage", "final"]),
+      rejectNeedle: "INVALID_ID_TYPE",
+    },
+    {
+      label: "validate-yap-package local ID source",
+      result: run("node", ["validate-yap-package.js", localIdSourceYap, "--mode", "generator", "--stage", "final"]),
+      expectNeedle: "ID_SOURCE_NOT_API",
     },
     {
       label: "standard schema unique IDs",

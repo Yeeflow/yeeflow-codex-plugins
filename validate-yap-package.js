@@ -402,6 +402,8 @@ function generatorFinalSeverity(report, fallback = "warning") {
 function validateGeneratedIntegerId(value, report, context = {}) {
   if (value === undefined || value === null || value === "") return;
   const severity = generatorFinalSeverity(report);
+  const rawLargeIntegerToken = typeof value === "string" && report._largeNumbers && report._largeNumbers.has(value);
+  if (rawLargeIntegerToken) return;
   if (!Number.isInteger(value)) {
     issue(report, severity, "INVALID_ID_TYPE", "Generated YAP ID values must be JSON integers.", {
       ...context,
@@ -412,7 +414,16 @@ function validateGeneratedIntegerId(value, report, context = {}) {
       ...context,
       value,
     });
+  } else if (report.mode === "generator" && report.stage === "final" && isLikelyLocalGeneratedId(value)) {
+    issue(report, severity, "ID_SOURCE_NOT_API", "Import-proof generated YAP IDs should come from the Yeeflow generate-unique-ids API, not the local fallback ID range.", {
+      ...context,
+      value,
+    });
   }
+}
+
+function isLikelyLocalGeneratedId(value) {
+  return /^7601000000000\d+$/.test(safeString(value));
 }
 
 function validateUniqueGeneratedId(value, seen, report, code, message, context = {}) {
@@ -4703,8 +4714,11 @@ function validateLookupRelationships(listsById, fieldsByList, report) {
         continue;
       }
       if (!listsById.has(targetListId)) {
-        issue(report, report.mode === "generator" ? "error" : "dependency", "LOOKUP_TARGET_UNRESOLVED", "Lookup target list does not resolve inside package.", { list: list.title, field: field.DisplayName || field.FieldName, targetListId });
+        issue(report, report.mode === "generator" ? "error" : "dependency", "LOOKUP_TARGET_LIST_UNRESOLVED", "Lookup target list does not resolve inside package.", { list: list.title, field: field.DisplayName || field.FieldName, targetListId });
         continue;
+      }
+      if (report.mode === "generator" && report.stage === "final") {
+        issue(report, "warning", "LOOKUP_FIELD_SCHEMA_UNPROVEN", "Lookup field schema is included for isolation but remains import-experimental until product confirms this generated lookup shape.", { list: list.title, field: field.DisplayName || field.FieldName, targetListId, displayField });
       }
       const target = listsById.get(targetListId);
       const targetRecords = target.item && target.item.ListDatas && isObject(target.item.ListDatas) ? target.item.ListDatas : {};
