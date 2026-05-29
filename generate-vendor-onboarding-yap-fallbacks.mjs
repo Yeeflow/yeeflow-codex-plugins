@@ -229,14 +229,14 @@ async function main() {
   ];
   const apiIdsNoLookups = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[0]), { dashboard: "minimal" });
   const apiIdsNoLookupsWithoutLookupFields = removeLookupRelationships(apiIdsNoLookups);
-  const apiIdsNoLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.8-replaceids-fixed-no-lookups.yap";
+  const apiIdsNoLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-no-lookups.yap";
   writeSchemaResultYap(apiIdsNoLookupsWithoutLookupFields, apiIdsNoLookupsPath);
   const apiIdsWithLookups = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[1]), { dashboard: "minimal" });
-  const apiIdsWithLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.8-replaceids-fixed-with-lookups.yap";
+  const apiIdsWithLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-with-lookups.yap";
   writeSchemaResultYap(apiIdsWithLookups, apiIdsWithLookupsPath);
   const apiIdsSimpleDashboard = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[2]), { dashboard: "simple-data-table" });
   const apiIdsSimpleDashboardNoLookups = removeLookupRelationships(apiIdsSimpleDashboard);
-  const apiIdsSimpleDashboardPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.8-replaceids-fixed-simple-dashboard.yap";
+  const apiIdsSimpleDashboardPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-simple-dashboard.yap";
   writeSchemaResultYap(apiIdsSimpleDashboardNoLookups, apiIdsSimpleDashboardPath);
 
   console.log(JSON.stringify({
@@ -312,7 +312,7 @@ async function main() {
       },
       {
         path: apiIdsNoLookupsPath,
-        purpose: "ListExportResult YAP with fixed AppID 41, API-issued list/field/layout IDs, and populated ReplaceIds; no lookup relationships",
+        purpose: "ListExportResult YAP with fixed AppID 41, generated ListSite CustomType, API-issued list/field/layout IDs, and populated ReplaceIds; no lookup relationships",
         buildStatus: "written",
         apiIds: summarizeIds(apiIdBatches[0]),
         dataLists: apiIdsNoLookupsWithoutLookupFields.Childs.length,
@@ -322,7 +322,7 @@ async function main() {
       },
       {
         path: apiIdsWithLookupsPath,
-        purpose: "ListExportResult YAP with fixed AppID 41, API-issued list/field/layout IDs, populated ReplaceIds, and lookup relationships",
+        purpose: "ListExportResult YAP with fixed AppID 41, generated ListSite CustomType, API-issued list/field/layout IDs, populated ReplaceIds, and lookup relationships",
         buildStatus: "written",
         apiIds: summarizeIds(apiIdBatches[1]),
         dataLists: apiIdsWithLookups.Childs.length,
@@ -332,7 +332,7 @@ async function main() {
       },
       {
         path: apiIdsSimpleDashboardPath,
-        purpose: "ListExportResult YAP with fixed AppID 41, API-issued list/field/layout IDs, populated ReplaceIds, no lookups, and one simple dashboard data table",
+        purpose: "ListExportResult YAP with fixed AppID 41, generated ListSite CustomType, API-issued list/field/layout IDs, populated ReplaceIds, no lookups, and one simple dashboard data table",
         buildStatus: "written",
         apiIds: summarizeIds(apiIdBatches[2]),
         dataLists: apiIdsSimpleDashboardNoLookups.Childs.length,
@@ -524,6 +524,7 @@ function assignSafeSchemaIds(source) {
   data.Item.ListModel.AppID = appId;
   data.Item.ListModel.ListID = rootListId;
   data.Item.ListModel.LayoutView = "";
+  data.Item.ListModel.CustomType = "";
 
   for (const layout of data.Item.Layouts || []) {
     const layoutId = nextId();
@@ -543,6 +544,7 @@ function assignSafeSchemaIds(source) {
     if (title) listIdByTitle.set(title, listId);
     child.ListModel.AppID = appId;
     child.ListModel.ListID = listId;
+    child.ListModel.CustomType = `ListSite_${rootListId}`;
 
     child.Defs.forEach((field, index) => {
       field.AppID = appId;
@@ -645,6 +647,7 @@ function assignApiSchemaIds(source, allocator, options = {}) {
   data.Item.ListModel.AppID = appId;
   data.Item.ListModel.ListID = rootListId;
   data.Item.ListModel.LayoutView = "";
+  data.Item.ListModel.CustomType = "";
 
   for (const layout of data.Item.Layouts || []) {
     const layoutId = allocator.next(`root layout ${layout.Title || ""}`);
@@ -664,6 +667,7 @@ function assignApiSchemaIds(source, allocator, options = {}) {
     if (title) listIdByTitle.set(title, listId);
     child.ListModel.AppID = appId;
     child.ListModel.ListID = listId;
+    child.ListModel.CustomType = `ListSite_${rootListId}`;
 
     child.Defs.forEach((field, index) => {
       field.AppID = appId;

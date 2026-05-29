@@ -604,6 +604,59 @@ Recommended next manual test for YAP:
 3. If both import, try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.8-replaceids-fixed-simple-dashboard.yap`.
 4. Keep V1.7 only as the historical failure reference for empty `ReplaceIds`.
 
+## YAP V1.9 ListSite CustomType Fix
+
+After the V1.8 no-lookup candidate still failed application creation, product team identified another generated-ID mismatch:
+
+- Feedback: `ListSite_这里的Id没有换成 生成的应用id`
+- Meaning: child `ListModel.CustomType` values such as `ListSite_<id>` must use the generated application/ListSet ID, not an old source ID.
+
+Root cause:
+
+- The generator normalized `ListModel.CustomType` from the source payload and then replaced `ListID`, `FieldID`, and `LayoutID` values.
+- It did not rewrite child `CustomType` after assigning the generated root ListSet ID.
+- The importer therefore saw child lists whose `CustomType` still pointed to the old source app/list-set identity.
+
+Generator fix:
+
+- Root `ListModel.CustomType` is now forced to an empty string.
+- Every child list `ListModel.CustomType` is now set to `ListSite_<generated root ListID>`.
+- This applies to both local safe-ID candidates and API-ID candidates, although the recommended path remains API-ID candidates.
+
+Validator hardening:
+
+- `validate-yap-package.js` now fails generated-final YAP packages if root `CustomType` is not empty.
+- It also fails generated-final YAP packages if a child list `CustomType` does not exactly match `ListSite_<root ListID>`.
+
+Generated V1.9 candidates:
+
+- CustomType-fixed no-lookups candidate: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-no-lookups.yap`
+- CustomType-fixed lookup candidate: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-with-lookups.yap`
+- CustomType-fixed simple-dashboard candidate: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-simple-dashboard.yap`
+
+V1.9 local validation:
+
+- `Resource.AppID`: `41` for all three candidates.
+- Root `ListModel.CustomType`: empty string.
+- Child `ListModel.CustomType`: `ListSite_<generated root ListID>` for all child lists.
+- `ReplaceIds`: 81 IDs for each candidate.
+- `FormKeys`: 0 keys for each candidate, expected because the candidates include no process forms.
+- Standard schema validation: pass, 0 errors for all three candidates.
+- YAP schema-standard inspector: pass, 0 errors, 0 warnings for all three candidates.
+- Package validator: pass with warnings, 0 errors for all three candidates.
+- CustomType warnings/errors: none.
+- ReplaceIds coverage warnings/errors: none.
+- Graph validator: pass with warnings, 0 errors for all three candidates.
+- Import-readiness suite: pass with warnings, 0 errors for all three candidates.
+- Regression smoke: pass, 25 checks.
+
+Recommended next manual test for YAP:
+
+1. Try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-no-lookups.yap`.
+2. If it imports, try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-with-lookups.yap`.
+3. If both import, try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-simple-dashboard.yap`.
+4. Keep V1.8 only as the historical failure reference for stale `ListSite_` custom type IDs.
+
 ## Signing And Verification
 
 The generator uses the standard Yeeflow API base URL behavior through `scripts/yeeflow-env-utils.mjs`.
@@ -624,7 +677,7 @@ The generator uses the standard Yeeflow API base URL behavior through `scripts/y
 - V1.4 server signature shape: 32-byte base64 value
 - V1.4 `verifysign` status: passed
 
-The V1 package remains the locally validated baseline. The V1.1 package proved signing and verification but failed package install. The V1.2 package proved wrapper/upload acceptance but failed materialization. The V1.3 package preserved the accepted wrapper pattern and restored export-like metadata but still failed materialization. The V1.4 YAPK package fixes the product-team-reported `Field.Category` integer typing issue. The full `.yap` fallback also reached the import dialog but failed create. The `.yap` V1.4 schema-direct package fixed category typing but still used the now-rejected direct `ListExportInfo` resource shape. The `.yap` V1.4 product-schema result packages fixed the wrapper shape but still had duplicate/unsafe IDs. The `.yap` V1.5 no-lookup package imported but used locally generated IDs and intentionally minimal UI. The `.yap` V1.6 API-ID package still failed because it incorrectly generated AppID. The `.yap` V1.7 fixed-AppID package still failed because `ReplaceIds` was empty. The `.yap` V1.8 ReplaceIds-fixed product-schema result packages are now the recommended YAP retry candidates.
+The V1 package remains the locally validated baseline. The V1.1 package proved signing and verification but failed package install. The V1.2 package proved wrapper/upload acceptance but failed materialization. The V1.3 package preserved the accepted wrapper pattern and restored export-like metadata but still failed materialization. The V1.4 YAPK package fixes the product-team-reported `Field.Category` integer typing issue. The full `.yap` fallback also reached the import dialog but failed create. The `.yap` V1.4 schema-direct package fixed category typing but still used the now-rejected direct `ListExportInfo` resource shape. The `.yap` V1.4 product-schema result packages fixed the wrapper shape but still had duplicate/unsafe IDs. The `.yap` V1.5 no-lookup package imported but used locally generated IDs and intentionally minimal UI. The `.yap` V1.6 API-ID package still failed because it incorrectly generated AppID. The `.yap` V1.7 fixed-AppID package still failed because `ReplaceIds` was empty. The `.yap` V1.8 ReplaceIds-fixed package still failed because child `ListSite_` custom type IDs pointed to the old source app/list-set. The `.yap` V1.9 CustomType-fixed product-schema result packages are now the recommended YAP retry candidates.
 
 ## Known Gaps
 
@@ -638,7 +691,8 @@ The V1 package remains the locally validated baseline. The V1.1 package proved s
 - The YAP V1.5 lookup product-schema result candidate failed import, so lookup shape remains the active isolation target.
 - The YAP V1.6 API-ID product-schema result candidates failed because `AppID` was generated instead of fixed at `41`.
 - The YAP V1.7 fixed-AppID plus API-ID product-schema result candidates failed because `ReplaceIds` was empty.
-- The YAP V1.8 ReplaceIds-fixed product-schema result candidates have not yet been manually import-tested after applying the product-team ReplaceIds/FormKeys correction.
+- The YAP V1.8 ReplaceIds-fixed product-schema result candidates failed because child `CustomType` values still used stale `ListSite_` IDs.
+- The YAP V1.9 CustomType-fixed product-schema result candidates have not yet been manually import-tested after applying the product-team ListSite correction.
 - The full `.yap` fallback reached the import dialog but failed create.
 - The `.yap` V1.3 schema-direct package must be manually import-tested before being treated as import-proven.
 - Collection/Kanban action steps are safe local placeholders and should be connected to tenant-specific workflows after import if needed.
@@ -647,15 +701,15 @@ The V1 package remains the locally validated baseline. The V1.1 package proved s
 
 ## Proof Boundary
 
-This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. It also proves that the product-team-reported `Field.Category` integer typing issue is fixed in both generated YAPK and YAP candidates, and that local validators now catch the regression. After product corrected the YAP schema, this branch also proves the generated YAP now decodes `Resource` to `ListExportResult`, with `Data` parsed and validated as `ListExportInfo`. After product identified a duplicate `LayoutID`, this branch proves local validators catch duplicate/unsafe ID regressions. After product recommended the generate-unique-ids API, this branch proves generated YAP candidates can use API-issued IDs while preserving 19-digit raw integer tokens without JavaScript rounding. After product clarified AppID handling, this branch proves generated YAP candidates keep `AppID = 41` and use API-issued IDs only for list/field/layout/resource identities. After product clarified ReplaceIds/FormKeys handling, this branch proves V1.8 generated YAP candidates collect all generated IDs into `ReplaceIds` and keep `FormKeys` empty when no process forms exist. The `.yapk` variants before V1.4 showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. Earlier `.yap` fallbacks showed that direct app import can still fail when the resource shape is wrong, IDs are unsafe/duplicated, AppID is incorrectly generated, ReplaceIds is empty, or lookup shape is not importer-compatible.
+This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. It also proves that the product-team-reported `Field.Category` integer typing issue is fixed in both generated YAPK and YAP candidates, and that local validators now catch the regression. After product corrected the YAP schema, this branch also proves the generated YAP now decodes `Resource` to `ListExportResult`, with `Data` parsed and validated as `ListExportInfo`. After product identified a duplicate `LayoutID`, this branch proves local validators catch duplicate/unsafe ID regressions. After product recommended the generate-unique-ids API, this branch proves generated YAP candidates can use API-issued IDs while preserving 19-digit raw integer tokens without JavaScript rounding. After product clarified AppID handling, this branch proves generated YAP candidates keep `AppID = 41` and use API-issued IDs only for list/field/layout/resource identities. After product clarified ReplaceIds/FormKeys handling, this branch proves generated YAP candidates collect all generated IDs into `ReplaceIds` and keep `FormKeys` empty when no process forms exist. After product clarified ListSite CustomType handling, this branch proves V1.9 generated YAP candidates set child `CustomType` to `ListSite_<generated root ListID>`. The `.yapk` variants before V1.4 showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. Earlier `.yap` fallbacks showed that direct app import can still fail when the resource shape is wrong, IDs are unsafe/duplicated, AppID is incorrectly generated, ReplaceIds is empty, CustomType points to stale IDs, or lookup shape is not importer-compatible.
 
 It does not prove live import success, runtime rendering, or end-user workflow behavior. Those require a focused manual import and runtime proof in a Yeeflow tenant.
 
 ## Manual Test Checklist
 
-1. Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.8-replaceids-fixed-no-lookups.yap`.
-2. If the no-lookup YAP imports, import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.8-replaceids-fixed-with-lookups.yap`.
-3. If both import, import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.8-replaceids-fixed-simple-dashboard.yap`.
+1. Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-no-lookups.yap`.
+2. If the no-lookup YAP imports, import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-with-lookups.yap`.
+3. If both import, import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-simple-dashboard.yap`.
 4. If YAP testing is blocked and YAPK retest is desired, install `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-category-fixed.yapk`.
 5. Open the Vendor Management Dashboard.
 6. Check dashboard padding, cards, KPI layout, alert, and quick links.

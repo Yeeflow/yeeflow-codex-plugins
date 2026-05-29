@@ -2523,9 +2523,16 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
     if (!title) issue(report, "error", "ROOT_TITLE_MISSING", "Root app title is required.", { path: `${pathPrefix}.ListModel.Title` });
     if (!list.AppID && report.mode === "generator" && report.stage === "final") issue(report, "error", "ROOT_APPID_MISSING", "Root AppID is required.", { path: `${pathPrefix}.ListModel.AppID` });
     if (!listId) issue(report, "error", "ROOT_LISTSET_ID_MISSING", "Root ListID/ListSetID is required.", { path: `${pathPrefix}.ListModel.ListID` });
+    if (safeString(list.CustomType)) {
+      issue(report, generatorFinalSeverity(report), "ROOT_CUSTOMTYPE_NOT_EMPTY", "Root app/ListSet CustomType should be empty; child list CustomType values should point to ListSite_<root ListID>.", { path: `${pathPrefix}.ListModel.CustomType`, customType: list.CustomType });
+    }
   } else {
     if (!listId) issue(report, "error", "CHILD_LISTID_MISSING", "Child ListID is required.", { path: `${pathPrefix}.ListModel.ListID`, title });
     if (!title) issue(report, "warning", "CHILD_TITLE_MISSING", "Child resource title is missing.", { path: `${pathPrefix}.ListModel.Title`, listId });
+    const expectedCustomType = `ListSite_${rootListSetId}`;
+    if (safeString(list.CustomType) !== expectedCustomType) {
+      issue(report, generatorFinalSeverity(report), "CHILD_CUSTOMTYPE_LISTSITE_MISMATCH", "Child list CustomType must point to the generated root application/ListSet ID as ListSite_<root ListID>.", { path: `${pathPrefix}.ListModel.CustomType`, title, customType: list.CustomType, expectedCustomType });
+    }
     if (!isSchemaDirectYap(report) && resourceType === "data list" && list.ListType === undefined) {
       issue(report, generatorFinalSeverity(report), "MAIN_LIST_TYPE_MISSING", "Generated child data lists must include ListModel.ListType before handoff; missing ListType can block Yeeflow import/materialization.", { path: `${pathPrefix}.ListModel.ListType`, title, listId });
     } else if (!isSchemaDirectYap(report) && resourceType === "data list" && Number(list.ListType) !== 1) {
