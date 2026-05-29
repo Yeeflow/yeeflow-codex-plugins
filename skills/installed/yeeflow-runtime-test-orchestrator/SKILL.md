@@ -17,6 +17,8 @@ Business Travel runtime-practice checkpoint: when a generated package imports, c
 
 YAPK-from-scratch runtime checkpoint: a signed and verified `.yapk` is not runtime proof. Before runtime upgrade testing, confirm that decoded `AppPackageInfo` passed content validators, graph checks, workflow publish-readiness checks, and placeholder scans before signing. Classify signing/verifysign as integrity proof only; classify upgrade/import, app open, workflow publish, workflow execution, assignment routing, and data mutation separately.
 
+Vendor Onboarding v1.13 YAPK runtime-test checkpoint: before manual install testing, confirm the package validates as schema v2 `AppExportPackageInfo`, `Resource` Brotli-decodes to `AppPackageInfo`, `Childs[]` uses `Fields` rather than `Defs`, `LongAsString` fields remain strings, `AppID = 41`, and dashboard Data table columns include both `Field` source binding and `FieldName` label. Passing `setsign` and `verifysign` remains signing proof only; app install/create and Home dashboard render must be recorded separately.
+
 ## Core Rule
 
 Treat local package validation and Yeeflow runtime proof as separate gates. A package can be locally valid but still not accepted as a baseline until the runtime pass is documented.

@@ -104,8 +104,12 @@ function add(findings, level, code, message, detail = {}) {
 }
 
 function decodeInput(inputPath, findings, largeNumbers) {
-  const parsed = parseJson(fs.readFileSync(inputPath, "utf8"), largeNumbers);
+  const parsed = parseJson(fs.readFileSync(inputPath, "utf8").replace(/^\uFEFF/, ""), largeNumbers);
   if (typeof parsed?.Resource === "string") {
+    if (!parsed.Resource.startsWith(GZIP_PREFIX) && inputPath.toLowerCase().endsWith(".yapk")) {
+      const decoded = parseJson(zlib.brotliDecompressSync(Buffer.from(parsed.Resource, "base64")).toString("utf8"), largeNumbers);
+      return normalizeYapkAppPackage(decoded);
+    }
     if (!parsed.Resource.startsWith(GZIP_PREFIX)) {
       add(findings, "error", "YAP_RESOURCE_PREFIX_INVALID", `Resource must start with ${GZIP_PREFIX}.`);
       return null;
@@ -116,6 +120,22 @@ function decodeInput(inputPath, findings, largeNumbers) {
   }
   if (typeof parsed?.Data === "string") return parseJson(parsed.Data, largeNumbers);
   return parsed;
+}
+
+function normalizeYapkAppPackage(decoded) {
+  if (!isObject(decoded) || !isObject(decoded.ListSet)) return decoded;
+  return {
+    Item: {
+      ListModel: decoded.ListSet,
+      Defs: [],
+      Layouts: asArray(decoded.Pages),
+    },
+    Childs: asArray(decoded.Childs).map((child) => ({
+      ListModel: child.List,
+      Defs: asArray(child.Fields),
+      Layouts: asArray(child.Layouts),
+    })),
+  };
 }
 
 function walkControls(control, visitor, pointer = "$", depth = 0) {
@@ -242,6 +262,11 @@ function inspectDataTable(control, pointer, page, listsById, findings, summary) 
     add(findings, "warning", "DATA_TABLE_DISPLAY_COLUMNS_THIN", "Generated dashboard Data table should include 3 to 5 meaningful display columns when fields are available.", { page, pointer, listId, columnCount: columns.length });
   }
   const fields = source?.fields || new Map();
+  for (const key of ["AppID", "ListID", "Type", "Title", "ListSetID"]) {
+    if (!safeString(control.attrs?.data?.list?.[key])) {
+      add(findings, "error", "DATA_TABLE_SOURCE_LIST_KEY_MISSING", "Dashboard Data table attrs.data.list must include AppID, ListID, Type, Title, and ListSetID.", { page, pointer: `${pointer}.attrs.data.list.${key}`, listId, key });
+    }
+  }
   columns.forEach((column, index) => {
     const explicitField = isObject(column) ? safeString(column.Field) : "";
     if (isObject(column) && !explicitField) {

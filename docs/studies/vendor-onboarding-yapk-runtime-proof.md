@@ -786,8 +786,54 @@ The generator uses the standard Yeeflow API base URL behavior through `scripts/y
 - V1.4 server signing status: `signed_and_verified`
 - V1.4 server signature shape: 32-byte base64 value
 - V1.4 `verifysign` status: passed
+- V1.13 YAPK schema v2 server signing status: `signed_and_verified`
+- V1.13 YAPK schema v2 server signature shape: 32-byte base64 value
+- V1.13 YAPK schema v2 `verifysign` status: HTTP 200
 
 The V1 package remains the locally validated baseline. The V1.1 package proved signing and verification but failed package install. The V1.2 package proved wrapper/upload acceptance but failed materialization. The V1.3 package preserved the accepted wrapper pattern and restored export-like metadata but still failed materialization. The V1.4 YAPK package fixes the product-team-reported `Field.Category` integer typing issue. The full `.yap` fallback also reached the import dialog but failed create. The `.yap` V1.4 schema-direct package fixed category typing but still used the now-rejected direct `ListExportInfo` resource shape. The `.yap` V1.4 product-schema result packages fixed the wrapper shape but still had duplicate/unsafe IDs. The `.yap` V1.5 no-lookup package imported but used locally generated IDs and intentionally minimal UI. The `.yap` V1.6 API-ID package still failed because it incorrectly generated AppID. The `.yap` V1.7 fixed-AppID package still failed because `ReplaceIds` was empty. The `.yap` V1.8 ReplaceIds-fixed package still failed because child `ListSite_` custom type IDs pointed to the old source app/list-set. The `.yap` V1.9 CustomType-fixed product-schema result packages imported successfully but exposed that `Home` still used an older dashboard shell. The `.yap` V1.10 current-dashboard candidate applies the export-proven current dashboard shell learned from the user-created `New Dashboard`. The `.yap` V1.11 current-dashboard-data-table candidate adds the previous simple Home content back to the current shell but its table query field bindings were incomplete. The `.yap` V1.12 current-dashboard-data-table-fields-fixed candidate corrects the table binding shape with export-proven `Field` values.
+
+## YAPK Schema V2 Candidate
+
+Product-team schema v2 changes the YAPK source of truth from the earlier YAP-style experiments:
+
+- Top-level YAPK is `AppExportPackageInfo`.
+- `Resource` is `base64(Brotli(JSON.stringify(AppPackageInfo)))`.
+- Decoded `Resource` must be `AppPackageInfo`, not YAP `ListExportResult` or direct `ListExportInfo`.
+- `AppPackageInfo.Childs[]` uses `Fields`, not YAP `Defs`.
+- `LongAsString` wrapper/layout fields remain numeric strings.
+- App-content integer IDs are emitted as raw JSON integer tokens without JavaScript rounding.
+
+New candidate:
+
+- `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.13-yapk-schema-v2.yapk`
+- Source content: the import-proven V1.12 YAP app content.
+- Scope: five child data lists, current-version Home dashboard, and the fixed Vendors Data table binding.
+- AppID: fixed `41`.
+- PackageId: generated with Yeeflow `generate-unique-ids` API.
+- Existing list, field, layout, and resource IDs: preserved from the import-proven V1.12 API-issued IDs.
+- YAPK wrapper `TenantID` and `ListID`: emitted as `LongAsString` strings.
+- Dashboard Data table: preserves `attrs.data.list` keys `AppID`, `ListID`, `Type`, `Title`, and `ListSetID`; each visible column includes `Field` source binding and `FieldName` label.
+- Current dashboard shell: schema-compatible YAPK layout with `Type = 103`, `Ext2 = "{\"src\":true}"`, and inline `LayoutInResources` content. Because YAPK schema v2 requires `LayoutView` to be a string, the generator emits an empty string for `LayoutView` in YAPK while preserving the current-dashboard marker in `Ext2` and page resources.
+
+Old V1.4 YAPK failure summary against schema v2:
+
+- Decoded to an `AppPackageInfo`-like shape but failed schema v2 with nulls where strings/arrays/objects were required.
+- Some dashboard Data table columns omitted the `Field` source binding, the same issue later proven by the V1.11/V1.12 YAP runtime test.
+- It predated the final YAPK v2 `LongAsString`, schema-required arrays, and current dashboard Data table validation rules.
+
+V1.13 validation:
+
+- Product-team YAPK schema v2 standard validator: pass.
+- Decoded Resource shape: `AppPackageInfo`.
+- `Childs` shape: uses `Fields`, not `Defs`.
+- `ListSet`: present.
+- `Pages`: present with Home dashboard.
+- `Childs`: five data lists, 59 fields, and 15 child layouts.
+- YAPK inspector: pass.
+- YAPK package validator: pass with one expected proof-boundary warning.
+- Generated UI quality inspector: pass with one dashboard Data table and zero findings.
+- Regression smoke: pass for YAP-style Resource rejection, missing Childs arrays, `Defs` instead of `Fields`, numeric `TenantID`, non-41 `AppID`, missing Data table `Field`, duplicate `LayoutID`, and invalid integer ID type.
+- Signing: `setsign` returned a 32-byte signature and `verifysign` returned HTTP 200.
 
 ## Known Gaps
 
@@ -806,13 +852,14 @@ The V1 package remains the locally validated baseline. The V1.1 package proved s
 - The YAP V1.12 current-dashboard Data table field-binding fix imported successfully and fixed the current-dashboard Data table query error.
 - The full `.yap` fallback reached the import dialog but failed create.
 - The `.yap` V1.3 schema-direct package must be manually import-tested before being treated as import-proven.
+- The YAPK V1.13 schema v2 package is server-signed, verified, schema-valid, and locally content-validated, but has not yet been manually install/runtime tested.
 - Collection/Kanban action steps are safe local placeholders and should be connected to tenant-specific workflows after import if needed.
 - Advanced controls such as Document embed, QR Code, Barcode, timeline, and print layout require runtime visual confirmation.
 - Custom CSS polish is represented as layout/style intent in generated controls; final visual polish must be checked in Yeeflow after import.
 
 ## Proof Boundary
 
-This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. It also proves that the product-team-reported `Field.Category` integer typing issue is fixed in both generated YAPK and YAP candidates, and that local validators now catch the regression. After product corrected the YAP schema, this branch also proves the generated YAP now decodes `Resource` to `ListExportResult`, with `Data` parsed and validated as `ListExportInfo`. After product identified a duplicate `LayoutID`, this branch proves local validators catch duplicate/unsafe ID regressions. After product recommended the generate-unique-ids API, this branch proves generated YAP candidates can use API-issued IDs while preserving 19-digit raw integer tokens without JavaScript rounding. After product clarified AppID handling, this branch proves generated YAP candidates keep `AppID = 41` and use API-issued IDs only for list/field/layout/resource identities. After product clarified ReplaceIds/FormKeys handling, this branch proves generated YAP candidates collect all generated IDs into `ReplaceIds` and keep `FormKeys` empty when no process forms exist. After product clarified ListSite CustomType handling, this branch proves V1.9 generated YAP candidates set child `CustomType` to `ListSite_<generated root ListID>`. The V1.12 generated YAP is user-confirmed import-proven; it opens with the current dashboard version and fixes the Data table query error by using `attrs.listarr[].Field` for source bindings and `attrs.listarr[].FieldName` for labels. The `.yapk` variants before V1.4 showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. Earlier `.yap` fallbacks showed that direct app import can still fail when the resource shape is wrong, IDs are unsafe/duplicated, AppID is incorrectly generated, ReplaceIds is empty, CustomType points to stale IDs, lookup shape is not importer-compatible, or dashboard Data table `Field` bindings are missing.
+This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. It also proves that the product-team-reported `Field.Category` integer typing issue is fixed in both generated YAPK and YAP candidates, and that local validators now catch the regression. After product corrected the YAP schema, this branch also proves the generated YAP now decodes `Resource` to `ListExportResult`, with `Data` parsed and validated as `ListExportInfo`. After product identified a duplicate `LayoutID`, this branch proves local validators catch duplicate/unsafe ID regressions. After product recommended the generate-unique-ids API, this branch proves generated YAP candidates can use API-issued IDs while preserving 19-digit raw integer tokens without JavaScript rounding. After product clarified AppID handling, this branch proves generated YAP candidates keep `AppID = 41` and use API-issued IDs only for list/field/layout/resource identities. After product clarified ReplaceIds/FormKeys handling, this branch proves generated YAP candidates collect all generated IDs into `ReplaceIds` and keep `FormKeys` empty when no process forms exist. After product clarified ListSite CustomType handling, this branch proves V1.9 generated YAP candidates set child `CustomType` to `ListSite_<generated root ListID>`. The V1.12 generated YAP is user-confirmed import-proven; it opens with the current dashboard version and fixes the Data table query error by using `attrs.listarr[].Field` for source bindings and `attrs.listarr[].FieldName` for labels. The V1.13 YAPK candidate proves the product-team schema v2 wrapper/resource shape locally: `AppExportPackageInfo` with `Resource` as Brotli-compressed `AppPackageInfo`, `Childs[].Fields`, schema-v2 required arrays, `LongAsString` strings, fixed `AppID = 41`, server signing, and `verifysign`. The `.yapk` variants before V1.4 showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. Earlier `.yap` fallbacks showed that direct app import can still fail when the resource shape is wrong, IDs are unsafe/duplicated, AppID is incorrectly generated, ReplaceIds is empty, CustomType points to stale IDs, lookup shape is not importer-compatible, or dashboard Data table `Field` bindings are missing.
 
 It does not prove full rich UI runtime behavior, lookup runtime behavior, workflow execution, record creation, action execution, or end-user process behavior. Those require additional focused manual runtime proof in a Yeeflow tenant.
 
@@ -824,7 +871,7 @@ It does not prove full rich UI runtime behavior, lookup runtime behavior, workfl
 4. Verify the Vendors Data table no longer shows `Field(s) ,,,,, have been deleted`.
 5. Verify the Data table settings show six display fields and the canvas renders the table area without query-configuration errors.
 6. If V1.12 fails, manually fix the Data table in Yeeflow, publish/save, export the app, and provide the export so the exact current-dashboard Data table binding shape can be compared.
-7. If YAP testing is blocked and YAPK retest is desired, install `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-category-fixed.yapk`.
+7. For YAPK retest, install `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.13-yapk-schema-v2.yapk`.
 8. Check dashboard padding, cards, KPI layout, alert, and quick links.
 9. Verify dashboard Data tables show configured columns.
 10. Verify Kanban cards show meaningful vendor fields.

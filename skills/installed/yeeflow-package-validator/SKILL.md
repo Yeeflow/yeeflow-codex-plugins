@@ -39,6 +39,8 @@ Business Travel runtime-practice update: `yap-v1-schema_v2.json` and the Busines
 
 YAPK-from-scratch validation update: validate generated `.yapk` content before signing. Decoded `AppPackageInfo` must pass package/app creation checks, graph checks, workflow publish-readiness checks, and placeholder scans before Brotli/base64/sign. Treat `YAPK_CONTENT_VALIDATION_FAILED_BEFORE_SIGNING` as blocking. `setsign` and `verifysign` prove wrapper/resource integrity only; they do not prove generated-app correctness, workflow publish-readiness, workflow execution, or tenant-specific routing.
 
+YAPK schema v2 validation rule from Vendor Onboarding v1.13: validate `.yapk` as `AppExportPackageInfo`, decode `Resource` as base64 Brotli JSON, and require decoded `AppPackageInfo`. Fail YAPK packages that decode to YAP `ListExportResult` with `YAPK_RESOURCE_NOT_APP_PACKAGE_INFO`. Require `Childs[].Fields` rather than `Defs`, preserve `LongAsString` fields as numeric strings, keep generated package `AppID = 41` where applicable, and fail missing dashboard Data table `attrs.listarr[].Field` source bindings with `DASHBOARD_DATA_TABLE_DISPLAY_FIELD_BINDING_MISSING`.
+
 ## Core Rule
 
 Validate before import. Do not runtime-test a package with blocking structural, graph, wrapper, workflow, list, field, materialization, FlowKey, or unsafe `.yapk` issues.
