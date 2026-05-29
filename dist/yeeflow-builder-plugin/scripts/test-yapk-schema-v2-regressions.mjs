@@ -6,7 +6,7 @@ import path from "node:path";
 import zlib from "node:zlib";
 import { spawnSync } from "node:child_process";
 
-const DEFAULT_PACKAGE = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.13-yapk-schema-v2.yapk";
+const DEFAULT_PACKAGE = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.14-yapk-portalinfo-array.yapk";
 const SCHEMA = "/Users/Renger/Downloads/yapk-schema_v2.json";
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
 
@@ -152,6 +152,12 @@ try {
   const invalidIdFile = writePackage(tempDir, "invalid-id-type", wrapper, invalidId);
   expectCode("invalid ID type", runValidator(invalidIdFile), "INVALID_ID_TYPE");
   results.push({ case: "invalid integer ID type", expected: "INVALID_ID_TYPE", status: "pass" });
+
+  const emptyPortalObject = structuredClone(decoded);
+  emptyPortalObject.PortalInfo = {};
+  const emptyPortalFile = writePackage(tempDir, "empty-portal-object", wrapper, emptyPortalObject);
+  expectCode("empty PortalInfo object", runValidator(emptyPortalFile), "YAPK_PORTALINFO_EMPTY_OBJECT_INVALID");
+  results.push({ case: "empty PortalInfo object for no portal", expected: "YAPK_PORTALINFO_EMPTY_OBJECT_INVALID", status: "pass" });
 
   console.log(JSON.stringify({ status: "pass", package: packagePath, cases: results }, null, 2));
 } finally {

@@ -37,6 +37,7 @@ const APP_PACKAGE_REQUIRED = [
   "PortalInfo",
   "Childs",
 ];
+const EMPTY_PORTALINFO_IMPORT_ERROR = "YAPK_PORTALINFO_EMPTY_OBJECT_INVALID";
 const LIST_PACKAGE_REQUIRED = ["List", "Fields", "Layouts", "RemindRules", "PublicForms", "FlowMappings"];
 const LIST_TYPE_ENUM = new Set([1, 16, 32, 64, 128, 1024]);
 const LIST_FLAGS_SHOW = 1;
@@ -458,6 +459,12 @@ function inspectAppPackage(decoded, findings) {
   }
   for (const key of APP_PACKAGE_REQUIRED) {
     if (!(key in decoded)) add(findings, "error", "YAPK_APP_PACKAGE_KEY_MISSING", "Decoded AppPackageInfo is missing a schema-required key.", { key });
+  }
+  if (isObject(decoded.PortalInfo) && Object.keys(decoded.PortalInfo).length === 0) {
+    add(findings, "error", EMPTY_PORTALINFO_IMPORT_ERROR, "Product import feedback requires PortalInfo to be [] when no portal is included; do not emit an empty object.", { path: "PortalInfo" });
+  }
+  if (decoded.PortalInfo !== undefined && !Array.isArray(decoded.PortalInfo) && !isObject(decoded.PortalInfo)) {
+    add(findings, "error", "YAPK_PORTALINFO_INVALID", "PortalInfo must be [] for no portal or a portal object when a portal is included.", { path: "PortalInfo", actualType: decoded.PortalInfo === null ? "null" : typeof decoded.PortalInfo });
   }
   summary.pages = asArray(decoded.Pages).length;
   summary.formReports = asArray(decoded.FormReports).length;

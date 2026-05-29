@@ -525,6 +525,34 @@ function summarizeDecoded(decoded, type) {
   };
 }
 
+function normalizeYapkDecodedForSchema(decoded) {
+  if (!isObject(decoded)) return decoded;
+  if (!Array.isArray(decoded.PortalInfo)) return decoded;
+  return { ...decoded, PortalInfo: {} };
+}
+
+function inspectYapkPortalInfo(decoded) {
+  const errors = [];
+  if (!isObject(decoded)) return errors;
+  if (isObject(decoded.PortalInfo) && Object.keys(decoded.PortalInfo).length === 0) {
+    errors.push({
+      scope: "decodedResource",
+      path: "$.PortalInfo",
+      code: "YAPK_PORTALINFO_EMPTY_OBJECT_INVALID",
+      message: "Product import feedback requires PortalInfo to be [] when no portal is included; do not emit an empty object.",
+    });
+  } else if (decoded.PortalInfo !== undefined && !Array.isArray(decoded.PortalInfo) && !isObject(decoded.PortalInfo)) {
+    errors.push({
+      scope: "decodedResource",
+      path: "$.PortalInfo",
+      code: "YAPK_PORTALINFO_INVALID",
+      message: "PortalInfo must be [] for no portal or a portal object when a portal is included.",
+      actualType: decoded.PortalInfo === null ? "null" : typeof decoded.PortalInfo,
+    });
+  }
+  return errors;
+}
+
 function safeParseJson(value) {
   try {
     return parseJsonPreservingLargeInts(value);
@@ -566,7 +594,8 @@ async function main() {
     return;
   }
   const decodedRef = schema["x-decodedResourceSchema"] || (type === "yapk" && schema.$defs?.AppPackageInfo ? { $ref: "#/$defs/AppPackageInfo" } : undefined);
-  const decodedErrors = validate(decoded, decodedRef, schema);
+  const decodedForSchema = type === "yapk" ? normalizeYapkDecodedForSchema(decoded) : decoded;
+  const decodedErrors = validate(decodedForSchema, decodedRef, schema);
   let contentErrors = [];
   let categoryTarget = decoded;
   if (type === "yap") {
@@ -580,7 +609,8 @@ async function main() {
   }
   const categoryErrors = inspectFieldCategories(categoryTarget, type);
   const idErrors = type === "yap" && categoryTarget ? inspectYapIds(categoryTarget) : type === "yapk" ? inspectYapkIds(decoded) : [];
-  const errors = [...wrapperErrors.map((error) => ({ scope: "wrapper", ...error })), ...decodedErrors.map((error) => ({ scope: "decodedResource", ...error })), ...contentErrors, ...categoryErrors, ...idErrors];
+  const portalErrors = type === "yapk" ? inspectYapkPortalInfo(decoded) : [];
+  const errors = [...wrapperErrors.map((error) => ({ scope: "wrapper", ...error })), ...decodedErrors.map((error) => ({ scope: "decodedResource", ...error })), ...contentErrors, ...categoryErrors, ...idErrors, ...portalErrors];
 
   console.log(JSON.stringify({
     input: path.basename(input),

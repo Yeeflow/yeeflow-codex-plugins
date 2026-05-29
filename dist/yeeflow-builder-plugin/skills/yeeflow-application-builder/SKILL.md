@@ -95,7 +95,7 @@ Use this skill when the user provides business requirements, process documents, 
 
 YAPK-from-scratch rule: when the requested deliverable is a generated `.yapk`, the builder must still treat the inner application as the first deliverable. Build and validate `AppPackageInfo` content before Brotli/base64/sign. Do not sign if package/app creation validators, graph validators, workflow publish-readiness checks, or placeholder scans fail. `setsign` and `verifysign` prove wrapper/resource integrity, not generated-app correctness or tenant-specific routing. Preserve the proof boundary and write generated `.yapk` output outside git.
 
-YAPK schema v2 rule from Vendor Onboarding v1.13: generated `.yapk` output must be `AppExportPackageInfo` with `Resource = base64(Brotli(AppPackageInfo JSON))`. Do not put YAP `ListExportResult` in YAPK `Resource`. Use `Childs[].Fields`, not `Defs`; preserve `LongAsString` fields as strings; keep `AppID = 41` where the import rules require it; use API-issued IDs for new generated package/object IDs; and validate current-dashboard Data table `Field` bindings before signing.
+YAPK schema v2 rule from Vendor Onboarding v1.13/v1.14: generated `.yapk` output must be `AppExportPackageInfo` with `Resource = base64(Brotli(AppPackageInfo JSON))`. Do not put YAP `ListExportResult` in YAPK `Resource`. Use `Childs[].Fields`, not `Defs`; preserve `LongAsString` fields as strings; emit `PortalInfo: []` when no portal is included; keep `AppID = 41` where the import rules require it; use API-issued IDs for new generated package/object IDs; and validate current-dashboard Data table `Field` bindings before signing.
 
 This skill is the top-level application-building controller. It coordinates proven generator skills:
 

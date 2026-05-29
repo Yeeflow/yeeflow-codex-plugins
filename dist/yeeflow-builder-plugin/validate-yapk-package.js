@@ -37,6 +37,7 @@ const APP_PACKAGE_REQUIRED = [
   "PortalInfo",
   "Childs",
 ];
+const EMPTY_PORTALINFO_IMPORT_ERROR = "YAPK_PORTALINFO_EMPTY_OBJECT_INVALID";
 const LIST_PACKAGE_REQUIRED = ["List", "Fields", "Layouts", "RemindRules", "PublicForms", "FlowMappings"];
 const LIST_TYPE_ENUM = new Set([1, 16, 32, 64, 128, 1024]);
 const FIELD_TYPE_ENUM = new Set(["Text", "Bit", "Decimal", "DateTime", "Datetime", "Bigint"]);
@@ -327,6 +328,12 @@ function validateAppPackage(decoded, errors, warnings) {
     return { decodedKeys: Object.keys(decoded), counts };
   }
   for (const key of APP_PACKAGE_REQUIRED) if (!(key in decoded)) add(errors, "YAPK_APP_PACKAGE_KEY_MISSING", "Decoded AppPackageInfo is missing a schema-required key.", { key });
+  if (isObject(decoded.PortalInfo) && Object.keys(decoded.PortalInfo).length === 0) {
+    add(errors, EMPTY_PORTALINFO_IMPORT_ERROR, "Product import feedback requires PortalInfo to be [] when no portal is included; do not emit an empty object.", { path: "PortalInfo" });
+  }
+  if (decoded.PortalInfo !== undefined && !Array.isArray(decoded.PortalInfo) && !isObject(decoded.PortalInfo)) {
+    add(errors, "YAPK_PORTALINFO_INVALID", "PortalInfo must be [] for no portal or a portal object when a portal is included.", { path: "PortalInfo", actualType: decoded.PortalInfo === null ? "null" : typeof decoded.PortalInfo });
+  }
   if (isObject(decoded.ListSet) && Number(decoded.ListSet.Flags) !== 1) {
     add(errors, "YAPK_LISTMODEL_FLAGS_MISSING_OR_INVALID", "Generated AppPackageInfo root app/list-set resource requires ListSet.Flags = 1 before signing.", { path: "ListSet.Flags", value: decoded.ListSet.Flags });
   }
