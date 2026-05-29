@@ -526,8 +526,15 @@ function hasCardStructure(page) {
 }
 
 function isDefaultAlert(control) {
-  const text = JSON.stringify(control || {});
-  return /Here is the description|"\s*Alert\s*"|>Alert</i.test(text) || /Alert Here is the description/i.test(text);
+  const values = [
+    control.label,
+    control.nv_label,
+    control.attrs?.title,
+    control.attrs?.description,
+    control.attrs?.message,
+    control.attrs?.text,
+  ].map(safeString).filter(Boolean);
+  return values.some((value) => /^alert$/i.test(value.trim()) || /Here is the description/i.test(value));
 }
 
 function inspectDashboardStrict(surface, spec, findings, summary) {
@@ -690,7 +697,13 @@ function main() {
   const specPackageFindings = compareSpecToPackage(spec, inventory, uiQuality.report);
   const strictVisual = args.strictVisualAppQuality ? inspectStrictVisualQuality(decodedPackage, spec) : { summary: {}, findings: [] };
   const strictEscalatedFindings = args.strictAppQuality
-    ? specPackageFindings.map((finding) => ({ ...finding, level: finding.level === "warning" ? "error" : finding.level, source: "strict-app-quality" }))
+    ? specPackageFindings.map((finding) => ({
+      ...finding,
+      level: ["SPEC_PRINT_PAGE_MANUAL_REVIEW", "SPEC_ADVANCED_VISUAL_ELEMENTS_MANUAL_REVIEW"].includes(finding.code)
+        ? finding.level
+        : finding.level === "warning" ? "error" : finding.level,
+      source: "strict-app-quality",
+    }))
     : specPackageFindings;
   const findings = [
     ...plan.findings,

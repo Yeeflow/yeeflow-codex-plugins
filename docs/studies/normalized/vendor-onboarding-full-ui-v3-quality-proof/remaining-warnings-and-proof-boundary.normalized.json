@@ -1,0 +1,20 @@
+{
+  "proof_boundary": {
+    "local_generation": true,
+    "local_validation": true,
+    "runtime_import_or_install_proven_for_v3": false
+  },
+  "remaining_manual_review": [
+    "print_page_visual_fidelity",
+    "qr_or_barcode_behavior",
+    "advanced_visual_elements",
+    "tenant_specific_workflow_actions",
+    "final_mockup_visual_comparison"
+  ],
+  "accepted_warning_codes": [
+    "APP_PLAN_NOT_SUPPLIED",
+    "UI_IMPLEMENTATION_SPEC_SECTION_MISSING",
+    "SPEC_PRINT_PAGE_MANUAL_REVIEW",
+    "SPEC_ADVANCED_VISUAL_ELEMENTS_MANUAL_REVIEW"
+  ]
+}

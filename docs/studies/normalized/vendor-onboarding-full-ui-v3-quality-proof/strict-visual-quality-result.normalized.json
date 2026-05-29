@@ -1,0 +1,21 @@
+{
+  "strict_visual_app_quality": {
+    "yapk": {
+      "status": "pass_with_warnings",
+      "blocking_errors": 0,
+      "warnings": 5
+    },
+    "yap": {
+      "status": "pass_with_warnings",
+      "blocking_errors": 0,
+      "warnings": 5
+    }
+  },
+  "warning_codes": [
+    "APP_PLAN_NOT_SUPPLIED",
+    "UI_IMPLEMENTATION_SPEC_SECTION_MISSING",
+    "SPEC_PRINT_PAGE_MANUAL_REVIEW",
+    "SPEC_ADVANCED_VISUAL_ELEMENTS_MANUAL_REVIEW"
+  ],
+  "quality_gate_interpretation": "Strict visual app quality has no blocking findings; remaining warnings require manual review or richer spec metadata."
+}

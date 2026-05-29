@@ -525,10 +525,17 @@ function summarizeDecoded(decoded, type) {
   };
 }
 
-function normalizeYapkDecodedForSchema(decoded) {
-  if (!isObject(decoded)) return decoded;
-  if (decoded.PortalInfo !== null) return decoded;
-  return { ...decoded, PortalInfo: {} };
+function normalizeRuntimeProvenDecodedForSchema(value) {
+  if (Array.isArray(value)) return value.map(normalizeRuntimeProvenDecodedForSchema);
+  if (!isObject(value)) return value;
+  const normalized = {};
+  for (const [key, child] of Object.entries(value)) {
+    normalized[key] = normalizeRuntimeProvenDecodedForSchema(child);
+  }
+  if (normalized.PortalInfo === null) normalized.PortalInfo = {};
+  if (normalized.SimplePortal === null) normalized.SimplePortal = {};
+  if (Number(normalized.Type) === 103 && normalized.LayoutView === null) normalized.LayoutView = "";
+  return normalized;
 }
 
 function inspectYapkPortalInfo(decoded) {
@@ -556,6 +563,36 @@ function inspectYapkPortalInfo(decoded) {
       code: "YAPK_PORTALINFO_INVALID",
       message: "PortalInfo must be null for no portal or a portal object when a portal is included.",
       actualType: typeof decoded.PortalInfo,
+    });
+  }
+  return errors;
+}
+
+function inspectYapSimplePortal(decoded) {
+  const errors = [];
+  if (!isObject(decoded)) return errors;
+  if (isObject(decoded.SimplePortal) && Object.keys(decoded.SimplePortal).length === 0) {
+    errors.push({
+      scope: "decodedResource",
+      path: "$.SimplePortal",
+      code: "YAP_SIMPLEPORTAL_EMPTY_OBJECT_INVALID",
+      message: "Product import feedback requires SimplePortal to be null when no portal is included; do not emit an empty object.",
+    });
+  } else if (Array.isArray(decoded.SimplePortal)) {
+    errors.push({
+      scope: "decodedResource",
+      path: "$.SimplePortal",
+      code: "YAP_SIMPLEPORTAL_ARRAY_INVALID",
+      message: "Product import feedback requires SimplePortal to be null when no portal is included; do not emit an array.",
+      length: decoded.SimplePortal.length,
+    });
+  } else if (decoded.SimplePortal !== undefined && decoded.SimplePortal !== null && !isObject(decoded.SimplePortal)) {
+    errors.push({
+      scope: "decodedResource",
+      path: "$.SimplePortal",
+      code: "YAP_SIMPLEPORTAL_INVALID",
+      message: "SimplePortal must be null for no portal or a portal object when a portal is included.",
+      actualType: typeof decoded.SimplePortal,
     });
   }
   return errors;
@@ -602,7 +639,7 @@ async function main() {
     return;
   }
   const decodedRef = schema["x-decodedResourceSchema"] || (type === "yapk" && schema.$defs?.AppPackageInfo ? { $ref: "#/$defs/AppPackageInfo" } : undefined);
-  const decodedForSchema = type === "yapk" ? normalizeYapkDecodedForSchema(decoded) : decoded;
+  const decodedForSchema = normalizeRuntimeProvenDecodedForSchema(decoded);
   const decodedErrors = validate(decodedForSchema, decodedRef, schema);
   let contentErrors = [];
   let categoryTarget = decoded;
@@ -612,12 +649,12 @@ async function main() {
     categoryTarget = dataResult.data || {};
     if (dataResult.data) {
       const contentRef = schema.$defs?.ListExportInfo ? { $ref: "#/$defs/ListExportInfo" } : decodedRef;
-      contentErrors = contentErrors.concat(validate(dataResult.data, contentRef, schema).map((error) => ({ scope: "decodedResource.Data", ...error })));
+      contentErrors = contentErrors.concat(validate(normalizeRuntimeProvenDecodedForSchema(dataResult.data), contentRef, schema).map((error) => ({ scope: "decodedResource.Data", ...error })));
     }
   }
   const categoryErrors = inspectFieldCategories(categoryTarget, type);
   const idErrors = type === "yap" && categoryTarget ? inspectYapIds(categoryTarget) : type === "yapk" ? inspectYapkIds(decoded) : [];
-  const portalErrors = type === "yapk" ? inspectYapkPortalInfo(decoded) : [];
+  const portalErrors = type === "yapk" ? inspectYapkPortalInfo(decoded) : inspectYapSimplePortal(decoded);
   const errors = [...wrapperErrors.map((error) => ({ scope: "wrapper", ...error })), ...decodedErrors.map((error) => ({ scope: "decodedResource", ...error })), ...contentErrors, ...categoryErrors, ...idErrors, ...portalErrors];
 
   console.log(JSON.stringify({

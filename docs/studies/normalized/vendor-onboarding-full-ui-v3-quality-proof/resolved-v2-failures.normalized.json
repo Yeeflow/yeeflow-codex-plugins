@@ -1,0 +1,22 @@
+{
+  "resolved_v2_failures": [
+    "retired_dashboard_shell_risk",
+    "missing_dashboard_src_marker",
+    "dashboard_data_table_missing_field_binding",
+    "default_alert_content",
+    "generic_button_labels",
+    "blank_or_generic_custom_forms",
+    "incomplete_kanban_collection_templates",
+    "scaffold_form_text",
+    "no_portal_simpleportal_object_or_array",
+    "no_portal_portalinfo_object_or_array"
+  ],
+  "v3_rules": {
+    "dashboard_type_103_requires_src": true,
+    "yap_simpleportal_for_no_portal": null,
+    "yapk_portalinfo_for_no_portal": null,
+    "data_table_columns_require_field_and_fieldname": true,
+    "blank_custom_forms_forbidden": true,
+    "default_alert_content_forbidden": true
+  }
+}

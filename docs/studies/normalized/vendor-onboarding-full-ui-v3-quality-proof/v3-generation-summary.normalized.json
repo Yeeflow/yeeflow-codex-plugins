@@ -1,0 +1,32 @@
+{
+  "package_paths": {
+    "yapk": "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v3.yapk",
+    "yap": "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v3.yap"
+  },
+  "source_baseline": "full-ui-v2 importable package baseline",
+  "generated_package_committed": false,
+  "app_areas": [
+    "Vendor Management Dashboard",
+    "Compliance Review Workspace",
+    "Vendors",
+    "Vendor Documents",
+    "Compliance Reviews",
+    "Vendor Tasks",
+    "Vendor Activity / History",
+    "Vendor Detail View Page",
+    "New Vendor Request Form",
+    "Vendor Print Page"
+  ],
+  "counts": {
+    "dashboard_pages": 2,
+    "data_lists": 5,
+    "custom_forms": 7,
+    "data_tables": 4,
+    "item_template_controls": 8
+  },
+  "signing": {
+    "yapk_server_signed": true,
+    "signature_bytes": 32,
+    "verifysign_status": 200
+  }
+}
