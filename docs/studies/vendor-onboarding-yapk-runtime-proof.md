@@ -728,6 +728,38 @@ V1.11 adds that same simple dashboard function back onto the current dashboard s
 
 This is a focused test to determine whether the current dashboard version can still accept inline `LayoutInResources` page content. If it imports and renders, the next step is to progressively add richer dashboard controls. If it imports but renders blank or fails, export a current-version dashboard with one manually added Text/Data table control so the exact current content storage pattern can be learned.
 
+V1.11 imported and opened the new dashboard version, but the Data table rendered:
+
+- `Field(s) ,,,,, have been deleted. Please check the query configuration.`
+
+Diagnosis:
+
+- The Data table sidebar showed the intended labels: `Vendor Name`, `Vendor Type`, `Country / Region`, `Primary Contact`, `Email`, and `Phone`.
+- The generated column entries used `FieldName` for the internal source field and omitted the export-proven `Field` binding.
+- Runtime-proven dashboard Data table exports use `attrs.listarr[].Field` for the query field and `attrs.listarr[].FieldName` for the visible column label.
+- The missing `Field` values explain the empty field names in the runtime error text.
+
+V1.12 fixes the Data table column binding shape:
+
+- `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.12-current-dashboard-data-table-fields-fixed.yap`
+- Home dashboard keeps the current dashboard shell: `LayoutView = null`, `Ext2 = "{\"src\":true}"`, and one inline page resource.
+- The Vendors Data table uses `attrs.data.list` with `AppID`, `ListID`, `Type`, `Title`, and `ListSetID`.
+- The six table columns use `Field` bindings: `Text0`, `Text1`, `Text2`, `Text3`, `Text4`, and `Text5`.
+- The visible labels remain `Vendor Name`, `Vendor Type`, `Country / Region`, `Primary Contact`, `Email`, and `Phone`.
+
+Validator hardening:
+
+- `validate-yap-package.js` and `scripts/inspect-generated-ui-quality.mjs` now flag generated dashboard Data table columns that omit the export-proven `Field` binding.
+- Synthetic regression test: removing `Field` from the six generated columns fails with `DASHBOARD_DATA_TABLE_DISPLAY_FIELD_BINDING_MISSING`.
+
+Validation:
+
+- Product-team YAP schema standard inspector: pass.
+- Package validator: pass with warnings only.
+- Materialization inspector: pass with one expected `NO_FORMS` warning.
+- Aggregate import-readiness: pass with warnings only; generated UI quality step passes with zero errors and zero warnings.
+- Strict historical schema validator still reports `Item.Layouts[0].LayoutView` as `null` instead of string, but this is the export-proven current-dashboard shell shape from the imported v1.10/v1.11 candidates.
+
 ## Signing And Verification
 
 The generator uses the standard Yeeflow API base URL behavior through `scripts/yeeflow-env-utils.mjs`.
@@ -748,7 +780,7 @@ The generator uses the standard Yeeflow API base URL behavior through `scripts/y
 - V1.4 server signature shape: 32-byte base64 value
 - V1.4 `verifysign` status: passed
 
-The V1 package remains the locally validated baseline. The V1.1 package proved signing and verification but failed package install. The V1.2 package proved wrapper/upload acceptance but failed materialization. The V1.3 package preserved the accepted wrapper pattern and restored export-like metadata but still failed materialization. The V1.4 YAPK package fixes the product-team-reported `Field.Category` integer typing issue. The full `.yap` fallback also reached the import dialog but failed create. The `.yap` V1.4 schema-direct package fixed category typing but still used the now-rejected direct `ListExportInfo` resource shape. The `.yap` V1.4 product-schema result packages fixed the wrapper shape but still had duplicate/unsafe IDs. The `.yap` V1.5 no-lookup package imported but used locally generated IDs and intentionally minimal UI. The `.yap` V1.6 API-ID package still failed because it incorrectly generated AppID. The `.yap` V1.7 fixed-AppID package still failed because `ReplaceIds` was empty. The `.yap` V1.8 ReplaceIds-fixed package still failed because child `ListSite_` custom type IDs pointed to the old source app/list-set. The `.yap` V1.9 CustomType-fixed product-schema result packages imported successfully but exposed that `Home` still used an older dashboard shell. The `.yap` V1.10 current-dashboard candidate applies the export-proven current dashboard shell learned from the user-created `New Dashboard`. The `.yap` V1.11 current-dashboard-data-table candidate adds the previous simple Home content back to the current shell for a focused content-render test.
+The V1 package remains the locally validated baseline. The V1.1 package proved signing and verification but failed package install. The V1.2 package proved wrapper/upload acceptance but failed materialization. The V1.3 package preserved the accepted wrapper pattern and restored export-like metadata but still failed materialization. The V1.4 YAPK package fixes the product-team-reported `Field.Category` integer typing issue. The full `.yap` fallback also reached the import dialog but failed create. The `.yap` V1.4 schema-direct package fixed category typing but still used the now-rejected direct `ListExportInfo` resource shape. The `.yap` V1.4 product-schema result packages fixed the wrapper shape but still had duplicate/unsafe IDs. The `.yap` V1.5 no-lookup package imported but used locally generated IDs and intentionally minimal UI. The `.yap` V1.6 API-ID package still failed because it incorrectly generated AppID. The `.yap` V1.7 fixed-AppID package still failed because `ReplaceIds` was empty. The `.yap` V1.8 ReplaceIds-fixed package still failed because child `ListSite_` custom type IDs pointed to the old source app/list-set. The `.yap` V1.9 CustomType-fixed product-schema result packages imported successfully but exposed that `Home` still used an older dashboard shell. The `.yap` V1.10 current-dashboard candidate applies the export-proven current dashboard shell learned from the user-created `New Dashboard`. The `.yap` V1.11 current-dashboard-data-table candidate adds the previous simple Home content back to the current shell but its table query field bindings were incomplete. The `.yap` V1.12 current-dashboard-data-table-fields-fixed candidate corrects the table binding shape with export-proven `Field` values.
 
 ## Known Gaps
 
@@ -764,6 +796,7 @@ The V1 package remains the locally validated baseline. The V1.1 package proved s
 - The YAP V1.7 fixed-AppID plus API-ID product-schema result candidates failed because `ReplaceIds` was empty.
 - The YAP V1.8 ReplaceIds-fixed product-schema result candidates failed because child `CustomType` values still used stale `ListSite_` IDs.
 - The YAP V1.9 CustomType-fixed product-schema result candidates have not yet been manually import-tested after applying the product-team ListSite correction.
+- The YAP V1.12 current-dashboard Data table field-binding fix has not yet been manually import-tested.
 - The full `.yap` fallback reached the import dialog but failed create.
 - The `.yap` V1.3 schema-direct package must be manually import-tested before being treated as import-proven.
 - Collection/Kanban action steps are safe local placeholders and should be connected to tenant-specific workflows after import if needed.
@@ -778,21 +811,23 @@ It does not prove live import success, runtime rendering, or end-user workflow b
 
 ## Manual Test Checklist
 
-1. Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-no-lookups.yap`.
-2. If the no-lookup YAP imports, import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-with-lookups.yap`.
-3. If both import, import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-simple-dashboard.yap`.
-4. If YAP testing is blocked and YAPK retest is desired, install `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-category-fixed.yapk`.
-5. Open the Vendor Management Dashboard.
-6. Check dashboard padding, cards, KPI layout, alert, and quick links.
-7. Verify dashboard Data tables show configured columns.
-8. Verify Kanban cards show meaningful vendor fields.
-9. Open the Vendor Detail View Page.
-10. Verify tabs, steps bar, progress controls, document embed area, compliance cards, task cards, and timeline.
-11. Open the New Vendor Request Form.
-12. Verify padded sections, toggle section, Dynamic Sub List, file/document fields, and form actions.
-13. Open the Compliance Review Workspace.
-14. Verify Kanban, collection cards, risk score, alert, bulk toolbar pattern, and missing/expired document table.
-15. Open the Vendor Print Page.
-16. Verify print layout, divider spacing, approval timeline, document checklist, QR Code, and Barcode.
-17. Connect placeholder collection/workflow actions to tenant-specific workflows if needed.
-18. Record the live import/runtime result before treating this as runtime-proven.
+1. Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.12-current-dashboard-data-table-fields-fixed.yap`.
+2. Open the Vendor Management Dashboard.
+3. Confirm the Home page uses the current/new dashboard version.
+4. Verify the Vendors Data table no longer shows `Field(s) ,,,,, have been deleted`.
+5. Verify the Data table settings show six display fields and the canvas renders the table area without query-configuration errors.
+6. If V1.12 fails, manually fix the Data table in Yeeflow, publish/save, export the app, and provide the export so the exact current-dashboard Data table binding shape can be compared.
+7. If YAP testing is blocked and YAPK retest is desired, install `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-category-fixed.yapk`.
+8. Check dashboard padding, cards, KPI layout, alert, and quick links.
+9. Verify dashboard Data tables show configured columns.
+10. Verify Kanban cards show meaningful vendor fields.
+11. Open the Vendor Detail View Page.
+12. Verify tabs, steps bar, progress controls, document embed area, compliance cards, task cards, and timeline.
+13. Open the New Vendor Request Form.
+14. Verify padded sections, toggle section, Dynamic Sub List, file/document fields, and form actions.
+15. Open the Compliance Review Workspace.
+16. Verify Kanban, collection cards, risk score, alert, bulk toolbar pattern, and missing/expired document table.
+17. Open the Vendor Print Page.
+18. Verify print layout, divider spacing, approval timeline, document checklist, QR Code, and Barcode.
+19. Connect placeholder collection/workflow actions to tenant-specific workflows if needed.
+20. Record the live import/runtime result before treating this as runtime-proven.

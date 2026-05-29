@@ -146,6 +146,7 @@ function fieldMapsForData(data) {
 function columnFieldName(column) {
   if (!isObject(column)) return safeString(column);
   const candidates = [
+    column.Field,
     column.FieldName,
     column.fieldName,
     column.field,
@@ -242,7 +243,11 @@ function inspectDataTable(control, pointer, page, listsById, findings, summary) 
   }
   const fields = source?.fields || new Map();
   columns.forEach((column, index) => {
-    const fieldName = columnFieldName(column);
+    const explicitField = isObject(column) ? safeString(column.Field) : "";
+    if (isObject(column) && !explicitField) {
+      add(findings, "error", "DATA_TABLE_DISPLAY_COLUMN_FIELD_BINDING_MISSING", "Dashboard Data table display column must include export-proven Field binding; FieldName is the visible label, not the query field.", { page, pointer: `${pointer}.attrs.listarr[${index}]`, listId });
+    }
+    const fieldName = explicitField || columnFieldName(column);
     if (!fieldName) {
       add(findings, "error", "DATA_TABLE_DISPLAY_COLUMN_FIELD_MISSING", "Data table display column must identify a source field.", { page, pointer: `${pointer}.attrs.listarr[${index}]`, listId });
     } else if (source && !fields.has(fieldName)) {

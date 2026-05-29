@@ -360,7 +360,7 @@ function hasSafeHorizontalPaddingNearRoot(root) {
 
 function displayColumnFieldName(column) {
   if (!isObject(column)) return safeString(column);
-  for (const candidate of [column.FieldName, column.fieldName, column.field, column.Name, column.name, column.SortName, column.id, column.FieldID, column.fieldID, column.value]) {
+  for (const candidate of [column.Field, column.field, column.FieldName, column.fieldName, column.Name, column.name, column.SortName, column.id, column.FieldID, column.fieldID, column.value]) {
     const value = safeString(candidate);
     if (value) return value;
   }
@@ -2079,7 +2079,11 @@ function validateDashboardDataTableControl(control, title, layoutId, pointer, li
   }
   const fields = fieldsByList.get(listId) || new Map();
   columns.forEach((column, index) => {
-    const fieldName = displayColumnFieldName(column);
+    const explicitField = isObject(column) ? safeString(column.Field) : "";
+    if (isObject(column) && !explicitField) {
+      issue(report, severity, "DASHBOARD_DATA_TABLE_DISPLAY_FIELD_BINDING_MISSING", "Dashboard Data table display columns must include export-proven Field bindings. FieldName is the visible label and is not enough for the query configuration.", { title, layoutId, pointer: `${pointer}.attrs.listarr[${index}]`, listId });
+    }
+    const fieldName = explicitField || displayColumnFieldName(column);
     if (!fieldName) {
       issue(report, severity, "DASHBOARD_DATA_TABLE_DISPLAY_FIELD_MISSING", "Data table display column entries must identify a source field.", { title, layoutId, pointer: `${pointer}.attrs.listarr[${index}]`, listId });
     } else if (fieldsByList.has(listId) && !fields.has(fieldName)) {

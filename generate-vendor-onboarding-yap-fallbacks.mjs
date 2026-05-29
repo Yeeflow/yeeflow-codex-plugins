@@ -222,13 +222,14 @@ async function main() {
   writeSchemaResultYap(uniqueIdsNoLookups, uniqueIdsNoLookupsPath);
   const apiEnv = loadYeeflowApiEnvironment();
   const apiIdCount = countSchemaIds(schemaDirect);
-  const apiIds = await fetchYeeflowUniqueIds({ apiBaseUrl: apiEnv.apiBaseUrl, apiKey: apiEnv.apiKey, count: apiIdCount * 5 });
+  const apiIds = await fetchYeeflowUniqueIds({ apiBaseUrl: apiEnv.apiBaseUrl, apiKey: apiEnv.apiKey, count: apiIdCount * 6 });
   const apiIdBatches = [
     apiIds.slice(0, apiIdCount),
     apiIds.slice(apiIdCount, apiIdCount * 2),
     apiIds.slice(apiIdCount * 2, apiIdCount * 3),
     apiIds.slice(apiIdCount * 3, apiIdCount * 4),
     apiIds.slice(apiIdCount * 4, apiIdCount * 5),
+    apiIds.slice(apiIdCount * 5, apiIdCount * 6),
   ];
   const apiIdsNoLookups = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[0]), { dashboard: "minimal" });
   const apiIdsNoLookupsWithoutLookupFields = removeLookupRelationships(apiIdsNoLookups);
@@ -249,6 +250,10 @@ async function main() {
   const apiIdsCurrentDashboardDataTableNoLookups = removeLookupRelationships(apiIdsCurrentDashboardDataTable);
   const apiIdsCurrentDashboardDataTablePath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.11-current-dashboard-data-table.yap";
   writeSchemaResultYap(apiIdsCurrentDashboardDataTableNoLookups, apiIdsCurrentDashboardDataTablePath);
+  const apiIdsCurrentDashboardDataTableFixed = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[5]), { dashboard: "simple-data-table" });
+  const apiIdsCurrentDashboardDataTableFixedNoLookups = removeLookupRelationships(apiIdsCurrentDashboardDataTableFixed);
+  const apiIdsCurrentDashboardDataTableFixedPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.12-current-dashboard-data-table-fields-fixed.yap";
+  writeSchemaResultYap(apiIdsCurrentDashboardDataTableFixedNoLookups, apiIdsCurrentDashboardDataTableFixedPath);
 
   console.log(JSON.stringify({
     status: "generated",
@@ -370,6 +375,16 @@ async function main() {
         fields: apiIdsCurrentDashboardDataTableNoLookups.Childs.reduce((total, child) => total + child.Defs.length, 0),
         dashboards: apiIdsCurrentDashboardDataTableNoLookups.Item.Layouts.length,
         layouts: apiIdsCurrentDashboardDataTableNoLookups.Childs.reduce((total, child) => total + child.Layouts.length, 0) + apiIdsCurrentDashboardDataTableNoLookups.Item.Layouts.length,
+      },
+      {
+        path: apiIdsCurrentDashboardDataTableFixedPath,
+        purpose: "ListExportResult YAP with fixed AppID 41, API-issued IDs, populated ReplaceIds, no lookups, current dashboard shell, and export-proven Vendors Data table Field bindings",
+        buildStatus: "written",
+        apiIds: summarizeIds(apiIdBatches[5]),
+        dataLists: apiIdsCurrentDashboardDataTableFixedNoLookups.Childs.length,
+        fields: apiIdsCurrentDashboardDataTableFixedNoLookups.Childs.reduce((total, child) => total + child.Defs.length, 0),
+        dashboards: apiIdsCurrentDashboardDataTableFixedNoLookups.Item.Layouts.length,
+        layouts: apiIdsCurrentDashboardDataTableFixedNoLookups.Childs.reduce((total, child) => total + child.Layouts.length, 0) + apiIdsCurrentDashboardDataTableFixedNoLookups.Item.Layouts.length,
       },
     ],
   }, null, 2));
@@ -808,12 +823,9 @@ function assignApiSchemaIds(source, allocator, options = {}) {
 function simpleDashboardSurface(data) {
   const vendors = (data.Childs || []).find((child) => child.ListModel?.Title === "Vendors");
   const columns = (vendors?.Defs || []).slice(0, 6).map((field, index) => ({
-    FieldID: field.FieldID,
-    FieldName: field.FieldName,
-    DisplayName: field.DisplayName,
-    Order: index + 1,
-    Show: true,
-    Type: field.Type || "input",
+    DisplayName: "",
+    FieldName: field.DisplayName,
+    Field: field.FieldName,
   }));
   return {
     title: "Vendor Management Dashboard",
@@ -850,12 +862,19 @@ function simpleDashboardSurface(data) {
           attrs: {
             data: {
               list: {
+                AppID: 41,
                 ListID: vendors?.ListModel?.ListID || "",
+                Type: 1,
                 Title: "Vendors",
+                ListSetID: data.Item?.ListModel?.ListID || "",
               },
-              columns,
+              ps: 10,
+              filter: [],
+              fulltext: [],
+              sort: [],
             },
             listarr: columns,
+            fallback: { et: "There are no vendors yet." },
           },
           children: [],
         },
