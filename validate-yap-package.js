@@ -399,6 +399,39 @@ function generatorFinalSeverity(report, fallback = "warning") {
   return report.mode === "generator" && report.stage === "final" ? "error" : fallback;
 }
 
+function validateGeneratedIntegerId(value, report, context = {}) {
+  if (value === undefined || value === null || value === "") return;
+  const severity = generatorFinalSeverity(report);
+  if (!Number.isInteger(value)) {
+    issue(report, severity, "INVALID_ID_TYPE", "Generated YAP ID values must be JSON integers.", {
+      ...context,
+      actualType: Array.isArray(value) ? "array" : value === null ? "null" : typeof value,
+    });
+  } else if (!Number.isSafeInteger(value)) {
+    issue(report, severity, "UNSAFE_INTEGER_ID", "Generated YAP integer IDs must be within Number.MAX_SAFE_INTEGER to avoid JSON rounding duplicates.", {
+      ...context,
+      value,
+    });
+  }
+}
+
+function validateUniqueGeneratedId(value, seen, report, code, message, context = {}) {
+  if (value === undefined || value === null || value === "") return;
+  const key = safeString(value);
+  const previous = seen.get(key);
+  if (previous) {
+    issue(report, generatorFinalSeverity(report), code, message, {
+      ...context,
+      value: key,
+      previousPath: previous.path,
+      previousList: previous.list,
+      previousName: previous.name,
+    });
+  } else {
+    seen.set(key, context);
+  }
+}
+
 function isSchemaDirectYap(report) {
   return report && report.wrapper && (report.wrapper.inputType === "wrapped-yap-schema-direct" || report.wrapper.inputType === "wrapped-yap-list-export-result");
 }
@@ -916,9 +949,12 @@ function validate(inputPath, mode, stage) {
   const fieldsByList = new Map();
   const localIds = new Set();
   const fieldIdsByApp = new Map();
+  const listIdsByApp = new Map();
+  const layoutIdsByApp = new Map();
+  const layoutResourceIdsByApp = new Map();
 
   resourceItems.forEach((item, index) => {
-    validateResourceItem(item, index, index === 0, rootListSetId, replaceIds, localIds, listsById, fieldsByList, fieldIdsByApp, report);
+    validateResourceItem(item, index, index === 0, rootListSetId, replaceIds, localIds, listsById, fieldsByList, fieldIdsByApp, listIdsByApp, layoutIdsByApp, layoutResourceIdsByApp, report);
   });
 
   validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList, report, resource);
@@ -2459,7 +2495,7 @@ function validateDataListFieldTypeSettings(field, listTitle, pathPrefix, report)
   }
 }
 
-function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, localIds, listsById, fieldsByList, fieldIdsByApp, report) {
+function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, localIds, listsById, fieldsByList, fieldIdsByApp, listIdsByApp, layoutIdsByApp, layoutResourceIdsByApp, report) {
   const pathPrefix = isRoot ? "$.Item" : `$.Childs[${index - 1}]`;
   if (!isObject(item) || !isObject(item.ListModel)) {
     issue(report, "error", "RESOURCE_LISTMODEL_MISSING", "Resource Item.ListModel is required.", { path: pathPrefix });
@@ -2485,6 +2521,8 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   }
 
   if (listId) {
+    validateGeneratedIntegerId(list.ListID, report, { path: `${pathPrefix}.ListModel.ListID`, list: title });
+    validateUniqueGeneratedId(list.ListID, listIdsByApp, report, "DUPLICATE_LIST_ID", "ListID values must be globally unique across generated ListExportItem resources.", { path: `${pathPrefix}.ListModel.ListID`, list: title, name: title });
     listsById.set(listId, { item, title, listId, listSetId, resourceType });
     localIds.add(listId);
   }
@@ -2493,12 +2531,15 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   const fieldNames = new Set();
   const fieldInternal = new Set();
   const fieldDisplayNames = new Set();
+  const fieldIndexes = new Set();
   for (const [fieldIndex, field] of fields.entries()) {
     const fp = `${pathPrefix}.Defs[${fieldIndex}]`;
     const fieldId = safeString(field.FieldID);
     const fieldName = safeString(field.FieldName);
     const internalName = safeString(field.InternalName);
     const displayName = safeString(field.DisplayName);
+    validateGeneratedIntegerId(field.FieldID, report, { path: `${fp}.FieldID`, list: title, field: displayName || fieldName || internalName || null });
+    validateGeneratedIntegerId(field.FieldIndex, report, { path: `${fp}.FieldIndex`, list: title, field: displayName || fieldName || internalName || null });
     if (!Number.isInteger(field.Category)) {
       issue(report, generatorFinalSeverity(report), "FIELD_CATEGORY_NOT_INT", "Field.Category must be an integer for generated packages.", {
         path: `${fp}.Category`,
@@ -2522,6 +2563,11 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
       } else {
         fieldIdsByApp.set(fieldId, { list: title, fieldName });
       }
+    }
+    if (field.FieldIndex !== undefined) {
+      const indexKey = safeString(field.FieldIndex);
+      if (fieldIndexes.has(indexKey)) issue(report, generatorFinalSeverity(report), "DUPLICATE_FIELD_INDEX", "FieldIndex values must be unique within a list.", { path: `${fp}.FieldIndex`, list: title, field: displayName || fieldName || internalName || null, value: indexKey });
+      fieldIndexes.add(indexKey);
     }
     if (safeString(field.ListID) && listId && safeString(field.ListID) !== listId) {
       issue(report, generatorFinalSeverity(report), "FIELD_LIST_ID_MISMATCH", "Field ListID must match its parent data-list ListID; otherwise Yeeflow may materialize the list shell without custom fields.", {
@@ -2635,7 +2681,18 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   layouts.forEach((layout, layoutIndex) => {
     const layoutId = safeString(layout.LayoutID);
     if (!layoutId) issue(report, "error", "LAYOUT_ID_MISSING", "LayoutID is required.", { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutID`, list: title });
-    else localIds.add(layoutId);
+    else {
+      validateGeneratedIntegerId(layout.LayoutID, report, { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutID`, list: title, layout: layout.Title || null });
+      validateUniqueGeneratedId(layout.LayoutID, layoutIdsByApp, report, "DUPLICATE_LAYOUT_ID", "LayoutID values must be globally unique across all ListExportItem.Layouts.", { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutID`, list: title, name: layout.Title || null });
+      localIds.add(layoutId);
+    }
+    asArray(layout.LayoutInResources).forEach((resource, resourceIndex) => {
+      if (resource && resource.ID !== undefined) {
+        validateGeneratedIntegerId(resource.ID, report, { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutInResources[${resourceIndex}].ID`, list: title, layout: layout.Title || null });
+        validateUniqueGeneratedId(resource.ID, layoutResourceIdsByApp, report, "DUPLICATE_RESOURCE_ID", "LayoutInResources ID values must be globally unique across layout resources.", { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutInResources[${resourceIndex}].ID`, list: title, name: layout.Title || null });
+      }
+      if (resource && resource.RefId !== undefined) validateGeneratedIntegerId(resource.RefId, report, { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutInResources[${resourceIndex}].RefId`, list: title, layout: layout.Title || null });
+    });
     if (!isRoot && Number(layout.Type) !== 1) {
       viewCount += 1;
       if (layout.IsDefault === true) defaultViewCount += 1;

@@ -17,6 +17,8 @@ This study records the local generation and validation status for the Vendor Onb
 - YAP field-category fixed schema-direct candidate: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-category-fixed.yap`
 - YAP product-schema result candidate without lookups: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result-no-lookups.yap`
 - YAP product-schema result candidate with lookups: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result.yap`
+- YAP unique-ID product-schema result candidate without lookups: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.5-unique-ids-no-lookups.yap`
+- YAP unique-ID product-schema result candidate with lookups: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.5-unique-ids.yap`
 - Generator: `generate-vendor-onboarding-compliance-yapk.mjs`
 - Install-compatibility generator: `generate-vendor-onboarding-install-compatible-yapk.mjs`
 - Branch: `codex/vendor-onboarding-yapk-runtime-proof`
@@ -27,6 +29,7 @@ This study records the local generation and validation status for the Vendor Onb
 - V1.3 generated status: server-signed export-shape candidate that keeps the V1.2 accepted wrapper/signing/encoding pattern and restores export-like list, field, and layout metadata
 - V1.4 generated status: server-signed export-shape YAPK and schema-direct YAP with every `Field.Category` normalized to an integer
 - YAP V1.4 product-schema result status: generated after product team supplied the corrected YAP v1 schema requiring decoded `Resource` to be `ListExportResult`
+- YAP V1.5 unique-ID product-schema result status: generated after product team identified duplicated `LayoutID` values; uses safe unique JSON integer IDs
 - YAP fallback status: generated from the same decoded application resource for normal application import testing after the YAPK path failed materialization
 - YAP V1.1 status: same full generated application as V1 YAP with `Resource.MainListType` normalized from string `classes` to numeric `1024`
 - YAP V1.2 data-model status: import-isolation candidate that removes the rich dashboard/custom-page surfaces and app groups, keeping the five data lists, fields, simple list forms, list views, and a minimal Home page
@@ -340,6 +343,75 @@ Recommended next manual test for YAP:
 2. If it imports, try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result.yap` to test lookup materialization.
 3. Do not return to rich UI generation until the schema-correct base import layer succeeds.
 
+## YAP V1.5 Unique ID Fix
+
+After the V1.4 product-schema YAP still failed import, product team feedback identified a duplicated layout ID:
+
+- Feedback: `layout id 重复了, 7601000000000001063`
+- Meaning: `LayoutID` values must be unique for importer materialization.
+
+Root cause:
+
+- Earlier Vendor Onboarding YAP candidates reused Yeeflow-style large numeric IDs above JavaScript's safe integer range.
+- During JSON parsing/stringifying, several IDs rounded to repeated values, which collapsed distinct `ListID`, `FieldID`, `LayoutID`, and layout-resource IDs.
+- The local validators checked schema shape but did not enforce global uniqueness or safe JSON integer ranges for generated IDs.
+
+Generator fix:
+
+- `generate-vendor-onboarding-yap-fallbacks.mjs` now creates V1.5 YAP candidates with a deterministic safe integer ID allocator.
+- Generated IDs are below `Number.MAX_SAFE_INTEGER`.
+- `ListID`, `FieldID`, `LayoutID`, and `LayoutInResources[].ID` values are unique in their package domains.
+- List view columns are rebuilt after ID allocation so view `FieldID` and `FieldName` references resolve to the regenerated fields.
+
+Validator hardening:
+
+- `scripts/validate-standard-package-schema.mjs` now reports:
+  - `DUPLICATE_LAYOUT_ID`
+  - `DUPLICATE_LIST_ID`
+  - `DUPLICATE_FIELD_ID`
+  - `DUPLICATE_RESOURCE_ID`
+  - `UNSAFE_INTEGER_ID`
+  - `INVALID_ID_TYPE`
+- `scripts/inspect-yap-schema-standard.mjs` now performs the same generated YAP ID uniqueness checks.
+- `validate-yap-package.js` now hard-errors duplicate generated `LayoutID`, `ListID`, `FieldID`, layout resource IDs, unsafe integer IDs, invalid ID types, and duplicate field indexes.
+
+Regression smoke:
+
+- Two layouts with the same `LayoutID` fail with `DUPLICATE_LAYOUT_ID`.
+- Two child lists with the same `ListID` fail with `DUPLICATE_LIST_ID`.
+- Two fields with the same `FieldID` fail with `DUPLICATE_FIELD_ID`.
+- An integer ID above `Number.MAX_SAFE_INTEGER` fails with `UNSAFE_INTEGER_ID`.
+- A unique-ID synthetic YAP passes the uniqueness checks.
+
+YAP V1.5 unique-ID local proof:
+
+- No-lookup output: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.5-unique-ids-no-lookups.yap`
+- Lookup output: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.5-unique-ids.yap`
+- Decoded `Resource` shape: `ListExportResult`
+- `ListExportResult.Data` shape: JSON string
+- Child lists: 5
+- Fields: 59
+- Layouts: 16
+- List IDs: 6 unique values, 0 duplicates
+- Field IDs: 59 unique values, 0 duplicates
+- Layout IDs: 16 unique values, 0 duplicates
+- Layout resource IDs: 11 unique values, 0 duplicates
+- Specific duplicated product-reported ID `7601000000000001063`: absent
+- All emitted IDs are safe JSON integers
+- Standard schema validation using `/Users/Renger/Downloads/yap-v1-schema.json`: pass, 0 errors for both candidates
+- YAP schema-standard inspector: pass, 0 errors, 0 warnings for both candidates
+- Package validator: pass with warnings, 0 errors for both candidates
+- Graph validator: pass with warnings, 0 errors for both candidates
+- Import-readiness suite: pass with warnings, 0 errors for both candidates
+- Field category audit: all 59 fields have integer `Category: 0`
+- Hard-coded `codex.yeeflow.com`: none detected
+
+Recommended next manual test for YAP:
+
+1. Try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.5-unique-ids-no-lookups.yap` first.
+2. If it imports, try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.5-unique-ids.yap` to test lookup materialization.
+3. Keep the V1.4 candidates only as historical failure references; V1.5 is the next recommended retry.
+
 ## Signing And Verification
 
 The generator uses the standard Yeeflow API base URL behavior through `scripts/yeeflow-env-utils.mjs`.
@@ -360,7 +432,7 @@ The generator uses the standard Yeeflow API base URL behavior through `scripts/y
 - V1.4 server signature shape: 32-byte base64 value
 - V1.4 `verifysign` status: passed
 
-The V1 package remains the locally validated baseline. The V1.1 package proved signing and verification but failed package install. The V1.2 package proved wrapper/upload acceptance but failed materialization. The V1.3 package preserved the accepted wrapper pattern and restored export-like metadata but still failed materialization. The V1.4 YAPK package fixes the product-team-reported `Field.Category` integer typing issue. The full `.yap` fallback also reached the import dialog but failed create. The `.yap` V1.4 schema-direct package fixed category typing but still used the now-rejected direct `ListExportInfo` resource shape. The `.yap` V1.4 product-schema result packages are now the recommended YAP retry candidates.
+The V1 package remains the locally validated baseline. The V1.1 package proved signing and verification but failed package install. The V1.2 package proved wrapper/upload acceptance but failed materialization. The V1.3 package preserved the accepted wrapper pattern and restored export-like metadata but still failed materialization. The V1.4 YAPK package fixes the product-team-reported `Field.Category` integer typing issue. The full `.yap` fallback also reached the import dialog but failed create. The `.yap` V1.4 schema-direct package fixed category typing but still used the now-rejected direct `ListExportInfo` resource shape. The `.yap` V1.4 product-schema result packages fixed the wrapper shape but still had duplicate/unsafe IDs. The `.yap` V1.5 unique-ID product-schema result packages are now the recommended YAP retry candidates.
 
 ## Known Gaps
 
@@ -370,6 +442,7 @@ The V1 package remains the locally validated baseline. The V1.1 package proved s
 - V1.3 reached the same materialization-failure state.
 - V1.4 has not yet been manually import-tested after the field `Category` typing fix.
 - The YAP V1.4 product-schema result candidates have not yet been manually import-tested after the corrected `ListExportResult` wrapper fix.
+- The YAP V1.5 unique-ID product-schema result candidates have not yet been manually import-tested after the duplicate `LayoutID` fix.
 - The full `.yap` fallback reached the import dialog but failed create.
 - The `.yap` V1.3 schema-direct package must be manually import-tested before being treated as import-proven.
 - Collection/Kanban action steps are safe local placeholders and should be connected to tenant-specific workflows after import if needed.
@@ -378,14 +451,14 @@ The V1 package remains the locally validated baseline. The V1.1 package proved s
 
 ## Proof Boundary
 
-This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. It also proves that the product-team-reported `Field.Category` integer typing issue is fixed in both generated YAPK and YAP candidates, and that local validators now catch the regression. After product corrected the YAP schema, this branch also proves the generated YAP now decodes `Resource` to `ListExportResult`, with `Data` parsed and validated as `ListExportInfo`. The `.yapk` variants before V1.4 showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. Earlier `.yap` fallbacks showed that direct app import can still fail when the resource shape is wrong or the rich generated UI payload is present.
+This branch proves that a full-scope Vendor Onboarding & Compliance Management app candidate can be generated from the approved UI implementation spec and pass local structural, graph, UI-quality, schema, wrapper round-trip, and import-readiness checks with no blocking errors. It also proves that the product-team-reported `Field.Category` integer typing issue is fixed in both generated YAPK and YAP candidates, and that local validators now catch the regression. After product corrected the YAP schema, this branch also proves the generated YAP now decodes `Resource` to `ListExportResult`, with `Data` parsed and validated as `ListExportInfo`. After product identified a duplicate `LayoutID`, this branch proves the V1.5 generated YAP candidates use safe unique IDs and local validators catch duplicate/unsafe ID regressions. The `.yapk` variants before V1.4 showed that signing, wrapper acceptance, API-issued IDs, and export-like metadata were still not enough for Yeeflow version-package materialization. Earlier `.yap` fallbacks showed that direct app import can still fail when the resource shape is wrong or IDs are unsafe/duplicated.
 
 It does not prove live import success, runtime rendering, or end-user workflow behavior. Those require a focused manual import and runtime proof in a Yeeflow tenant.
 
 ## Manual Test Checklist
 
-1. Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result-no-lookups.yap`.
-2. If the no-lookup YAP imports, import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result.yap`.
+1. Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.5-unique-ids-no-lookups.yap`.
+2. If the no-lookup YAP imports, import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.5-unique-ids.yap`.
 3. If YAP testing is blocked and YAPK retest is desired, install `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-category-fixed.yapk`.
 4. Open the Vendor Management Dashboard.
 5. Check dashboard padding, cards, KPI layout, alert, and quick links.

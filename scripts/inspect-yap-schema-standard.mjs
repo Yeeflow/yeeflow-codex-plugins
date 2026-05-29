@@ -205,6 +205,77 @@ function inspectListExportItem(item, exportPath, findings, summary) {
   }
 }
 
+function addDuplicateFinding(findings, code, message, seen, value, detail) {
+  const key = String(value);
+  const previous = seen.get(key);
+  if (previous) add(findings, "error", code, message, { value, previousPath: previous.path, ...detail });
+  else seen.set(key, detail);
+}
+
+function inspectIdUniqueness(data, findings) {
+  const listIds = new Map();
+  const fieldIds = new Map();
+  const layoutIds = new Map();
+  const resourceIds = new Map();
+  const idKeys = new Set(["AppID", "ListID", "FieldID", "LayoutID", "ID", "RefId", "ReportID", "ProcModelID", "ResourceID"]);
+  const assertSafeInteger = (value, pointer) => {
+    if (value === undefined || value === null || value === "") return;
+    if (!Number.isInteger(value)) {
+      add(findings, "error", "INVALID_ID_TYPE", "Generated YAP ID values must be JSON integers.", {
+        path: pointer,
+        actualType: Array.isArray(value) ? "array" : value === null ? "null" : typeof value,
+      });
+    } else if (!Number.isSafeInteger(value)) {
+      add(findings, "error", "UNSAFE_INTEGER_ID", "Generated YAP integer IDs must be within Number.MAX_SAFE_INTEGER to avoid JSON rounding duplicates.", {
+        path: pointer,
+        value,
+      });
+    }
+  };
+  const walk = (value, pointer = "Data") => {
+    if (Array.isArray(value)) value.forEach((child, index) => walk(child, `${pointer}[${index}]`));
+    else if (isObject(value)) {
+      for (const [key, child] of Object.entries(value)) {
+        const childPath = `${pointer}.${key}`;
+        if (idKeys.has(key)) assertSafeInteger(child, childPath);
+        walk(child, childPath);
+      }
+    }
+  };
+  walk(data);
+
+  const items = [];
+  if (isObject(data?.Item)) items.push({ item: data.Item, path: "Data.Item", title: data.Item.ListModel?.Title || "root" });
+  asArray(data?.Childs).forEach((child, index) => items.push({ item: child, path: `Data.Childs[${index}]`, title: child.ListModel?.Title || null }));
+  for (const { item, path: itemPath, title } of items) {
+    const listId = item?.ListModel?.ListID;
+    if (listId !== undefined) addDuplicateFinding(findings, "DUPLICATE_LIST_ID", "ListID values must be globally unique across generated ListExportItem resources.", listIds, listId, { path: `${itemPath}.ListModel.ListID`, list: title });
+
+    const fieldIndexes = new Map();
+    const fieldNames = new Map();
+    const internalNames = new Map();
+    const displayNames = new Map();
+    asArray(item?.Defs).forEach((field, index) => {
+      const fieldPath = `${itemPath}.Defs[${index}]`;
+      const fieldLabel = field?.DisplayName || field?.FieldName || field?.InternalName || null;
+      if (field?.FieldID !== undefined) addDuplicateFinding(findings, "DUPLICATE_FIELD_ID", "FieldID values must be globally unique in generated packages.", fieldIds, field.FieldID, { path: `${fieldPath}.FieldID`, list: title, field: fieldLabel });
+      if (field?.FieldIndex !== undefined) addDuplicateFinding(findings, "DUPLICATE_FIELD_INDEX", "FieldIndex values must be unique within a list.", fieldIndexes, field.FieldIndex, { path: `${fieldPath}.FieldIndex`, list: title, field: fieldLabel });
+      if (field?.FieldName) addDuplicateFinding(findings, "DUPLICATE_FIELD_NAME", "FieldName values must be unique within a list.", fieldNames, field.FieldName, { path: `${fieldPath}.FieldName`, list: title, field: fieldLabel });
+      if (field?.InternalName) addDuplicateFinding(findings, "DUPLICATE_INTERNAL_NAME", "InternalName values must be unique within a list.", internalNames, field.InternalName, { path: `${fieldPath}.InternalName`, list: title, field: fieldLabel });
+      if (field?.DisplayName) addDuplicateFinding(findings, "DUPLICATE_DISPLAY_NAME", "DisplayName values should be unique within a generated list.", displayNames, field.DisplayName, { path: `${fieldPath}.DisplayName`, list: title, field: fieldLabel });
+    });
+
+    asArray(item?.Layouts).forEach((layout, index) => {
+      const layoutPath = `${itemPath}.Layouts[${index}]`;
+      const layoutLabel = layout?.Title || null;
+      if (layout?.LayoutID !== undefined) addDuplicateFinding(findings, "DUPLICATE_LAYOUT_ID", "LayoutID values must be globally unique across all ListExportItem.Layouts.", layoutIds, layout.LayoutID, { path: `${layoutPath}.LayoutID`, list: title, layout: layoutLabel });
+      asArray(layout?.LayoutInResources).forEach((resource, resourceIndex) => {
+        if (resource?.ID !== undefined) addDuplicateFinding(findings, "DUPLICATE_RESOURCE_ID", "LayoutInResources ID values must be globally unique across layout resources.", resourceIds, resource.ID, { path: `${layoutPath}.LayoutInResources[${resourceIndex}].ID`, list: title, layout: layoutLabel });
+      });
+    });
+  }
+}
+
 function inspectNoRule(form, index, findings, summary) {
   const noRule = form && form.NoRule;
   const formPath = `Data.Forms[${index}]`;
@@ -300,6 +371,7 @@ function main() {
     if (!isObject(decoded.data.Item)) add(findings, "error", "LIST_EXPORT_INFO_ITEM_MISSING", "ListExportInfo.Item is required.", { path: "Data.Item" });
     else inspectListExportItem(decoded.data.Item, "Data.Item", findings, summary);
     asArray(decoded.data.Childs).forEach((child, index) => inspectListExportItem(child, `Data.Childs[${index}]`, findings, summary));
+    inspectIdUniqueness(decoded.data, findings);
     asArray(decoded.data.Forms).forEach((form, index) => inspectNoRule(form, index, findings, summary));
     inspectOtherModules(decoded.data, findings, summary);
   }

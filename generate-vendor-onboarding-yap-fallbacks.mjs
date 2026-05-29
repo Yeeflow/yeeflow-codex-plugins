@@ -7,6 +7,7 @@ const TMP_DIR = ".tmp/vendor-onboarding-compliance-management";
 const TITLE = "Vendor Onboarding & Compliance Management";
 const DESCRIPTION = "Generated Yeeflow application package from the approved Vendor Onboarding UI implementation spec.";
 const ICON_URL = "{\"b\":\"#E6F7FF\",\"i\":\"fa-regular fa-building-shield\",\"c\":\"#008DA6\"}";
+const SAFE_ID_BASE = 760100000000000;
 
 function parseResource() {
   const resource = JSON.parse(fs.readFileSync(SOURCE_RESOURCE, "utf8"));
@@ -217,12 +218,7 @@ function main() {
   fs.mkdirSync(TMP_DIR, { recursive: true });
   const { resource, data } = parseResource();
 
-  const numericResourcePath = writeResource("vendor-onboarding-compliance-management.decoded-resource-yap-v1.1", resource, data);
-  const numericResult = buildYap(numericResourcePath, "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.1-mainlisttype.yap");
-
   const dataModel = makeDataModelOnly(data);
-  const dataModelResourcePath = writeResource("vendor-onboarding-compliance-management.decoded-resource-yap-v1.2-data-model", resource, dataModel);
-  const dataModelResult = buildYap(dataModelResourcePath, "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.2-data-model.yap");
   const schemaDirect = makeSchemaDirectData(dataModel);
   const schemaDirectPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.3-schema-direct.yap";
   writeSchemaDirectYap(schemaDirect, schemaDirectPath);
@@ -233,6 +229,12 @@ function main() {
   const schemaResultNoLookups = removeLookupRelationships(schemaDirect);
   const schemaResultNoLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-yap-schema-result-no-lookups.yap";
   writeSchemaResultYap(schemaResultNoLookups, schemaResultNoLookupsPath);
+  const uniqueIds = assignSafeSchemaIds(schemaDirect);
+  const uniqueIdsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.5-unique-ids.yap";
+  writeSchemaResultYap(uniqueIds, uniqueIdsPath);
+  const uniqueIdsNoLookups = removeLookupRelationships(uniqueIds);
+  const uniqueIdsNoLookupsPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.5-unique-ids-no-lookups.yap";
+  writeSchemaResultYap(uniqueIdsNoLookups, uniqueIdsNoLookupsPath);
 
   console.log(JSON.stringify({
     status: "generated",
@@ -240,12 +242,12 @@ function main() {
       {
         path: "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.1-mainlisttype.yap",
         purpose: "numeric MainListType candidate",
-        buildStatus: numericResult.status,
+        buildStatus: "skipped; legacy Resource shape is superseded by product-schema ListExportResult YAP",
       },
       {
         path: "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.2-data-model.yap",
         purpose: "data-model import isolation candidate",
-        buildStatus: dataModelResult.status,
+        buildStatus: "skipped; legacy Resource shape is superseded by product-schema ListExportResult YAP",
         dataLists: dataModel.Childs.length,
         fields: dataModel.Childs.reduce((total, child) => total + child.Defs.length, 0),
         dashboards: dataModel.Item.Layouts.length,
@@ -286,6 +288,24 @@ function main() {
         fields: schemaDirect.Childs.reduce((total, child) => total + child.Defs.length, 0),
         dashboards: schemaDirect.Item.Layouts.length,
         layouts: schemaDirect.Childs.reduce((total, child) => total + child.Layouts.length, 0) + schemaDirect.Item.Layouts.length,
+      },
+      {
+        path: uniqueIdsNoLookupsPath,
+        purpose: "ListExportResult YAP with safe unique IDs, no lookup relationships",
+        buildStatus: "written",
+        dataLists: uniqueIdsNoLookups.Childs.length,
+        fields: uniqueIdsNoLookups.Childs.reduce((total, child) => total + child.Defs.length, 0),
+        dashboards: uniqueIdsNoLookups.Item.Layouts.length,
+        layouts: uniqueIdsNoLookups.Childs.reduce((total, child) => total + child.Layouts.length, 0) + uniqueIdsNoLookups.Item.Layouts.length,
+      },
+      {
+        path: uniqueIdsPath,
+        purpose: "ListExportResult YAP with safe unique IDs and lookup relationships",
+        buildStatus: "written",
+        dataLists: uniqueIds.Childs.length,
+        fields: uniqueIds.Childs.reduce((total, child) => total + child.Defs.length, 0),
+        dashboards: uniqueIds.Item.Layouts.length,
+        layouts: uniqueIds.Childs.reduce((total, child) => total + child.Layouts.length, 0) + uniqueIds.Item.Layouts.length,
       },
     ],
   }, null, 2));
@@ -444,6 +464,160 @@ function removeLookupRelationships(data) {
     }
   }
   return next;
+}
+
+function createIdAllocator(base = SAFE_ID_BASE) {
+  let next = base;
+  const seen = new Set();
+  return (step = 1) => {
+    next += step;
+    if (!Number.isSafeInteger(next)) throw new Error(`Generated ID ${next} exceeds Number.MAX_SAFE_INTEGER.`);
+    if (seen.has(next)) throw new Error(`Generated duplicate ID ${next}.`);
+    seen.add(next);
+    return next;
+  };
+}
+
+function assignSafeSchemaIds(source) {
+  const data = structuredClone(source);
+  const nextId = createIdAllocator();
+  const appId = data.Item?.ListModel?.AppID || 41;
+  const rootListId = nextId();
+  const listIdByTitle = new Map();
+
+  data.Item.ListModel.AppID = appId;
+  data.Item.ListModel.ListID = rootListId;
+  data.Item.ListModel.LayoutView = "";
+
+  for (const layout of data.Item.Layouts || []) {
+    const layoutId = nextId();
+    layout.AppID = appId;
+    layout.ListID = rootListId;
+    layout.LayoutID = layoutId;
+    layout.LayoutInResources = (layout.LayoutInResources || []).map((resource) => ({
+      ...resource,
+      ID: layoutId,
+      RefId: layoutId,
+    }));
+  }
+
+  for (const child of data.Childs || []) {
+    const listId = nextId();
+    const title = child.ListModel?.Title || "";
+    if (title) listIdByTitle.set(title, listId);
+    child.ListModel.AppID = appId;
+    child.ListModel.ListID = listId;
+
+    child.Defs.forEach((field, index) => {
+      field.AppID = appId;
+      field.ListID = listId;
+      field.FieldID = nextId();
+      field.FieldIndex = index;
+      const prefix = field.FieldType === "DateTime" ? "DateTime" : field.FieldType === "Decimal" ? "Decimal" : field.FieldType === "Bit" ? "Bit" : "Text";
+      field.FieldName = `${prefix}${field.FieldIndex}`;
+      if (!field.InternalName) field.InternalName = field.FieldName;
+      field.Category = normalizeFieldCategory(field.Category);
+    });
+
+    const layoutIds = [];
+    child.Layouts.forEach((layout) => {
+      const layoutId = nextId();
+      layoutIds.push(layoutId);
+      layout.AppID = appId;
+      layout.ListID = listId;
+      layout.LayoutID = layoutId;
+      if (Number(layout.Type) !== 1) layout.LayoutView = JSON.stringify(makeListViewLayout(child));
+      layout.LayoutInResources = (layout.LayoutInResources || []).map((resource) => ({
+        ...resource,
+        ID: layoutId,
+        RefId: layoutId,
+      }));
+    });
+    const editLayout = child.Layouts.find((layout) => Number(layout.Type) === 1 && layout.Title === "Edit Item") || child.Layouts.find((layout) => Number(layout.Type) === 1);
+    const viewLayout = child.Layouts.find((layout) => Number(layout.Type) === 1 && layout.Title === "View Item") || editLayout;
+    child.ListModel.LayoutView = JSON.stringify({
+      add: editLayout?.LayoutID || layoutIds[0] || "default",
+      edit: editLayout?.LayoutID || layoutIds[0] || "default",
+      view: viewLayout?.LayoutID || editLayout?.LayoutID || layoutIds[0] || "default",
+      opentype: { add: "modal" },
+      modalsize: {},
+      sortVer: 1,
+    });
+  }
+
+  const home = data.Item.Layouts[0];
+  data.Item.ListModel.LayoutView = JSON.stringify({
+    add: "default",
+    edit: "default",
+    view: "default",
+    sort: [
+      {
+        AppID: appId,
+        ListID: home?.LayoutID || rootListId,
+        ListSetID: rootListId,
+        Type: 103,
+        IsHidden: false,
+        Title: "Home",
+        Icon: "fa-regular fa-house",
+      },
+      ...(data.Childs || []).map((child) => ({
+        AppID: appId,
+        ListID: child.ListModel.ListID,
+        ListSetID: rootListId,
+        Type: child.ListModel.Type,
+        IsHidden: false,
+        Title: child.ListModel.Title,
+        Icon: "fa-regular fa-list-check",
+      })),
+    ],
+    sortVer: 1,
+  });
+
+  const vendorListId = listIdByTitle.get("Vendors");
+  const vendorTitleField = (data.Childs || []).find((child) => child.ListModel?.Title === "Vendors")?.Defs?.[0]?.FieldName || "Text0";
+  for (const child of data.Childs || []) {
+    for (const field of child.Defs || []) {
+      if (field.Type !== "lookup") continue;
+      if (!vendorListId) {
+        field.Type = "input";
+        field.Rules = null;
+        continue;
+      }
+      field.Rules = JSON.stringify({
+        appid: appId,
+        listsetid: rootListId,
+        listid: vendorListId,
+        listfield: vendorTitleField,
+        displayField: vendorTitleField,
+      });
+    }
+  }
+
+  return data;
+}
+
+function makeListViewLayout(child) {
+  const fields = (child.Defs || []).filter((field) => field.Type !== "textarea").slice(0, 10);
+  return {
+    layout: fields.map((field, index) => ({
+      FieldID: field.FieldID,
+      FieldName: field.FieldName,
+      DisplayName: field.DisplayName,
+      Mobile: true,
+      Order: index + 1,
+      Show: true,
+      Type: field.Type || "input",
+    })),
+    sort: [],
+    filter: [],
+    query: [],
+    search: fields.slice(0, 3).map((field) => ({
+      FieldID: field.FieldID,
+      FieldName: field.FieldName,
+      DisplayName: field.DisplayName,
+      Type: field.Type || "input",
+    })),
+  };
 }
 
 function writeSchemaDirectYap(data, output) {

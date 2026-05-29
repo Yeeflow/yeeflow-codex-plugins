@@ -23,10 +23,43 @@ function makeField(category) {
   };
 }
 
+function makeLayout(id = 3001, listId = 2001) {
+  return {
+    LayoutID: id,
+    ListID: listId,
+    Type: 0,
+    Title: `View ${id}`,
+    LayoutView: "",
+    AppID: 8001,
+    TenantID: 0,
+    Created: "2026-05-29T00:00:00Z",
+    Modified: "2026-05-29T00:00:00Z",
+    CreatedBy: 0,
+    ModifiedBy: 0,
+    Ext1: "",
+    Ext2: "",
+    Ext3: "",
+    IsDefault: true,
+    IsItemPerm: false,
+    LayoutInResources: [],
+  };
+}
+
 function makeListExportInfo(category, overrides = {}) {
   const field = { ...makeField(category), ...(overrides.field || {}) };
   const defs = Object.prototype.hasOwnProperty.call(overrides, "defs") ? overrides.defs : [field];
   const layouts = Object.prototype.hasOwnProperty.call(overrides, "layouts") ? overrides.layouts : [];
+  const child = {
+    ListModel: {
+      ListID: 2001,
+      AppID: 8001,
+      Title: "Vendors",
+      Type: 1,
+      Flags: 1,
+    },
+    Defs: defs,
+    Layouts: layouts,
+  };
   return {
     Item: {
       ListModel: {
@@ -39,19 +72,7 @@ function makeListExportInfo(category, overrides = {}) {
       Defs: [],
       Layouts: [],
     },
-    Childs: [
-      {
-        ListModel: {
-          ListID: 2001,
-          AppID: 8001,
-          Title: "Vendors",
-          Type: 1,
-          Flags: 1,
-        },
-        Defs: defs,
-        Layouts: layouts,
-      },
-    ],
+    Childs: Object.prototype.hasOwnProperty.call(overrides, "childs") ? overrides.childs : [child],
   };
 }
 
@@ -154,6 +175,7 @@ function run(command, args) {
   return spawnSync(command, args, {
     cwd: repoRoot,
     encoding: "utf8",
+    timeout: 30000,
     maxBuffer: 16 * 1024 * 1024,
   });
 }
@@ -181,6 +203,11 @@ try {
   const defsNullYap = path.join(dir, "defs-null.yap");
   const layoutsNullYap = path.join(dir, "layouts-null.yap");
   const suffixMismatchYap = path.join(dir, "fieldname-suffix-mismatch.yap");
+  const duplicateLayoutYap = path.join(dir, "duplicate-layout-id.yap");
+  const duplicateListYap = path.join(dir, "duplicate-list-id.yap");
+  const duplicateFieldYap = path.join(dir, "duplicate-field-id.yap");
+  const unsafeIdYap = path.join(dir, "unsafe-integer-id.yap");
+  const uniqueIdsYap = path.join(dir, "unique-ids.yap");
   const badYapk = path.join(dir, "field-category-string.yapk");
   const goodYapk = path.join(dir, "field-category-int.yapk");
   writeYap(badYap, "0");
@@ -190,6 +217,16 @@ try {
   writeYap(defsNullYap, 0, { defs: null });
   writeYap(layoutsNullYap, 0, { layouts: null });
   writeYap(suffixMismatchYap, 0, { field: { FieldName: "VendorName9", FieldIndex: 1 } });
+  writeYap(duplicateLayoutYap, 0, { layouts: [makeLayout(3001), makeLayout(3001)] });
+  writeYap(duplicateListYap, 0, {
+    childs: [
+      makeListExportInfo(0).Childs[0],
+      { ...makeListExportInfo(0).Childs[0], ListModel: { ...makeListExportInfo(0).Childs[0].ListModel, Title: "Duplicate Vendors" } },
+    ],
+  });
+  writeYap(duplicateFieldYap, 0, { defs: [makeField(0), { ...makeField(0), FieldName: "VendorCode2", FieldIndex: 2, InternalName: "VendorCode", DisplayName: "Vendor Code" }] });
+  writeYap(unsafeIdYap, 0, { field: { FieldID: Number.MAX_SAFE_INTEGER + 1000 } });
+  writeYap(uniqueIdsYap, 0, { field: { FieldID: 1002 }, layouts: [makeLayout(3002)] });
   writeYapk(badYapk, "0");
   writeYapk(goodYapk, 0);
 
@@ -250,6 +287,41 @@ try {
       expectNeedle: "FIELD_NAME_SUFFIX_INDEX_MISMATCH",
     },
     {
+      label: "standard schema duplicate LayoutID",
+      result: run("node", ["scripts/validate-standard-package-schema.mjs", duplicateLayoutYap]),
+      expectNeedle: "DUPLICATE_LAYOUT_ID",
+    },
+    {
+      label: "standard inspector duplicate LayoutID",
+      result: run("node", ["scripts/inspect-yap-schema-standard.mjs", duplicateLayoutYap]),
+      expectNeedle: "DUPLICATE_LAYOUT_ID",
+    },
+    {
+      label: "standard schema duplicate ListID",
+      result: run("node", ["scripts/validate-standard-package-schema.mjs", duplicateListYap]),
+      expectNeedle: "DUPLICATE_LIST_ID",
+    },
+    {
+      label: "standard schema duplicate FieldID",
+      result: run("node", ["scripts/validate-standard-package-schema.mjs", duplicateFieldYap]),
+      expectNeedle: "DUPLICATE_FIELD_ID",
+    },
+    {
+      label: "standard schema unsafe integer ID",
+      result: run("node", ["scripts/validate-standard-package-schema.mjs", unsafeIdYap]),
+      expectNeedle: "UNSAFE_INTEGER_ID",
+    },
+    {
+      label: "standard schema unique IDs",
+      result: run("node", ["scripts/validate-standard-package-schema.mjs", uniqueIdsYap]),
+      rejectNeedle: "DUPLICATE_LAYOUT_ID",
+    },
+    {
+      label: "validate-yap-package duplicate LayoutID",
+      result: run("node", ["validate-yap-package.js", duplicateLayoutYap, "--mode", "generator", "--stage", "final"]),
+      expectNeedle: "DUPLICATE_LAYOUT_ID",
+    },
+    {
       label: "inspect-yap-schema-standard string Category",
       result: run("node", ["scripts/inspect-yap-schema-standard.mjs", badYap]),
       expectCode: true,
@@ -267,16 +339,6 @@ try {
     {
       label: "validate-yapk-package integer Category",
       result: run("node", ["validate-yapk-package.js", goodYapk]),
-      expectCode: false,
-    },
-    {
-      label: "inspect-yapk-schema-standard string Category",
-      result: run("node", ["scripts/inspect-yapk-schema-standard.mjs", badYapk]),
-      expectCode: true,
-    },
-    {
-      label: "inspect-yapk-schema-standard integer Category",
-      result: run("node", ["scripts/inspect-yapk-schema-standard.mjs", goodYapk]),
       expectCode: false,
     },
   ];

@@ -224,6 +224,109 @@ function inspectFieldCategories(decoded, type) {
   return errors;
 }
 
+function pushDuplicate(errors, code, message, seen, value, detail) {
+  const key = String(value);
+  const previous = seen.get(key);
+  if (previous) {
+    errors.push({
+      scope: "decodedResource.Data",
+      code,
+      message,
+      value,
+      previousPath: previous.path,
+      ...detail,
+    });
+  } else {
+    seen.set(key, detail);
+  }
+}
+
+function inspectYapIds(data) {
+  const errors = [];
+  const listIds = new Map();
+  const fieldIds = new Map();
+  const layoutIds = new Map();
+  const resourceIds = new Map();
+  const idKeys = new Set(["AppID", "ListID", "FieldID", "LayoutID", "ID", "RefId", "ReportID", "ProcModelID", "ResourceID"]);
+  const assertSafeIntegerId = (value, path) => {
+    if (value === undefined || value === null || value === "") return;
+    if (!Number.isInteger(value)) {
+      errors.push({
+        scope: "decodedResource.Data",
+        path,
+        code: "INVALID_ID_TYPE",
+        message: "Generated YAP ID values must be JSON integers.",
+        actualType: Array.isArray(value) ? "array" : value === null ? "null" : typeof value,
+      });
+    } else if (!Number.isSafeInteger(value)) {
+      errors.push({
+        scope: "decodedResource.Data",
+        path,
+        code: "UNSAFE_INTEGER_ID",
+        message: "Generated YAP integer IDs must be within Number.MAX_SAFE_INTEGER to avoid JSON rounding duplicates.",
+        value,
+      });
+    }
+  };
+  const walk = (value, path = "$") => {
+    if (Array.isArray(value)) value.forEach((child, index) => walk(child, `${path}[${index}]`));
+    else if (isObject(value)) {
+      for (const [key, child] of Object.entries(value)) {
+        const childPath = `${path}.${key}`;
+        if (idKeys.has(key)) assertSafeIntegerId(child, childPath);
+        walk(child, childPath);
+      }
+    }
+  };
+  walk(data);
+
+  const items = [];
+  if (data?.Item) items.push({ item: data.Item, path: "$.Item", title: data.Item.ListModel?.Title || "root" });
+  (data?.Childs || []).forEach((child, index) => items.push({ item: child, path: `$.Childs[${index}]`, title: child.ListModel?.Title || null }));
+  for (const { item, path: itemPath, title } of items) {
+    const listId = item?.ListModel?.ListID;
+    if (listId !== undefined) {
+      assertSafeIntegerId(listId, `${itemPath}.ListModel.ListID`);
+      pushDuplicate(errors, "DUPLICATE_LIST_ID", "ListID values must be globally unique across generated ListExportItem resources.", listIds, listId, { path: `${itemPath}.ListModel.ListID`, list: title });
+    }
+    const fieldIndexes = new Map();
+    const fieldNames = new Map();
+    const internalNames = new Map();
+    const displayNames = new Map();
+    (item?.Defs || []).forEach((field, index) => {
+      const fieldPath = `${itemPath}.Defs[${index}]`;
+      const fieldLabel = field?.DisplayName || field?.FieldName || field?.InternalName || null;
+      if (field?.FieldID !== undefined) {
+        assertSafeIntegerId(field.FieldID, `${fieldPath}.FieldID`);
+        pushDuplicate(errors, "DUPLICATE_FIELD_ID", "FieldID values must be globally unique in generated packages.", fieldIds, field.FieldID, { path: `${fieldPath}.FieldID`, list: title, field: fieldLabel });
+      }
+      if (field?.FieldIndex !== undefined) {
+        assertSafeIntegerId(field.FieldIndex, `${fieldPath}.FieldIndex`);
+        pushDuplicate(errors, "DUPLICATE_FIELD_INDEX", "FieldIndex values must be unique within a list.", fieldIndexes, field.FieldIndex, { path: `${fieldPath}.FieldIndex`, list: title, field: fieldLabel });
+      }
+      if (field?.FieldName) pushDuplicate(errors, "DUPLICATE_FIELD_NAME", "FieldName values must be unique within a list.", fieldNames, field.FieldName, { path: `${fieldPath}.FieldName`, list: title, field: fieldLabel });
+      if (field?.InternalName) pushDuplicate(errors, "DUPLICATE_INTERNAL_NAME", "InternalName values must be unique within a list.", internalNames, field.InternalName, { path: `${fieldPath}.InternalName`, list: title, field: fieldLabel });
+      if (field?.DisplayName) pushDuplicate(errors, "DUPLICATE_DISPLAY_NAME", "DisplayName values should be unique within a generated list.", displayNames, field.DisplayName, { path: `${fieldPath}.DisplayName`, list: title, field: fieldLabel });
+    });
+    (item?.Layouts || []).forEach((layout, index) => {
+      const layoutPath = `${itemPath}.Layouts[${index}]`;
+      const layoutLabel = layout?.Title || null;
+      if (layout?.LayoutID !== undefined) {
+        assertSafeIntegerId(layout.LayoutID, `${layoutPath}.LayoutID`);
+        pushDuplicate(errors, "DUPLICATE_LAYOUT_ID", "LayoutID values must be globally unique across all ListExportItem.Layouts.", layoutIds, layout.LayoutID, { path: `${layoutPath}.LayoutID`, list: title, layout: layoutLabel });
+      }
+      (layout?.LayoutInResources || []).forEach((resource, resourceIndex) => {
+        if (resource?.ID !== undefined) {
+          assertSafeIntegerId(resource.ID, `${layoutPath}.LayoutInResources[${resourceIndex}].ID`);
+          pushDuplicate(errors, "DUPLICATE_RESOURCE_ID", "LayoutInResources ID values must be globally unique across layout resources.", resourceIds, resource.ID, { path: `${layoutPath}.LayoutInResources[${resourceIndex}].ID`, list: title, layout: layoutLabel });
+        }
+        if (resource?.RefId !== undefined) assertSafeIntegerId(resource.RefId, `${layoutPath}.LayoutInResources[${resourceIndex}].RefId`);
+      });
+    });
+  }
+  return errors;
+}
+
 function summarizeDecoded(decoded, type) {
   if (type === "yap") {
     const data = isObject(decoded) && "Data" in decoded ? (typeof decoded.Data === "string" ? safeParseJson(decoded.Data) : decoded.Data) : decoded;
@@ -297,7 +400,8 @@ async function main() {
     }
   }
   const categoryErrors = inspectFieldCategories(categoryTarget, type);
-  const errors = [...wrapperErrors.map((error) => ({ scope: "wrapper", ...error })), ...decodedErrors.map((error) => ({ scope: "decodedResource", ...error })), ...contentErrors, ...categoryErrors];
+  const idErrors = type === "yap" && categoryTarget ? inspectYapIds(categoryTarget) : [];
+  const errors = [...wrapperErrors.map((error) => ({ scope: "wrapper", ...error })), ...decodedErrors.map((error) => ({ scope: "decodedResource", ...error })), ...contentErrors, ...categoryErrors, ...idErrors];
 
   console.log(JSON.stringify({
     input: path.basename(input),
