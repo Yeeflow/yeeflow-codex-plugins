@@ -111,6 +111,7 @@ function decodeInput(inputPath, findings, largeNumbers) {
       return null;
     }
     const resource = parseJson(zlib.gunzipSync(Buffer.from(parsed.Resource.slice(GZIP_PREFIX.length), "base64")).toString("utf8"), largeNumbers);
+    if (resource && typeof resource === "object" && (resource.Item || Array.isArray(resource.Childs))) return resource;
     return typeof resource.Data === "string" ? parseJson(resource.Data, largeNumbers) : resource.Data;
   }
   if (typeof parsed?.Data === "string") return parseJson(parsed.Data, largeNumbers);

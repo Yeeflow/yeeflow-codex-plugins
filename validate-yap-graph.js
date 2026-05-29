@@ -136,6 +136,10 @@ function unresolvedLevel(report) {
   return "dependency";
 }
 
+function isSchemaDirectYap(report) {
+  return report && report.inputType === "wrapped-yap-schema-direct";
+}
+
 function tryParseJson(value) {
   if (typeof value !== "string" || !value.trim()) return null;
   try {
@@ -181,8 +185,12 @@ function decodeInput(inputPath, report) {
       addIssue(report, "error", "RESOURCE_JSON_INVALID", "Decoded Resource JSON is invalid.", { error: error.message });
       return null;
     }
+    if ((resource && typeof resource === "object") && (resource.Item || Array.isArray(resource.Childs))) {
+      report.inputType = "wrapped-yap-schema-direct";
+      return { wrapper: parsed, resource, data: resource };
+    }
     if (typeof resource.Data !== "string") {
-      addIssue(report, "error", "RESOURCE_DATA_MISSING", "Decoded Resource.Data must be a JSON string.");
+      addIssue(report, "error", "RESOURCE_DATA_MISSING", "Decoded Resource should be schema-direct ListExportInfo, or legacy Resource.Data must be a JSON string.");
       return null;
     }
     let data;
@@ -456,6 +464,7 @@ function addRootNavigationEdges(context) {
   const documentLibraryOnlyPackage = isDocumentLibraryOnlyPackage(context.data);
   const layoutView = tryParseJson(root.LayoutView);
   if (!layoutView) {
+    if (isSchemaDirectYap(context.report) && !asArray(context.data && context.data.Item && context.data.Item.Layouts).some((layout) => safeString(layout.Type) === "103")) return;
     addIssue(context.report, strictLevel(context.report), "ROOT_LAYOUTVIEW_INVALID", "Root app/ListSet LayoutView must be parseable JSON navigation metadata.");
     return;
   }
@@ -546,7 +555,7 @@ function validateBasicStructure(context) {
       addIssue(report, "error", `${key.toUpperCase()}_NOT_ARRAY`, `Data.${key} must be an array when present.`);
     }
   }
-  if (resource && !Array.isArray(resource.ReplaceIds)) addIssue(report, "error", "REPLACEIDS_NOT_ARRAY", "Resource.ReplaceIds must be an array.");
+  if (resource && !isSchemaDirectYap(report) && !Array.isArray(resource.ReplaceIds)) addIssue(report, "error", "REPLACEIDS_NOT_ARRAY", "Resource.ReplaceIds must be an array.");
   if (resource && isDocumentLibraryOnlyPackage(data) && resource.SimplePortal !== null) {
     addIssue(report, "warning", "DOCUMENT_LIBRARY_SIMPLEPORTAL_NOT_NULL", "Known-good document-library exports use Resource.SimplePortal = null. Generated [] wrappers failed Yeeflow create in v1/v2.", { simplePortalType: Array.isArray(resource.SimplePortal) ? "array" : typeof resource.SimplePortal });
   }
@@ -1330,6 +1339,7 @@ function addOtherModuleEdges(context) {
 function validateReplaceIdsAndPlaceholders(context, decoded) {
   const { report, replaceIds, localIds } = context;
   const replaceIdArray = asArray(context.resource && context.resource.ReplaceIds).map(String);
+  if (isSchemaDirectYap(report)) return;
   const duplicateReplaceIds = replaceIdArray.filter((id, index) => replaceIdArray.indexOf(id) !== index);
   if (duplicateReplaceIds.length) {
     addIssue(report, strictLevel(report, "warning"), "REPLACEIDS_DUPLICATE", "Resource.ReplaceIds contains duplicate IDs.", { count: new Set(duplicateReplaceIds).size });

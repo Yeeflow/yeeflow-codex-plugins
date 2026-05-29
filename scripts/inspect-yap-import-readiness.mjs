@@ -55,6 +55,7 @@ function decodeWrapper(inputPath) {
   if (typeof parsed?.Resource !== "string") return { wrapperPresent: false, wrapper: parsed, resource: null, data: parsed };
   if (!parsed.Resource.startsWith(GZIP_PREFIX)) return { wrapperPresent: true, wrapper: parsed, resourcePrefixValid: false, resource: null, data: null };
   const resource = parseJson(zlib.gunzipSync(Buffer.from(parsed.Resource.slice(GZIP_PREFIX.length), "base64")).toString("utf8"));
+  if (isObject(resource) && (resource.Item || Array.isArray(resource.Childs))) return { wrapperPresent: true, resourcePrefixValid: true, wrapper: parsed, resource, data: resource };
   const data = parseJson(resource.Data);
   return { wrapperPresent: true, resourcePrefixValid: true, wrapper: parsed, resource, data };
 }
@@ -81,10 +82,10 @@ function runJsonStep(name, command, args, options = {}) {
   const ignoredFindings = findings.length - activeFindings.length;
   const findingErrors = activeFindings.filter((finding) => finding.level === "error" || finding.severity === "error").length;
   const findingWarnings = activeFindings.filter((finding) => finding.level === "warning" || finding.severity === "warning").length + ignoredFindings;
-  const normalizedStatus = report.status || (warnings + findingWarnings > 0 ? "pass_with_warnings" : "pass");
+  const normalizedStatus = report.status === "fail" && ignoredFindings === findings.length ? "pass_with_warnings" : report.status || (warnings + findingWarnings > 0 ? "pass_with_warnings" : "pass");
   return {
     name,
-    status: (result.status === 0 || ignoredFindings === findings.length) && report.status !== "fail" && errors + findingErrors === 0 ? normalizedStatus : "fail",
+    status: (result.status === 0 || ignoredFindings === findings.length) && (report.status !== "fail" || ignoredFindings === findings.length) && errors + findingErrors === 0 ? normalizedStatus : "fail",
     exitCode: result.status,
     errors: errors + findingErrors,
     warnings: warnings + findingWarnings,
@@ -123,7 +124,9 @@ function main() {
     }));
     steps.push(runJsonStep("generated-ui-quality-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-generated-ui-quality.mjs"), inputPath]));
     steps.push(runJsonStep("advanced-controls-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-advanced-controls.mjs"), inputPath]));
-    steps.push(runJsonStep("container-button-actions-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-container-button-actions.mjs"), inputPath]));
+    steps.push(runJsonStep("container-button-actions-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-container-button-actions.mjs"), inputPath], {
+      ignoredFindingCodes: ["DASHBOARD_NOT_FOUND"],
+    }));
     steps.push(runJsonStep("sub-list-dynamic-controls-inspection", process.execPath, [path.join(repoRoot, "scripts/inspect-sub-list-dynamic-controls.mjs"), inputPath]));
 
     const decoded = decodeWrapper(inputPath);

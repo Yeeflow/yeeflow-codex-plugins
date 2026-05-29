@@ -399,6 +399,10 @@ function generatorFinalSeverity(report, fallback = "warning") {
   return report.mode === "generator" && report.stage === "final" ? "error" : fallback;
 }
 
+function isSchemaDirectYap(report) {
+  return report && report.wrapper && report.wrapper.inputType === "wrapped-yap-schema-direct";
+}
+
 function validateAppCreationFieldRules(field, report, context = {}) {
   const severity = generatorFinalSeverity(report);
   const fieldName = safeString(field && field.FieldName);
@@ -559,8 +563,12 @@ function decodeInput(inputPath, report) {
       issue(report, "error", "RESOURCE_JSON_INVALID", "Decoded Resource JSON is invalid.", { error: error.message });
       return null;
     }
+    if ((resource && typeof resource === "object") && (resource.Item || Array.isArray(resource.Childs))) {
+      report.wrapper.inputType = "wrapped-yap-schema-direct";
+      return { wrapper, resource, data: resource };
+    }
     if (typeof resource.Data !== "string") {
-      issue(report, "error", "RESOURCE_DATA_MISSING", "Decoded Resource.Data must be a JSON string.");
+      issue(report, "error", "RESOURCE_DATA_MISSING", "Decoded Resource should be schema-direct ListExportInfo, or legacy Resource.Data must be a JSON string.");
       return null;
     }
     let data;
@@ -1001,7 +1009,7 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
   if (!rootPageLayouts.size) {
     issue(
       report,
-      documentLibraryOnlyPackage ? "warning" : report.mode === "generator" && report.stage === "final" ? "error" : "warning",
+      documentLibraryOnlyPackage || isSchemaDirectYap(report) ? "warning" : report.mode === "generator" && report.stage === "final" ? "error" : "warning",
       "ROOT_APP_PAGE_LAYOUT_MISSING",
       "Root app/ListSet has no Type 103 app page layout. Document-library-only exports can omit root pages; richer generated apps usually need an openable app shell.",
     );
@@ -1009,7 +1017,9 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
   for (const layout of rootLayouts.filter((candidate) => safeString(candidate.Type) === "103")) {
     const layoutId = safeString(layout.LayoutID);
     if (layout.LayoutView !== null && layout.LayoutView !== undefined) {
-      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_LAYOUTVIEW_NOT_NULL", "Root Type 103 app page LayoutView should be null; working exports store page content in LayoutInResources.Resource.", { title: layout.Title, layoutId });
+      if (!(isSchemaDirectYap(report) && layout.LayoutView === "")) {
+        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_LAYOUTVIEW_NOT_NULL", "Root Type 103 app page LayoutView should be null; working exports store page content in LayoutInResources.Resource.", { title: layout.Title, layoutId });
+      }
     }
     if (!Array.isArray(layout.LayoutInResources)) {
       issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_LAYOUTINRESOURCES_NOT_ARRAY", "Root Type 103 app page LayoutInResources must be an array. Minimal dashboard-only exports use an empty array.", { title: layout.Title, layoutId });
@@ -1056,6 +1066,7 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
   }
   const layoutView = tryParseJson(root.LayoutView);
   if (!layoutView) {
+    if (isSchemaDirectYap(report) && !asArray(data.Item && data.Item.Layouts).some((layout) => safeString(layout.Type) === "103")) return;
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_LAYOUTVIEW_INVALID", "Root app/ListSet LayoutView must be parseable JSON navigation metadata.");
     return;
   }
@@ -2267,8 +2278,8 @@ function validateBasicStructure(data, resource, report) {
     }
   }
   if (resource) {
-    if (!Array.isArray(resource.ReplaceIds)) issue(report, "error", "REPLACEIDS_NOT_ARRAY", "Resource.ReplaceIds must be an array.");
-    if (resource.AppID === undefined || resource.AppID === null || resource.AppID === "") {
+    if (!isSchemaDirectYap(report) && !Array.isArray(resource.ReplaceIds)) issue(report, "error", "REPLACEIDS_NOT_ARRAY", "Resource.ReplaceIds must be an array.");
+    if (!isSchemaDirectYap(report) && (resource.AppID === undefined || resource.AppID === null || resource.AppID === "")) {
       issue(report, "error", "RESOURCE_APPID_MISSING", "Resource.AppID is required in wrapped .yap packages.");
     }
     if (isDocumentLibraryOnlyPackage(data) && resource.SimplePortal !== null) {
@@ -2463,9 +2474,9 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   } else {
     if (!listId) issue(report, "error", "CHILD_LISTID_MISSING", "Child ListID is required.", { path: `${pathPrefix}.ListModel.ListID`, title });
     if (!title) issue(report, "warning", "CHILD_TITLE_MISSING", "Child resource title is missing.", { path: `${pathPrefix}.ListModel.Title`, listId });
-    if (resourceType === "data list" && list.ListType === undefined) {
+    if (!isSchemaDirectYap(report) && resourceType === "data list" && list.ListType === undefined) {
       issue(report, generatorFinalSeverity(report), "MAIN_LIST_TYPE_MISSING", "Generated child data lists must include ListModel.ListType before handoff; missing ListType can block Yeeflow import/materialization.", { path: `${pathPrefix}.ListModel.ListType`, title, listId });
-    } else if (resourceType === "data list" && Number(list.ListType) !== 1) {
+    } else if (!isSchemaDirectYap(report) && resourceType === "data list" && Number(list.ListType) !== 1) {
       issue(report, generatorFinalSeverity(report), "MAIN_LIST_TYPE_INVALID", "Generated Type 1 data lists must use ListModel.ListType = 1 before handoff.", { path: `${pathPrefix}.ListModel.ListType`, title, listId, listType: list.ListType });
     }
   }
@@ -2859,7 +2870,9 @@ function validateViewExtField(ext, key, fieldsByName, layout, report, severity) 
 
 function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report, layoutsById = new Map()) {
   if (layout.LayoutView !== null && layout.LayoutView !== undefined) {
-    issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "CUSTOM_FORM_LAYOUTVIEW_NOT_NULL", "Custom form LayoutView should be null.", { path: `${pathPrefix}.LayoutView`, title: layout.Title });
+    if (!(isSchemaDirectYap(report) && layout.LayoutView === "")) {
+      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "CUSTOM_FORM_LAYOUTVIEW_NOT_NULL", "Custom form LayoutView should be null.", { path: `${pathPrefix}.LayoutView`, title: layout.Title });
+    }
   }
   const resources = asArray(layout.LayoutInResources);
   if (!resources.length) {
@@ -3245,6 +3258,7 @@ function validateEmbeddedControlExpressions(control, report, context) {
 }
 
 function validateReplaceIds(replaceIds, localIds, report) {
+  if (isSchemaDirectYap(report)) return;
   if (!replaceIds.size) {
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "REPLACEIDS_EMPTY", "Resource.ReplaceIds is empty or unavailable.");
     return;

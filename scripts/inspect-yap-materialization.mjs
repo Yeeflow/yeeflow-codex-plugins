@@ -98,6 +98,9 @@ function loadPackage(inputPath) {
   if (parsed?.Resource?.startsWith?.(GZIP_PREFIX)) {
     const body = Buffer.from(parsed.Resource.slice(GZIP_PREFIX.length), "base64");
     const resource = parseJson(zlib.gunzipSync(body).toString("utf8"), largeNumbers);
+    if (resource && typeof resource === "object" && (resource.Item || Array.isArray(resource.Childs))) {
+      return { wrapper: parsed, resource, app: resource, largeNumbers: [...largeNumbers] };
+    }
     return { wrapper: parsed, resource, app: parseJson(resource.Data, largeNumbers), largeNumbers: [...largeNumbers] };
   }
   if (typeof parsed?.Data === "string") {
@@ -114,9 +117,10 @@ function looksLikeLocalId(value) {
   return /^\d{16,}$/.test(asString(value)) && /^([6-9]\d{3}|[1-9]\d{4,})/.test(asString(value).slice(0, 4));
 }
 
-function readLayoutView(model, errors) {
+function readLayoutView(model, errors, options = {}) {
   const view = tryParseJson(model?.LayoutView);
   if (!view || typeof view !== "object") {
+    if (options.schemaDirect && !options.hasRootDashboard) return {};
     errors.push({ code: "ROOT_LAYOUT_VIEW_INVALID", message: "Root ListModel.LayoutView is missing or not valid JSON." });
     return {};
   }
@@ -136,7 +140,9 @@ function inspect(inputPath) {
   const listWorkflows = forms.filter((form) => Number(form?.WorkflowType) === 1);
   const scheduledWorkflows = forms.filter((form) => Number(form?.WorkflowType) === 3);
   const documentLibraryOnlyPackage = childLists.length > 0 && childLists.every((child) => Number(child?.ListModel?.Type) === 16);
-  const layoutView = readLayoutView(rootModel, errors);
+  const schemaDirectPackage = resource && typeof resource === "object" && !Object.prototype.hasOwnProperty.call(resource, "Data") && (resource.Item || Array.isArray(resource.Childs));
+  const hasRootDashboard = rootLayouts.some((layout) => Number(layout?.Type) === 103);
+  const layoutView = readLayoutView(rootModel, errors, { schemaDirect: schemaDirectPackage, hasRootDashboard });
   const nav = Array.isArray(layoutView.sort) ? layoutView.sort : [];
   const navByListId = new Map(nav.map((item) => [asString(item.ListID), item]));
   const rootLayoutsById = new Map(rootLayouts.map((layout) => [asString(layout.LayoutID), layout]));
@@ -164,11 +170,11 @@ function inspect(inputPath) {
   }
   if (!nav.length) {
     const issue = { code: "ROOT_NAV_EMPTY", message: "Root navigation LayoutView.sort is empty. Document-library-only sample exports can use only {sortVer:1}; richer generated apps can import as an empty shell if navigation is missing." };
-    (documentLibraryOnlyPackage ? warnings : errors).push(issue);
+    (documentLibraryOnlyPackage || schemaDirectPackage ? warnings : errors).push(issue);
   }
   if (!rootLayouts.length) {
     const issue = { code: "ROOT_LAYOUTS_EMPTY", message: "Root app has no Item.Layouts pages. Document-library-only sample exports can omit root pages; richer generated apps should include an app shell page." };
-    (documentLibraryOnlyPackage ? warnings : errors).push(issue);
+    (documentLibraryOnlyPackage || schemaDirectPackage ? warnings : errors).push(issue);
   }
   if (!childLists.length) warnings.push({ code: "NO_CHILD_LISTS", message: "App has no child data lists." });
   if (!forms.length) warnings.push({ code: "NO_FORMS", message: "App has no workflow/form resources." });
@@ -176,7 +182,7 @@ function inspect(inputPath) {
   const dashboardNav = nav.filter((item) => Number(item.Type) === 103);
   if (!dashboardNav.length) {
     const issue = { code: "NO_DASHBOARD_NAV", message: "Root navigation has no Type 103 dashboard/page entry. This is sample-proven for document-library-only exports but risky for richer generated apps." };
-    (documentLibraryOnlyPackage ? warnings : errors).push(issue);
+    (documentLibraryOnlyPackage || schemaDirectPackage ? warnings : errors).push(issue);
   }
   for (const item of dashboardNav) {
     const navListId = asString(item.ListID);
@@ -219,7 +225,7 @@ function inspect(inputPath) {
     const navItem = navByListId.get(listId);
     if (!navItem) {
       const issue = { code: "CHILD_LIST_NOT_IN_NAV", message: "Child resource is not reachable from root navigation. This is sample-proven for document-library-only exports but risky for normal data-list packages.", detail: { title: child?.ListModel?.Title, listId } };
-      (documentLibraryOnlyPackage && Number(child?.ListModel?.Type) === 16 ? warnings : errors).push(issue);
+      ((documentLibraryOnlyPackage && Number(child?.ListModel?.Type) === 16) || schemaDirectPackage ? warnings : errors).push(issue);
     } else if (Number(navItem.Type) !== Number(child?.ListModel?.Type || 1)) {
       warnings.push({ code: "CHILD_LIST_NAV_TYPE_MISMATCH", message: "Child data-list navigation type differs from ListModel.Type.", detail: { title: child?.ListModel?.Title, listId, navType: navItem.Type, listType: child?.ListModel?.Type } });
     }
@@ -230,9 +236,9 @@ function inspect(inputPath) {
     const displayNames = new Set();
     if (!fields.length) errors.push({ code: "CHILD_LIST_FIELDS_EMPTY", message: "Child data list has no fields attached.", detail: { title: child?.ListModel?.Title, listId } });
     if (Number(child?.ListModel?.Type) === 1) {
-      if (child?.ListModel?.ListType === undefined) {
+      if (!schemaDirectPackage && child?.ListModel?.ListType === undefined) {
         errors.push({ code: "CHILD_DATA_LIST_LISTTYPE_MISSING", message: "Generated Type 1 data lists must include ListModel.ListType before Yeeflow import.", detail: { title: child?.ListModel?.Title, listId } });
-      } else if (Number(child.ListModel.ListType) !== 1) {
+      } else if (!schemaDirectPackage && Number(child.ListModel.ListType) !== 1) {
         errors.push({ code: "CHILD_DATA_LIST_LISTTYPE_INVALID", message: "Generated Type 1 data lists must use ListModel.ListType = 1 before Yeeflow import.", detail: { title: child?.ListModel?.Title, listId, listType: child.ListModel.ListType } });
       }
       const titleField = fields.find((field) => asString(field.FieldName) === "Title");

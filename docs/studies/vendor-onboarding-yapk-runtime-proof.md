@@ -204,6 +204,8 @@ The V1.3 schema-direct YAP candidate fixes that schema mismatch:
 
 The V1.3 schema-direct YAP is now the recommended next manual import candidate. If it still creates a tile but shows `Import failed`, the next blocker is likely inside server-side materialization semantics that are not expressed by the provided JSON schema, and Yeeflow server-side import diagnostics will be needed.
 
+If V1.3 still fails, use the isolation matrix in `docs/studies/vendor-onboarding-import-isolation-matrix.md`. It provides six schema-direct `.yap` packages that add one capability layer at a time, from one data list through five lists, lookups, simple forms, a Data table dashboard, and a Kanban dashboard.
+
 ## Signing And Verification
 
 The generator uses the standard Yeeflow API base URL behavior through `scripts/yeeflow-env-utils.mjs`.

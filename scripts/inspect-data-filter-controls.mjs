@@ -146,6 +146,7 @@ function decodeYap(inputPath) {
   }
   const resourceText = zlib.gunzipSync(Buffer.from(wrapper.Resource.slice(GZIP_PREFIX.length), "base64")).toString("utf8");
   const resource = parseJson(resourceText);
+  if (resource && typeof resource === "object" && (resource.Item || Array.isArray(resource.Childs))) return { wrapper, resource, data: resource };
   if (typeof resource.Data !== "string") throw new Error("Decoded Resource.Data is missing.");
   return { wrapper, resource, data: parseJson(resource.Data) };
 }

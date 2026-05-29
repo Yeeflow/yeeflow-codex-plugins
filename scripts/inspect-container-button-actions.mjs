@@ -100,6 +100,7 @@ function decodeInput(inputPath) {
   const parsed = JSON.parse(fs.readFileSync(inputPath, "utf8"));
   if (typeof parsed.Resource === "string" && parsed.Resource.startsWith(GZIP_PREFIX)) {
     const resource = parseJson(zlib.gunzipSync(Buffer.from(parsed.Resource.slice(GZIP_PREFIX.length), "base64")).toString("utf8"));
+    if (resource && typeof resource === "object" && (resource.Item || Array.isArray(resource.Childs))) return { wrapper: parsed, resource, data: resource, inputType: "wrapped-yap-schema-direct" };
     return { wrapper: parsed, resource, data: parseJson(resource.Data), inputType: "wrapped-yap" };
   }
   if (typeof parsed.Data === "string") return { wrapper: null, resource: parsed, data: parseJson(parsed.Data), inputType: "resource-json" };
