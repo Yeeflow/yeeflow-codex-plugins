@@ -805,8 +805,49 @@ function validateLayoutRule(rule, page) {
   if (["print-header", "print-summary"].includes(normalized)) return /print|quotation|inventory|summary|customer|vendor|logo|picture/i.test(JSON.stringify(page || {}));
   if (["print-item-table", "print-checklist", "line-item-table"].includes(normalized)) return /table-v2|list-body|list-footer|dynamic-field|products|services|inventory|document|checklist/i.test(JSON.stringify(page || {}));
   if (["qr-barcode-section", "print-qr-barcode"].includes(normalized)) return /qrcode|qr-code|list-qrcode|barcode|vendor code/i.test(JSON.stringify(page || {}));
+  if (["print-context"].includes(normalized)) return hasPrintContext(page);
+  if (["current-record-or-item-binding"].includes(normalized)) return hasCurrentRecordOrItemQrBinding(page);
+  if (["no-static-placeholder-qr"].includes(normalized)) return !hasStaticPlaceholderQr(page);
   if (["no-mutating-actions", "read-only-print"].includes(normalized)) return !/\b(Submit|Approve|Mark|Delete|Save Draft|Request Missing Documents)\b/i.test(JSON.stringify(page || {}));
   return true;
+}
+
+function hasPrintContext(page) {
+  return /print|quotation|inventory|invoice|summary|terms|page-break/i.test(JSON.stringify(page || {}));
+}
+
+function qrControls(page) {
+  const controls = [];
+  walkControls(page, (control, pointer) => {
+    const type = normalizedControlType(control.type);
+    const raw = JSON.stringify(control || {});
+    if (["qrcode", "barcode"].includes(type) || /list-qrcode|qr-code|qrcode|barcode/i.test(raw)) {
+      controls.push({ control, pointer, raw });
+    }
+  });
+  return controls;
+}
+
+function hasStaticPlaceholderQr(page) {
+  return qrControls(page).some(({ raw }) => /example\.com|placeholder|yourdomain|todo|sample-qr|static-placeholder/i.test(raw));
+}
+
+function hasFieldBoundQrFallback(page) {
+  return /\b(vendor code|quote number|quotation number|inventory code|serial number|document code|barcode value|qr fallback)\b/i.test(JSON.stringify(page || {}));
+}
+
+function hasCurrentRecordOrItemQrBinding(page) {
+  const controls = qrControls(page);
+  if (!controls.length) return hasFieldBoundQrFallback(page);
+  return controls.some(({ raw, pointer }) => (
+    /list-qrcode|list_field|List Fields:|Current object|current item|current record|fieldName|fieldID|InternalName|ListDataID|Autonumber|Serial|Quote|Code|Title/i.test(raw)
+    || /collection|list|table|children/i.test(pointer)
+  ));
+}
+
+function hasRepeatedQrScope(page) {
+  const raw = JSON.stringify(page || {});
+  return /list-qrcode/i.test(raw) && /collection|table-v2|list-body|list-footer|repeat|current item/i.test(raw);
 }
 
 function templateControlGroups(template) {
@@ -902,6 +943,49 @@ function validateTemplateConformance(section, page, checklistPage, template, fin
           action: label,
         });
       }
+    }
+  }
+  if (template.templateId === "print_page_qr_barcode_section") {
+    const expectedMultiItemQr = /multi|repeated|collection|checklist|table/i.test(JSON.stringify(section));
+    if (!qrControls(page).length && !hasFieldBoundQrFallback(page)) {
+      passed = false;
+      templateAdd(findings, "PRINT_QR_SECTION_MISSING", "Print page QR/barcode section is missing a QR/barcode control or field-bound code fallback.", {
+        page: checklistPage.title,
+        section: section.id,
+        templateId: template.templateId,
+      });
+    }
+    if (hasStaticPlaceholderQr(page)) {
+      passed = false;
+      templateAdd(findings, "PRINT_QR_VALUE_PLACEHOLDER", "Print page QR/barcode section uses a static placeholder QR value.", {
+        page: checklistPage.title,
+        section: section.id,
+        templateId: template.templateId,
+      });
+    }
+    if (!hasCurrentRecordOrItemQrBinding(page)) {
+      passed = false;
+      templateAdd(findings, "PRINT_QR_BINDING_UNRESOLVED", "Print page QR/barcode section is not bound to current item/current record context or a business code field.", {
+        page: checklistPage.title,
+        section: section.id,
+        templateId: template.templateId,
+      });
+    }
+    if (expectedMultiItemQr && !hasRepeatedQrScope(page)) {
+      passed = false;
+      templateAdd(findings, "PRINT_QR_SCOPE_INVALID", "Multi-item print QR section must scope QR controls to the repeated item/list context.", {
+        page: checklistPage.title,
+        section: section.id,
+        templateId: template.templateId,
+      });
+    }
+    if (!qrControls(page).length && !hasFieldBoundQrFallback(page)) {
+      passed = false;
+      templateAdd(findings, "PRINT_QR_FALLBACK_MISSING", "Print page QR fallback must be business-specific and field-bound when QR generation is deferred.", {
+        page: checklistPage.title,
+        section: section.id,
+        templateId: template.templateId,
+      });
     }
   }
   const before = findings.length;

@@ -1039,7 +1039,10 @@
       "layoutRules": [
         "print_layout",
         "section_spacing",
-        "qr_barcode_section"
+        "qr_barcode_section",
+        "print_context",
+        "current_record_or_item_binding",
+        "no_static_placeholder_qr"
       ],
       "styleRules": [
         "compact_identity_block"
@@ -1049,30 +1052,40 @@
       ],
       "validationRules": [
         "section_exists",
-        "required_fields_present"
+        "required_fields_present",
+        "qr_control_inside_print_page_or_item_template",
+        "qr_value_bound_to_current_record_or_item",
+        "no_static_placeholder_url",
+        "field_bound_fallback_if_deferred"
       ],
-      "allowedFallback": "Plain Vendor Code field when QR/barcode is unsafe.",
-      "proofStatus": "needs-golden-proof",
+      "allowedFallback": "Use a field-bound business code such as Vendor Code, Quote Number, Inventory Code, or Serial Number when QR generation is deferred; do not use static placeholder URLs.",
+      "proofStatus": "export-proven",
       "sourceExports": [
         "Company Overview (3).yap",
         "Online Library.yap / Detail Page and Barcode Scan",
-        "Sales Quotation.yap / Print Page"
+        "Sales Quotation.yap / Print Page",
+        "Online Library (1).yap / Print Inventory",
+        "Sales Quotation (1).yap / Print Page"
       ],
-      "partialEvidence": true,
+      "partialEvidence": false,
       "observedControls": [
         "qrcode",
         "barcode",
         "dynamic-field",
         "list-qrcode",
-        "container"
+        "container",
+        "collection"
       ],
       "observedPatterns": [
         "QR Code and Barcode controls appear on Company Overview View page",
         "Online Library proves Barcode and list QR Code controls on inventory/detail surfaces and a separate printable Inventory page",
-        "Sales Quotation proves print-page layout but does not include QR/barcode controls"
+        "Sales Quotation proves print-page layout but does not include QR/barcode controls",
+        "Online Library (1) Print Inventory places a list-qrcode control inside a repeated Collection item context so each printed inventory item receives its own QR code",
+        "Sales Quotation (1) Print Page places a list-qrcode control inside the single-record print page container so the QR is scoped to the current quotation record",
+        "QR sections sit inside padded print/container structure and rely on current item/current record context rather than static placeholder URLs"
       ],
       "limitations": [
-        "QR/barcode controls and print layout are separately export-proven, but QR/barcode embedded inside a print page still needs focused golden/runtime proof"
+        "export-proven structure only; browser print rendering and scanned QR destination behavior still require runtime/manual proof"
       ]
     },
     {

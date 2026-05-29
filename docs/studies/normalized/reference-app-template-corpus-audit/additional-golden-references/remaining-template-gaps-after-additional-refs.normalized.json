@@ -1,20 +1,15 @@
 {
   "remainingGaps": [
     {
-      "templateId": "print_page_qr_barcode_section",
-      "status": "partial-evidence",
-      "reason": "QR/barcode controls are export-proven and print layouts are export-proven, but QR/barcode embedded directly inside print-page layout still needs focused proof."
-    },
-    {
       "templateId": "browser_print_page_break_behavior",
       "status": "runtime-manual-proof-needed",
-      "reason": "Exports prove structure, not browser print output or page-break fidelity."
+      "reason": "Exports prove print structure and QR placement, not browser print output, page-break fidelity, or scanned QR destination behavior."
     }
   ],
   "newGoldenAppNeeded": false,
   "focusedGoldenProofStillUseful": [
-    "QR/barcode inside print page",
-    "browser print/page-break behavior"
+    "browser print/page-break behavior",
+    "scanned QR destination behavior"
   ],
-  "vendorOnboardingV41Readiness": "can proceed page by page using expanded corpus, with QR/barcode print fallback or focused proof"
+  "vendorOnboardingV41Readiness": "can proceed page by page using expanded corpus; all template-library gaps are structurally export-proven"
 }

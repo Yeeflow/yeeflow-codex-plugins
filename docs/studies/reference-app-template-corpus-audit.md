@@ -171,11 +171,32 @@ After the initial audit, four additional exports were studied to close the remai
 
 A broad new golden app is no longer needed before Vendor Onboarding v4.1. The expanded corpus is enough for page-by-page generation of KPI dashboards and print summaries/checklists. A focused golden proof is still useful only for QR/barcode inside a print page and for browser print/page-break behavior.
 
+## QR Code Print Page Golden References
+
+Two additional print exports close the QR/barcode print-page gap:
+
+| Export | Focus page | QR pattern | Proof boundary |
+| --- | --- | --- | --- |
+| `Online Library (1).yap` | `Print Inventory` | Multi-item print page places `list-qrcode` inside the repeated Collection item context, so each printed inventory item can carry its current-item QR code. | Export-proven structure only. |
+| `Sales Quotation (1).yap` | `Print Page` | Single-record print page places `list-qrcode` inside the print page container, scoped to the current quotation record. | Export-proven structure only. |
+
+QR print binding patterns:
+
+- Multi-item print QR: place QR control inside the repeated item/list/Collection context and bind through current item scope.
+- Single-item print QR: place QR control inside the print page container and bind through current record scope.
+- Safe fallback: use a field-bound business code such as Vendor Code, Quote Number, Inventory Code, or Serial Number when QR binding is deferred.
+- Invalid fallback: static placeholder URLs or unbound QR controls.
+
+### Final Template Gap Decision
+
+`print_page_qr_barcode_section` is now export-proven for structure. All previously identified template-library gaps are covered by the expanded corpus. A new golden app is not required before Vendor Onboarding v4.1, though browser print/page-break behavior and scanned QR destination behavior still need runtime/manual verification.
+
 ## Recommended Next Steps
 
 1. Extend the template library with the reference corpus evidence from this audit.
 2. Use the corpus for dashboard, custom form, Kanban/Collection, timeline, related-record, and action templates.
 3. Use NHIC and Service Desk dashboard patterns for KPI/card rows.
 4. Use Online Library and Sales Quotation patterns for print summaries and print item/checklist tables.
-5. Keep QR/barcode-in-print as a documented fallback or focused golden proof.
+5. Use Online Library (1) and Sales Quotation (1) patterns for print-page QR sections.
 6. Generate Vendor Onboarding v4.1 page by page only after template conformance and corpus coverage are wired into validation.
+7. Keep browser print/page-break and scanned QR destination behavior as manual/runtime checks.

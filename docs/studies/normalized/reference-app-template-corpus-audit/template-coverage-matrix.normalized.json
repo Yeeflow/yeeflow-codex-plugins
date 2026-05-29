@@ -154,15 +154,17 @@
     },
     {
       "templateId": "print_page_qr_barcode_section",
-      "status": "needs-golden-proof",
+      "status": "export-proven",
       "sourceExports": [
         "Company Overview (3).yap",
         "Online Library.yap / Detail Page and Barcode Scan",
-        "Sales Quotation.yap / Print Page"
+        "Sales Quotation.yap / Print Page",
+        "Online Library (1).yap / Print Inventory",
+        "Sales Quotation (1).yap / Print Page"
       ],
-      "partialEvidence": true,
+      "partialEvidence": false,
       "limitations": [
-        "QR/barcode controls and print layout are separately export-proven, but not together in one print page"
+        "browser print rendering and scanned QR destination behavior remain runtime/manual proof boundaries"
       ]
     },
     {

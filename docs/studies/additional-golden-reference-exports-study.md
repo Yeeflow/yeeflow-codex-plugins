@@ -109,6 +109,35 @@ QR/barcode controls are export-proven, and print page layouts are export-proven,
 - include QR/barcode in the print page only after a focused export/runtime proof confirms the exact shape, or
 - use a safe Vendor Code/static code fallback and document the deferred QR/barcode print integration.
 
+## QR Code Print Page Golden References
+
+Two follow-up exports close the QR/barcode print-page structure gap:
+
+| Export | Focus page | QR print evidence | Binding pattern |
+| --- | --- | --- | --- |
+| `Online Library (1).yap` | `Print Inventory` | Multi-item print page contains `list-qrcode` inside the repeated Collection item context for inventory output. | QR is scoped to each current inventory item in the repeated item template. |
+| `Sales Quotation (1).yap` | `Print Page` | Single-record print page contains `list-qrcode` inside the print page container. | QR is scoped to the current quotation record. |
+
+Observed layout rules:
+
+- QR controls are placed inside the printable page structure rather than only on a separate detail page.
+- Multi-item QR uses a repeated list/Collection context, so each printed row/card can carry a QR for the current item.
+- Single-item QR uses the current record context on the print page.
+- QR sections sit inside container structure with print spacing/padding.
+- Print pages remain read-oriented; ordinary mutation actions are not part of the QR print section.
+
+Generation rules:
+
+- Use `list-qrcode` or an equivalent QR Code control inside the print page or print item template.
+- Bind the QR to current item/current record context or to a business code field.
+- Do not generate static placeholder QR URLs.
+- If QR binding cannot be safely generated, use a field-bound business code fallback and document the deferment.
+
+Updated proof boundary:
+
+- `print_page_qr_barcode_section` is now export-proven for structure.
+- Browser print rendering, page breaks, and scanned QR destination behavior still require runtime/manual proof.
+
 ## Recommendation
 
-Vendor Onboarding v4.1 can proceed page by page using the expanded corpus for KPI dashboards, print summaries, and print item/checklist tables. A new broad golden app is no longer required first. A focused golden proof remains useful for QR/barcode-in-print and browser print/page-break behavior.
+Vendor Onboarding v4.1 can proceed page by page using the expanded corpus for KPI dashboards, print summaries, print item/checklist tables, and QR print sections. A new broad golden app is no longer required first. Runtime/manual checks remain useful for browser print/page-break behavior and scanned QR destination behavior.

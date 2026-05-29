@@ -383,4 +383,14 @@ Additional reference exports were studied to close the remaining KPI and print g
 | `print_page_document_checklist` | Online Library multi-item inventory print table; Sales Quotation single-record line-item table/list | export-proven | Generated print tables/checklists must be read-only and bind configured fields. |
 | `print_page_qr_barcode_section` | Online Library `Detail Page` and `Barcode Scan` prove QR/barcode controls; Sales Quotation proves print layout | needs-golden-proof | QR/barcode controls inside an actual print-page layout are still only partially covered. |
 
-Expanded corpus conclusion: polished KPI rows, print summaries, and print item/checklist/table sections are now sufficiently export-proven for page-by-page generation. A new golden app is no longer needed for those templates, but QR/barcode embedded inside a print page still needs focused golden proof or a documented fallback.
+Expanded corpus conclusion: polished KPI rows, print summaries, print item/checklist/table sections, and QR/barcode print sections are now sufficiently export-proven for page-by-page generation. A new broad golden app is no longer needed for known template-library gaps; browser print/page-break behavior and scanned QR destination behavior remain runtime/manual proof boundaries.
+
+## QR Code Print Page References
+
+`Online Library (1).yap` and `Sales Quotation (1).yap` close the remaining QR/barcode print template gap.
+
+| Template ID | QR print evidence | Updated proof status | Remaining limitation |
+| --- | --- | --- | --- |
+| `print_page_qr_barcode_section` | `Online Library (1).yap` / `Print Inventory` includes `list-qrcode` inside a repeated Collection item context; `Sales Quotation (1).yap` / `Print Page` includes `list-qrcode` inside the single-record print page container. | export-proven | Browser print rendering, page breaks, and scanned QR destination behavior still need runtime/manual proof. |
+
+QR generation rule: place QR controls inside the print page or inside the print item template/repeated row context. Bind the QR value to current item/current record context or a business code field. Do not generate static placeholder QR URLs. If QR binding is not safe, use a field-bound business code fallback such as Vendor Code, Quote Number, Inventory Code, or Serial Number and document the deferment.

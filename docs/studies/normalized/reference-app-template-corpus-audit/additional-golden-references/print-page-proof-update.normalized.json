@@ -21,12 +21,18 @@
     {
       "templateId": "print_page_qr_barcode_section",
       "previousStatus": "needs-golden-proof",
-      "updatedStatus": "needs-golden-proof",
+      "updatedStatus": "export-proven",
       "sourceExports": [
         "Online Library.yap / Detail Page and Barcode Scan",
-        "Sales Quotation.yap / Print Page"
+        "Sales Quotation.yap / Print Page",
+        "Online Library (1).yap / Print Inventory",
+        "Sales Quotation (1).yap / Print Page"
       ],
-      "reason": "QR/barcode controls and print layout are separately export-proven, but QR/barcode embedded inside a print page is not yet proven."
+      "reason": "QR/barcode integration inside print pages is now structurally export-proven by multi-item and single-item print references.",
+      "remainingRuntimeBoundaries": [
+        "browser print/page-break behavior",
+        "scanned QR destination behavior"
+      ]
     }
   ],
   "proofBoundary": "export-proven structure only; browser print and page-break behavior not claimed"
