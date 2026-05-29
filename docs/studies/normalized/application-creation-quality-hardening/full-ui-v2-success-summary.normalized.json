@@ -1,0 +1,17 @@
+{
+  "app": "Vendor Onboarding & Compliance Management",
+  "proof": "full-ui-v2",
+  "packages": {
+    "yapk": "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v2-src-dashboard.yapk",
+    "yap": "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v2-src-dashboard.yap"
+  },
+  "status": {
+    "yapkInstall": "user-confirmed-success",
+    "yapImport": "user-confirmed-success-after-simpleportal-null-fix",
+    "dashboardRenderer": "current-src-dashboard"
+  },
+  "notes": [
+    "Import/install foundation is proven for these candidates.",
+    "Visual fidelity against the five approved mockups still requires manual review."
+  ]
+}

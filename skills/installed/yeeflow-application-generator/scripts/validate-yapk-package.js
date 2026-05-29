@@ -92,6 +92,16 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function safeParseJson(value) {
+  if (isObject(value) || Array.isArray(value)) return value;
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
 function walk(value, visitor, pointer = "$") {
   visitor(value, pointer);
   if (Array.isArray(value)) value.forEach((item, index) => walk(item, visitor, `${pointer}[${index}]`));
@@ -336,7 +346,7 @@ function validateAppPackage(decoded, errors, warnings) {
     add(errors, ARRAY_PORTALINFO_IMPORT_ERROR, "Product import feedback requires PortalInfo to be null when no portal is included; do not emit an array.", { path: "PortalInfo", length: decoded.PortalInfo.length });
   }
   if (decoded.PortalInfo !== undefined && decoded.PortalInfo !== null && !Array.isArray(decoded.PortalInfo) && !isObject(decoded.PortalInfo)) {
-    add(errors, "YAPK_PORTALINFO_INVALID", "PortalInfo must be null for no portal or a portal object when a portal is included.", { path: "PortalInfo", actualType: typeof decoded.PortalInfo });
+    add(errors, "YAPK_PORTALINFO_NO_PORTAL_MUST_BE_NULL", "PortalInfo must be null for no portal packages.", { path: "PortalInfo", actualType: typeof decoded.PortalInfo });
   }
   if (isObject(decoded.ListSet) && Number(decoded.ListSet.Flags) !== 1) {
     add(errors, "YAPK_LISTMODEL_FLAGS_MISSING_OR_INVALID", "Generated AppPackageInfo root app/list-set resource requires ListSet.Flags = 1 before signing.", { path: "ListSet.Flags", value: decoded.ListSet.Flags });
@@ -444,6 +454,17 @@ function walkControls(node, visitor) {
 function validateDashboardDataTables(decoded, errors) {
   const maps = fieldsByList(decoded);
   for (const [pageIndex, page] of asArray(decoded.Pages).entries()) {
+    if (Number(page?.Type) === 103) {
+      const ext2 = safeParseJson(page.Ext2);
+      if (!ext2 || ext2.src !== true) {
+        add(errors, "DASHBOARD_TYPE_103_SRC_REQUIRED", "YAPK Type 103 dashboard pages must include Ext2 {\"src\":true}; otherwise Yeeflow opens the retired legacy dashboard renderer.", { path: `Pages[${pageIndex}].Ext2`, title: page.Title || null, layoutId: page.LayoutID || null });
+        add(errors, "DASHBOARD_CURRENT_VERSION_MARKER_MISSING", "Generated dashboard is missing the current-version src marker.", { path: `Pages[${pageIndex}].Ext2`, title: page.Title || null, layoutId: page.LayoutID || null });
+        if (page.Ext2 === "" || page.Ext2 === undefined || page.Ext2 === null) add(errors, "DASHBOARD_LEGACY_RENDERER_FORBIDDEN", "Retired/legacy dashboard shells are forbidden for generated applications.", { path: `Pages[${pageIndex}].Ext2`, title: page.Title || null, layoutId: page.LayoutID || null });
+      }
+      if (!Array.isArray(page.LayoutInResources)) {
+        add(errors, "DASHBOARD_LAYOUTINRESOURCES_INVALID", "Generated Type 103 dashboards must use an array for LayoutInResources.", { path: `Pages[${pageIndex}].LayoutInResources`, title: page.Title || null, layoutId: page.LayoutID || null, actualType: page.LayoutInResources === null ? "null" : typeof page.LayoutInResources });
+      }
+    }
     for (const [resourceIndex, resource] of asArray(page.LayoutInResources).entries()) {
       if (typeof resource.Resource !== "string" || !resource.Resource.trim()) continue;
       let parsed;
@@ -486,6 +507,7 @@ function validate(file, baselineFile = null) {
 
   const resource = decodeBrotliResource(wrapper.Resource, errors);
   const appValidation = resource.decoded ? validateAppPackage(resource.decoded, errors, warnings) : { decodedKeys: [], counts: null };
+  if (resource.decoded) validateDashboardDataTables(resource.decoded, errors);
 
   const metadata = {
     redactedIdentityPresent: {

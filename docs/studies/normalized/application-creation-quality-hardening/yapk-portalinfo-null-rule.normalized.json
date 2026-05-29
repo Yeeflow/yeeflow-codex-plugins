@@ -1,0 +1,17 @@
+{
+  "rule": "yapk-no-portal-portalinfo-null",
+  "appliesTo": "generated no-portal YAPK packages",
+  "required": {
+    "AppPackageInfo.PortalInfo": null
+  },
+  "invalid": [
+    { "PortalInfo": {} },
+    { "PortalInfo": [] },
+    { "PortalInfo": "missing-or-other-non-null-no-portal-value" }
+  ],
+  "errors": [
+    "YAPK_PORTALINFO_EMPTY_OBJECT_INVALID",
+    "YAPK_PORTALINFO_ARRAY_INVALID",
+    "YAPK_PORTALINFO_NO_PORTAL_MUST_BE_NULL"
+  ]
+}

@@ -316,21 +316,36 @@ function inspectDashboards(data, listsById, findings, summary) {
   const rootLayouts = asArray(data?.Item?.Layouts);
   rootLayouts.forEach((layout, layoutIndex) => {
     if (Number(layout.Type) !== 103) return;
+    const title = safeString(layout.Title);
+    const layoutId = safeString(layout.LayoutID);
+    summary.dashboardTitles.push(title);
+    const ext2 = parseMaybeJson(layout.Ext2);
+    if (!ext2 || ext2.src !== true) {
+      add(findings, "error", "DASHBOARD_TYPE_103_SRC_REQUIRED", "Generated Type 103 dashboards must include Ext2 {\"src\":true}; otherwise Yeeflow opens the retired legacy dashboard renderer.", { layoutIndex, title, layoutId });
+      add(findings, "error", "DASHBOARD_CURRENT_VERSION_MARKER_MISSING", "Generated dashboard is missing the current-version src marker.", { layoutIndex, title, layoutId });
+      if (layout.Ext2 === "" || layout.Ext2 === undefined || layout.Ext2 === null) {
+        add(findings, "error", "DASHBOARD_LEGACY_RENDERER_FORBIDDEN", "Retired/legacy dashboard shells are forbidden for generated applications.", { layoutIndex, title, layoutId });
+      }
+    }
+    if (!Array.isArray(layout.LayoutInResources)) {
+      add(findings, "error", "DASHBOARD_LAYOUTINRESOURCES_INVALID", "Generated Type 103 dashboards must use an array for LayoutInResources.", { layoutIndex, title, layoutId, actualType: layout.LayoutInResources === null ? "null" : typeof layout.LayoutInResources });
+      return;
+    }
     const resource = asArray(layout.LayoutInResources)[0]?.Resource;
     const page = parseMaybeJson(resource);
     if (!page) {
-      const ext2 = parseMaybeJson(layout.Ext2);
-      const currentDashboardShell = layout.LayoutView === null && ext2 && ext2.src === true && Array.isArray(layout.LayoutInResources) && layout.LayoutInResources.length === 0;
+      const currentDashboardShell = (layout.LayoutView === null || layout.LayoutView === "" || layout.LayoutView === undefined) && ext2 && ext2.src === true && Array.isArray(layout.LayoutInResources) && layout.LayoutInResources.length === 0;
       if (currentDashboardShell) {
         summary.dashboardPages += 1;
-        add(findings, "warning", "DASHBOARD_CURRENT_SHELL_NO_INLINE_RESOURCE", "Current-version blank dashboard shell is export-proven, but it has no inline page JSON to inspect for padding, controls, or data bindings.", { layoutIndex, title: safeString(layout.Title), layoutId: safeString(layout.LayoutID) });
+        summary.blankDashboards += 1;
+        add(findings, "warning", "DASHBOARD_CURRENT_SHELL_NO_INLINE_RESOURCE", "Current-version blank dashboard shell is export-proven, but it has no inline page JSON to inspect for padding, controls, or data bindings.", { layoutIndex, title, layoutId });
         return;
       }
-      add(findings, "error", "DASHBOARD_RESOURCE_JSON_INVALID", "Dashboard page Resource must parse as JSON.", { layoutIndex, title: safeString(layout.Title) });
+      add(findings, "error", "DASHBOARD_RESOURCE_JSON_INVALID", "Dashboard page Resource must parse as JSON.", { layoutIndex, title });
       return;
     }
     summary.dashboardPages += 1;
-    inspectRoot(page, { kind: "dashboard", title: safeString(layout.Title), layoutId: safeString(layout.LayoutID) }, listsById, findings, summary);
+    inspectRoot(page, { kind: "dashboard", title, layoutId }, listsById, findings, summary);
   });
 }
 
@@ -347,6 +362,7 @@ function inspectCustomForms(data, listsById, findings, summary) {
         continue;
       }
       summary.customForms += 1;
+      summary.customFormTitles.push(safeString(layout.Title));
       inspectRoot(form, { kind: "custom_form", list: listTitle, listId, title: safeString(layout.Title), layoutId: safeString(layout.LayoutID) }, listsById, findings, summary);
     }
   }
@@ -357,7 +373,7 @@ function main() {
   const findings = [];
   const largeNumbers = new Set();
   const data = decodeInput(input, findings, largeNumbers);
-  const summary = { dashboardPages: 0, customForms: 0, dataTables: 0, itemTemplateControls: 0 };
+  const summary = { dashboardPages: 0, customForms: 0, dataTables: 0, itemTemplateControls: 0, blankDashboards: 0, dashboardTitles: [], customFormTitles: [] };
   if (data) {
     const listsById = fieldMapsForData(data);
     inspectDashboards(data, listsById, findings, summary);

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require("fs");
+const { spawnSync } = require("child_process");
 const zlib = require("zlib");
 
 const WRAPPER_REQUIRED = [
@@ -36,6 +37,8 @@ const APP_PACKAGE_REQUIRED = [
   "PortalInfo",
   "Childs",
 ];
+const EMPTY_PORTALINFO_IMPORT_ERROR = "YAPK_PORTALINFO_EMPTY_OBJECT_INVALID";
+const ARRAY_PORTALINFO_IMPORT_ERROR = "YAPK_PORTALINFO_ARRAY_INVALID";
 const LIST_PACKAGE_REQUIRED = ["List", "Fields", "Layouts", "RemindRules", "PublicForms", "FlowMappings"];
 const LIST_TYPE_ENUM = new Set([1, 16, 32, 64, 128, 1024]);
 const FIELD_TYPE_ENUM = new Set(["Text", "Bit", "Decimal", "DateTime", "Datetime", "Bigint"]);
@@ -74,6 +77,7 @@ const FIELD_NAME_SUFFIX_RE = /(\d+)$/;
 const UTC_DATE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 const NUMERIC_STRING_RE = /^\d+$/;
 const PLACEHOLDER_RE = /^__.*REQUIRED.*__$/;
+const LARGE_INTEGER_RE = /^-?\d{16,}$/;
 
 function usage() {
   console.error("Usage: node validate-yapk-package.js <package.yapk> [--baseline <baseline.yapk>]");
@@ -88,6 +92,16 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function safeParseJson(value) {
+  if (isObject(value) || Array.isArray(value)) return value;
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
 function walk(value, visitor, pointer = "$") {
   visitor(value, pointer);
   if (Array.isArray(value)) value.forEach((item, index) => walk(item, visitor, `${pointer}[${index}]`));
@@ -96,7 +110,53 @@ function walk(value, visitor, pointer = "$") {
 
 function readWrapper(file) {
   const text = fs.readFileSync(file, "utf8").replace(/^\uFEFF/, "");
-  return JSON.parse(text);
+  return parseJsonPreservingLargeInts(text);
+}
+
+function quoteLargeIntegers(jsonText) {
+  let out = "";
+  let i = 0;
+  let inString = false;
+  let escaped = false;
+  while (i < jsonText.length) {
+    const ch = jsonText[i];
+    if (inString) {
+      out += ch;
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === "\"") inString = false;
+      i += 1;
+      continue;
+    }
+    if (ch === "\"") {
+      inString = true;
+      out += ch;
+      i += 1;
+      continue;
+    }
+    if (ch === "-" || (ch >= "0" && ch <= "9")) {
+      const start = i;
+      let j = i;
+      if (jsonText[j] === "-") j += 1;
+      while (j < jsonText.length && jsonText[j] >= "0" && jsonText[j] <= "9") j += 1;
+      if (jsonText[j] === "." || jsonText[j] === "e" || jsonText[j] === "E") {
+        while (j < jsonText.length && /[0-9eE+\-.]/.test(jsonText[j])) j += 1;
+        out += jsonText.slice(start, j);
+      } else {
+        const token = jsonText.slice(start, j);
+        out += LARGE_INTEGER_RE.test(token) ? `"${token}"` : token;
+      }
+      i = j;
+      continue;
+    }
+    out += ch;
+    i += 1;
+  }
+  return out;
+}
+
+function parseJsonPreservingLargeInts(text) {
+  return JSON.parse(quoteLargeIntegers(text));
 }
 
 function add(list, code, message, detail = {}) {
@@ -158,10 +218,20 @@ function decodeBrotliResource(resource, errors) {
   for (const [name, bytes] of variants) {
     try {
       const decompressed = zlib.brotliDecompressSync(bytes);
-      const decoded = JSON.parse(decompressed.toString("utf8"));
+      const decoded = parseJsonPreservingLargeInts(decompressed.toString("utf8"));
       attempts.push({ name, brotli: true, json: true, inputBytes: bytes.length, decodedTextBytes: decompressed.length });
       return { decoded, attempts, resourceBytes: base64Bytes.length, decodedTextBytes: decompressed.length };
     } catch (error) {
+      const tolerant = tolerantBrotliDecodeSync(bytes);
+      if (tolerant.text) {
+        try {
+          const decoded = parseJsonPreservingLargeInts(tolerant.text);
+          attempts.push({ name, brotli: "tolerant", json: true, inputBytes: bytes.length, decodedTextBytes: Buffer.byteLength(tolerant.text), errorClass: error.code || error.name || "DECODE_ERROR" });
+          return { decoded, attempts, resourceBytes: base64Bytes.length, decodedTextBytes: Buffer.byteLength(tolerant.text) };
+        } catch {
+          // Fall through to record the normal sync decode failure.
+        }
+      }
       attempts.push({ name, brotli: false, inputBytes: bytes.length, errorClass: error.code || error.name || "DECODE_ERROR" });
     }
   }
@@ -169,10 +239,36 @@ function decodeBrotliResource(resource, errors) {
   return { decoded: null, attempts, resourceBytes: base64Bytes.length, decodedTextBytes: 0 };
 }
 
+function tolerantBrotliDecodeSync(bytes) {
+  const script = `
+    const zlib = require("zlib");
+    const chunks = [];
+    const stream = zlib.createBrotliDecompress();
+    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("error", () => {
+      process.stdout.write(Buffer.concat(chunks).toString("base64"));
+    });
+    stream.on("end", () => {
+      process.stdout.write(Buffer.concat(chunks).toString("base64"));
+    });
+    stream.end(Buffer.from(process.argv[1], "base64"));
+  `;
+  const result = spawnSync(process.execPath, ["-e", script, bytes.toString("base64")], { encoding: "utf8", maxBuffer: 128 * 1024 * 1024 });
+  if (result.status !== 0 || !result.stdout) return { text: "" };
+  return { text: Buffer.from(result.stdout, "base64").toString("utf8") };
+}
+
 function validateField(field, path, errors, warnings) {
   if (!isObject(field)) {
     add(errors, "YAPK_FIELD_NOT_OBJECT", "List field entry must be an object.", { path });
     return;
+  }
+  if (!Number.isInteger(field.Category)) {
+    add(errors, "FIELD_CATEGORY_NOT_INT", "Field.Category must be an integer for generated YAPK packages.", {
+      path: `${path}.Category`,
+      field: field.DisplayName || field.FieldName || field.InternalName || null,
+      actualType: field.Category === undefined ? "missing" : Array.isArray(field.Category) ? "array" : field.Category === null ? "null" : typeof field.Category,
+    });
   }
   const fieldName = String(field.FieldName || "");
   const match = fieldName.match(FIELD_NAME_SUFFIX_RE);
@@ -198,6 +294,7 @@ function validateListPackage(pkg, path, errors, warnings, counts) {
   counts.fields += asArray(pkg.Fields).length;
   counts.layouts += asArray(pkg.Layouts).length;
   for (const [index, field] of asArray(pkg.Fields).entries()) validateField(field, `${path}.Fields[${index}]`, errors, warnings);
+  if ("Defs" in pkg) add(errors, "YAPK_CHILDS_USES_DEFS", "YAPK Childs items must use Fields, not YAP Defs.", { path: `${path}.Defs` });
 }
 
 function validateNoRule(form, path, errors, counts) {
@@ -237,7 +334,20 @@ function validateAppPackage(decoded, errors, warnings) {
     add(errors, "YAPK_APP_PACKAGE_NOT_OBJECT", "Decoded Resource must be an AppPackageInfo object.");
     return { decodedKeys: [], counts };
   }
+  if ("MainListType" in decoded || "Data" in decoded || "Item" in decoded) {
+    add(errors, "YAPK_RESOURCE_NOT_APP_PACKAGE_INFO", "Decoded YAPK Resource must be AppPackageInfo, not YAP ListExportResult/ListExportInfo.");
+    return { decodedKeys: Object.keys(decoded), counts };
+  }
   for (const key of APP_PACKAGE_REQUIRED) if (!(key in decoded)) add(errors, "YAPK_APP_PACKAGE_KEY_MISSING", "Decoded AppPackageInfo is missing a schema-required key.", { key });
+  if (isObject(decoded.PortalInfo) && Object.keys(decoded.PortalInfo).length === 0) {
+    add(errors, EMPTY_PORTALINFO_IMPORT_ERROR, "Product import feedback requires PortalInfo to be null when no portal is included; do not emit an empty object.", { path: "PortalInfo" });
+  }
+  if (Array.isArray(decoded.PortalInfo)) {
+    add(errors, ARRAY_PORTALINFO_IMPORT_ERROR, "Product import feedback requires PortalInfo to be null when no portal is included; do not emit an array.", { path: "PortalInfo", length: decoded.PortalInfo.length });
+  }
+  if (decoded.PortalInfo !== undefined && decoded.PortalInfo !== null && !Array.isArray(decoded.PortalInfo) && !isObject(decoded.PortalInfo)) {
+    add(errors, "YAPK_PORTALINFO_NO_PORTAL_MUST_BE_NULL", "PortalInfo must be null for no portal packages.", { path: "PortalInfo", actualType: typeof decoded.PortalInfo });
+  }
   if (isObject(decoded.ListSet) && Number(decoded.ListSet.Flags) !== 1) {
     add(errors, "YAPK_LISTMODEL_FLAGS_MISSING_OR_INVALID", "Generated AppPackageInfo root app/list-set resource requires ListSet.Flags = 1 before signing.", { path: "ListSet.Flags", value: decoded.ListSet.Flags });
   }
@@ -252,6 +362,8 @@ function validateAppPackage(decoded, errors, warnings) {
   counts.components = asArray(decoded.Components).length;
   for (const [index, form] of asArray(decoded.Forms).entries()) validateNoRule(form, `Forms[${index}]`, errors, counts);
   for (const [index, child] of asArray(decoded.Childs).entries()) validateListPackage(child, `Childs[${index}]`, errors, warnings, counts);
+  validateGeneratedYapkIds(decoded, errors);
+  validateDashboardDataTables(decoded, errors);
   const placeholders = [];
   walk(decoded, (value, pointer) => {
     if (typeof value === "string" && PLACEHOLDER_RE.test(value)) placeholders.push({ path: pointer, placeholder: value });
@@ -268,12 +380,123 @@ function validateAppPackage(decoded, errors, warnings) {
   return { decodedKeys: Object.keys(decoded), counts };
 }
 
+function validateGeneratedYapkIds(decoded, errors) {
+  const listIds = new Map();
+  const fieldIds = new Map();
+  const layoutIds = new Map();
+  const resourceIds = new Map();
+  const safeId = (value, path, longAsString = false) => {
+    if (value === undefined || value === null || value === "") return;
+    if (longAsString) {
+      if (typeof value !== "string" || !/^\d+$/.test(value)) add(errors, "INVALID_ID_TYPE", "YAPK LongAsString ID must be a numeric string.", { path, actualType: Array.isArray(value) ? "array" : value === null ? "null" : typeof value });
+      return;
+    }
+    if (typeof value === "string" && /^\d{16,}$/.test(value)) return;
+    if (!Number.isInteger(value)) add(errors, "INVALID_ID_TYPE", "YAPK integer ID must be a JSON integer or preserved raw large integer token.", { path, actualType: Array.isArray(value) ? "array" : value === null ? "null" : typeof value });
+    else if (!Number.isSafeInteger(value)) add(errors, "UNSAFE_INTEGER_ID", "YAPK integer ID was parsed as an unsafe JavaScript number; preserve 64-bit IDs without rounding.", { path, value });
+  };
+  const duplicate = (seen, value, code, message, detail) => {
+    const key = String(value);
+    if (!key) return;
+    const previous = seen.get(key);
+    if (previous) add(errors, code, message, { value: key, previousPath: previous.path, ...detail });
+    else seen.set(key, detail);
+  };
+  safeId(decoded.ListSet?.ListID, "ListSet.ListID");
+  duplicate(listIds, decoded.ListSet?.ListID, "DUPLICATE_LIST_ID", "ListID values must be globally unique.", { path: "ListSet.ListID", list: decoded.ListSet?.Title || "root" });
+  for (const [index, page] of asArray(decoded.Pages).entries()) {
+    safeId(page.ListID, `Pages[${index}].ListID`);
+    safeId(page.LayoutID, `Pages[${index}].LayoutID`, true);
+    duplicate(layoutIds, page.LayoutID, "DUPLICATE_LAYOUT_ID", "LayoutID values must be globally unique.", { path: `Pages[${index}].LayoutID`, layout: page.Title || null });
+    for (const [resourceIndex, resource] of asArray(page.LayoutInResources).entries()) {
+      safeId(resource.ID, `Pages[${index}].LayoutInResources[${resourceIndex}].ID`);
+      safeId(resource.RefId, `Pages[${index}].LayoutInResources[${resourceIndex}].RefId`);
+      duplicate(resourceIds, resource.ID, "DUPLICATE_RESOURCE_ID", "LayoutInResources ID values must be globally unique.", { path: `Pages[${index}].LayoutInResources[${resourceIndex}].ID`, layout: page.Title || null });
+    }
+  }
+  for (const [childIndex, child] of asArray(decoded.Childs).entries()) {
+    const title = child.List?.Title || null;
+    safeId(child.List?.ListID, `Childs[${childIndex}].List.ListID`);
+    duplicate(listIds, child.List?.ListID, "DUPLICATE_LIST_ID", "ListID values must be globally unique.", { path: `Childs[${childIndex}].List.ListID`, list: title });
+    for (const [fieldIndex, field] of asArray(child.Fields).entries()) {
+      safeId(field.ListID, `Childs[${childIndex}].Fields[${fieldIndex}].ListID`);
+      safeId(field.FieldID, `Childs[${childIndex}].Fields[${fieldIndex}].FieldID`);
+      duplicate(fieldIds, field.FieldID, "DUPLICATE_FIELD_ID", "FieldID values must be globally unique.", { path: `Childs[${childIndex}].Fields[${fieldIndex}].FieldID`, list: title, field: field.DisplayName || field.FieldName || null });
+    }
+    for (const [layoutIndex, layout] of asArray(child.Layouts).entries()) {
+      safeId(layout.ListID, `Childs[${childIndex}].Layouts[${layoutIndex}].ListID`);
+      safeId(layout.LayoutID, `Childs[${childIndex}].Layouts[${layoutIndex}].LayoutID`, true);
+      duplicate(layoutIds, layout.LayoutID, "DUPLICATE_LAYOUT_ID", "LayoutID values must be globally unique.", { path: `Childs[${childIndex}].Layouts[${layoutIndex}].LayoutID`, list: title, layout: layout.Title || null });
+    }
+  }
+}
+
+function fieldsByList(decoded) {
+  const out = new Map();
+  for (const child of asArray(decoded.Childs)) {
+    const listId = String(child.List?.ListID || "");
+    if (!listId) continue;
+    const fields = new Set();
+    for (const field of asArray(child.Fields)) {
+      for (const candidate of [field.FieldName, field.InternalName, field.DisplayName, field.FieldID].filter(Boolean)) fields.add(String(candidate));
+    }
+    out.set(listId, fields);
+  }
+  return out;
+}
+
+function walkControls(node, visitor) {
+  if (!node || typeof node !== "object") return;
+  visitor(node);
+  for (const child of asArray(node.children)) walkControls(child, visitor);
+}
+
+function validateDashboardDataTables(decoded, errors) {
+  const maps = fieldsByList(decoded);
+  for (const [pageIndex, page] of asArray(decoded.Pages).entries()) {
+    if (Number(page?.Type) === 103) {
+      const ext2 = safeParseJson(page.Ext2);
+      if (!ext2 || ext2.src !== true) {
+        add(errors, "DASHBOARD_TYPE_103_SRC_REQUIRED", "YAPK Type 103 dashboard pages must include Ext2 {\"src\":true}; otherwise Yeeflow opens the retired legacy dashboard renderer.", { path: `Pages[${pageIndex}].Ext2`, title: page.Title || null, layoutId: page.LayoutID || null });
+        add(errors, "DASHBOARD_CURRENT_VERSION_MARKER_MISSING", "Generated dashboard is missing the current-version src marker.", { path: `Pages[${pageIndex}].Ext2`, title: page.Title || null, layoutId: page.LayoutID || null });
+        if (page.Ext2 === "" || page.Ext2 === undefined || page.Ext2 === null) add(errors, "DASHBOARD_LEGACY_RENDERER_FORBIDDEN", "Retired/legacy dashboard shells are forbidden for generated applications.", { path: `Pages[${pageIndex}].Ext2`, title: page.Title || null, layoutId: page.LayoutID || null });
+      }
+      if (!Array.isArray(page.LayoutInResources)) {
+        add(errors, "DASHBOARD_LAYOUTINRESOURCES_INVALID", "Generated Type 103 dashboards must use an array for LayoutInResources.", { path: `Pages[${pageIndex}].LayoutInResources`, title: page.Title || null, layoutId: page.LayoutID || null, actualType: page.LayoutInResources === null ? "null" : typeof page.LayoutInResources });
+      }
+    }
+    for (const [resourceIndex, resource] of asArray(page.LayoutInResources).entries()) {
+      if (typeof resource.Resource !== "string" || !resource.Resource.trim()) continue;
+      let parsed;
+      try { parsed = JSON.parse(resource.Resource); } catch { continue; }
+      walkControls(parsed, (control) => {
+        if (control?.type !== "data-list") return;
+        const pointer = `Pages[${pageIndex}].LayoutInResources[${resourceIndex}].Resource`;
+        const listRef = control.attrs?.data?.list || {};
+        for (const key of ["AppID", "ListID", "Type", "Title", "ListSetID"]) {
+          if (listRef[key] === undefined || listRef[key] === null || String(listRef[key]) === "") add(errors, "YAPK_DASHBOARD_DATA_TABLE_SOURCE_KEY_MISSING", "Dashboard Data table attrs.data.list must include AppID, ListID, Type, Title, and ListSetID.", { path: `${pointer}.attrs.data.list.${key}`, key });
+        }
+        const listId = String(listRef.ListID || "");
+        const fields = maps.get(listId);
+        for (const [columnIndex, column] of asArray(control.attrs?.listarr).entries()) {
+          const field = column?.Field === undefined || column?.Field === null ? "" : String(column.Field);
+          if (!field) add(errors, "DASHBOARD_DATA_TABLE_DISPLAY_FIELD_BINDING_MISSING", "Dashboard Data table display columns must include Field source bindings; FieldName is only the visible label.", { path: `${pointer}.attrs.listarr[${columnIndex}]`, listId });
+          else if (fields && !fields.has(field)) add(errors, "DASHBOARD_DATA_TABLE_DISPLAY_FIELD_UNRESOLVED", "Dashboard Data table Field binding must resolve to the source list.", { path: `${pointer}.attrs.listarr[${columnIndex}].Field`, listId, field });
+        }
+      });
+    }
+  }
+}
+
 function validate(file, baselineFile = null) {
   const errors = [];
   const warnings = [];
   const wrapper = readWrapper(file);
   if (!isObject(wrapper)) add(errors, "YAPK_WRAPPER_NOT_OBJECT", "Top-level package must be a JSON object.");
   for (const key of WRAPPER_REQUIRED) if (!(key in wrapper)) add(errors, "YAPK_REQUIRED_KEY_MISSING", `Missing required key ${key}.`);
+  if (typeof wrapper.TenantID !== "string" || !NUMERIC_STRING_RE.test(wrapper.TenantID || "")) add(errors, "YAPK_TENANT_ID_INVALID", "Generated YAPK TenantID must be a LongAsString numeric string.");
+  if (typeof wrapper.ListID !== "string" || !NUMERIC_STRING_RE.test(wrapper.ListID || "")) add(errors, "YAPK_LIST_ID_INVALID", "Generated YAPK top-level ListID must be a LongAsString numeric string.");
+  if (String(wrapper.AppID) !== "41") add(errors, "YAPK_APPID_NOT_FIXED_41", "Generated YAPK wrapper AppID must stay fixed at 41.");
   if (typeof wrapper.Resource !== "string" || !wrapper.Resource) add(errors, "YAPK_RESOURCE_INVALID", "Resource must be a non-empty base64 string.");
   if (typeof wrapper.Resource === "string" && !isBase64(wrapper.Resource)) add(errors, "YAPK_RESOURCE_BASE64_INVALID", "Resource must be canonical base64 text.");
   if (String(wrapper.Resource || "").startsWith("[______gizp______]")) add(errors, "YAPK_RESOURCE_USES_YAP_GZIP_PREFIX", ".yapk Resource must not use .yap gzip prefix.");
@@ -284,6 +507,7 @@ function validate(file, baselineFile = null) {
 
   const resource = decodeBrotliResource(wrapper.Resource, errors);
   const appValidation = resource.decoded ? validateAppPackage(resource.decoded, errors, warnings) : { decodedKeys: [], counts: null };
+  if (resource.decoded) validateDashboardDataTables(resource.decoded, errors);
 
   const metadata = {
     redactedIdentityPresent: {

@@ -1,0 +1,19 @@
+{
+  "strictAppQualityGate": {
+    "requiresSpecCoverage": true,
+    "forbidsLegacyDashboards": true,
+    "forbidsBlankDashboardsUnlessAllowed": true,
+    "requiresDataTableFieldBindings": true,
+    "requiresPortalNullRules": true,
+    "requiresDeferredFeatureReasons": true
+  },
+  "checks": [
+    "planned pages exist",
+    "Type 103 dashboards include src true",
+    "Data table columns include Field and FieldName",
+    "Data table source list keys include AppID/ListID/Type/Title/ListSetID",
+    "item templates include meaningful dynamic fields",
+    "YAP SimplePortal is null for no portal",
+    "YAPK PortalInfo is null for no portal"
+  ]
+}

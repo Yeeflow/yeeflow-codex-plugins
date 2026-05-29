@@ -1,0 +1,17 @@
+{
+  "rule": "yap-no-portal-simpleportal-null",
+  "appliesTo": "generated no-portal YAP packages",
+  "required": {
+    "ListExportResult.SimplePortal": null
+  },
+  "invalid": [
+    { "SimplePortal": {} },
+    { "SimplePortal": [] },
+    { "SimplePortal": "missing" }
+  ],
+  "errors": [
+    "YAP_SIMPLEPORTAL_EMPTY_OBJECT_INVALID",
+    "YAP_SIMPLEPORTAL_ARRAY_INVALID",
+    "YAP_SIMPLEPORTAL_NO_PORTAL_MUST_BE_NULL"
+  ]
+}

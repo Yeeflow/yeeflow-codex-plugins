@@ -123,16 +123,25 @@ function decodeInput(inputPath, findings, largeNumbers) {
       add(findings, "error", "YAP_RESOURCE_DECODE_INVALID", "Resource gzip/base64 or JSON decode failed.", { error: error.message });
       return { wrapper: parsed, resource: null, data: null, inputType: "wrapped-yap" };
     }
-    if (typeof resource.Data !== "string") {
-      add(findings, "error", "RESOURCE_DATA_MISSING", "Decoded Resource.Data must be a JSON string.");
+    if (isObject(resource.Item) || Array.isArray(resource.Childs)) {
+      add(findings, "error", "YAP_RESOURCE_NOT_LIST_EXPORT_RESULT", "Decoded Resource must be ListExportResult with Data, not direct ListExportInfo.", { path: "$.Resource" });
+      return { wrapper: parsed, resource, data: resource, inputType: "wrapped-yap-schema-direct-invalid" };
+    }
+    if (!isObject(resource) || !("Data" in resource)) {
+      add(findings, "error", "RESOURCE_DATA_MISSING", "Decoded Resource should be ListExportResult with Data.");
       return { wrapper: parsed, resource, data: null, inputType: "wrapped-yap" };
     }
-    try {
-      return { wrapper: parsed, resource, data: parseJson(resource.Data, largeNumbers), inputType: "wrapped-yap" };
-    } catch (error) {
-      add(findings, "error", "RESOURCE_DATA_JSON_INVALID", "Decoded Resource.Data JSON parse failed.", { error: error.message });
-      return { wrapper: parsed, resource, data: null, inputType: "wrapped-yap" };
+    if (typeof resource.Data === "string") {
+      try {
+        return { wrapper: parsed, resource, data: parseJson(resource.Data, largeNumbers), inputType: "wrapped-yap-list-export-result-data-string" };
+      } catch (error) {
+        add(findings, "error", "RESOURCE_DATA_JSON_INVALID", "Decoded Resource.Data JSON parse failed.", { error: error.message });
+        return { wrapper: parsed, resource, data: null, inputType: "wrapped-yap-list-export-result" };
+      }
     }
+    if (isObject(resource.Data)) return { wrapper: parsed, resource, data: resource.Data, inputType: "wrapped-yap-list-export-result-data-object" };
+    add(findings, "error", "RESOURCE_DATA_INVALID", "Decoded Resource.Data must be a JSON string or ListExportInfo object.", { actualType: Array.isArray(resource.Data) ? "array" : resource.Data === null ? "null" : typeof resource.Data });
+    return { wrapper: parsed, resource, data: null, inputType: "wrapped-yap-list-export-result" };
   }
   if (parsed && typeof parsed.Data === "string") {
     try {
@@ -172,6 +181,104 @@ function inspectListExportItem(item, exportPath, findings, summary) {
   }
   summary.defs += asArray(item.Defs).length;
   summary.layouts += asArray(item.Layouts).length;
+  for (const [fieldIndex, field] of asArray(item.Defs).entries()) {
+    if (!Number.isInteger(field && field.Category)) {
+      add(findings, "error", "FIELD_CATEGORY_NOT_INT", "Field.Category must be an integer for generated YAP packages.", {
+        path: `${exportPath}.Defs[${fieldIndex}].Category`,
+        list: item.ListModel?.Title || null,
+        field: field?.DisplayName || field?.FieldName || field?.InternalName || null,
+        actualType: field?.Category === undefined ? "missing" : Array.isArray(field?.Category) ? "array" : field?.Category === null ? "null" : typeof field?.Category,
+      });
+    }
+    if (typeof field?.FieldName === "string" && Number.isInteger(field?.FieldIndex)) {
+      const match = field.FieldName.match(/(\d+)$/);
+      if (!match || Number.parseInt(match[1], 10) !== field.FieldIndex) {
+        add(findings, "error", "FIELD_NAME_SUFFIX_INDEX_MISMATCH", "FieldName trailing digits must equal FieldIndex.", {
+          path: `${exportPath}.Defs[${fieldIndex}].FieldName`,
+          list: item.ListModel?.Title || null,
+          field: field.DisplayName || field.FieldName || field.InternalName || null,
+          fieldName: field.FieldName,
+          fieldIndex: field.FieldIndex,
+        });
+      }
+    }
+  }
+}
+
+function addDuplicateFinding(findings, code, message, seen, value, detail) {
+  const key = String(value);
+  const previous = seen.get(key);
+  if (previous) add(findings, "error", code, message, { value, previousPath: previous.path, ...detail });
+  else seen.set(key, detail);
+}
+
+function inspectIdUniqueness(data, findings, largeNumbers = new Set()) {
+  const listIds = new Map();
+  const fieldIds = new Map();
+  const layoutIds = new Map();
+  const resourceIds = new Map();
+  const idKeys = new Set(["AppID", "ListID", "FieldID", "LayoutID", "ID", "RefId", "ReportID", "ProcModelID", "ResourceID"]);
+  const assertSafeInteger = (value, pointer) => {
+    if (value === undefined || value === null || value === "") return;
+    if (typeof value === "string" && largeNumbers.has(value)) return;
+    if (!Number.isInteger(value)) {
+      add(findings, "error", "INVALID_ID_TYPE", "Generated YAP ID values must be JSON integers.", {
+        path: pointer,
+        actualType: Array.isArray(value) ? "array" : value === null ? "null" : typeof value,
+      });
+    } else if (!Number.isSafeInteger(value)) {
+      add(findings, "error", "UNSAFE_INTEGER_ID", "Generated YAP integer IDs must be within Number.MAX_SAFE_INTEGER to avoid JSON rounding duplicates.", {
+        path: pointer,
+        value,
+      });
+    }
+  };
+  const walk = (value, pointer = "Data") => {
+    if (Array.isArray(value)) value.forEach((child, index) => walk(child, `${pointer}[${index}]`));
+    else if (isObject(value)) {
+      for (const [key, child] of Object.entries(value)) {
+        const childPath = `${pointer}.${key}`;
+        if (idKeys.has(key)) assertSafeInteger(child, childPath);
+        walk(child, childPath);
+      }
+    }
+  };
+  walk(data);
+
+  const items = [];
+  if (isObject(data?.Item)) items.push({ item: data.Item, path: "Data.Item", title: data.Item.ListModel?.Title || "root" });
+  asArray(data?.Childs).forEach((child, index) => items.push({ item: child, path: `Data.Childs[${index}]`, title: child.ListModel?.Title || null }));
+  for (const { item, path: itemPath, title } of items) {
+    const listId = item?.ListModel?.ListID;
+    const appId = item?.ListModel?.AppID;
+    if (appId !== undefined && String(appId) !== "41") {
+      add(findings, "error", "LISTMODEL_APPID_NOT_FIXED_41", "Generated YAP ListModel.AppID must stay fixed at 41; use API-issued IDs for list/field/layout IDs only.", { path: `${itemPath}.ListModel.AppID`, list: title, appId });
+    }
+    if (listId !== undefined) addDuplicateFinding(findings, "DUPLICATE_LIST_ID", "ListID values must be globally unique across generated ListExportItem resources.", listIds, listId, { path: `${itemPath}.ListModel.ListID`, list: title });
+
+    const fieldIndexes = new Map();
+    const fieldNames = new Map();
+    const internalNames = new Map();
+    const displayNames = new Map();
+    asArray(item?.Defs).forEach((field, index) => {
+      const fieldPath = `${itemPath}.Defs[${index}]`;
+      const fieldLabel = field?.DisplayName || field?.FieldName || field?.InternalName || null;
+      if (field?.FieldID !== undefined) addDuplicateFinding(findings, "DUPLICATE_FIELD_ID", "FieldID values must be globally unique in generated packages.", fieldIds, field.FieldID, { path: `${fieldPath}.FieldID`, list: title, field: fieldLabel });
+      if (field?.FieldIndex !== undefined) addDuplicateFinding(findings, "DUPLICATE_FIELD_INDEX", "FieldIndex values must be unique within a list.", fieldIndexes, field.FieldIndex, { path: `${fieldPath}.FieldIndex`, list: title, field: fieldLabel });
+      if (field?.FieldName) addDuplicateFinding(findings, "DUPLICATE_FIELD_NAME", "FieldName values must be unique within a list.", fieldNames, field.FieldName, { path: `${fieldPath}.FieldName`, list: title, field: fieldLabel });
+      if (field?.InternalName) addDuplicateFinding(findings, "DUPLICATE_INTERNAL_NAME", "InternalName values must be unique within a list.", internalNames, field.InternalName, { path: `${fieldPath}.InternalName`, list: title, field: fieldLabel });
+      if (field?.DisplayName) addDuplicateFinding(findings, "DUPLICATE_DISPLAY_NAME", "DisplayName values should be unique within a generated list.", displayNames, field.DisplayName, { path: `${fieldPath}.DisplayName`, list: title, field: fieldLabel });
+    });
+
+    asArray(item?.Layouts).forEach((layout, index) => {
+      const layoutPath = `${itemPath}.Layouts[${index}]`;
+      const layoutLabel = layout?.Title || null;
+      if (layout?.LayoutID !== undefined) addDuplicateFinding(findings, "DUPLICATE_LAYOUT_ID", "LayoutID values must be globally unique across all ListExportItem.Layouts.", layoutIds, layout.LayoutID, { path: `${layoutPath}.LayoutID`, list: title, layout: layoutLabel });
+      asArray(layout?.LayoutInResources).forEach((resource, resourceIndex) => {
+        if (resource?.ID !== undefined) addDuplicateFinding(findings, "DUPLICATE_RESOURCE_ID", "LayoutInResources ID values must be globally unique across layout resources.", resourceIds, resource.ID, { path: `${layoutPath}.LayoutInResources[${resourceIndex}].ID`, list: title, layout: layoutLabel });
+      });
+    });
+  }
 }
 
 function inspectNoRule(form, index, findings, summary) {
@@ -247,6 +354,15 @@ function inspectOtherModules(data, findings, summary) {
   }
 }
 
+function inspectSimplePortal(resource, findings) {
+  if (!isObject(resource)) return;
+  if (resource.SimplePortal === null) return;
+  add(findings, "error", isObject(resource.SimplePortal) && Object.keys(resource.SimplePortal).length === 0 ? "YAP_SIMPLEPORTAL_EMPTY_OBJECT_INVALID" : Array.isArray(resource.SimplePortal) ? "YAP_SIMPLEPORTAL_ARRAY_INVALID" : "YAP_SIMPLEPORTAL_NO_PORTAL_MUST_BE_NULL", "Product import feedback requires SimplePortal to be null when no portal is included; do not emit an empty object or other value.", {
+    path: "Resource.SimplePortal",
+    actualType: Array.isArray(resource.SimplePortal) ? "array" : resource.SimplePortal === undefined ? "missing" : typeof resource.SimplePortal,
+  });
+}
+
 function main() {
   if (process.argv.includes("--help") || process.argv.includes("-h") || process.argv.length < 3) usage(process.argv.length < 3 ? 1 : 0);
   const input = process.argv[2];
@@ -265,10 +381,12 @@ function main() {
     permissionEntries: 0,
     largeNumericIdsPreserved: largeNumbers.size,
   };
+  inspectSimplePortal(decoded.resource, findings);
   if (decoded.data) {
     if (!isObject(decoded.data.Item)) add(findings, "error", "LIST_EXPORT_INFO_ITEM_MISSING", "ListExportInfo.Item is required.", { path: "Data.Item" });
     else inspectListExportItem(decoded.data.Item, "Data.Item", findings, summary);
     asArray(decoded.data.Childs).forEach((child, index) => inspectListExportItem(child, `Data.Childs[${index}]`, findings, summary));
+    inspectIdUniqueness(decoded.data, findings, largeNumbers);
     asArray(decoded.data.Forms).forEach((form, index) => inspectNoRule(form, index, findings, summary));
     inspectOtherModules(decoded.data, findings, summary);
   }

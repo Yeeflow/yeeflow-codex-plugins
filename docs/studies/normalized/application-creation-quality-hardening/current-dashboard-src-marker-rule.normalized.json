@@ -1,0 +1,22 @@
+{
+  "rule": "current-dashboard-src-marker",
+  "appliesTo": "generated Type 103 dashboards",
+  "required": {
+    "Type": 103,
+    "Ext2": "{\"src\":true}",
+    "LayoutInResources": "array",
+    "legacyRenderer": "forbidden"
+  },
+  "invalid": [
+    { "Ext2": "" },
+    { "Ext2": null },
+    { "Ext2": "missing" },
+    { "LayoutView": "", "Ext2": "" }
+  ],
+  "errors": [
+    "DASHBOARD_TYPE_103_SRC_REQUIRED",
+    "DASHBOARD_CURRENT_VERSION_MARKER_MISSING",
+    "DASHBOARD_LEGACY_RENDERER_FORBIDDEN",
+    "DASHBOARD_LAYOUTINRESOURCES_INVALID"
+  ]
+}

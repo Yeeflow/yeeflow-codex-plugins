@@ -1,0 +1,76 @@
+{
+  "packageName": "Vendor Onboarding & Compliance Management full UI v2 src-dashboard",
+  "outputs": {
+    "yapk": "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v2-src-dashboard.yapk",
+    "yap": "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v2-src-dashboard.yap"
+  },
+  "sourceOfTruth": {
+    "approvedSpec": "docs/generated-app-plans/vendor-onboarding-compliance-ui-implementation-spec.md",
+    "visualReference": "five previously approved Vendor Onboarding UI mockups"
+  },
+  "generationRules": {
+    "appId": 41,
+    "idSource": "Yeeflow generate-unique-ids API",
+    "apiIdCount": 84,
+    "largeIdsPreservedAsStrings": true,
+    "fieldCategoryInteger": true,
+    "fieldIndexUniqueWithinList": true,
+    "currentDashboardShell": true,
+    "allType103DashboardsHaveExt2Src": true,
+    "yapSimplePortal": null,
+    "dashboardDataTableFieldAndFieldName": true,
+    "yapkPortalInfo": null
+  },
+  "implementedScope": {
+    "dataLists": [
+      "Vendors",
+      "Vendor Documents",
+      "Compliance Reviews",
+      "Vendor Tasks",
+      "Vendor Activity / History"
+    ],
+    "dashboards": [
+      "Vendor Management Dashboard",
+      "Compliance Review Workspace"
+    ],
+    "customLayouts": [
+      "Vendor Detail View Page",
+      "New Vendor Request Form",
+      "Vendor Print Page"
+    ],
+    "controls": [
+      "KPI cards",
+      "Progress circle",
+      "Progress bar",
+      "Alert",
+      "Kanban",
+      "Data table",
+      "Icon list",
+      "Vertical timeline",
+      "Tabs",
+      "Steps bar",
+      "Dynamic fields",
+      "Dynamic user",
+      "Dynamic file",
+      "Document embed",
+      "Dynamic Sub List",
+      "Collection actions",
+      "Bulk toolbar pattern",
+      "QR Code",
+      "Barcode",
+      "Divider"
+    ]
+  },
+  "validation": {
+    "yapkSchemaV2": "pass",
+    "yapkStandardInspector": "pass",
+    "yapkPackageValidator": "pass_with_expected_runtime_warning",
+    "yapSchema": "pass",
+    "yapStandardInspector": "pass",
+    "yapPackageValidator": "pass_with_warnings",
+    "yapGraphValidator": "pass_with_warnings",
+    "yapImportReadiness": "pass_with_warnings",
+    "generatedUiQuality": "pass_with_warnings"
+  },
+  "proofBoundary": "Local generation, signing, schema validation, and structural/spec coverage only. Manual Yeeflow import and visual runtime review are still required."
+}

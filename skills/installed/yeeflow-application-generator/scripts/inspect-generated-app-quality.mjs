@@ -36,7 +36,7 @@ const REQUIRED_SPEC_SECTIONS = [
 function usage(exitCode = 1) {
   const text = [
     "Usage:",
-    "  node scripts/inspect-generated-app-quality.mjs --package <app.yap|decoded-data.json> [--plan <plan.md>] [--spec <ui-implementation-spec.md>] [--json-out <report.json>]",
+    "  node scripts/inspect-generated-app-quality.mjs --package <app.yap|app.yapk|decoded-data.json> [--plan <plan.md>] [--spec <ui-implementation-spec.md>] [--strict-app-quality] [--allow-blank-dashboard] [--json-out <report.json>]",
     "",
     "Combines app-plan presence checks, optional UI implementation spec checks, package inventory, and generated UI quality checks.",
   ].join("\n");
@@ -46,13 +46,15 @@ function usage(exitCode = 1) {
 
 function parseArgs(argv) {
   if (argv.includes("--help") || argv.includes("-h")) usage(0);
-  const args = { packagePath: "", planPath: "", specPath: "", jsonOut: "" };
+  const args = { packagePath: "", planPath: "", specPath: "", jsonOut: "", strictAppQuality: false, allowBlankDashboard: false };
   for (let index = 2; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--package") args.packagePath = argv[++index] || "";
     else if (arg === "--plan") args.planPath = argv[++index] || "";
     else if (arg === "--spec") args.specPath = argv[++index] || "";
     else if (arg === "--json-out") args.jsonOut = argv[++index] || "";
+    else if (arg === "--strict-app-quality") args.strictAppQuality = true;
+    else if (arg === "--allow-blank-dashboard") args.allowBlankDashboard = true;
     else usage();
   }
   if (!args.packagePath) usage();
@@ -193,7 +195,18 @@ function inspectSpec(specPath) {
       message: "The spec should identify the mockup/image/design reference it was extracted from when applicable.",
     });
   }
-  return { exists: true, path: specPath, bytes: Buffer.byteLength(text), sections, expected, findings };
+  return { exists: true, path: specPath, bytes: Buffer.byteLength(text), sections, expected, expectedAreas: extractExpectedAreas(text), findings };
+}
+
+function extractExpectedAreas(text) {
+  const knownAreas = [
+    "Vendor Management Dashboard",
+    "Vendor Detail View Page",
+    "New Vendor Request Form",
+    "Compliance Review Workspace",
+    "Vendor Print Page",
+  ];
+  return knownAreas.filter((area) => new RegExp(area.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i").test(text));
 }
 
 function packageInventory(validationReport) {
@@ -218,23 +231,62 @@ function packageInventory(validationReport) {
   };
 }
 
-function compareSpecToPackage(spec, inventory, uiQualityReport) {
+function packageSurfaceTitles(inventory, uiQualityReport) {
+  const titles = new Set();
+  for (const resource of inventory.resources || []) {
+    if (resource.title) titles.add(String(resource.title).toLowerCase());
+  }
+  for (const form of inventory.forms || []) {
+    if (form.name) titles.add(String(form.name).toLowerCase());
+  }
+  for (const title of uiQualityReport?.summary?.dashboardTitles || []) {
+    if (title) titles.add(String(title).toLowerCase());
+  }
+  for (const title of uiQualityReport?.summary?.customFormTitles || []) {
+    if (title) titles.add(String(title).toLowerCase());
+  }
+  return titles;
+}
+
+function compareSpecToPackage(spec, inventory, uiQualityReport, options = {}) {
   if (!spec.exists) return [];
   const findings = [];
   const expected = spec.expected || {};
   const summary = inventory.summary || {};
   const uiSummary = uiQualityReport?.summary || {};
-  if (expected.dashboards && Number(summary.dashboards || 0) === 0) {
-    findings.push({ level: "warning", code: "SPEC_EXPECTED_DASHBOARD_MISSING", message: "The UI implementation spec references dashboard pages, but package inventory found none." });
+  const missingLevel = options.strictAppQuality ? "error" : "warning";
+  if (expected.dashboards && Number(summary.dashboards || 0) === 0 && Number(uiSummary.dashboardPages || 0) === 0) {
+    findings.push({ level: missingLevel, code: "SPEC_EXPECTED_DASHBOARD_MISSING", message: "The UI implementation spec references dashboard pages, but package inventory found none." });
   }
   if (expected.customForms && Number(uiSummary.customForms || 0) === 0 && Number(summary.forms || 0) === 0) {
-    findings.push({ level: "warning", code: "SPEC_EXPECTED_FORM_SURFACES_MISSING", message: "The UI implementation spec references form/view/print surfaces, but package inventory found no matching form surfaces." });
+    findings.push({ level: missingLevel, code: "SPEC_EXPECTED_FORM_SURFACES_MISSING", message: "The UI implementation spec references form/view/print surfaces, but package inventory found no matching form surfaces." });
   }
   if (expected.dataTables && Number(uiSummary.dataTables || 0) === 0) {
-    findings.push({ level: "warning", code: "SPEC_EXPECTED_DATA_TABLE_MISSING", message: "The UI implementation spec references Data table/grid surfaces, but UI inspection found no Data table controls." });
+    findings.push({ level: missingLevel, code: "SPEC_EXPECTED_DATA_TABLE_MISSING", message: "The UI implementation spec references Data table/grid surfaces, but UI inspection found no Data table controls." });
   }
   if (expected.itemTemplates && Number(uiSummary.itemTemplateControls || 0) === 0) {
-    findings.push({ level: "warning", code: "SPEC_EXPECTED_COLLECTION_KANBAN_TIMELINE_MISSING", message: "The UI implementation spec references Collection/Kanban/Timeline surfaces, but UI inspection found no item-template controls." });
+    findings.push({ level: missingLevel, code: "SPEC_EXPECTED_COLLECTION_KANBAN_TIMELINE_MISSING", message: "The UI implementation spec references Collection/Kanban/Timeline surfaces, but UI inspection found no item-template controls." });
+  }
+  if (options.strictAppQuality) {
+    const packageTitles = packageSurfaceTitles(inventory, uiQualityReport);
+    for (const area of spec.expectedAreas || []) {
+      if (!packageTitles.has(area.toLowerCase())) {
+        findings.push({
+          level: "error",
+          code: "SPEC_PLANNED_APP_AREA_MISSING",
+          message: "Strict app quality requires every planned app area from the approved spec to exist or be explicitly deferred with a reason.",
+          area,
+        });
+      }
+    }
+    if (Number(uiSummary.blankDashboards || 0) > 0 && !options.allowBlankDashboard) {
+      findings.push({
+        level: "error",
+        code: "STRICT_APP_BLANK_DASHBOARD_FORBIDDEN",
+        message: "Strict full-application generation may not return blank dashboards unless a test scope explicitly allows them.",
+        count: uiSummary.blankDashboards,
+      });
+    }
   }
   if (expected.printPage) {
     findings.push({ level: "warning", code: "SPEC_PRINT_PAGE_MANUAL_REVIEW", message: "The UI implementation spec references a Print Page. Verify print layout, QR/barcode, page breaks, and read-only field formatting manually." });
@@ -253,10 +305,14 @@ function main() {
   const specPath = args.specPath ? path.resolve(args.specPath) : "";
   const plan = inspectPlan(planPath);
   const spec = inspectSpec(specPath);
-  const validation = runJsonStep("package-validation", process.execPath, [path.join(repoRoot, "validate-yap-package.js"), packagePath, "--mode", "compatibility"]);
+  const ext = path.extname(packagePath).toLowerCase();
+  const validationArgs = ext === ".yapk"
+    ? [path.join(repoRoot, "validate-yapk-package.js"), packagePath]
+    : [path.join(repoRoot, "validate-yap-package.js"), packagePath, "--mode", args.strictAppQuality ? "generator" : "compatibility", "--stage", args.strictAppQuality ? "final" : "draft"];
+  const validation = runJsonStep("package-validation", process.execPath, validationArgs);
   const uiQuality = runJsonStep("generated-ui-quality", process.execPath, [path.join(repoRoot, "scripts/inspect-generated-ui-quality.mjs"), packagePath]);
   const inventory = packageInventory(validation.report);
-  const specPackageFindings = compareSpecToPackage(spec, inventory, uiQuality.report);
+  const specPackageFindings = compareSpecToPackage(spec, inventory, uiQuality.report, args);
   const findings = [
     ...plan.findings,
     ...spec.findings,
@@ -269,6 +325,7 @@ function main() {
   const report = {
     status: errors ? "fail" : warnings ? "pass_with_warnings" : "pass",
     package: packagePath,
+    strictAppQuality: args.strictAppQuality,
     plan,
     spec,
     inventory,
