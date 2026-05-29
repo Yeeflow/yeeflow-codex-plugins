@@ -1,0 +1,33 @@
+{
+  "templates": [
+    {
+      "templateId": "print_page_summary",
+      "previousStatus": "needs-golden-proof",
+      "updatedStatus": "export-proven",
+      "sourceExports": [
+        "Sales Quotation.yap / Print Page",
+        "Online Library.yap / Print Inventory"
+      ]
+    },
+    {
+      "templateId": "print_page_document_checklist",
+      "previousStatus": "needs-golden-proof",
+      "updatedStatus": "export-proven",
+      "sourceExports": [
+        "Online Library.yap / Print Inventory",
+        "Sales Quotation.yap / Print Page"
+      ]
+    },
+    {
+      "templateId": "print_page_qr_barcode_section",
+      "previousStatus": "needs-golden-proof",
+      "updatedStatus": "needs-golden-proof",
+      "sourceExports": [
+        "Online Library.yap / Detail Page and Barcode Scan",
+        "Sales Quotation.yap / Print Page"
+      ],
+      "reason": "QR/barcode controls and print layout are separately export-proven, but QR/barcode embedded inside a print page is not yet proven."
+    }
+  ],
+  "proofBoundary": "export-proven structure only; browser print and page-break behavior not claimed"
+}

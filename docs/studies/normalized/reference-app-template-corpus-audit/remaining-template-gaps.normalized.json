@@ -1,23 +1,20 @@
 {
   "audit": "reference-app-template-corpus-audit",
-  "newGoldenAppStillNeeded": true,
+  "newGoldenAppStillNeeded": false,
   "gaps": [
     {
-      "templateId": "kpi_card_row",
-      "reason": "Existing exports show summaries and metrics but not the polished four-card KPI row required for high-quality full app generation."
-    },
-    {
-      "templateId": "print_page_summary",
-      "reason": "No inspected reference export contained a clear custom Print Page layout."
-    },
-    {
-      "templateId": "print_page_document_checklist",
-      "reason": "No inspected reference export contained a print document checklist."
-    },
-    {
       "templateId": "print_page_qr_barcode_section",
-      "reason": "QR and Barcode controls are export-proven, but not their print-page integration."
+      "reason": "Additional exports prove QR/barcode controls and print layouts separately, but not QR/barcode embedded directly inside a print-page layout."
+    },
+    {
+      "templateId": "browser_print_page_break_behavior",
+      "reason": "Exports prove print structure, not browser print output or page-break fidelity."
     }
   ],
-  "recommendation": "Use the existing corpus for most dashboard, form, Data table, Kanban/Collection, timeline, action, and advanced-control templates. Create a smaller golden reference app focused on KPI card polish and print-page composition."
+  "coveredByAdditionalRefs": [
+    "kpi_card_row",
+    "print_page_summary",
+    "print_page_document_checklist"
+  ],
+  "recommendation": "Use the expanded corpus for dashboard, form, Data table, Kanban/Collection, timeline, action, KPI, and print-summary/table templates. Use a documented fallback or focused proof for QR/barcode inside print pages."
 }

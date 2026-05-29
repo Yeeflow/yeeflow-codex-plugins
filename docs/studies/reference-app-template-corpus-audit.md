@@ -149,9 +149,33 @@ Not yet as a single broad jump. The corpus is strong enough to support page-by-p
 
 The print page should wait for golden proof or use a documented conservative fallback.
 
+## Additional KPI and Print Golden References
+
+After the initial audit, four additional exports were studied to close the remaining KPI and print-page gaps:
+
+| Export | Focus page/dashboard | Relevant evidence | Proof boundary |
+| --- | --- | --- | --- |
+| `DEMO Innovation Ecosystem Platform (1).yap` | `NHIC Innovation Overview` | Current Type 103 dashboard with `src` marker, bounded/padded dashboard body, filter controls, Summary controls, chart sections, Pivot Table, card padding, borders, gaps, and business metric labels. | Export-proven structure and bindings only. |
+| `Service Desk Pro (2).yap` | `Executive Dashboard` | Current Type 103 dashboard with deep container hierarchy, many Summary controls, chart/metric sections, filters, spacing, borders, width-constrained sections, and operational dashboard composition. | Export-proven structure and bindings only; some related Service Desk patterns have separate focused runtime proofs. |
+| `Online Library.yap` | `Inventory`, `Print Inventory` | Inventory dashboard with print action, multi-item printable inventory output, repeated table-like sections, dynamic fields, dynamic image, Barcode Scan page, and QR/barcode controls on inventory/detail surfaces. | Export-proven structure only; print action/open behavior is not claimed here. |
+| `Sales Quotation.yap` | `Print Page`, `View Quotation` | Single-record print page with quotation summary, logo/picture area, customer fields, line-item list body/footer, totals, terms text, padding, gaps, borders, and no normal mutation action inside the print page. | Export-proven structure only. |
+
+### Gap Closure
+
+- Polished KPI card rows are now sufficiently export-proven from `NHIC Innovation Overview` and `Executive Dashboard`.
+- Print page summaries are now sufficiently export-proven from `Sales Quotation` and `Online Library`.
+- Print document/checklist/table patterns are now sufficiently export-proven from `Print Inventory` and `Sales Quotation` line-item print layout.
+- QR/barcode controls are export-proven in inventory/detail surfaces, but QR/barcode embedded directly inside a print page is still only partially covered.
+
+### Updated Golden-App Decision
+
+A broad new golden app is no longer needed before Vendor Onboarding v4.1. The expanded corpus is enough for page-by-page generation of KPI dashboards and print summaries/checklists. A focused golden proof is still useful only for QR/barcode inside a print page and for browser print/page-break behavior.
+
 ## Recommended Next Steps
 
 1. Extend the template library with the reference corpus evidence from this audit.
 2. Use the corpus for dashboard, custom form, Kanban/Collection, timeline, related-record, and action templates.
-3. Create a smaller golden reference app focused on KPI card polish and print page composition.
-4. Generate Vendor Onboarding v4.1 page by page only after template conformance and corpus coverage are wired into validation.
+3. Use NHIC and Service Desk dashboard patterns for KPI/card rows.
+4. Use Online Library and Sales Quotation patterns for print summaries and print item/checklist tables.
+5. Keep QR/barcode-in-print as a documented fallback or focused golden proof.
+6. Generate Vendor Onboarding v4.1 page by page only after template conformance and corpus coverage are wired into validation.

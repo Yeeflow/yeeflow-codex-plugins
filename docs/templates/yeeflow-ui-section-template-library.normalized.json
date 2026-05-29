@@ -44,21 +44,27 @@
       "proofStatus": "export-proven",
       "sourceExports": [
         "Projects Center_2.yap",
-        "Company Overview (3).yap"
+        "Company Overview (3).yap",
+        "DEMO Innovation Ecosystem Platform (1).yap / NHIC Innovation Overview",
+        "Service Desk Pro (2).yap / Executive Dashboard"
       ],
       "observedControls": [
         "container",
         "heading",
         "action-button",
-        "collection"
+        "collection",
+        "relative-period",
+        "check-filter",
+        "select-filter"
       ],
       "observedPatterns": [
         "safe padded dashboard root",
         "header action buttons such as All projects and My projects",
-        "dashboard text hierarchy"
+        "dashboard text hierarchy",
+        "dashboard header is followed by filter/action rows and bounded content containers in NHIC and Service Desk dashboards"
       ],
       "limitations": [
-        "active navigation/action semantics still require validation per package"
+        "active navigation/action semantics and filter-variable wiring still require validation per package"
       ]
     },
     {
@@ -86,7 +92,8 @@
         "safe_padding",
         "grid_row",
         "card_container",
-        "section_spacing"
+        "section_spacing",
+        "summary_card_row"
       ],
       "styleRules": [
         "card_background_or_border",
@@ -102,24 +109,36 @@
         "data_binding_present"
       ],
       "allowedFallback": "Static aggregate placeholders only when labeled and documented as deferred aggregate binding.",
-      "proofStatus": "needs-golden-proof",
+      "proofStatus": "export-proven",
       "sourceExports": [
         "Sales_Management_AD.yap",
-        "Projects Center_2.yap"
+        "Projects Center_2.yap",
+        "DEMO Innovation Ecosystem Platform (1).yap / NHIC Innovation Overview",
+        "Service Desk Pro (2).yap / Executive Dashboard"
       ],
-      "partialEvidence": true,
+      "partialEvidence": false,
       "observedControls": [
         "summary",
         "container",
         "heading",
-        "progress"
+        "progress",
+        "relative-period",
+        "check-filter",
+        "select-filter",
+        "bar-chart",
+        "pie-chart",
+        "line-chart",
+        "PivotTable"
       ],
       "observedPatterns": [
         "sales dashboard summary metrics",
-        "project dashboard summaries and progress indicators"
+        "project dashboard summaries and progress indicators",
+        "NHIC dashboard uses a padded constrained dashboard body with filter row and multiple Summary controls inside row containers",
+        "Service Desk Executive Dashboard uses a deep padded container hierarchy with 14 Summary controls, chart sections, filter controls, gaps, borders, and width-constrained rows",
+        "summary controls carry business labels, aggregate field settings, card padding, border/radius, and dashboard filter bindings"
       ],
       "limitations": [
-        "existing exports show metric/summary controls but not the exact polished four-card KPI row required for Vendor Onboarding"
+        "export-proven structure and binding only; aggregate correctness and runtime values still require package-specific validation"
       ]
     },
     {
@@ -162,17 +181,24 @@
       "proofStatus": "export-proven",
       "sourceExports": [
         "Company Overview (3).yap",
-        "Projects Center_2.yap"
+        "Projects Center_2.yap",
+        "Service Desk Pro (2).yap / Executive Dashboard",
+        "DEMO Innovation Ecosystem Platform (1).yap / NHIC Innovation Overview"
       ],
       "observedControls": [
         "progress-circle",
         "progress-bar",
         "progress",
         "container",
-        "heading"
+        "heading",
+        "summary",
+        "bar-chart",
+        "line-chart",
+        "pie-chart"
       ],
       "observedPatterns": [
-        "progress controls embedded with related text and dynamic fields"
+        "progress controls embedded with related text and dynamic fields",
+        "summary cards combine business labels with aggregate values and adjacent chart/metric sections"
       ],
       "limitations": [
         "binding and aggregate calculation must still be validated per package"
@@ -217,7 +243,8 @@
       "allowedFallback": "Static business-specific alert content if dynamic alert binding is deferred.",
       "proofStatus": "export-proven",
       "sourceExports": [
-        "Company Overview (3).yap"
+        "Company Overview (3).yap",
+        "Service Desk Pro (2).yap / Executive Dashboard"
       ],
       "partialEvidence": true,
       "observedControls": [
@@ -226,10 +253,11 @@
         "text"
       ],
       "observedPatterns": [
-        "Alert advanced control appears in dashboard pages"
+        "Alert advanced control appears in dashboard pages",
+        "dashboard status/metric groups provide business-specific performance context; generated alerts still require real business copy"
       ],
       "limitations": [
-        "reference alert content is generic in places, so business-specific alert copy remains a hard generation requirement"
+        "business-specific alert copy remains a generation responsibility; generic alert text is still invalid"
       ]
     },
     {
@@ -268,17 +296,26 @@
       "allowedFallback": "Collection/list cards with equivalent fields if Data table is unsupported.",
       "proofStatus": "runtime-proven",
       "sourceExports": [
-        "Sales_Management_AD.yap"
+        "Sales_Management_AD.yap",
+        "Online Library.yap / Print Inventory",
+        "Sales Quotation.yap / Print Page"
       ],
       "observedControls": [
-        "data-list"
+        "data-list",
+        "table-v2",
+        "list",
+        "list-body",
+        "list-footer",
+        "dynamic-field"
       ],
       "observedPatterns": [
         "dashboard data table with Field and FieldName columns bound to Accounts",
-        "related data tables on Account view for Contacts and Opportunities"
+        "related data tables on Account view for Contacts and Opportunities",
+        "Online Library Print Inventory uses repeated table-v2 rows/sections with dynamic fields for multi-item inventory print output",
+        "Sales Quotation Print Page uses a line-item list body/footer pattern for product and service rows plus totals"
       ],
       "limitations": [
-        "row actions and filter behavior are separate validation/runtime boundaries"
+        "dashboard Data table Field/FieldName binding remains a separate rule; print line-item lists use print/list controls rather than dashboard data-list columns"
       ]
     },
     {
@@ -869,7 +906,10 @@
         "print_layout",
         "safe_padding",
         "section_spacing",
-        "no_mutating_actions"
+        "no_mutating_actions",
+        "print_header",
+        "print_summary",
+        "read_only_print"
       ],
       "styleRules": [
         "print_spacing",
@@ -885,13 +925,27 @@
         "no_mutating_actions"
       ],
       "allowedFallback": "Use record code text when QR/barcode controls are unsafe.",
-      "proofStatus": "needs-golden-proof",
-      "sourceExports": [],
-      "observedControls": [],
-      "observedPatterns": [],
+      "proofStatus": "export-proven",
+      "sourceExports": [
+        "Sales Quotation.yap / Print Page",
+        "Online Library.yap / Print Inventory"
+      ],
+      "observedControls": [
+        "container",
+        "heading",
+        "dynamic-field",
+        "picture",
+        "text-editor",
+        "flex_grid"
+      ],
+      "observedPatterns": [
+        "Sales Quotation Print Page uses a structured print layout with logo/picture area, customer/quotation summary fields, terms text, totals, background/border styling, padding, gaps, and width-constrained rows",
+        "Online Library Print Inventory uses a printable dashboard-like page with padded sections, heading text, dynamic fields, dynamic image, and repeated inventory output"
+      ],
       "limitations": [
-        "No inspected reference export contained a clear custom Print Page layout"
-      ]
+        "export-proven only; browser print rendering and page-break behavior still require runtime/manual proof"
+      ],
+      "partialEvidence": false
     },
     {
       "templateId": "print_page_document_checklist",
@@ -920,7 +974,9 @@
       "layoutRules": [
         "print_layout",
         "section_spacing",
-        "no_mutating_actions"
+        "no_mutating_actions",
+        "print_item_table",
+        "read_only_print"
       ],
       "styleRules": [
         "compact_print_rows",
@@ -935,13 +991,27 @@
         "required_fields_present"
       ],
       "allowedFallback": "Static checklist rows only with documented data-binding gap.",
-      "proofStatus": "needs-golden-proof",
-      "sourceExports": [],
-      "observedControls": [],
-      "observedPatterns": [],
+      "proofStatus": "export-proven",
+      "sourceExports": [
+        "Online Library.yap / Print Inventory",
+        "Sales Quotation.yap / Print Page"
+      ],
+      "observedControls": [
+        "table-v2",
+        "list",
+        "list-body",
+        "list-footer",
+        "dynamic-field",
+        "heading"
+      ],
+      "observedPatterns": [
+        "Online Library Print Inventory proves multi-item print table/checklist composition with repeated table-v2 sections and dynamic fields",
+        "Sales Quotation Print Page proves single-record line-item table/list composition with header, body rows, footer/totals, and descriptive fields"
+      ],
       "limitations": [
-        "No inspected reference export contained a print document checklist"
-      ]
+        "document-specific lifecycle/status semantics remain package-specific; generated print tables must bind configured fields and stay read-only"
+      ],
+      "partialEvidence": false
     },
     {
       "templateId": "print_page_qr_barcode_section",
@@ -968,7 +1038,8 @@
       ],
       "layoutRules": [
         "print_layout",
-        "section_spacing"
+        "section_spacing",
+        "qr_barcode_section"
       ],
       "styleRules": [
         "compact_identity_block"
@@ -983,19 +1054,25 @@
       "allowedFallback": "Plain Vendor Code field when QR/barcode is unsafe.",
       "proofStatus": "needs-golden-proof",
       "sourceExports": [
-        "Company Overview (3).yap"
+        "Company Overview (3).yap",
+        "Online Library.yap / Detail Page and Barcode Scan",
+        "Sales Quotation.yap / Print Page"
       ],
       "partialEvidence": true,
       "observedControls": [
         "qrcode",
         "barcode",
-        "dynamic-field"
+        "dynamic-field",
+        "list-qrcode",
+        "container"
       ],
       "observedPatterns": [
-        "QR Code and Barcode controls appear on Company Overview View page"
+        "QR Code and Barcode controls appear on Company Overview View page",
+        "Online Library proves Barcode and list QR Code controls on inventory/detail surfaces and a separate printable Inventory page",
+        "Sales Quotation proves print-page layout but does not include QR/barcode controls"
       ],
       "limitations": [
-        "Print-page integration of QR/barcode still needs golden proof"
+        "QR/barcode controls and print layout are separately export-proven, but QR/barcode embedded inside a print page still needs focused golden/runtime proof"
       ]
     },
     {

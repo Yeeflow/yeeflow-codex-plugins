@@ -673,8 +673,8 @@ function hasCardStructure(page) {
   walkControls(page, (control) => {
     const type = safeString(control.type);
     const label = safeString(control.label).toLowerCase();
-    const styleText = JSON.stringify(control.attrs?.style || {});
-    if (type === "card" || label.includes("card") || /border|shadow|radius|background/i.test(styleText)) cardLike += 1;
+    const styleText = JSON.stringify(control.attrs || {});
+    if (type === "card" || type === "summary" || label.includes("card") || /border|shadow|radius|background|padding/i.test(styleText)) cardLike += 1;
   });
   return cardLike >= 3;
 }
@@ -684,8 +684,8 @@ function hasAnyCardContainer(page) {
   walkControls(page, (control) => {
     const type = safeString(control.type);
     const label = safeString(control.label).toLowerCase();
-    const styleText = JSON.stringify(control.attrs?.style || {});
-    if (type === "card" || label.includes("card") || /border|shadow|radius|background/i.test(styleText)) cardLike += 1;
+    const styleText = JSON.stringify(control.attrs || {});
+    if (type === "card" || type === "summary" || label.includes("card") || /border|shadow|radius|background|padding/i.test(styleText)) cardLike += 1;
   });
   return cardLike >= 1;
 }
@@ -695,8 +695,10 @@ function normalizedControlType(type) {
   const aliases = {
     "data-table": "data-list",
     "data-grid": "data-list",
+    "table-v2": "data-list",
     "action-button": "button",
     "flex-grid": "grid",
+    "flex_grid": "grid",
     "section": "container",
     "section-column": "container",
     "line": "divider",
@@ -712,6 +714,9 @@ function normalizedControlType(type) {
     "summary": "dynamic-field",
     "dynamic-sub-list": "list",
     "sub-list": "list",
+    "list-body": "list",
+    "list-footer": "list",
+    "list-qrcode": "qrcode",
     "qr-code": "qrcode",
     "document-embed": "document",
     "custom-css": "custom-css",
@@ -793,9 +798,13 @@ function validateLayoutRule(rule, page) {
   if (normalized === "safe-padding") return hasSafePadding(page);
   if (["card-container", "styled-card", "section-card"].includes(normalized)) return hasAnyCardContainer(page);
   if (["card-structure", "card-structure-present"].includes(normalized)) return hasCardStructure(page);
+  if (["kpi-card-row", "metric-card-row", "summary-card-row"].includes(normalized)) return hasCardStructure(page) && /summary|aggregate|metric|total|open|resolved|submitted|kpi/i.test(JSON.stringify(page || {}));
   if (["grid-row", "multi-column-grid", "grid-structure", "responsive-grid"].includes(normalized)) return hasGridStructure(page);
   if (["section-spacing", "visual-rhythm", "safe-spacing"].includes(normalized)) return hasSectionSpacing(page);
-  if (["print-layout", "print-css"].includes(normalized)) return /print|page-break|barcode|qrcode|vendor code/i.test(JSON.stringify(page || {}));
+  if (["print-layout", "print-css"].includes(normalized)) return /print|page-break|quotation|inventory|barcode|qrcode|vendor code/i.test(JSON.stringify(page || {}));
+  if (["print-header", "print-summary"].includes(normalized)) return /print|quotation|inventory|summary|customer|vendor|logo|picture/i.test(JSON.stringify(page || {}));
+  if (["print-item-table", "print-checklist", "line-item-table"].includes(normalized)) return /table-v2|list-body|list-footer|dynamic-field|products|services|inventory|document|checklist/i.test(JSON.stringify(page || {}));
+  if (["qr-barcode-section", "print-qr-barcode"].includes(normalized)) return /qrcode|qr-code|list-qrcode|barcode|vendor code/i.test(JSON.stringify(page || {}));
   if (["no-mutating-actions", "read-only-print"].includes(normalized)) return !/\b(Submit|Approve|Mark|Delete|Save Draft|Request Missing Documents)\b/i.test(JSON.stringify(page || {}));
   return true;
 }

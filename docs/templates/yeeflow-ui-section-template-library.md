@@ -368,3 +368,19 @@ The template library is now mapped against four existing Yeeflow reference expor
 | `selection_bulk_toolbar` | Company Overview bulk Mark completed/Delete selected actions; prior focused runtime proof | runtime-proven | Selected IDs/count variables must resolve per generated package. |
 
 Reference corpus conclusion: the existing exports are enough to strengthen most dashboard, custom form, Data table, Kanban/Collection, timeline, and action templates. A new golden app is still needed for polished KPI card rows and print-page composition, especially print summary, print document checklist, and QR/barcode integration on print pages.
+
+## Additional KPI And Print Golden References
+
+Additional reference exports were studied to close the remaining KPI and print gaps. Treat these as export-proven structure and binding evidence only unless a separate runtime proof exists.
+
+| Template ID | Additional reference evidence | Updated proof status | Remaining limitation |
+| --- | --- | --- | --- |
+| `kpi_card_row` | `DEMO Innovation Ecosystem Platform (1).yap` / `NHIC Innovation Overview`; `Service Desk Pro (2).yap` / `Executive Dashboard` | export-proven | Aggregate correctness and runtime values remain package-specific. |
+| `dashboard_header_action_bar` | NHIC and Service Desk dashboard header/filter/action rows | export-proven | Action targets and filter variables must still resolve per generated package. |
+| `progress_summary_card` | Service Desk and NHIC Summary/chart metric groups | export-proven | Generated packages must validate aggregate bindings and business labels. |
+| `data_table_section` | `Online Library.yap` / `Print Inventory`; `Sales Quotation.yap` / `Print Page` | runtime-proven for dashboard Data table binding, export-proven for print line-item/table sections | Dashboard Data table and print line-item/list controls use different schemas and must be validated separately. |
+| `print_page_summary` | `Sales Quotation.yap` / `Print Page`; `Online Library.yap` / `Print Inventory` | export-proven | Browser print/page-break behavior still needs runtime/manual proof. |
+| `print_page_document_checklist` | Online Library multi-item inventory print table; Sales Quotation single-record line-item table/list | export-proven | Generated print tables/checklists must be read-only and bind configured fields. |
+| `print_page_qr_barcode_section` | Online Library `Detail Page` and `Barcode Scan` prove QR/barcode controls; Sales Quotation proves print layout | needs-golden-proof | QR/barcode controls inside an actual print-page layout are still only partially covered. |
+
+Expanded corpus conclusion: polished KPI rows, print summaries, and print item/checklist/table sections are now sufficiently export-proven for page-by-page generation. A new golden app is no longer needed for those templates, but QR/barcode embedded inside a print page still needs focused golden proof or a documented fallback.
