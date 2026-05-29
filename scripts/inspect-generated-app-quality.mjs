@@ -47,7 +47,7 @@ const VENDOR_ONBOARDING_EXPECTED_PAGES = [
 function usage(exitCode = 1) {
   const text = [
     "Usage:",
-    "  node scripts/inspect-generated-app-quality.mjs --package <app.yap|app.yapk|decoded-data.json> [--plan <plan.md>] [--spec <ui-implementation-spec.md>] [--composition-checklist <checklist.normalized.json>] [--strict-app-quality] [--strict-visual-app-quality] [--json-out <report.json>]",
+    "  node scripts/inspect-generated-app-quality.mjs --package <app.yap|app.yapk|decoded-data.json> [--plan <plan.md>] [--spec <ui-implementation-spec.md>] [--composition-checklist <checklist.normalized.json>] [--template-library <templates.normalized.json>] [--strict-app-quality] [--strict-visual-app-quality] [--json-out <report.json>]",
     "",
     "Combines app-plan presence checks, UI implementation spec checks, package inventory, generated UI quality checks, and strict full-application visual quality gates.",
   ].join("\n");
@@ -62,6 +62,7 @@ function parseArgs(argv) {
     planPath: "",
     specPath: "",
     compositionChecklistPath: "",
+    templateLibraryPath: "",
     jsonOut: "",
     strictAppQuality: false,
     strictVisualAppQuality: false,
@@ -72,6 +73,7 @@ function parseArgs(argv) {
     else if (arg === "--plan") args.planPath = argv[++index] || "";
     else if (arg === "--spec") args.specPath = argv[++index] || "";
     else if (arg === "--composition-checklist") args.compositionChecklistPath = argv[++index] || "";
+    else if (arg === "--template-library") args.templateLibraryPath = argv[++index] || "";
     else if (arg === "--json-out") args.jsonOut = argv[++index] || "";
     else if (arg === "--strict-app-quality") args.strictAppQuality = true;
     else if (arg === "--strict-visual-app-quality") {
@@ -369,7 +371,67 @@ function inspectSpec(specPath) {
   };
 }
 
-function inspectCompositionChecklist(checklistPath) {
+function inspectTemplateLibrary(libraryPath) {
+  const findings = [];
+  if (!libraryPath) return { exists: false, templates: [], templatesById: new Map(), findings };
+  if (!fs.existsSync(libraryPath)) {
+    findings.push({
+      level: "error",
+      code: "TEMPLATE_LIBRARY_FILE_MISSING",
+      message: "The supplied template library JSON file does not exist.",
+      path: libraryPath,
+      source: "template-library",
+    });
+    return { exists: false, templates: [], templatesById: new Map(), findings };
+  }
+  let parsed;
+  try {
+    parsed = parseJson(fs.readFileSync(libraryPath, "utf8"), new Set());
+  } catch (error) {
+    findings.push({
+      level: "error",
+      code: "TEMPLATE_LIBRARY_JSON_INVALID",
+      message: `Template library JSON could not be parsed: ${error.message}`,
+      path: libraryPath,
+      source: "template-library",
+    });
+    return { exists: false, templates: [], templatesById: new Map(), findings };
+  }
+  const templates = asArray(parsed.templates);
+  const templatesById = new Map();
+  if (!templates.length) {
+    findings.push({
+      level: "error",
+      code: "TEMPLATE_LIBRARY_TEMPLATES_MISSING",
+      message: "Template library must include a nonempty templates array.",
+      path: libraryPath,
+      source: "template-library",
+    });
+  }
+  for (const template of templates) {
+    const templateId = safeString(template.templateId);
+    if (!templateId) {
+      findings.push({ level: "error", code: "TEMPLATE_ID_MISSING", message: "Template library entry is missing templateId.", source: "template-library" });
+      continue;
+    }
+    if (templatesById.has(templateId)) {
+      findings.push({ level: "error", code: "TEMPLATE_ID_DUPLICATE", message: "Template library entry has a duplicate templateId.", templateId, source: "template-library" });
+      continue;
+    }
+    templatesById.set(templateId, template);
+  }
+  return {
+    exists: true,
+    path: libraryPath,
+    library: safeString(parsed.library),
+    version: safeString(parsed.version),
+    templates,
+    templatesById,
+    findings,
+  };
+}
+
+function inspectCompositionChecklist(checklistPath, templateLibrary = { exists: false, templatesById: new Map() }) {
   const findings = [];
   if (!checklistPath) {
     return { exists: false, pages: [], findings };
@@ -427,6 +489,14 @@ function inspectCompositionChecklist(checklistPath) {
       }
       if (!asArray(section.controls).length) {
         findings.push({ level: "error", code: "COMPOSITION_SECTION_CONTROLS_MISSING", message: "Composition checklist section must define exact Yeeflow control types.", page: page.title, section: section.id, source: "composition-checklist" });
+      }
+      if (templateLibrary.exists && (section.status === "required" || section.required === true)) {
+        const templateId = safeString(section.templateId);
+        if (!templateId) {
+          findings.push({ level: "error", code: "TEMPLATE_ID_MISSING", message: "Required composition checklist section must reference a known templateId.", page: page.title, section: section.id, source: "template-library" });
+        } else if (!templateLibrary.templatesById.has(templateId)) {
+          findings.push({ level: "error", code: "TEMPLATE_ID_UNKNOWN", message: "Composition checklist section references an unknown templateId.", page: page.title, section: section.id, templateId, source: "template-library" });
+        }
       }
       if (section.status === "deferred" && !safeString(section.deferReason || section.fallback?.reason)) {
         findings.push({ level: "error", code: "COMPOSITION_FALLBACK_REASON_MISSING", message: "Deferred checklist sections must include a reason and fallback.", page: page.title, section: section.id, source: "composition-checklist" });
@@ -588,6 +658,10 @@ function compositionAdd(findings, code, message, detail = {}, level = "error") {
   findings.push({ level, code, message, detail, source: "composition-checklist" });
 }
 
+function templateAdd(findings, code, message, detail = {}, level = "error") {
+  findings.push({ level, code, message, detail, source: "template-library" });
+}
+
 function hasSafePadding(page) {
   const text = JSON.stringify(page || {});
   if (/padding/i.test(text) && /(--sp--s[3-9]|\b(1[6-9]|[2-9]\d)px\b|"left"\s*:\s*"?([2-9]\d|1[6-9])|"right"\s*:\s*"?([2-9]\d|1[6-9]))/.test(text)) return true;
@@ -714,6 +788,114 @@ function validateLayoutRule(rule, page) {
   return true;
 }
 
+function templateControlGroups(template) {
+  const controls = new Set(asArray(template.requiredControls).map(normalizedControlType).filter(Boolean));
+  const groups = [];
+  const consumeGroup = (alts) => {
+    const present = alts.filter((type) => controls.has(type));
+    if (present.length > 1) {
+      groups.push(present);
+      present.forEach((type) => controls.delete(type));
+      return true;
+    }
+    return false;
+  };
+  consumeGroup(["progress-circle", "progress-bar"]);
+  consumeGroup(["kanban", "collection"]);
+  consumeGroup(["timeline-v", "timeline-h", "collection"]);
+  consumeGroup(["qrcode", "barcode"]);
+  const recordDisplayControls = ["data-list", "collection", "timeline-v", "timeline-h", "document", "list"].filter((type) => controls.has(type));
+  if (recordDisplayControls.length > 1) {
+    groups.push(recordDisplayControls);
+    recordDisplayControls.forEach((type) => controls.delete(type));
+  }
+  for (const type of controls) groups.push([type]);
+  return groups;
+}
+
+function sectionExpectedFields(section, template) {
+  return Array.from(new Set([
+    ...asArray(template.requiredFields).map(safeString),
+    ...asArray(section.requiredFields).map(safeString),
+  ].filter(Boolean)));
+}
+
+function validateTemplateConformance(section, page, checklistPage, template, findings) {
+  if (!template) return { checked: false, passed: false };
+  let passed = true;
+  const types = controlTypeSet(page);
+  for (const group of templateControlGroups(template)) {
+    if (!group.some((type) => types.has(type))) {
+      passed = false;
+      templateAdd(findings, "TEMPLATE_REQUIRED_CONTROL_MISSING", "Generated section does not satisfy the referenced template's required controls.", {
+        page: checklistPage.title,
+        section: section.id,
+        templateId: template.templateId,
+        requiredControl: group.length === 1 ? group[0] : group,
+      });
+    }
+  }
+  const text = pageText(page);
+  const missingFields = sectionExpectedFields(section, template).filter((field) => !text.includes(field.toLowerCase()));
+  if (missingFields.length) {
+    passed = false;
+    templateAdd(findings, "TEMPLATE_REQUIRED_FIELD_MISSING", "Generated section does not include fields required by the referenced template.", {
+      page: checklistPage.title,
+      section: section.id,
+      templateId: template.templateId,
+      missingFields,
+    });
+  }
+  const layoutRules = Array.from(new Set([...asArray(template.layoutRules), ...asArray(section.layoutRules)].map(safeString).filter(Boolean)));
+  for (const layoutRule of layoutRules) {
+    if (!validateLayoutRule(layoutRule, page)) {
+      passed = false;
+      templateAdd(findings, "TEMPLATE_LAYOUT_RULE_MISSING", "Generated section does not satisfy the referenced template's layout rule.", {
+        page: checklistPage.title,
+        section: section.id,
+        templateId: template.templateId,
+        layoutRule,
+      });
+    }
+  }
+  if (pageHasPlaceholderContent(page)) {
+    passed = false;
+    templateAdd(findings, "TEMPLATE_PLACEHOLDER_IMPLEMENTATION", "Generated section uses placeholder/default content to satisfy a template.", {
+      page: checklistPage.title,
+      section: section.id,
+      templateId: template.templateId,
+    });
+  }
+  const templateActions = asArray(template.actionRules).map(safeString).filter(Boolean);
+  const requiredActions = asArray(section.actionBindings).map((action) => safeString(isObject(action) ? action.label : action)).filter(Boolean);
+  if (templateActions.some((rule) => /require|binding|resolve/i.test(rule)) && requiredActions.length) {
+    const buttons = buttonIndex(page);
+    for (const label of requiredActions) {
+      const matchingButtons = buttons.filter((button) => button.label.toLowerCase().includes(label.toLowerCase()) || label.toLowerCase().includes(button.label.toLowerCase()));
+      if (!matchingButtons.length || !matchingButtons.some((button) => button.hasAction)) {
+        passed = false;
+        templateAdd(findings, "TEMPLATE_ACTION_RULE_MISSING", "Generated section does not satisfy the referenced template's action binding rule.", {
+          page: checklistPage.title,
+          section: section.id,
+          templateId: template.templateId,
+          action: label,
+        });
+      }
+    }
+  }
+  const before = findings.length;
+  validateItemTemplate({ ...section, itemTemplate: section.itemTemplate || template.itemTemplate }, page, checklistPage, findings);
+  if (findings.length > before) passed = false;
+  if (!passed) {
+    templateAdd(findings, "TEMPLATE_CONFORMANCE_FAILED", "Generated section failed template conformance.", {
+      page: checklistPage.title,
+      section: section.id,
+      templateId: template.templateId,
+    });
+  }
+  return { checked: true, passed };
+}
+
 function itemTemplateDynamicFieldCount(control) {
   let count = 0;
   walkControls(control, (node) => {
@@ -754,9 +936,9 @@ function validateItemTemplate(section, page, checklistPage, findings) {
   }
 }
 
-function inspectCompositionQuality(decodedPackage, checklist) {
+function inspectCompositionQuality(decodedPackage, checklist, templateLibrary = { exists: false, templatesById: new Map() }) {
   const findings = [];
-  const summary = { pages: [], sectionCount: 0 };
+  const summary = { pages: [], sectionCount: 0, templateConformance: { checked: 0, passed: 0, failed: 0 } };
   if (!checklist.exists) return { summary, findings };
   const data = decodedPackage?.data;
   if (!data) {
@@ -788,7 +970,9 @@ function inspectCompositionQuality(decodedPackage, checklist) {
       const sectionTextFound = sectionTexts.some((needle) => text.includes(needle.toLowerCase()));
       const sectionTypes = asArray(section.controls).map(normalizedControlType).filter(Boolean);
       const controlFound = sectionTypes.length === 0 || sectionTypes.some((type) => types.has(type));
-      pageSummary.sections.push({ id: section.id, title: section.title, status, textFound: sectionTextFound, controlFound });
+      const templateId = safeString(section.templateId);
+      const template = templateId && templateLibrary.exists ? templateLibrary.templatesById.get(templateId) : null;
+      pageSummary.sections.push({ id: section.id, title: section.title, status, templateId, textFound: sectionTextFound, controlFound });
       summary.sectionCount += 1;
       if (status === "deferred" && !safeString(section.deferReason || section.fallback?.reason)) {
         compositionAdd(findings, "COMPOSITION_FALLBACK_REASON_MISSING", "Checklist section is deferred without a reason.", { page: checklistPage.title, section: section.id });
@@ -819,6 +1003,20 @@ function inspectCompositionQuality(decodedPackage, checklist) {
         }
       }
       validateItemTemplate(section, page, checklistPage, findings);
+      if (templateLibrary.exists) {
+        if (!templateId) {
+          templateAdd(findings, "TEMPLATE_ID_MISSING", "Required generated section cannot be validated against a template because templateId is missing.", { page: checklistPage.title, section: section.id });
+        } else if (!template) {
+          templateAdd(findings, "TEMPLATE_ID_UNKNOWN", "Required generated section references an unknown templateId.", { page: checklistPage.title, section: section.id, templateId });
+        } else {
+          const result = validateTemplateConformance(section, page, checklistPage, template, findings);
+          if (result.checked) {
+            summary.templateConformance.checked += 1;
+            if (result.passed) summary.templateConformance.passed += 1;
+            else summary.templateConformance.failed += 1;
+          }
+        }
+      }
     }
   }
   return { summary, findings };
@@ -981,22 +1179,25 @@ function main() {
   const planPath = args.planPath ? path.resolve(args.planPath) : "";
   const specPath = args.specPath ? path.resolve(args.specPath) : "";
   const compositionChecklistPath = args.compositionChecklistPath ? path.resolve(args.compositionChecklistPath) : "";
+  const templateLibraryPath = args.templateLibraryPath ? path.resolve(args.templateLibraryPath) : "";
   const decodedPackage = decodePackage(packagePath);
   const plan = inspectPlan(planPath);
   const spec = inspectSpec(specPath);
-  const compositionChecklist = inspectCompositionChecklist(compositionChecklistPath);
+  const templateLibrary = inspectTemplateLibrary(templateLibraryPath);
+  const compositionChecklist = inspectCompositionChecklist(compositionChecklistPath, templateLibrary);
   const validation = runJsonStep("package-validation", process.execPath, packageValidatorArgs(repoRoot, packagePath));
   const uiQuality = runJsonStep("generated-ui-quality", process.execPath, [path.join(repoRoot, "scripts/inspect-generated-ui-quality.mjs"), packagePath]);
   const inventory = packageInventory(validation.report, decodedPackage);
   const specPackageFindings = compareSpecToPackage(spec, inventory, uiQuality.report);
   const strictVisual = args.strictVisualAppQuality ? inspectStrictVisualQuality(decodedPackage, spec) : { summary: {}, findings: [] };
-  const compositionQuality = compositionChecklist.exists ? inspectCompositionQuality(decodedPackage, compositionChecklist) : { summary: {}, findings: [] };
+  const compositionQuality = compositionChecklist.exists ? inspectCompositionQuality(decodedPackage, compositionChecklist, templateLibrary) : { summary: {}, findings: [] };
   const strictEscalatedFindings = args.strictAppQuality
     ? specPackageFindings.map((finding) => ({ ...finding, level: finding.level === "warning" ? "error" : finding.level, source: "strict-app-quality" }))
     : specPackageFindings;
   const findings = [
     ...plan.findings,
     ...spec.findings,
+    ...templateLibrary.findings,
     ...compositionChecklist.findings,
     ...strictEscalatedFindings,
     ...((validation.report.findings || []).map((finding) => ({ ...finding, source: "package-validation" }))),
@@ -1014,6 +1215,17 @@ function main() {
     packageType: decodedPackage.packageType,
     plan,
     spec,
+    templateLibrary: {
+      exists: templateLibrary.exists,
+      path: templateLibrary.path,
+      library: templateLibrary.library,
+      version: templateLibrary.version,
+      templates: templateLibrary.templates?.map((template) => ({
+        templateId: template.templateId,
+        category: template.category,
+        proofStatus: template.proofStatus,
+      })) || [],
+    },
     compositionChecklist: {
       exists: compositionChecklist.exists,
       path: compositionChecklist.path,
