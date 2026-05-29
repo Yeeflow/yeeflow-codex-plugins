@@ -289,6 +289,13 @@ function inspectDashboards(data, listsById, findings, summary) {
     const resource = asArray(layout.LayoutInResources)[0]?.Resource;
     const page = parseMaybeJson(resource);
     if (!page) {
+      const ext2 = parseMaybeJson(layout.Ext2);
+      const currentDashboardShell = layout.LayoutView === null && ext2 && ext2.src === true && Array.isArray(layout.LayoutInResources) && layout.LayoutInResources.length === 0;
+      if (currentDashboardShell) {
+        summary.dashboardPages += 1;
+        add(findings, "warning", "DASHBOARD_CURRENT_SHELL_NO_INLINE_RESOURCE", "Current-version blank dashboard shell is export-proven, but it has no inline page JSON to inspect for padding, controls, or data bindings.", { layoutIndex, title: safeString(layout.Title), layoutId: safeString(layout.LayoutID) });
+        return;
+      }
       add(findings, "error", "DASHBOARD_RESOURCE_JSON_INVALID", "Dashboard page Resource must parse as JSON.", { layoutIndex, title: safeString(layout.Title) });
       return;
     }

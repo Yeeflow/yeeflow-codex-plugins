@@ -317,6 +317,56 @@ function zeroPadding(padding) {
   return ["top", "right", "bottom", "left"].every((side) => value[side] === "--sp--s0" || value[side] === 0 || value[side] === "0" || value[side] === "");
 }
 
+function hasSafeHorizontalPaddingValue(value) {
+  if (value === undefined || value === null || value === "") return false;
+  if (typeof value === "number") return value >= 16;
+  if (typeof value === "string") {
+    if (/--sp--s([3-9]|[1-9]\d+)/.test(value)) return true;
+    const numeric = Number(value.trim().replace(/px$/, ""));
+    return Number.isFinite(numeric) && numeric >= 16;
+  }
+  if (Array.isArray(value)) return value.some(hasSafeHorizontalPaddingValue);
+  if (!isObject(value)) return false;
+  return ["left", "right", "x", "horizontal"].some((key) => hasSafeHorizontalPaddingValue(value[key]));
+}
+
+function controlPaddingCandidates(control) {
+  const attrs = control && control.attrs || {};
+  const common = attrs.common || {};
+  return [
+    attrs.padding,
+    attrs.container && attrs.container.padding,
+    attrs.style && attrs.style.padding,
+    common.padding,
+    common.positioning && common.positioning.padding,
+    control && control.padding,
+  ];
+}
+
+function hasSafeHorizontalPaddingNearRoot(root) {
+  if (!isObject(root)) return false;
+  if (controlPaddingCandidates(root).some(hasSafeHorizontalPaddingValue)) return true;
+  let found = false;
+  asArray(root.children).forEach((child, index) => {
+    walkControls(child, (control, pointer) => {
+      if (found) return;
+      const depth = pointer.split(".children[").length - 1 + pointer.split(".columns[").length - 1;
+      if (depth > 2) return;
+      if (controlPaddingCandidates(control).some(hasSafeHorizontalPaddingValue)) found = true;
+    }, `$.children[${index}]`);
+  });
+  return found;
+}
+
+function displayColumnFieldName(column) {
+  if (!isObject(column)) return safeString(column);
+  for (const candidate of [column.FieldName, column.fieldName, column.field, column.Name, column.name, column.SortName, column.id, column.FieldID, column.fieldID, column.value]) {
+    const value = safeString(candidate);
+    if (value) return value;
+  }
+  return "";
+}
+
 function findControlByLabel(root, label) {
   let found = null;
   walkControls(root, (control) => {
@@ -347,6 +397,54 @@ function issue(report, level, code, message, details = {}) {
 
 function generatorFinalSeverity(report, fallback = "warning") {
   return report.mode === "generator" && report.stage === "final" ? "error" : fallback;
+}
+
+function validateGeneratedIntegerId(value, report, context = {}) {
+  if (value === undefined || value === null || value === "") return;
+  const severity = generatorFinalSeverity(report);
+  const rawLargeIntegerToken = typeof value === "string" && report._largeNumbers && report._largeNumbers.has(value);
+  if (rawLargeIntegerToken) return;
+  if (!Number.isInteger(value)) {
+    issue(report, severity, "INVALID_ID_TYPE", "Generated YAP ID values must be JSON integers.", {
+      ...context,
+      actualType: Array.isArray(value) ? "array" : value === null ? "null" : typeof value,
+    });
+  } else if (!Number.isSafeInteger(value)) {
+    issue(report, severity, "UNSAFE_INTEGER_ID", "Generated YAP integer IDs must be within Number.MAX_SAFE_INTEGER to avoid JSON rounding duplicates.", {
+      ...context,
+      value,
+    });
+  } else if (report.mode === "generator" && report.stage === "final" && isLikelyLocalGeneratedId(value)) {
+    issue(report, severity, "ID_SOURCE_NOT_API", "Import-proof generated YAP IDs should come from the Yeeflow generate-unique-ids API, not the local fallback ID range.", {
+      ...context,
+      value,
+    });
+  }
+}
+
+function isLikelyLocalGeneratedId(value) {
+  return /^7601000000000\d+$/.test(safeString(value));
+}
+
+function validateUniqueGeneratedId(value, seen, report, code, message, context = {}) {
+  if (value === undefined || value === null || value === "") return;
+  const key = safeString(value);
+  const previous = seen.get(key);
+  if (previous) {
+    issue(report, generatorFinalSeverity(report), code, message, {
+      ...context,
+      value: key,
+      previousPath: previous.path,
+      previousList: previous.list,
+      previousName: previous.name,
+    });
+  } else {
+    seen.set(key, context);
+  }
+}
+
+function isSchemaDirectYap(report) {
+  return report && report.wrapper && (report.wrapper.inputType === "wrapped-yap-schema-direct" || report.wrapper.inputType === "wrapped-yap-list-export-result");
 }
 
 function validateAppCreationFieldRules(field, report, context = {}) {
@@ -509,8 +607,12 @@ function decodeInput(inputPath, report) {
       issue(report, "error", "RESOURCE_JSON_INVALID", "Decoded Resource JSON is invalid.", { error: error.message });
       return null;
     }
+    if ((resource && typeof resource === "object") && (resource.Item || Array.isArray(resource.Childs))) {
+      report.wrapper.inputType = "wrapped-yap-schema-direct";
+      return { wrapper, resource, data: resource };
+    }
     if (typeof resource.Data !== "string") {
-      issue(report, "error", "RESOURCE_DATA_MISSING", "Decoded Resource.Data must be a JSON string.");
+      issue(report, "error", "RESOURCE_DATA_MISSING", "Decoded Resource should be schema-direct ListExportInfo, or legacy Resource.Data must be a JSON string.");
       return null;
     }
     let data;
@@ -519,6 +621,9 @@ function decodeInput(inputPath, report) {
     } catch (error) {
       issue(report, "error", "RESOURCE_DATA_JSON_INVALID", "Resource.Data JSON is invalid.", { error: error.message });
       return null;
+    }
+    if (Number(resource.MainListType) === 1024 && Object.prototype.hasOwnProperty.call(resource, "Data")) {
+      report.wrapper.inputType = "wrapped-yap-list-export-result";
     }
     return { wrapper, resource, data };
   }
@@ -855,9 +960,12 @@ function validate(inputPath, mode, stage) {
   const fieldsByList = new Map();
   const localIds = new Set();
   const fieldIdsByApp = new Map();
+  const listIdsByApp = new Map();
+  const layoutIdsByApp = new Map();
+  const layoutResourceIdsByApp = new Map();
 
   resourceItems.forEach((item, index) => {
-    validateResourceItem(item, index, index === 0, rootListSetId, replaceIds, localIds, listsById, fieldsByList, fieldIdsByApp, report);
+    validateResourceItem(item, index, index === 0, rootListSetId, replaceIds, localIds, listsById, fieldsByList, fieldIdsByApp, listIdsByApp, layoutIdsByApp, layoutResourceIdsByApp, report);
   });
 
   validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList, report, resource);
@@ -951,23 +1059,33 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
   if (!rootPageLayouts.size) {
     issue(
       report,
-      documentLibraryOnlyPackage ? "warning" : report.mode === "generator" && report.stage === "final" ? "error" : "warning",
+      documentLibraryOnlyPackage || isSchemaDirectYap(report) ? "warning" : report.mode === "generator" && report.stage === "final" ? "error" : "warning",
       "ROOT_APP_PAGE_LAYOUT_MISSING",
       "Root app/ListSet has no Type 103 app page layout. Document-library-only exports can omit root pages; richer generated apps usually need an openable app shell.",
     );
   }
   for (const layout of rootLayouts.filter((candidate) => safeString(candidate.Type) === "103")) {
     const layoutId = safeString(layout.LayoutID);
+    const ext2 = tryParseJson(layout.Ext2);
+    const resources = asArray(layout.LayoutInResources);
+    if (!resources.length) {
+      if (layout.LayoutView !== null || !ext2 || ext2.src !== true) {
+        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DASHBOARD_USES_LEGACY_SCHEMA", "Generated Type 103 dashboard shell should use the current export-proven shape: LayoutView null, Ext2 {\"src\":true}, and empty LayoutInResources.", { title: layout.Title, layoutId, layoutViewType: layout.LayoutView === null ? "null" : typeof layout.LayoutView, ext2 });
+      }
+      if (!ext2 || ext2.src !== true) {
+        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DASHBOARD_CURRENT_VERSION_MARKER_MISSING", "Generated dashboard shell is missing the current-version Ext2 {\"src\":true} marker.", { title: layout.Title, layoutId });
+      }
+    }
     if (layout.LayoutView !== null && layout.LayoutView !== undefined) {
-      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_LAYOUTVIEW_NOT_NULL", "Root Type 103 app page LayoutView should be null; working exports store page content in LayoutInResources.Resource.", { title: layout.Title, layoutId });
+      if (!(isSchemaDirectYap(report) && layout.LayoutView === "")) {
+        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_LAYOUTVIEW_NOT_NULL", "Root Type 103 app page LayoutView should be null; working exports store page content in LayoutInResources.Resource.", { title: layout.Title, layoutId });
+      }
     }
     if (!Array.isArray(layout.LayoutInResources)) {
       issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_LAYOUTINRESOURCES_NOT_ARRAY", "Root Type 103 app page LayoutInResources must be an array. Minimal dashboard-only exports use an empty array.", { title: layout.Title, layoutId });
       continue;
     }
-    const resources = layout.LayoutInResources;
     if (!resources.length) {
-      const ext2 = tryParseJson(layout.Ext2);
       const isMinimalDashboardShell = ext2 && ext2.src === true && replaceIds.has(layoutId);
       if (!isMinimalDashboardShell) {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_MISSING", "Root Type 103 app page layout without embedded page content must match the minimal dashboard-only export pattern: LayoutInResources empty, Ext2 {\"src\":true}, and LayoutID in ReplaceIds.", { title: layout.Title, layoutId });
@@ -987,9 +1105,6 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
       if (resourceId && refId && resourceId !== refId) {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_ID_REFID_MISMATCH", "Root Type 103 app page LayoutInResources ID and RefId should match each other.", { title: layout.Title, layoutId, resourceId, refId });
       }
-      if (!usesInlinePageResourceId && (replaceIds.has(resourceId) || replaceIds.has(refId))) {
-        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_ID_IN_REPLACEIDS", "Root Type 103 app page LayoutInResources ID/RefId should not be in ReplaceIds; only the LayoutID is remapped.", { title: layout.Title, layoutId, resourceId, refId });
-      }
       const page = tryParseJson(resource.Resource);
       if (!page) {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_JSON_INVALID", "Root Type 103 app page Resource must be valid page JSON.", { title: layout.Title, layoutId, resourceId });
@@ -1006,6 +1121,7 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
   }
   const layoutView = tryParseJson(root.LayoutView);
   if (!layoutView) {
+    if (isSchemaDirectYap(report) && !asArray(data.Item && data.Item.Layouts).some((layout) => safeString(layout.Type) === "103")) return;
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_LAYOUTVIEW_INVALID", "Root app/ListSet LayoutView must be parseable JSON navigation metadata.");
     return;
   }
@@ -1171,8 +1287,12 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
   if (page.attrs && page.attrs.hideHeaderAll !== true) {
     uiStandardWarning(report, "UI_STANDARD_DASHBOARD_HEADER_NOT_HIDDEN", "UI/UX standard dashboards should set attrs.hideHeaderAll to true.", { title, layoutId });
   }
-  if (!zeroPadding(page.attrs && page.attrs.container && page.attrs.container.padding)) {
-    uiStandardWarning(report, "UI_STANDARD_DASHBOARD_PADDING_NOT_ZERO", "UI/UX standard dashboards should use zero page padding: attrs.container.padding with --sp--s0 on all sides.", { title, layoutId });
+  const dashboardRootPadding = page.attrs && page.attrs.container && page.attrs.container.padding;
+  if (!zeroPadding(dashboardRootPadding) && !hasSafeHorizontalPaddingValue(dashboardRootPadding)) {
+    uiStandardWarning(report, "UI_STANDARD_DASHBOARD_PADDING_UNUSUAL", "Dashboard page root padding should be either zero with padded inner sections or safe horizontal page padding.", { title, layoutId });
+  }
+  if (!hasSafeHorizontalPaddingNearRoot(page)) {
+    uiStandardWarning(report, "UI_QUALITY_DASHBOARD_SAFE_PADDING_MISSING", "Generated dashboards should include safe left/right padding on an outer page section or container so controls do not touch window edges.", { title, layoutId });
   }
   validateUiStandardContainers(page, report, { surface: "dashboard", title, layoutId, requireFormBody: false });
   if (page.filterVars !== undefined && !Array.isArray(page.filterVars)) {
@@ -1211,6 +1331,8 @@ function validateDashboardPageResource(page, layout, resource, listsById, fields
       dataFilterControls.push({ pointer, controlId, controlType, binding: safeString(node.binding), attrs: node.attrs || {} });
     } else if (controlType === "remove-filters" || controlType === "remove-filers") {
       removeFilterControls.push({ pointer, controlId, controlType, attrs: node.attrs || {} });
+    } else if (controlType === "data-list") {
+      validateDashboardDataTableControl(node, title, layoutId, pointer, listsById, fieldsByList, report);
     } else if (controlType && /filter/i.test(controlType) && !isKnownNonDataFilterControlType(controlType)) {
       issue(report, "warning", "DASHBOARD_DATA_FILTER_TYPE_UNKNOWN", "Dashboard contains an unknown filter-like control type. Treat this as unproven until an export maps the schema.", { title, layoutId, pointer, controlType });
     }
@@ -1937,6 +2059,35 @@ function validateDashboardCollectionControls(page, title, layoutId, listsById, f
   validateDashboardPageActions();
 }
 
+function validateDashboardDataTableControl(control, title, layoutId, pointer, listsById, fieldsByList, report) {
+  const severity = generatorFinalSeverity(report);
+  const listId = safeString(control.attrs && control.attrs.data && control.attrs.data.list && control.attrs.data.list.ListID);
+  const columns = asArray(control.attrs && control.attrs.listarr);
+  if (!listId) {
+    issue(report, severity, "DASHBOARD_DATA_TABLE_SOURCE_MISSING", "Generated dashboard Data table controls must configure attrs.data.list.", { title, layoutId, pointer });
+    return;
+  }
+  if (!listsById.has(listId)) {
+    issue(report, severity, "DASHBOARD_DATA_TABLE_SOURCE_UNRESOLVED", "Generated dashboard Data table controls must reference a packaged data list.", { title, layoutId, pointer, listId });
+  }
+  if (!columns.length) {
+    issue(report, severity, "DASHBOARD_DATA_TABLE_DISPLAY_COLUMNS_MISSING", "Generated dashboard Data table controls must include attrs.listarr display fields. Empty table field configuration is not handoff-ready.", { title, layoutId, pointer, listId });
+    return;
+  }
+  if (columns.length < 3) {
+    issue(report, "warning", "DASHBOARD_DATA_TABLE_DISPLAY_COLUMNS_THIN", "Generated dashboard Data table controls should include 3 to 5 meaningful display columns when source fields are available.", { title, layoutId, pointer, listId, columnCount: columns.length });
+  }
+  const fields = fieldsByList.get(listId) || new Map();
+  columns.forEach((column, index) => {
+    const fieldName = displayColumnFieldName(column);
+    if (!fieldName) {
+      issue(report, severity, "DASHBOARD_DATA_TABLE_DISPLAY_FIELD_MISSING", "Data table display column entries must identify a source field.", { title, layoutId, pointer: `${pointer}.attrs.listarr[${index}]`, listId });
+    } else if (fieldsByList.has(listId) && !fields.has(fieldName)) {
+      issue(report, severity, "DASHBOARD_DATA_TABLE_DISPLAY_FIELD_UNRESOLVED", "Data table display column must resolve to the selected source list fields.", { title, layoutId, pointer: `${pointer}.attrs.listarr[${index}]`, listId, fieldName });
+    }
+  });
+}
+
 function validateDashboardExtFieldRefs(title, layoutId, pointer, attr, fieldsByList, filterVars, report) {
   const listId = safeString(attr && attr.ListID);
   if (!listId) return;
@@ -2182,9 +2333,11 @@ function validateBasicStructure(data, resource, report) {
     }
   }
   if (resource) {
-    if (!Array.isArray(resource.ReplaceIds)) issue(report, "error", "REPLACEIDS_NOT_ARRAY", "Resource.ReplaceIds must be an array.");
-    if (resource.AppID === undefined || resource.AppID === null || resource.AppID === "") {
+    if (!isSchemaDirectYap(report) && !Array.isArray(resource.ReplaceIds)) issue(report, "error", "REPLACEIDS_NOT_ARRAY", "Resource.ReplaceIds must be an array.");
+    if (!isSchemaDirectYap(report) && (resource.AppID === undefined || resource.AppID === null || resource.AppID === "")) {
       issue(report, "error", "RESOURCE_APPID_MISSING", "Resource.AppID is required in wrapped .yap packages.");
+    } else if (!isSchemaDirectYap(report) && report.mode === "generator" && report.stage === "final" && safeString(resource.AppID) !== "41") {
+      issue(report, "error", "RESOURCE_APPID_NOT_FIXED_41", "Generated YAP Resource.AppID must stay fixed at 41; do not request this ID from the generate-unique-ids API.", { appId: resource.AppID });
     }
     if (isDocumentLibraryOnlyPackage(data) && resource.SimplePortal !== null) {
       issue(report, "warning", "DOCUMENT_LIBRARY_SIMPLEPORTAL_NOT_NULL", "Known-good document-library exports use Resource.SimplePortal = null. Generated [] wrappers failed Yeeflow create in v1/v2.", { simplePortalType: Array.isArray(resource.SimplePortal) ? "array" : typeof resource.SimplePortal });
@@ -2208,6 +2361,9 @@ function validateListExportItemSchema(item, pathPrefix, report) {
   if (!isObject(item.ListModel)) {
     issue(report, generatorFinalSeverity(report), "LIST_EXPORT_ITEM_LISTMODEL_MISSING", "Generated app/list resources should include ListExportItem.ListModel.", { path: `${pathPrefix}.ListModel` });
   } else {
+    if (report.mode === "generator" && report.stage === "final" && item.ListModel.AppID !== undefined && safeString(item.ListModel.AppID) !== "41") {
+      issue(report, "error", "LISTMODEL_APPID_NOT_FIXED_41", "Generated YAP ListModel.AppID must stay fixed at 41; use API-issued IDs for list/field/layout IDs only.", { path: `${pathPrefix}.ListModel.AppID`, appId: item.ListModel.AppID });
+    }
     if (item.ListModel.Flags !== 1) {
       issue(report, generatorFinalSeverity(report), "LISTMODEL_FLAGS_MISSING_OR_INVALID", "Product schema v2 requires CustomListModel.Flags = 1 on generated root and child list resources; missing or different values can fail import.", { path: `${pathPrefix}.ListModel.Flags`, value: item.ListModel.Flags });
     }
@@ -2360,7 +2516,7 @@ function validateDataListFieldTypeSettings(field, listTitle, pathPrefix, report)
   }
 }
 
-function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, localIds, listsById, fieldsByList, fieldIdsByApp, report) {
+function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, localIds, listsById, fieldsByList, fieldIdsByApp, listIdsByApp, layoutIdsByApp, layoutResourceIdsByApp, report) {
   const pathPrefix = isRoot ? "$.Item" : `$.Childs[${index - 1}]`;
   if (!isObject(item) || !isObject(item.ListModel)) {
     issue(report, "error", "RESOURCE_LISTMODEL_MISSING", "Resource Item.ListModel is required.", { path: pathPrefix });
@@ -2375,17 +2531,26 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
     if (!title) issue(report, "error", "ROOT_TITLE_MISSING", "Root app title is required.", { path: `${pathPrefix}.ListModel.Title` });
     if (!list.AppID && report.mode === "generator" && report.stage === "final") issue(report, "error", "ROOT_APPID_MISSING", "Root AppID is required.", { path: `${pathPrefix}.ListModel.AppID` });
     if (!listId) issue(report, "error", "ROOT_LISTSET_ID_MISSING", "Root ListID/ListSetID is required.", { path: `${pathPrefix}.ListModel.ListID` });
+    if (safeString(list.CustomType)) {
+      issue(report, generatorFinalSeverity(report), "ROOT_CUSTOMTYPE_NOT_EMPTY", "Root app/ListSet CustomType should be empty; child list CustomType values should point to ListSite_<root ListID>.", { path: `${pathPrefix}.ListModel.CustomType`, customType: list.CustomType });
+    }
   } else {
     if (!listId) issue(report, "error", "CHILD_LISTID_MISSING", "Child ListID is required.", { path: `${pathPrefix}.ListModel.ListID`, title });
     if (!title) issue(report, "warning", "CHILD_TITLE_MISSING", "Child resource title is missing.", { path: `${pathPrefix}.ListModel.Title`, listId });
-    if (resourceType === "data list" && list.ListType === undefined) {
+    const expectedCustomType = `ListSite_${rootListSetId}`;
+    if (safeString(list.CustomType) !== expectedCustomType) {
+      issue(report, generatorFinalSeverity(report), "CHILD_CUSTOMTYPE_LISTSITE_MISMATCH", "Child list CustomType must point to the generated root application/ListSet ID as ListSite_<root ListID>.", { path: `${pathPrefix}.ListModel.CustomType`, title, customType: list.CustomType, expectedCustomType });
+    }
+    if (!isSchemaDirectYap(report) && resourceType === "data list" && list.ListType === undefined) {
       issue(report, generatorFinalSeverity(report), "MAIN_LIST_TYPE_MISSING", "Generated child data lists must include ListModel.ListType before handoff; missing ListType can block Yeeflow import/materialization.", { path: `${pathPrefix}.ListModel.ListType`, title, listId });
-    } else if (resourceType === "data list" && Number(list.ListType) !== 1) {
+    } else if (!isSchemaDirectYap(report) && resourceType === "data list" && Number(list.ListType) !== 1) {
       issue(report, generatorFinalSeverity(report), "MAIN_LIST_TYPE_INVALID", "Generated Type 1 data lists must use ListModel.ListType = 1 before handoff.", { path: `${pathPrefix}.ListModel.ListType`, title, listId, listType: list.ListType });
     }
   }
 
   if (listId) {
+    validateGeneratedIntegerId(list.ListID, report, { path: `${pathPrefix}.ListModel.ListID`, list: title });
+    validateUniqueGeneratedId(list.ListID, listIdsByApp, report, "DUPLICATE_LIST_ID", "ListID values must be globally unique across generated ListExportItem resources.", { path: `${pathPrefix}.ListModel.ListID`, list: title, name: title });
     listsById.set(listId, { item, title, listId, listSetId, resourceType });
     localIds.add(listId);
   }
@@ -2394,12 +2559,23 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   const fieldNames = new Set();
   const fieldInternal = new Set();
   const fieldDisplayNames = new Set();
+  const fieldIndexes = new Set();
   for (const [fieldIndex, field] of fields.entries()) {
     const fp = `${pathPrefix}.Defs[${fieldIndex}]`;
     const fieldId = safeString(field.FieldID);
     const fieldName = safeString(field.FieldName);
     const internalName = safeString(field.InternalName);
     const displayName = safeString(field.DisplayName);
+    validateGeneratedIntegerId(field.FieldID, report, { path: `${fp}.FieldID`, list: title, field: displayName || fieldName || internalName || null });
+    validateGeneratedIntegerId(field.FieldIndex, report, { path: `${fp}.FieldIndex`, list: title, field: displayName || fieldName || internalName || null });
+    if (!Number.isInteger(field.Category)) {
+      issue(report, generatorFinalSeverity(report), "FIELD_CATEGORY_NOT_INT", "Field.Category must be an integer for generated packages.", {
+        path: `${fp}.Category`,
+        list: title,
+        field: displayName || fieldName || internalName || null,
+        actualType: field.Category === undefined ? "missing" : Array.isArray(field.Category) ? "array" : field.Category === null ? "null" : typeof field.Category,
+      });
+    }
     if (!fieldId) issue(report, "error", "FIELD_ID_MISSING", "FieldID is required.", { path: `${fp}.FieldID`, list: title });
     else {
       localIds.add(fieldId);
@@ -2415,6 +2591,11 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
       } else {
         fieldIdsByApp.set(fieldId, { list: title, fieldName });
       }
+    }
+    if (field.FieldIndex !== undefined) {
+      const indexKey = safeString(field.FieldIndex);
+      if (fieldIndexes.has(indexKey)) issue(report, generatorFinalSeverity(report), "DUPLICATE_FIELD_INDEX", "FieldIndex values must be unique within a list.", { path: `${fp}.FieldIndex`, list: title, field: displayName || fieldName || internalName || null, value: indexKey });
+      fieldIndexes.add(indexKey);
     }
     if (safeString(field.ListID) && listId && safeString(field.ListID) !== listId) {
       issue(report, generatorFinalSeverity(report), "FIELD_LIST_ID_MISMATCH", "Field ListID must match its parent data-list ListID; otherwise Yeeflow may materialize the list shell without custom fields.", {
@@ -2528,7 +2709,22 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
   layouts.forEach((layout, layoutIndex) => {
     const layoutId = safeString(layout.LayoutID);
     if (!layoutId) issue(report, "error", "LAYOUT_ID_MISSING", "LayoutID is required.", { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutID`, list: title });
-    else localIds.add(layoutId);
+    else {
+      validateGeneratedIntegerId(layout.LayoutID, report, { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutID`, list: title, layout: layout.Title || null });
+      validateUniqueGeneratedId(layout.LayoutID, layoutIdsByApp, report, "DUPLICATE_LAYOUT_ID", "LayoutID values must be globally unique across all ListExportItem.Layouts.", { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutID`, list: title, name: layout.Title || null });
+      localIds.add(layoutId);
+    }
+    asArray(layout.LayoutInResources).forEach((resource, resourceIndex) => {
+      if (resource && resource.ID !== undefined) {
+        validateGeneratedIntegerId(resource.ID, report, { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutInResources[${resourceIndex}].ID`, list: title, layout: layout.Title || null });
+        validateUniqueGeneratedId(resource.ID, layoutResourceIdsByApp, report, "DUPLICATE_RESOURCE_ID", "LayoutInResources ID values must be globally unique across layout resources.", { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutInResources[${resourceIndex}].ID`, list: title, name: layout.Title || null });
+        localIds.add(safeString(resource.ID));
+      }
+      if (resource && resource.RefId !== undefined) {
+        validateGeneratedIntegerId(resource.RefId, report, { path: `${pathPrefix}.Layouts[${layoutIndex}].LayoutInResources[${resourceIndex}].RefId`, list: title, layout: layout.Title || null });
+        localIds.add(safeString(resource.RefId));
+      }
+    });
     if (!isRoot && Number(layout.Type) !== 1) {
       viewCount += 1;
       if (layout.IsDefault === true) defaultViewCount += 1;
@@ -2774,7 +2970,9 @@ function validateViewExtField(ext, key, fieldsByName, layout, report, severity) 
 
 function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report, layoutsById = new Map()) {
   if (layout.LayoutView !== null && layout.LayoutView !== undefined) {
-    issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "CUSTOM_FORM_LAYOUTVIEW_NOT_NULL", "Custom form LayoutView should be null.", { path: `${pathPrefix}.LayoutView`, title: layout.Title });
+    if (!(isSchemaDirectYap(report) && layout.LayoutView === "")) {
+      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "CUSTOM_FORM_LAYOUTVIEW_NOT_NULL", "Custom form LayoutView should be null.", { path: `${pathPrefix}.LayoutView`, title: layout.Title });
+    }
   }
   const resources = asArray(layout.LayoutInResources);
   if (!resources.length) {
@@ -2796,6 +2994,9 @@ function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report, layo
   }
   validateCustomFormActions(form, fieldsByName, pathPrefix, report, layout.Title, layoutsById);
   validateUiStandardFormRoot(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix });
+  if (!hasSafeHorizontalPaddingNearRoot(form)) {
+    uiStandardWarning(report, "UI_QUALITY_CUSTOM_FORM_SAFE_PADDING_MISSING", "Generated Data List custom forms should include safe left/right padding on an outer section or container so fields do not touch page edges.", { title: layout.Title, path: pathPrefix });
+  }
   validateUiStandardContainers(form, report, { surface: "custom list form", title: layout.Title, path: pathPrefix, requireFormBody: false });
   if (!asArray(form.children).length) {
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "CUSTOM_FORM_EMPTY_CHILDREN", "Assigned custom form has no controls.", { title: layout.Title });
@@ -3157,6 +3358,7 @@ function validateEmbeddedControlExpressions(control, report, context) {
 }
 
 function validateReplaceIds(replaceIds, localIds, report) {
+  if (isSchemaDirectYap(report)) return;
   if (!replaceIds.size) {
     issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "REPLACEIDS_EMPTY", "Resource.ReplaceIds is empty or unavailable.");
     return;
@@ -3815,8 +4017,9 @@ function validateUiStandardFormRoot(form, report, context = {}) {
   if (container && container.cw !== "2") {
     uiStandardWarning(report, "UI_STANDARD_CONTENT_WIDTH_NOT_FULL", "UI/UX standard forms should use full-width content area: attrs.container.cw = \"2\".", context);
   }
-  if (!zeroPadding(container && container.padding)) {
-    uiStandardWarning(report, "UI_STANDARD_FORM_PADDING_NOT_ZERO", "UI/UX standard forms should use zero page padding: attrs.container.padding with --sp--s0 on all sides.", context);
+  const rootPadding = container && container.padding;
+  if (!zeroPadding(rootPadding) && !hasSafeHorizontalPaddingValue(rootPadding)) {
+    uiStandardWarning(report, "UI_STANDARD_FORM_PADDING_UNUSUAL", "Form root padding should be either zero with padded inner sections or safe horizontal page padding.", context);
   }
 }
 
@@ -4532,8 +4735,11 @@ function validateLookupRelationships(listsById, fieldsByList, report) {
         continue;
       }
       if (!listsById.has(targetListId)) {
-        issue(report, report.mode === "generator" ? "error" : "dependency", "LOOKUP_TARGET_UNRESOLVED", "Lookup target list does not resolve inside package.", { list: list.title, field: field.DisplayName || field.FieldName, targetListId });
+        issue(report, report.mode === "generator" ? "error" : "dependency", "LOOKUP_TARGET_LIST_UNRESOLVED", "Lookup target list does not resolve inside package.", { list: list.title, field: field.DisplayName || field.FieldName, targetListId });
         continue;
+      }
+      if (report.mode === "generator" && report.stage === "final") {
+        issue(report, "warning", "LOOKUP_FIELD_SCHEMA_UNPROVEN", "Lookup field schema is included for isolation but remains import-experimental until product confirms this generated lookup shape.", { list: list.title, field: field.DisplayName || field.FieldName, targetListId, displayField });
       }
       const target = listsById.get(targetListId);
       const targetRecords = target.item && target.item.ListDatas && isObject(target.item.ListDatas) ? target.item.ListDatas : {};

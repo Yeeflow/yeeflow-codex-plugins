@@ -657,6 +657,60 @@ Recommended next manual test for YAP:
 3. If both import, try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-simple-dashboard.yap`.
 4. Keep V1.8 only as the historical failure reference for stale `ListSite_` custom type IDs.
 
+## YAP V1.10 Current Dashboard Shell Study
+
+After the V1.9 generated YAP files imported successfully, the generated `Home` dashboard still appeared to use an older dashboard shell. The user manually added a current-version dashboard named `New Dashboard` and exported the updated app as:
+
+- `/Users/Renger/Downloads/Vendor Onboarding & Compliance Managementv1.93.yap`
+
+The raw export is not committed. The normalized findings are stored under:
+
+- `docs/studies/normalized/vendor-onboarding-dashboard-version/`
+
+### Dashboard learning
+
+- Old generated `Home` dashboard:
+  - root `Item.Layouts[]` entry
+  - `Type = 103`
+  - `LayoutView = ""`
+  - `Ext2 = ""`
+  - `LayoutInResources` null or missing after export
+- User-created current `New Dashboard`:
+  - root `Item.Layouts[]` entry
+  - `Type = 103`
+  - `LayoutView = null`
+  - `Ext2 = "{\"src\":true}"`
+  - `LayoutInResources = []`
+
+### Generator fix
+
+The Vendor Onboarding YAP generator now emits the current-dashboard shell for generated root dashboard pages:
+
+- `LayoutView: null`
+- `Ext2: "{\"src\":true}"`
+- `LayoutInResources: []`
+
+The candidate generated from this learning is:
+
+- `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.10-current-dashboard.yap`
+
+### Validator hardening
+
+`validate-yap-package.js` now reports generated-final dashboard shell issues with:
+
+- `DASHBOARD_USES_LEGACY_SCHEMA`
+- `DASHBOARD_CURRENT_VERSION_MARKER_MISSING`
+
+The existing `ROOT_APP_PAGE_RESOURCE_MISSING` gate still applies when an empty dashboard shell does not match the export-proven current pattern.
+
+`scripts/inspect-yap-materialization.mjs` and `scripts/inspect-generated-ui-quality.mjs` now recognize the export-proven current blank dashboard shell so a current empty dashboard is not incorrectly failed as a missing legacy inline page resource.
+
+Strict JSON-schema validation still reports one mismatch for V1.10: `Item.Layouts[0].LayoutView` is `null` while the supplied schema declares it as `string`. The user-edited v1.93 export has the same current-dashboard `LayoutView: null` shape, so this is recorded as schema/export drift rather than a blocker in the package-specific validators.
+
+### Manual test recommendation
+
+Import `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.10-current-dashboard.yap` and verify that `Home` uses the new/current dashboard version. This candidate intentionally uses the current blank dashboard shell rather than a rich inline dashboard resource, because the v1.93 export proves the current shell but does not yet prove current-dashboard rich control storage.
+
 ## Signing And Verification
 
 The generator uses the standard Yeeflow API base URL behavior through `scripts/yeeflow-env-utils.mjs`.
@@ -677,7 +731,7 @@ The generator uses the standard Yeeflow API base URL behavior through `scripts/y
 - V1.4 server signature shape: 32-byte base64 value
 - V1.4 `verifysign` status: passed
 
-The V1 package remains the locally validated baseline. The V1.1 package proved signing and verification but failed package install. The V1.2 package proved wrapper/upload acceptance but failed materialization. The V1.3 package preserved the accepted wrapper pattern and restored export-like metadata but still failed materialization. The V1.4 YAPK package fixes the product-team-reported `Field.Category` integer typing issue. The full `.yap` fallback also reached the import dialog but failed create. The `.yap` V1.4 schema-direct package fixed category typing but still used the now-rejected direct `ListExportInfo` resource shape. The `.yap` V1.4 product-schema result packages fixed the wrapper shape but still had duplicate/unsafe IDs. The `.yap` V1.5 no-lookup package imported but used locally generated IDs and intentionally minimal UI. The `.yap` V1.6 API-ID package still failed because it incorrectly generated AppID. The `.yap` V1.7 fixed-AppID package still failed because `ReplaceIds` was empty. The `.yap` V1.8 ReplaceIds-fixed package still failed because child `ListSite_` custom type IDs pointed to the old source app/list-set. The `.yap` V1.9 CustomType-fixed product-schema result packages are now the recommended YAP retry candidates.
+The V1 package remains the locally validated baseline. The V1.1 package proved signing and verification but failed package install. The V1.2 package proved wrapper/upload acceptance but failed materialization. The V1.3 package preserved the accepted wrapper pattern and restored export-like metadata but still failed materialization. The V1.4 YAPK package fixes the product-team-reported `Field.Category` integer typing issue. The full `.yap` fallback also reached the import dialog but failed create. The `.yap` V1.4 schema-direct package fixed category typing but still used the now-rejected direct `ListExportInfo` resource shape. The `.yap` V1.4 product-schema result packages fixed the wrapper shape but still had duplicate/unsafe IDs. The `.yap` V1.5 no-lookup package imported but used locally generated IDs and intentionally minimal UI. The `.yap` V1.6 API-ID package still failed because it incorrectly generated AppID. The `.yap` V1.7 fixed-AppID package still failed because `ReplaceIds` was empty. The `.yap` V1.8 ReplaceIds-fixed package still failed because child `ListSite_` custom type IDs pointed to the old source app/list-set. The `.yap` V1.9 CustomType-fixed product-schema result packages imported successfully but exposed that `Home` still used an older dashboard shell. The `.yap` V1.10 current-dashboard candidate applies the export-proven current dashboard shell learned from the user-created `New Dashboard`.
 
 ## Known Gaps
 

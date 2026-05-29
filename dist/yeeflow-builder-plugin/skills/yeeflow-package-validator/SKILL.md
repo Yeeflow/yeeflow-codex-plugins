@@ -21,6 +21,8 @@ Generated application validation must include UI quality checks before import or
 
 Dashboard pages and Data List custom forms should have safe left/right padding through a root or near-root container/section. Missing safe padding is at least a warning and can block handoff when the generated page visibly places major content against the window edge. Major dashboard controls directly under the page root without a wrapper container/section should warn.
 
+Generated root dashboard shells should use the current export-proven shape from the Vendor Onboarding v1.93 `New Dashboard`: root `Type = 103`, `LayoutView = null`, `Ext2 = "{\"src\":true}"`, and `LayoutInResources = []` when no inline page resource is present. Generated-final validation should flag legacy blank dashboard shells with `DASHBOARD_USES_LEGACY_SCHEMA` or `DASHBOARD_CURRENT_VERSION_MARKER_MISSING`. If a dashboard includes inline page resources, continue validating the page JSON, data sources, controls, and table columns normally.
+
 Empty dynamic item templates, unresolved data-bound controls, missing progress/steps values, and buttons/actions without valid bindings should be reported before runtime testing. Do not classify a generated package as ready when table, form, dashboard, or data-binding quality checks fail.
 
 ## Plan-To-Package Validation

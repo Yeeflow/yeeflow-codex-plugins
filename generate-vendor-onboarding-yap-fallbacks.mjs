@@ -115,23 +115,24 @@ function normalizeFormLayout(layout, title) {
 }
 
 function makeMinimalHomePage(layout) {
-  return {
+  return makeCurrentDashboardLayout(layout, "Home");
+}
+
+function makeCurrentDashboardLayout(layout, title = "Home") {
+  const next = {
     ...layout,
-    Title: "Home",
+    Title: title,
     Type: 103,
     LayoutView: null,
     Ext1: layout.Ext1 ?? null,
-    Ext2: layout.Ext2 ?? null,
+    Ext2: "{\"src\":true}",
     Ext3: layout.Ext3 ?? null,
     IsDefault: false,
     IsItemPerm: false,
-    Perms: null,
-    LayoutInResources: [{
-      ID: layout.LayoutID,
-      RefId: layout.LayoutID,
-      Resource: JSON.stringify(minimalSurface("Home")),
-    }],
+    LayoutInResources: [],
   };
+  delete next.Perms;
+  return next;
 }
 
 function makeDataModelOnly(data) {
@@ -221,11 +222,12 @@ async function main() {
   writeSchemaResultYap(uniqueIdsNoLookups, uniqueIdsNoLookupsPath);
   const apiEnv = loadYeeflowApiEnvironment();
   const apiIdCount = countSchemaIds(schemaDirect);
-  const apiIds = await fetchYeeflowUniqueIds({ apiBaseUrl: apiEnv.apiBaseUrl, apiKey: apiEnv.apiKey, count: apiIdCount * 3 });
+  const apiIds = await fetchYeeflowUniqueIds({ apiBaseUrl: apiEnv.apiBaseUrl, apiKey: apiEnv.apiKey, count: apiIdCount * 4 });
   const apiIdBatches = [
     apiIds.slice(0, apiIdCount),
     apiIds.slice(apiIdCount, apiIdCount * 2),
     apiIds.slice(apiIdCount * 2, apiIdCount * 3),
+    apiIds.slice(apiIdCount * 3, apiIdCount * 4),
   ];
   const apiIdsNoLookups = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[0]), { dashboard: "minimal" });
   const apiIdsNoLookupsWithoutLookupFields = removeLookupRelationships(apiIdsNoLookups);
@@ -238,6 +240,10 @@ async function main() {
   const apiIdsSimpleDashboardNoLookups = removeLookupRelationships(apiIdsSimpleDashboard);
   const apiIdsSimpleDashboardPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.9-customtype-fixed-simple-dashboard.yap";
   writeSchemaResultYap(apiIdsSimpleDashboardNoLookups, apiIdsSimpleDashboardPath);
+  const apiIdsCurrentDashboard = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[3]), { dashboard: "current-shell" });
+  const apiIdsCurrentDashboardNoLookups = removeLookupRelationships(apiIdsCurrentDashboard);
+  const apiIdsCurrentDashboardPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.10-current-dashboard.yap";
+  writeSchemaResultYap(apiIdsCurrentDashboardNoLookups, apiIdsCurrentDashboardPath);
 
   console.log(JSON.stringify({
     status: "generated",
@@ -339,6 +345,16 @@ async function main() {
         fields: apiIdsSimpleDashboardNoLookups.Childs.reduce((total, child) => total + child.Defs.length, 0),
         dashboards: apiIdsSimpleDashboardNoLookups.Item.Layouts.length,
         layouts: apiIdsSimpleDashboardNoLookups.Childs.reduce((total, child) => total + child.Layouts.length, 0) + apiIdsSimpleDashboardNoLookups.Item.Layouts.length,
+      },
+      {
+        path: apiIdsCurrentDashboardPath,
+        purpose: "ListExportResult YAP with fixed AppID 41, API-issued IDs, populated ReplaceIds, no lookups, and export-proven current dashboard shell",
+        buildStatus: "written",
+        apiIds: summarizeIds(apiIdBatches[3]),
+        dataLists: apiIdsCurrentDashboardNoLookups.Childs.length,
+        fields: apiIdsCurrentDashboardNoLookups.Childs.reduce((total, child) => total + child.Defs.length, 0),
+        dashboards: apiIdsCurrentDashboardNoLookups.Item.Layouts.length,
+        layouts: apiIdsCurrentDashboardNoLookups.Childs.reduce((total, child) => total + child.Layouts.length, 0) + apiIdsCurrentDashboardNoLookups.Item.Layouts.length,
       },
     ],
   }, null, 2));
@@ -531,11 +547,15 @@ function assignSafeSchemaIds(source) {
     layout.AppID = appId;
     layout.ListID = rootListId;
     layout.LayoutID = layoutId;
-    layout.LayoutInResources = (layout.LayoutInResources || []).map((resource) => ({
-      ...resource,
-      ID: layoutId,
-      RefId: layoutId,
-    }));
+    if (Number(layout.Type) === 103) {
+      Object.assign(layout, makeCurrentDashboardLayout(layout, layout.Title || "Home"));
+    } else {
+      layout.LayoutInResources = (layout.LayoutInResources || []).map((resource) => ({
+        ...resource,
+        ID: layoutId,
+        RefId: layoutId,
+      }));
+    }
   }
 
   for (const child of data.Childs || []) {
@@ -654,11 +674,15 @@ function assignApiSchemaIds(source, allocator, options = {}) {
     layout.AppID = appId;
     layout.ListID = rootListId;
     layout.LayoutID = layoutId;
-    layout.LayoutInResources = [{
-      ID: layoutId,
-      RefId: layoutId,
-      Resource: JSON.stringify(minimalSurface("Home")),
-    }];
+    if (Number(layout.Type) === 103) {
+      Object.assign(layout, makeCurrentDashboardLayout(layout, layout.Title || "Home"));
+    } else {
+      layout.LayoutInResources = [{
+        ID: layoutId,
+        RefId: layoutId,
+        Resource: JSON.stringify(minimalSurface(layout.Title || "Page")),
+      }];
+    }
   }
 
   for (const child of data.Childs || []) {

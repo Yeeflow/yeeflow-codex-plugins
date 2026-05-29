@@ -111,6 +111,7 @@ function decodeInput(inputPath, findings, largeNumbers) {
       return null;
     }
     const resource = parseJson(zlib.gunzipSync(Buffer.from(parsed.Resource.slice(GZIP_PREFIX.length), "base64")).toString("utf8"), largeNumbers);
+    if (resource && typeof resource === "object" && (resource.Item || Array.isArray(resource.Childs))) return resource;
     return typeof resource.Data === "string" ? parseJson(resource.Data, largeNumbers) : resource.Data;
   }
   if (typeof parsed?.Data === "string") return parseJson(parsed.Data, largeNumbers);
@@ -288,6 +289,13 @@ function inspectDashboards(data, listsById, findings, summary) {
     const resource = asArray(layout.LayoutInResources)[0]?.Resource;
     const page = parseMaybeJson(resource);
     if (!page) {
+      const ext2 = parseMaybeJson(layout.Ext2);
+      const currentDashboardShell = layout.LayoutView === null && ext2 && ext2.src === true && Array.isArray(layout.LayoutInResources) && layout.LayoutInResources.length === 0;
+      if (currentDashboardShell) {
+        summary.dashboardPages += 1;
+        add(findings, "warning", "DASHBOARD_CURRENT_SHELL_NO_INLINE_RESOURCE", "Current-version blank dashboard shell is export-proven, but it has no inline page JSON to inspect for padding, controls, or data bindings.", { layoutIndex, title: safeString(layout.Title), layoutId: safeString(layout.LayoutID) });
+        return;
+      }
       add(findings, "error", "DASHBOARD_RESOURCE_JSON_INVALID", "Dashboard page Resource must parse as JSON.", { layoutIndex, title: safeString(layout.Title) });
       return;
     }

@@ -204,7 +204,11 @@ function inspect(inputPath) {
     }
     const lir = layout.LayoutInResources?.[0];
     if (!lir) {
-      errors.push({ code: "DASHBOARD_LAYOUT_RESOURCE_MISSING", message: "Type 103 root dashboard layout has no LayoutInResources[0].", detail: { layoutId: navListId } });
+      const ext2 = tryParseJson(layout.Ext2);
+      const currentDashboardShell = layout.LayoutView === null && ext2 && ext2.src === true && Array.isArray(layout.LayoutInResources) && layout.LayoutInResources.length === 0;
+      if (!currentDashboardShell) {
+        errors.push({ code: "DASHBOARD_LAYOUT_RESOURCE_MISSING", message: "Type 103 root dashboard layout has no LayoutInResources[0].", detail: { layoutId: navListId } });
+      }
     } else {
       if (asString(lir.ID) !== asString(layout.LayoutID) || asString(lir.RefId) !== asString(layout.LayoutID)) {
         errors.push({

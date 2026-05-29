@@ -1066,6 +1066,16 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
   }
   for (const layout of rootLayouts.filter((candidate) => safeString(candidate.Type) === "103")) {
     const layoutId = safeString(layout.LayoutID);
+    const ext2 = tryParseJson(layout.Ext2);
+    const resources = asArray(layout.LayoutInResources);
+    if (!resources.length) {
+      if (layout.LayoutView !== null || !ext2 || ext2.src !== true) {
+        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DASHBOARD_USES_LEGACY_SCHEMA", "Generated Type 103 dashboard shell should use the current export-proven shape: LayoutView null, Ext2 {\"src\":true}, and empty LayoutInResources.", { title: layout.Title, layoutId, layoutViewType: layout.LayoutView === null ? "null" : typeof layout.LayoutView, ext2 });
+      }
+      if (!ext2 || ext2.src !== true) {
+        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DASHBOARD_CURRENT_VERSION_MARKER_MISSING", "Generated dashboard shell is missing the current-version Ext2 {\"src\":true} marker.", { title: layout.Title, layoutId });
+      }
+    }
     if (layout.LayoutView !== null && layout.LayoutView !== undefined) {
       if (!(isSchemaDirectYap(report) && layout.LayoutView === "")) {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_LAYOUTVIEW_NOT_NULL", "Root Type 103 app page LayoutView should be null; working exports store page content in LayoutInResources.Resource.", { title: layout.Title, layoutId });
@@ -1075,9 +1085,7 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
       issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_LAYOUTINRESOURCES_NOT_ARRAY", "Root Type 103 app page LayoutInResources must be an array. Minimal dashboard-only exports use an empty array.", { title: layout.Title, layoutId });
       continue;
     }
-    const resources = layout.LayoutInResources;
     if (!resources.length) {
-      const ext2 = tryParseJson(layout.Ext2);
       const isMinimalDashboardShell = ext2 && ext2.src === true && replaceIds.has(layoutId);
       if (!isMinimalDashboardShell) {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_RESOURCE_MISSING", "Root Type 103 app page layout without embedded page content must match the minimal dashboard-only export pattern: LayoutInResources empty, Ext2 {\"src\":true}, and LayoutID in ReplaceIds.", { title: layout.Title, layoutId });

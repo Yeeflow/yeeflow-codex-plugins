@@ -19,6 +19,8 @@ description: generate, inspect, validate, package, debug, and improve small yeef
 
 Do not generate a `.yap` or `.yapk` package directly from a broad app request unless the user explicitly skips planning. Start from a saved or visible Markdown app plan that names the purpose, users/roles, data lists and fields, forms, dashboards/pages, controls, actions/workflows, permissions, integrations, layout/design approach, validation checklist, assumptions, exclusions, and proof boundary.
 
+For generated YAP root dashboards, use the current dashboard shell learned from the Vendor Onboarding v1.93 export: `Type = 103`, `LayoutView = null`, `Ext2 = "{\"src\":true}"`, and `LayoutInResources = []` for an empty/current shell, with root navigation pointing to the dashboard `LayoutID`. Preserve the import-learned YAP rules: `AppID = 41`, API-issued IDs, populated `ReplaceIds`, integer `Field.Category`, unique IDs, product-schema `ListExportResult`, and child `CustomType = ListSite_<root ListID>`.
+
 Ask focused clarification questions when blocking details are missing, especially purpose, roles, required lists/fields, status model, approval flow, dashboards, actions/workflows, integrations, package type, or output format. Ask only enough to prevent a bad package. For non-blocking gaps, document assumptions in the plan and proceed.
 
 Default to the full functional application described in the plan, not a simple/MVP/basic v1 build. Implement all planned core lists, fields, forms, dashboards, actions, workflows, and major controls in one package when feasible. If something cannot be generated safely, document it as excluded/deferred with a reason and workaround; do not silently omit planned features.

@@ -11,6 +11,8 @@ When a dashboard/application page is included in app navigation, reference the r
 
 Dashboard menu items can be top-level resources or children inside a top-level `Type = "classes"` navigation group. Do not create nested groups. Validate the menu reference resolves to an included Type 103 layout before wrapper build.
 
+Current dashboard shell learning: the Vendor Onboarding v1.93 export proves that newly created current-version dashboards are still root `Type = 103` layouts, but the blank current dashboard shell uses `LayoutView = null`, `Ext2 = "{\"src\":true}"`, and `LayoutInResources = []`. Do not generate new app dashboards with the legacy blank-string shell (`LayoutView = ""`, empty `Ext2`, or null/missing `LayoutInResources`). Keep navigation registration in root `ListModel.LayoutView.sort[]` pointing to the generated dashboard `LayoutID`. Rich current-dashboard control content remains unproven until a current-dashboard-with-controls export is studied.
+
 Use this skill when the user asks to generate, debug, validate, or learn Yeeflow dashboard packages, including minimal dashboard-only apps, dashboard widgets, dashboard page JSON, Type `103` navigation, dashboard `exts`, and dashboard import failures.
 
 When dashboard changes target an existing imported application, route package-type decisions through `yeeflow-application-builder` / `yeeflow-application-generator`. Generate `.yap` for new/cloned apps. For `.yapk` upgrades, start from a Yeeflow Version management baseline and preserve app identity/stable IDs; do not attempt to patch dashboard internals in `.yapk` while its `Resource` payload remains opaque.
