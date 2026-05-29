@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { loadDotenvFile, resolveYeeflowEnvironment } from "./scripts/yeeflow-env-utils.mjs";
 
 const APP_PACKAGE = ".tmp/vendor-onboarding-compliance-management/vendor-onboarding-compliance-management.app-package-info.json";
-const VERSION = "1.3-export-shape";
+const VERSION = process.env.VENDOR_ONBOARDING_YAPK_VERSION || "1.4-category-fixed";
 const OUT = `/Users/Renger/Downloads/vendor-onboarding-compliance-management.v${VERSION}.yapk`;
 const REPORT = `.tmp/vendor-onboarding-compliance-management/vendor-onboarding-compliance-management.v${VERSION}.report.json`;
 const TITLE = "Vendor Onboarding & Compliance Management";
@@ -126,7 +126,7 @@ function normalizeField(field) {
     InternalName: field.InternalName,
     Type: field.Type,
     Status: field.Status ?? 1,
-    Category: field.Category || "List",
+    Category: normalizeFieldCategory(field.Category),
     DefaultValue: field.DefaultValue ?? "",
     Rules: field.Rules ?? null,
     IsSort: field.IsSort ?? false,
@@ -136,6 +136,13 @@ function normalizeField(field) {
     Ext2: field.Ext2 ?? null,
     Ext3: field.Ext3 ?? null,
   };
+}
+
+function normalizeFieldCategory(value) {
+  if (Number.isInteger(value)) return value;
+  if (typeof value === "string" && /^-?\d+$/.test(value.trim())) return Number.parseInt(value, 10);
+  if (value === undefined || value === null || value === "" || value === "List") return 0;
+  throw new Error(`Field.Category must be an integer; got ${Array.isArray(value) ? "array" : typeof value}.`);
 }
 
 function normalizeLayout(layout, fallbackTitle) {

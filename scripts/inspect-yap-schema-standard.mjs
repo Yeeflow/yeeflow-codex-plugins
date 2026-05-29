@@ -175,6 +175,16 @@ function inspectListExportItem(item, exportPath, findings, summary) {
   }
   summary.defs += asArray(item.Defs).length;
   summary.layouts += asArray(item.Layouts).length;
+  for (const [fieldIndex, field] of asArray(item.Defs).entries()) {
+    if (!Number.isInteger(field && field.Category)) {
+      add(findings, "error", "FIELD_CATEGORY_NOT_INT", "Field.Category must be an integer for generated YAP packages.", {
+        path: `${exportPath}.Defs[${fieldIndex}].Category`,
+        list: item.ListModel?.Title || null,
+        field: field?.DisplayName || field?.FieldName || field?.InternalName || null,
+        actualType: field?.Category === undefined ? "missing" : Array.isArray(field?.Category) ? "array" : field?.Category === null ? "null" : typeof field?.Category,
+      });
+    }
+  }
 }
 
 function inspectNoRule(form, index, findings, summary) {

@@ -119,10 +119,55 @@ function decodeYap(wrapper) {
   return JSON.parse(text);
 }
 
-function decodeYapk(wrapper) {
+async function decodeYapk(wrapper) {
   if (typeof wrapper.Resource !== "string") throw new Error("YAPK Resource must be a string.");
-  const text = zlib.brotliDecompressSync(Buffer.from(wrapper.Resource, "base64")).toString("utf8");
-  return JSON.parse(text);
+  const bytes = Buffer.from(wrapper.Resource, "base64");
+  try {
+    return JSON.parse(zlib.brotliDecompressSync(bytes).toString("utf8"));
+  } catch (syncError) {
+    const text = await tolerantBrotliText(bytes);
+    if (text) return JSON.parse(text);
+    throw syncError;
+  }
+}
+
+function tolerantBrotliText(bytes) {
+  return new Promise((resolve) => {
+    const stream = zlib.createBrotliDecompress();
+    const chunks = [];
+    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("error", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    stream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    stream.end(bytes);
+  });
+}
+
+function inspectFieldCategories(decoded, type) {
+  const errors = [];
+  const groups = [];
+  if (type === "yap") {
+    if (decoded.Item) groups.push({ path: "$.Item.Defs", list: decoded.Item.ListModel?.Title || null, fields: decoded.Item.Defs || [] });
+    (decoded.Childs || []).forEach((child, index) => groups.push({ path: `$.Childs[${index}].Defs`, list: child.ListModel?.Title || null, fields: child.Defs || [] }));
+  } else {
+    if (decoded.ListSet) groups.push({ path: "$.ListSet.Fields", list: decoded.ListSet.List?.Title || null, fields: decoded.ListSet.Fields || [] });
+    (decoded.Childs || []).forEach((child, index) => groups.push({ path: `$.Childs[${index}].Fields`, list: child.List?.Title || null, fields: child.Fields || [] }));
+  }
+  for (const group of groups) {
+    group.fields.forEach((field, index) => {
+      if (!Number.isInteger(field?.Category)) {
+        errors.push({
+          scope: "decodedResource",
+          path: `${group.path}[${index}].Category`,
+          code: "FIELD_CATEGORY_NOT_INT",
+          message: "Field.Category must be an integer.",
+          list: group.list,
+          field: field?.DisplayName || field?.FieldName || field?.InternalName || null,
+          actualType: field?.Category === undefined ? "missing" : Array.isArray(field?.Category) ? "array" : field?.Category === null ? "null" : typeof field?.Category,
+        });
+      }
+    });
+  }
+  return errors;
 }
 
 function summarizeDecoded(decoded, type) {
@@ -142,7 +187,7 @@ function summarizeDecoded(decoded, type) {
   };
 }
 
-function main() {
+async function main() {
   if (process.argv.includes("--help") || process.argv.includes("-h") || process.argv.length < 3) usage(process.argv.length < 3 ? 1 : 0);
   const input = process.argv[2];
   const type = path.extname(input).toLowerCase().replace(".", "");
@@ -154,7 +199,7 @@ function main() {
   const wrapperErrors = validate(wrapper, schema, schema);
   let decoded;
   try {
-    decoded = type === "yap" ? decodeYap(wrapper) : decodeYapk(wrapper);
+    decoded = type === "yap" ? decodeYap(wrapper) : await decodeYapk(wrapper);
   } catch (error) {
     const errors = [...wrapperErrors.map((item) => ({ scope: "wrapper", ...item })), {
       scope: "decodedResource",
@@ -176,7 +221,8 @@ function main() {
   }
   const decodedRef = type === "yap" ? schema["x-decodedResourceSchema"] : schema["x-decodedResourceSchema"];
   const decodedErrors = validate(decoded, decodedRef, schema);
-  const errors = [...wrapperErrors.map((error) => ({ scope: "wrapper", ...error })), ...decodedErrors.map((error) => ({ scope: "decodedResource", ...error }))];
+  const categoryErrors = inspectFieldCategories(decoded, type);
+  const errors = [...wrapperErrors.map((error) => ({ scope: "wrapper", ...error })), ...decodedErrors.map((error) => ({ scope: "decodedResource", ...error })), ...categoryErrors];
 
   console.log(JSON.stringify({
     input: path.basename(input),
@@ -190,4 +236,7 @@ function main() {
   if (errors.length) process.exitCode = 1;
 }
 
-main();
+main().catch((error) => {
+  console.error(JSON.stringify({ status: "fail", error: error.message }, null, 2));
+  process.exit(1);
+});

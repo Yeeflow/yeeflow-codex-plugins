@@ -2496,6 +2496,14 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
     const fieldName = safeString(field.FieldName);
     const internalName = safeString(field.InternalName);
     const displayName = safeString(field.DisplayName);
+    if (!Number.isInteger(field.Category)) {
+      issue(report, generatorFinalSeverity(report), "FIELD_CATEGORY_NOT_INT", "Field.Category must be an integer for generated packages.", {
+        path: `${fp}.Category`,
+        list: title,
+        field: displayName || fieldName || internalName || null,
+        actualType: field.Category === undefined ? "missing" : Array.isArray(field.Category) ? "array" : field.Category === null ? "null" : typeof field.Category,
+      });
+    }
     if (!fieldId) issue(report, "error", "FIELD_ID_MISSING", "FieldID is required.", { path: `${fp}.FieldID`, list: title });
     else {
       localIds.add(fieldId);

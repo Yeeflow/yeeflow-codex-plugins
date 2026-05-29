@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require("fs");
+const { spawnSync } = require("child_process");
 const zlib = require("zlib");
 
 const WRAPPER_REQUIRED = [
@@ -162,6 +163,16 @@ function decodeBrotliResource(resource, errors) {
       attempts.push({ name, brotli: true, json: true, inputBytes: bytes.length, decodedTextBytes: decompressed.length });
       return { decoded, attempts, resourceBytes: base64Bytes.length, decodedTextBytes: decompressed.length };
     } catch (error) {
+      const tolerant = tolerantBrotliDecodeSync(bytes);
+      if (tolerant.text) {
+        try {
+          const decoded = JSON.parse(tolerant.text);
+          attempts.push({ name, brotli: "tolerant", json: true, inputBytes: bytes.length, decodedTextBytes: Buffer.byteLength(tolerant.text), errorClass: error.code || error.name || "DECODE_ERROR" });
+          return { decoded, attempts, resourceBytes: base64Bytes.length, decodedTextBytes: Buffer.byteLength(tolerant.text) };
+        } catch {
+          // Fall through to record the normal sync decode failure.
+        }
+      }
       attempts.push({ name, brotli: false, inputBytes: bytes.length, errorClass: error.code || error.name || "DECODE_ERROR" });
     }
   }
@@ -169,10 +180,36 @@ function decodeBrotliResource(resource, errors) {
   return { decoded: null, attempts, resourceBytes: base64Bytes.length, decodedTextBytes: 0 };
 }
 
+function tolerantBrotliDecodeSync(bytes) {
+  const script = `
+    const zlib = require("zlib");
+    const chunks = [];
+    const stream = zlib.createBrotliDecompress();
+    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("error", () => {
+      process.stdout.write(Buffer.concat(chunks).toString("base64"));
+    });
+    stream.on("end", () => {
+      process.stdout.write(Buffer.concat(chunks).toString("base64"));
+    });
+    stream.end(Buffer.from(process.argv[1], "base64"));
+  `;
+  const result = spawnSync(process.execPath, ["-e", script, bytes.toString("base64")], { encoding: "utf8", maxBuffer: 128 * 1024 * 1024 });
+  if (result.status !== 0 || !result.stdout) return { text: "" };
+  return { text: Buffer.from(result.stdout, "base64").toString("utf8") };
+}
+
 function validateField(field, path, errors, warnings) {
   if (!isObject(field)) {
     add(errors, "YAPK_FIELD_NOT_OBJECT", "List field entry must be an object.", { path });
     return;
+  }
+  if (!Number.isInteger(field.Category)) {
+    add(errors, "FIELD_CATEGORY_NOT_INT", "Field.Category must be an integer for generated YAPK packages.", {
+      path: `${path}.Category`,
+      field: field.DisplayName || field.FieldName || field.InternalName || null,
+      actualType: field.Category === undefined ? "missing" : Array.isArray(field.Category) ? "array" : field.Category === null ? "null" : typeof field.Category,
+    });
   }
   const fieldName = String(field.FieldName || "");
   const match = fieldName.match(FIELD_NAME_SUFFIX_RE);

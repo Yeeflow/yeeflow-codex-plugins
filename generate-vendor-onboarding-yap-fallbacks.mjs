@@ -226,6 +226,8 @@ function main() {
   const schemaDirect = makeSchemaDirectData(dataModel);
   const schemaDirectPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.3-schema-direct.yap";
   writeSchemaDirectYap(schemaDirect, schemaDirectPath);
+  const categoryFixedPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.4-category-fixed.yap";
+  writeSchemaDirectYap(schemaDirect, categoryFixedPath);
 
   console.log(JSON.stringify({
     status: "generated",
@@ -247,6 +249,15 @@ function main() {
       {
         path: schemaDirectPath,
         purpose: "schema-direct YAP v1 candidate",
+        buildStatus: "written",
+        dataLists: schemaDirect.Childs.length,
+        fields: schemaDirect.Childs.reduce((total, child) => total + child.Defs.length, 0),
+        dashboards: schemaDirect.Item.Layouts.length,
+        layouts: schemaDirect.Childs.reduce((total, child) => total + child.Layouts.length, 0) + schemaDirect.Item.Layouts.length,
+      },
+      {
+        path: categoryFixedPath,
+        purpose: "schema-direct YAP with integer Field.Category values",
         buildStatus: "written",
         dataLists: schemaDirect.Childs.length,
         fields: schemaDirect.Childs.reduce((total, child) => total + child.Defs.length, 0),
@@ -334,6 +345,7 @@ function makeSchemaDirectData(source) {
         // Leave opaque Rules strings unchanged.
       }
     }
+    next.Category = normalizeFieldCategory(next.Category);
     return next;
   };
   const layout = (item) => ({
@@ -389,6 +401,13 @@ function makeSchemaDirectData(source) {
     AppComponents: [],
     OtherModules: [],
   };
+}
+
+function normalizeFieldCategory(value) {
+  if (Number.isInteger(value)) return value;
+  if (typeof value === "string" && /^-?\d+$/.test(value.trim())) return Number.parseInt(value, 10);
+  if (value === undefined || value === null || value === "" || value === "List") return 0;
+  throw new Error(`Field.Category must be an integer; got ${Array.isArray(value) ? "array" : typeof value}.`);
 }
 
 function writeSchemaDirectYap(data, output) {

@@ -2,6 +2,7 @@
 
 import fs from "node:fs/promises";
 import zlib from "node:zlib";
+import { spawnSync } from "node:child_process";
 
 const WRAPPER_REQUIRED = [
   "PackageId",
@@ -143,11 +144,43 @@ function decodeResource(resource, findings) {
       return { attempts, decoded, decodedTextBytes: decompressed.length, resourceDecodedBytes: variants[0][1].length };
     } catch (error) {
       attempts.push({ name, brotli: false, inputBytes: bytes.length, errorClass: error.code || error.name || "DECODE_ERROR" });
+      const tolerant = tolerantBrotliDecodeSync(bytes);
+      if (tolerant.text) {
+        try {
+          const decoded = JSON.parse(tolerant.text);
+          attempts.push({ name, brotli: "tolerant", json: true, inputBytes: bytes.length, decodedTextBytes: Buffer.byteLength(tolerant.text) });
+          return { attempts, decoded, decodedTextBytes: Buffer.byteLength(tolerant.text), resourceDecodedBytes: variants[0][1].length };
+        } catch (jsonError) {
+          attempts.push({ name, brotli: "tolerant", json: false, inputBytes: bytes.length, errorClass: jsonError.name || "JSON_ERROR" });
+        }
+      }
     }
   }
 
   add(findings, "error", "YAPK_RESOURCE_BROTLI_DECODE_FAILED", "Resource did not Brotli-decompress to JSON with tested schema variants.");
   return { attempts, decoded: null, decodedTextBytes: 0, resourceDecodedBytes: variants[0][1].length };
+}
+
+function tolerantBrotliDecodeSync(bytes) {
+  const script = `
+    const zlib = require("zlib");
+    const chunks = [];
+    const stream = zlib.createBrotliDecompress();
+    stream.on("data", (chunk) => chunks.push(chunk));
+    stream.on("error", () => {
+      process.stdout.write(Buffer.concat(chunks).toString("base64"));
+    });
+    stream.on("end", () => {
+      process.stdout.write(Buffer.concat(chunks).toString("base64"));
+    });
+    stream.end(Buffer.from(process.argv[1], "base64"));
+  `;
+  const result = spawnSync(process.execPath, ["-e", script, bytes.toString("base64")], {
+    encoding: "utf8",
+    maxBuffer: 128 * 1024 * 1024,
+  });
+  if (result.status !== 0 || !result.stdout) return { text: "" };
+  return { text: Buffer.from(result.stdout, "base64").toString("utf8") };
 }
 
 function inspectWrapper(wrapper, findings) {
@@ -178,6 +211,13 @@ function inspectField(field, path, findings, summary) {
     return;
   }
   summary.fieldCount += 1;
+  if (!Number.isInteger(field.Category)) {
+    add(findings, "error", "FIELD_CATEGORY_NOT_INT", "Field.Category must be an integer for generated YAPK packages.", {
+      path: `${path}.Category`,
+      field: field.DisplayName || field.FieldName || field.InternalName || null,
+      actualType: field.Category === undefined ? "missing" : Array.isArray(field.Category) ? "array" : field.Category === null ? "null" : typeof field.Category,
+    });
+  }
   const fieldName = String(field.FieldName || "");
   const match = fieldName.match(FIELD_NAME_SUFFIX_RE);
   if (!match && fieldName !== "Title") add(findings, "error", "YAPK_FIELD_NAME_SUFFIX_MISSING", "FieldName must end with digits, except the built-in Title field.", { path: `${path}.FieldName` });
