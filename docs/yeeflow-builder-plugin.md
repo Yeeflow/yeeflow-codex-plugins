@@ -2,7 +2,7 @@
 
 The Yeeflow Builder Plugin is a skills-only Codex plugin for Yeeflow application builders. It packages proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth or MCP servers. API-backed helper scripts require local environment variables and must not hardcode a tenant-specific URL.
 
-Package status: v0.6.1 is finalized after the official marketplace smoke test for `yeeflow-builder-plugin-v0.6.1-rc1` passed. Latest final release tag: `yeeflow-builder-plugin-v0.6.1`. The official public Git install source is `https://github.com/Yeeflow/yeeflow-codex-plugins.git`.
+Package status: v0.6.2 is finalized after the official marketplace smoke test for `yeeflow-builder-plugin-v0.6.2-rc1` passed. Latest final release tag: `yeeflow-builder-plugin-v0.6.2`. The official public Git install source is `https://github.com/Yeeflow/yeeflow-codex-plugins.git`.
 
 ## Package Contents
 
@@ -134,7 +134,7 @@ Custom code support must only be claimed for contexts that are runtime-proven. P
 
 New app creation outputs `.yap`.
 
-Existing app upgrade `.yapk` is schema-backed as `AppExportPackageInfo`, but content mutation remains unsupported until Resource decode/edit/Brotli encode/sign/verify/runtime-upgrade is proven. Do not claim externally edited `.yapk` packages are valid upgrades. Do not mutate generated `.yap` or `.yapk` files as part of plugin packaging.
+Existing app upgrade `.yapk` is schema-backed as `AppExportPackageInfo`. v0.6.2 includes a focused, runtime-proven YAPK generation/install path for the Vendor Onboarding proof package using Brotli `AppPackageInfo`, server signing, LongAsString preservation, and `PortalInfo: null` for no-portal packages. Do not claim arbitrary externally edited `.yapk` upgrades beyond the proven path. Do not mutate generated `.yap` or `.yapk` files as part of plugin packaging.
 
 For existing app work, use `.yapk` exports for inspection, validation, and change planning only unless a proven Yeeflow-safe upgrade mechanism exists.
 
@@ -163,6 +163,23 @@ Included Advanced Controls: Tab, Toggle, Timer, Icon list, Divider, Alert, Progr
 Runtime proof: `/Users/Renger/Downloads/advanced-controls-runtime-proof.v1.yap` imported successfully, `Advanced Controls Runtime Dashboard` opened, Tab switching worked, Toggle expand/collapse worked, Timer/Icon list/Divider/Alert/Progress bar/Spacer/Progress circle/Steps bar/QR Code/Barcode rendered, Embed rendered safely without breaking the page, Document embed rendered a safe empty state, and no missing binding/render/action error appeared.
 
 Proof boundary: this runtime proof is limited to the generated Advanced Controls runtime package and covers rendering/basic interactions only. It does not prove QR scan behavior, Barcode scan behavior, external iframe content loading beyond safe render, non-empty document preview, dynamic value changes, or Approval Form/Public Form host behavior.
+
+## v0.6.2 Scope
+
+v0.6.2 adds proven YAP/YAPK import-generation fixes, current dashboard generation, API ID handling, and dashboard Data table binding validation while preserving v0.6.1 tenant-neutral environment guidance and all earlier v0.6.0 through v0.5.22 capability milestones.
+
+Included import-generation hardening:
+
+- Proven YAP v1.12 import path using `Resource = [______gizp______] + Gzip(JSON(ListExportResult))`, with `ListExportResult.Data` containing `ListExportInfo`.
+- Proven YAPK v1.15 install path using top-level `AppExportPackageInfo` and `Resource = base64(Brotli(AppPackageInfo JSON))`.
+- YAPK `Childs[].Fields`, LongAsString string preservation, server signing, and `PortalInfo: null` for no-portal packages.
+- `AppID = 41`, API-issued IDs for generated IDs, 19-digit ID preservation without JavaScript rounding, unique ID checks, `Field.Category` integer validation, and the learned `CustomType` import rule.
+- Current dashboard shell generation with Type `103`, current export-proven `LayoutView`, `Ext2 = {"src":true}`, and `LayoutInResources = []` or inline current-dashboard resources where applicable.
+- Dashboard Data table display columns require `Field` for the source field internal name and `FieldName` for the visible label; missing `Field` fails validation.
+
+Install smoke result: passed for tested RC tag `yeeflow-builder-plugin-v0.6.2-rc1`, RC package commit `01645e6d5bb2ea0dc53f484312c01e34fe08126d`, official source `https://github.com/Yeeflow/yeeflow-codex-plugins.git`, sparse paths `.agents/plugins/marketplace.json` and `dist/yeeflow-builder-plugin`, expected version `0.6.2`, and bundled skill count `21`. Final tag: `yeeflow-builder-plugin-v0.6.2`.
+
+Proof boundary: v0.6.2 proves the focused Vendor Onboarding YAP v1.12 import path and YAPK v1.15 install path, plus the current-dashboard/Data table binding rules used there. It does not prove every future generated application will be visually perfect or that arbitrary YAPK mutations are safe outside the proven generation/signing path.
 
 ## v0.6.1 Scope
 

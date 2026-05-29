@@ -16,10 +16,10 @@ Plugin root:
 dist/yeeflow-builder-plugin/
 ```
 
-Current release-candidate archive:
+Current release archive:
 
 ```text
-dist/yeeflow-builder-plugin-0.6.1.zip
+dist/yeeflow-builder-plugin-0.6.2.zip
 ```
 
 Current release status:
@@ -32,6 +32,7 @@ Current release status:
 - v0.5.23 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.5.23-rc1`; final tag `yeeflow-builder-plugin-v0.5.23`.
 - v0.6.0 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.6.0-rc1`; final tag `yeeflow-builder-plugin-v0.6.0`.
 - v0.6.1 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.6.1-rc1`; final tag `yeeflow-builder-plugin-v0.6.1`.
+- v0.6.2 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.6.2-rc1`; final tag `yeeflow-builder-plugin-v0.6.2`.
 - ZIP package smoke test: passed locally.
 - Git marketplace install: passed.
 - Production/public marketplace: not applicable.
@@ -54,7 +55,7 @@ Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.1-rc1
+yeeflow-builder-plugin-v0.6.2
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -79,6 +80,48 @@ Smoke prompts tested:
 - Dashboard-generator data-bound document-library dashboard guidance.
 
 ## Release Notes
+
+### v0.6.2
+
+Previous final version: `0.6.1`.
+
+Final version: `0.6.2`.
+
+Tested RC tag: `yeeflow-builder-plugin-v0.6.2-rc1`.
+
+RC package commit: `01645e6d5bb2ea0dc53f484312c01e34fe08126d`.
+
+Private marketplace install smoke test: passed.
+
+Final tag: `yeeflow-builder-plugin-v0.6.2`.
+
+Bundled skill count: `21`.
+
+Included milestone: proven YAP/YAPK import-generation fixes, current dashboard generation, API ID handling, and dashboard Data table binding fixes.
+
+Verified marketplace install values:
+
+- Source: `https://github.com/Yeeflow/yeeflow-codex-plugins.git`
+- Git ref: `yeeflow-builder-plugin-v0.6.2`
+- Sparse paths: `.agents/plugins/marketplace.json`, `dist/yeeflow-builder-plugin`
+- Expected marketplace: `Yeeflow Internal`
+- Expected plugin: `Yeeflow Builder`
+- Expected version: `0.6.2`
+- Expected bundled skills: `21`
+
+Main improvements:
+
+- Preserves the proven YAP v1.12 import path: top-level `Title`, `Description`, `IconUrl`, `IsListSet`, and `Resource`; `Resource = [______gizp______] + Gzip(JSON(ListExportResult))`; decoded Resource is `ListExportResult`; `ListExportResult.Data` contains `ListExportInfo`.
+- Preserves the proven YAPK v1.15 install path: top-level `AppExportPackageInfo`; `Resource = base64(Brotli(AppPackageInfo JSON))`; decoded Resource is `AppPackageInfo`; `Childs[].Fields`, not `Defs`; LongAsString fields remain strings; no-portal packages use `PortalInfo: null`.
+- Applies import-generation rules: `AppID = 41`, generated IDs from the Yeeflow generate-unique-ids API, exact 19-digit ID preservation without JavaScript rounding, unique ID validation, `Field.Category` integer validation, and the learned `CustomType` rule.
+- Generates the current dashboard shell and validates dashboard Data table `Field` source binding plus `FieldName` visible label binding.
+- Preserves v0.6.1 tenant/environment guidance and v0.6.0 through v0.5.22 capability milestones.
+
+Proof boundary:
+
+- v0.6.2 records focused Vendor Onboarding runtime proof for the YAP v1.12 import path and YAPK v1.15 install path.
+- It proves the current-dashboard shell and Data table binding rule for the tested package path, not arbitrary future visual perfection.
+- Marketplace install smoke testing passed for `yeeflow-builder-plugin-v0.6.2-rc1`; the final `yeeflow-builder-plugin-v0.6.2` tag records the accepted release state.
 
 ### v0.6.1
 
