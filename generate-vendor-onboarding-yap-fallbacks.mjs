@@ -222,12 +222,13 @@ async function main() {
   writeSchemaResultYap(uniqueIdsNoLookups, uniqueIdsNoLookupsPath);
   const apiEnv = loadYeeflowApiEnvironment();
   const apiIdCount = countSchemaIds(schemaDirect);
-  const apiIds = await fetchYeeflowUniqueIds({ apiBaseUrl: apiEnv.apiBaseUrl, apiKey: apiEnv.apiKey, count: apiIdCount * 4 });
+  const apiIds = await fetchYeeflowUniqueIds({ apiBaseUrl: apiEnv.apiBaseUrl, apiKey: apiEnv.apiKey, count: apiIdCount * 5 });
   const apiIdBatches = [
     apiIds.slice(0, apiIdCount),
     apiIds.slice(apiIdCount, apiIdCount * 2),
     apiIds.slice(apiIdCount * 2, apiIdCount * 3),
     apiIds.slice(apiIdCount * 3, apiIdCount * 4),
+    apiIds.slice(apiIdCount * 4, apiIdCount * 5),
   ];
   const apiIdsNoLookups = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[0]), { dashboard: "minimal" });
   const apiIdsNoLookupsWithoutLookupFields = removeLookupRelationships(apiIdsNoLookups);
@@ -244,6 +245,10 @@ async function main() {
   const apiIdsCurrentDashboardNoLookups = removeLookupRelationships(apiIdsCurrentDashboard);
   const apiIdsCurrentDashboardPath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.10-current-dashboard.yap";
   writeSchemaResultYap(apiIdsCurrentDashboardNoLookups, apiIdsCurrentDashboardPath);
+  const apiIdsCurrentDashboardDataTable = assignApiSchemaIds(schemaDirect, createApiIdAllocator(apiIdBatches[4]), { dashboard: "simple-data-table" });
+  const apiIdsCurrentDashboardDataTableNoLookups = removeLookupRelationships(apiIdsCurrentDashboardDataTable);
+  const apiIdsCurrentDashboardDataTablePath = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.11-current-dashboard-data-table.yap";
+  writeSchemaResultYap(apiIdsCurrentDashboardDataTableNoLookups, apiIdsCurrentDashboardDataTablePath);
 
   console.log(JSON.stringify({
     status: "generated",
@@ -355,6 +360,16 @@ async function main() {
         fields: apiIdsCurrentDashboardNoLookups.Childs.reduce((total, child) => total + child.Defs.length, 0),
         dashboards: apiIdsCurrentDashboardNoLookups.Item.Layouts.length,
         layouts: apiIdsCurrentDashboardNoLookups.Childs.reduce((total, child) => total + child.Layouts.length, 0) + apiIdsCurrentDashboardNoLookups.Item.Layouts.length,
+      },
+      {
+        path: apiIdsCurrentDashboardDataTablePath,
+        purpose: "ListExportResult YAP with fixed AppID 41, API-issued IDs, populated ReplaceIds, no lookups, current dashboard shell, and simple Vendors Data table content",
+        buildStatus: "written",
+        apiIds: summarizeIds(apiIdBatches[4]),
+        dataLists: apiIdsCurrentDashboardDataTableNoLookups.Childs.length,
+        fields: apiIdsCurrentDashboardDataTableNoLookups.Childs.reduce((total, child) => total + child.Defs.length, 0),
+        dashboards: apiIdsCurrentDashboardDataTableNoLookups.Item.Layouts.length,
+        layouts: apiIdsCurrentDashboardDataTableNoLookups.Childs.reduce((total, child) => total + child.Layouts.length, 0) + apiIdsCurrentDashboardDataTableNoLookups.Item.Layouts.length,
       },
     ],
   }, null, 2));
