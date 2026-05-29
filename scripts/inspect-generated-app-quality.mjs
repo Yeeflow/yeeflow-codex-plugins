@@ -47,7 +47,7 @@ const VENDOR_ONBOARDING_EXPECTED_PAGES = [
 function usage(exitCode = 1) {
   const text = [
     "Usage:",
-    "  node scripts/inspect-generated-app-quality.mjs --package <app.yap|app.yapk|decoded-data.json> [--plan <plan.md>] [--spec <ui-implementation-spec.md>] [--strict-app-quality] [--strict-visual-app-quality] [--json-out <report.json>]",
+    "  node scripts/inspect-generated-app-quality.mjs --package <app.yap|app.yapk|decoded-data.json> [--plan <plan.md>] [--spec <ui-implementation-spec.md>] [--composition-checklist <checklist.normalized.json>] [--strict-app-quality] [--strict-visual-app-quality] [--json-out <report.json>]",
     "",
     "Combines app-plan presence checks, UI implementation spec checks, package inventory, generated UI quality checks, and strict full-application visual quality gates.",
   ].join("\n");
@@ -61,6 +61,7 @@ function parseArgs(argv) {
     packagePath: "",
     planPath: "",
     specPath: "",
+    compositionChecklistPath: "",
     jsonOut: "",
     strictAppQuality: false,
     strictVisualAppQuality: false,
@@ -70,6 +71,7 @@ function parseArgs(argv) {
     if (arg === "--package") args.packagePath = argv[++index] || "";
     else if (arg === "--plan") args.planPath = argv[++index] || "";
     else if (arg === "--spec") args.specPath = argv[++index] || "";
+    else if (arg === "--composition-checklist") args.compositionChecklistPath = argv[++index] || "";
     else if (arg === "--json-out") args.jsonOut = argv[++index] || "";
     else if (arg === "--strict-app-quality") args.strictAppQuality = true;
     else if (arg === "--strict-visual-app-quality") {
@@ -367,6 +369,80 @@ function inspectSpec(specPath) {
   };
 }
 
+function inspectCompositionChecklist(checklistPath) {
+  const findings = [];
+  if (!checklistPath) {
+    return { exists: false, pages: [], findings };
+  }
+  if (!fs.existsSync(checklistPath)) {
+    findings.push({
+      level: "error",
+      code: "COMPOSITION_CHECKLIST_FILE_MISSING",
+      message: "The supplied composition checklist JSON file does not exist.",
+      path: checklistPath,
+      source: "composition-checklist",
+    });
+    return { exists: false, pages: [], findings };
+  }
+  let parsed;
+  try {
+    parsed = parseJson(fs.readFileSync(checklistPath, "utf8"), new Set());
+  } catch (error) {
+    findings.push({
+      level: "error",
+      code: "COMPOSITION_CHECKLIST_JSON_INVALID",
+      message: `Composition checklist JSON could not be parsed: ${error.message}`,
+      path: checklistPath,
+      source: "composition-checklist",
+    });
+    return { exists: false, pages: [], findings };
+  }
+  const pages = asArray(parsed.pages);
+  if (!pages.length) {
+    findings.push({
+      level: "error",
+      code: "COMPOSITION_CHECKLIST_PAGES_MISSING",
+      message: "Composition checklist must include a nonempty pages array.",
+      path: checklistPath,
+      source: "composition-checklist",
+    });
+  }
+  const sectionIds = new Set();
+  for (const page of pages) {
+    if (!safeString(page.id)) {
+      findings.push({ level: "error", code: "COMPOSITION_PAGE_ID_MISSING", message: "Composition checklist page is missing a stable id.", page: page.title, source: "composition-checklist" });
+    }
+    if (!safeString(page.title)) {
+      findings.push({ level: "error", code: "COMPOSITION_PAGE_TITLE_MISSING", message: "Composition checklist page is missing a title.", pageId: page.id, source: "composition-checklist" });
+    }
+    for (const section of asArray(page.sections)) {
+      const sectionKey = `${safeString(page.id)}:${safeString(section.id)}`;
+      if (!safeString(section.id)) {
+        findings.push({ level: "error", code: "COMPOSITION_SECTION_ID_MISSING", message: "Composition checklist section is missing a stable id.", page: page.title, source: "composition-checklist" });
+      } else if (sectionIds.has(sectionKey)) {
+        findings.push({ level: "error", code: "COMPOSITION_SECTION_ID_DUPLICATE", message: "Composition checklist section id is duplicated within the same page.", page: page.title, section: section.id, source: "composition-checklist" });
+      } else sectionIds.add(sectionKey);
+      if (!["required", "optional", "deferred"].includes(safeString(section.status))) {
+        findings.push({ level: "error", code: "COMPOSITION_SECTION_STATUS_INVALID", message: "Composition checklist section must use required, optional, or deferred status.", page: page.title, section: section.id, status: section.status, source: "composition-checklist" });
+      }
+      if (!asArray(section.controls).length) {
+        findings.push({ level: "error", code: "COMPOSITION_SECTION_CONTROLS_MISSING", message: "Composition checklist section must define exact Yeeflow control types.", page: page.title, section: section.id, source: "composition-checklist" });
+      }
+      if (section.status === "deferred" && !safeString(section.deferReason || section.fallback?.reason)) {
+        findings.push({ level: "error", code: "COMPOSITION_FALLBACK_REASON_MISSING", message: "Deferred checklist sections must include a reason and fallback.", page: page.title, section: section.id, source: "composition-checklist" });
+      }
+    }
+  }
+  return {
+    exists: true,
+    path: checklistPath,
+    application: safeString(parsed.application),
+    version: safeString(parsed.version),
+    pages,
+    findings,
+  };
+}
+
 function packageInventory(validationReport, decodedPackage) {
   const inventories = validationReport?.inventories || {};
   const resources = Array.isArray(inventories.resources) ? inventories.resources : [];
@@ -508,6 +584,10 @@ function strictAdd(findings, code, message, detail = {}, level = "error") {
   findings.push({ level, code, message, detail, source: "strict-visual-app-quality" });
 }
 
+function compositionAdd(findings, code, message, detail = {}, level = "error") {
+  findings.push({ level, code, message, detail, source: "composition-checklist" });
+}
+
 function hasSafePadding(page) {
   const text = JSON.stringify(page || {});
   if (/padding/i.test(text) && /(--sp--s[3-9]|\b(1[6-9]|[2-9]\d)px\b|"left"\s*:\s*"?([2-9]\d|1[6-9])|"right"\s*:\s*"?([2-9]\d|1[6-9]))/.test(text)) return true;
@@ -523,6 +603,225 @@ function hasCardStructure(page) {
     if (type === "card" || label.includes("card") || /border|shadow|radius|background/i.test(styleText)) cardLike += 1;
   });
   return cardLike >= 3;
+}
+
+function hasAnyCardContainer(page) {
+  let cardLike = 0;
+  walkControls(page, (control) => {
+    const type = safeString(control.type);
+    const label = safeString(control.label).toLowerCase();
+    const styleText = JSON.stringify(control.attrs?.style || {});
+    if (type === "card" || label.includes("card") || /border|shadow|radius|background/i.test(styleText)) cardLike += 1;
+  });
+  return cardLike >= 1;
+}
+
+function normalizedControlType(type) {
+  const normalized = safeString(type).toLowerCase().replace(/[_\s]+/g, "-");
+  const aliases = {
+    "data-table": "data-list",
+    "data-grid": "data-list",
+    "vertical-timeline": "timeline-v",
+    "horizontal-timeline": "timeline-h",
+    "steps-bar": "steps",
+    "dynamic-sub-list": "list",
+    "sub-list": "list",
+    "qr-code": "qrcode",
+    "document-embed": "document",
+    "custom-css": "custom-css",
+  };
+  return aliases[normalized] || normalized;
+}
+
+function controlTypeSet(page) {
+  const types = new Set();
+  walkControls(page, (control) => types.add(normalizedControlType(control.type)));
+  return types;
+}
+
+function pageText(page) {
+  return JSON.stringify(page || {}).toLowerCase();
+}
+
+function hasGridStructure(page) {
+  let gridLike = 0;
+  walkControls(page, (control) => {
+    const type = normalizedControlType(control.type);
+    const attrs = JSON.stringify(control.attrs || {});
+    if (["grid", "flex-grid", "row", "columns"].includes(type) || /columns|grid|flex|gap/i.test(attrs)) gridLike += 1;
+  });
+  return gridLike > 0;
+}
+
+function hasSectionSpacing(page) {
+  const text = JSON.stringify(page || {});
+  if (/margin|gap|spacer|divider|--sp--s[3-9]|\b(16|20|24|32)px\b/i.test(text)) return true;
+  let rhythmControls = 0;
+  walkControls(page, (control) => {
+    if (["divider", "spacer", "section"].includes(normalizedControlType(control.type))) rhythmControls += 1;
+  });
+  return rhythmControls > 0;
+}
+
+function sectionMatchText(section) {
+  const explicit = asArray(section.matchText).map(safeString).filter(Boolean);
+  if (explicit.length) return explicit;
+  return [safeString(section.title), safeString(section.id).replace(/[_-]+/g, " ")].filter(Boolean);
+}
+
+function surfaceMatchesType(surface, pageType) {
+  const type = safeString(pageType).toLowerCase();
+  if (!type) return true;
+  if (type === "dashboard") return surface.kind === "dashboard";
+  if (type.includes("form") || type.includes("print") || type.includes("view") || type.includes("new")) return surface.kind === "custom_form";
+  return true;
+}
+
+function findSurfaceForChecklistPage(checklistPage, surfaces) {
+  const allSurfaces = [...surfaces.dashboards, ...surfaces.customForms];
+  const title = safeString(checklistPage.title).toLowerCase();
+  const idTitle = safeString(checklistPage.id).replace(/[_-]+/g, " ").toLowerCase();
+  const byTitle = title
+    ? allSurfaces.find((surface) => surfaceMatchesType(surface, checklistPage.type) && safeString(surface.title).toLowerCase() === title)
+      || allSurfaces.find((surface) => surfaceMatchesType(surface, checklistPage.type) && safeString(surface.title).toLowerCase().includes(title))
+    : null;
+  if (byTitle || title) return byTitle;
+  return allSurfaces.find((surface) => surfaceMatchesType(surface, checklistPage.type) && safeString(surface.title).toLowerCase().includes(idTitle));
+}
+
+function buttonIndex(page) {
+  const buttons = [];
+  walkControls(page, (control, pointer) => {
+    if (normalizedControlType(control.type) === "button") buttons.push({ control, pointer, label: controlText(control), hasAction: hasActionBinding(control) });
+  });
+  return buttons;
+}
+
+function pageHasPlaceholderContent(page) {
+  const text = JSON.stringify(page || "");
+  return /Here is the description|"\s*Alert\s*"|>\s*Alert\s*<|"label"\s*:\s*"Button"|"text"\s*:\s*"Button"|safeGeneratedAction|placeholder-only|lorem ipsum/i.test(text);
+}
+
+function validateLayoutRule(rule, page) {
+  const normalized = safeString(rule).toLowerCase().replace(/[_\s]+/g, "-");
+  if (normalized === "safe-padding") return hasSafePadding(page);
+  if (["card-container", "styled-card", "section-card"].includes(normalized)) return hasAnyCardContainer(page);
+  if (["card-structure", "card-structure-present"].includes(normalized)) return hasCardStructure(page);
+  if (["grid-row", "multi-column-grid", "grid-structure", "responsive-grid"].includes(normalized)) return hasGridStructure(page);
+  if (["section-spacing", "visual-rhythm", "safe-spacing"].includes(normalized)) return hasSectionSpacing(page);
+  if (["print-layout", "print-css"].includes(normalized)) return /print|page-break|barcode|qrcode|vendor code/i.test(JSON.stringify(page || {}));
+  if (["no-mutating-actions", "read-only-print"].includes(normalized)) return !/\b(Submit|Approve|Mark|Delete|Save Draft|Request Missing Documents)\b/i.test(JSON.stringify(page || {}));
+  return true;
+}
+
+function itemTemplateDynamicFieldCount(control) {
+  let count = 0;
+  walkControls(control, (node) => {
+    const type = normalizedControlType(node.type);
+    if (type.startsWith("dynamic") || type === "field") count += 1;
+  });
+  return count;
+}
+
+function validateItemTemplate(section, page, checklistPage, findings) {
+  const itemTemplate = section.itemTemplate || {};
+  if (!isObject(itemTemplate)) return;
+  const expectedTypes = asArray(itemTemplate.controls || section.controls)
+    .map(normalizedControlType)
+    .filter((type) => ["kanban", "collection", "timeline-v", "timeline-h", "list"].includes(type));
+  if (!expectedTypes.length) return;
+  const candidates = [];
+  walkControls(page, (control, pointer) => {
+    if (expectedTypes.includes(normalizedControlType(control.type))) candidates.push({ control, pointer });
+  });
+  if (!candidates.length) {
+    compositionAdd(findings, "COMPOSITION_ITEM_TEMPLATE_CONTROL_MISSING", "Required Kanban/Collection/Timeline/Sub List control is missing for checklist section.", { page: checklistPage.title, section: section.id, controls: expectedTypes });
+    return;
+  }
+  const minDynamicFields = Number(itemTemplate.minDynamicFields || 0);
+  if (minDynamicFields > 0 && !candidates.some((candidate) => itemTemplateDynamicFieldCount(candidate.control) >= minDynamicFields)) {
+    compositionAdd(findings, "COMPOSITION_ITEM_TEMPLATE_TOO_MINIMAL", "Required item template does not include enough dynamic fields.", { page: checklistPage.title, section: section.id, minDynamicFields });
+  }
+  const requiredFields = asArray(itemTemplate.requiredFields).map(safeString).filter(Boolean);
+  const text = pageText(page);
+  const missingFields = requiredFields.filter((field) => !text.includes(field.toLowerCase()));
+  if (missingFields.length) {
+    compositionAdd(findings, "COMPOSITION_ITEM_TEMPLATE_FIELD_MISSING", "Required item-template fields are missing.", { page: checklistPage.title, section: section.id, missingFields });
+  }
+  if (itemTemplate.requiresActions === true) {
+    const hasItemActions = candidates.some((candidate) => asArray(candidate.control?.attrs?.actions).length > 0 || asArray(candidate.control?.actions).length > 0);
+    if (!hasItemActions) compositionAdd(findings, "COMPOSITION_ITEM_TEMPLATE_ACTIONS_MISSING", "Required item template lacks configured actions.", { page: checklistPage.title, section: section.id });
+  }
+}
+
+function inspectCompositionQuality(decodedPackage, checklist) {
+  const findings = [];
+  const summary = { pages: [], sectionCount: 0 };
+  if (!checklist.exists) return { summary, findings };
+  const data = decodedPackage?.data;
+  if (!data) {
+    compositionAdd(findings, "COMPOSITION_PACKAGE_DATA_MISSING", "Package could not be decoded into an app model for composition checklist validation.");
+    return { summary, findings };
+  }
+  const surfaces = collectSurfaces(data);
+  for (const checklistPage of checklist.pages) {
+    const requiredPage = checklistPage.required !== false;
+    const surface = findSurfaceForChecklistPage(checklistPage, surfaces);
+    const pageSummary = { id: safeString(checklistPage.id), title: safeString(checklistPage.title), type: safeString(checklistPage.type), required: requiredPage, implemented: Boolean(surface), sections: [] };
+    summary.pages.push(pageSummary);
+    if (!surface) {
+      if (requiredPage) compositionAdd(findings, "COMPOSITION_REQUIRED_PAGE_MISSING", "Required composition-checklist page is missing from the package.", { page: checklistPage.title, pageId: checklistPage.id });
+      continue;
+    }
+    const page = surface.page;
+    const types = controlTypeSet(page);
+    const text = pageText(page);
+    const buttons = buttonIndex(page);
+    const { total } = countControls(page);
+    if ((safeString(checklistPage.type).includes("form") || safeString(checklistPage.type).includes("print")) && (!page || total < 6)) {
+      compositionAdd(findings, "COMPOSITION_CUSTOM_FORM_BLANK", "Required data list custom form/print layout is blank or too small for the approved checklist.", { page: checklistPage.title, totalControls: total });
+    }
+    for (const section of asArray(checklistPage.sections)) {
+      const status = safeString(section.status || (section.required === false ? "optional" : "required"));
+      const requiredSection = status === "required" || section.required === true;
+      const sectionTexts = sectionMatchText(section);
+      const sectionTextFound = sectionTexts.some((needle) => text.includes(needle.toLowerCase()));
+      const sectionTypes = asArray(section.controls).map(normalizedControlType).filter(Boolean);
+      const controlFound = sectionTypes.length === 0 || sectionTypes.some((type) => types.has(type));
+      pageSummary.sections.push({ id: section.id, title: section.title, status, textFound: sectionTextFound, controlFound });
+      summary.sectionCount += 1;
+      if (status === "deferred" && !safeString(section.deferReason || section.fallback?.reason)) {
+        compositionAdd(findings, "COMPOSITION_FALLBACK_REASON_MISSING", "Checklist section is deferred without a reason.", { page: checklistPage.title, section: section.id });
+      }
+      if (!requiredSection) continue;
+      if (!sectionTextFound) compositionAdd(findings, "COMPOSITION_REQUIRED_SECTION_MISSING", "Required composition-checklist section is missing visible/matchable content.", { page: checklistPage.title, section: section.id, matchText: sectionTexts });
+      if (!controlFound) compositionAdd(findings, "COMPOSITION_SECTION_CONTROL_MISSING", "Required section does not include a matching Yeeflow control type.", { page: checklistPage.title, section: section.id, controls: sectionTypes });
+      const dataSources = asArray(section.dataSources || (section.dataSource ? [section.dataSource] : [])).map(safeString).filter(Boolean);
+      const missingDataSources = dataSources.filter((source) => !text.includes(source.toLowerCase()));
+      if (dataSources.length && missingDataSources.length === dataSources.length) {
+        compositionAdd(findings, "COMPOSITION_SECTION_DATA_BINDING_MISSING", "Required section has no detectable binding to its required data source.", { page: checklistPage.title, section: section.id, dataSources });
+      }
+      const requiredFields = asArray(section.requiredFields).map(safeString).filter(Boolean);
+      const missingFields = requiredFields.filter((field) => !text.includes(field.toLowerCase()));
+      if (requiredFields.length && missingFields.length) compositionAdd(findings, "COMPOSITION_REQUIRED_FIELD_MISSING", "Required section fields are missing from the generated page/form.", { page: checklistPage.title, section: section.id, missingFields });
+      if (pageHasPlaceholderContent(page) && asArray(section.validationRules).includes("no_placeholder_content")) {
+        compositionAdd(findings, "COMPOSITION_PLACEHOLDER_CONTENT", "Required section/page contains placeholder or default generated content.", { page: checklistPage.title, section: section.id });
+      }
+      for (const layoutRule of asArray(section.layoutRules)) {
+        if (!validateLayoutRule(layoutRule, page)) compositionAdd(findings, "COMPOSITION_LAYOUT_RULE_MISSING", "Required section layout/card/padding rule is not satisfied.", { page: checklistPage.title, section: section.id, layoutRule });
+      }
+      for (const action of asArray(section.actionBindings)) {
+        const label = safeString(isObject(action) ? action.label : action);
+        if (!label) continue;
+        const matchingButtons = buttons.filter((button) => button.label.toLowerCase().includes(label.toLowerCase()) || label.toLowerCase().includes(button.label.toLowerCase()));
+        if (!matchingButtons.length || !matchingButtons.some((button) => button.hasAction)) {
+          compositionAdd(findings, "COMPOSITION_REQUIRED_ACTION_BINDING_MISSING", "Required section action binding is missing or unresolved.", { page: checklistPage.title, section: section.id, action: label });
+        }
+      }
+      validateItemTemplate(section, page, checklistPage, findings);
+    }
+  }
+  return { summary, findings };
 }
 
 function isDefaultAlert(control) {
@@ -681,24 +980,29 @@ function main() {
   const packagePath = path.resolve(args.packagePath);
   const planPath = args.planPath ? path.resolve(args.planPath) : "";
   const specPath = args.specPath ? path.resolve(args.specPath) : "";
+  const compositionChecklistPath = args.compositionChecklistPath ? path.resolve(args.compositionChecklistPath) : "";
   const decodedPackage = decodePackage(packagePath);
   const plan = inspectPlan(planPath);
   const spec = inspectSpec(specPath);
+  const compositionChecklist = inspectCompositionChecklist(compositionChecklistPath);
   const validation = runJsonStep("package-validation", process.execPath, packageValidatorArgs(repoRoot, packagePath));
   const uiQuality = runJsonStep("generated-ui-quality", process.execPath, [path.join(repoRoot, "scripts/inspect-generated-ui-quality.mjs"), packagePath]);
   const inventory = packageInventory(validation.report, decodedPackage);
   const specPackageFindings = compareSpecToPackage(spec, inventory, uiQuality.report);
   const strictVisual = args.strictVisualAppQuality ? inspectStrictVisualQuality(decodedPackage, spec) : { summary: {}, findings: [] };
+  const compositionQuality = compositionChecklist.exists ? inspectCompositionQuality(decodedPackage, compositionChecklist) : { summary: {}, findings: [] };
   const strictEscalatedFindings = args.strictAppQuality
     ? specPackageFindings.map((finding) => ({ ...finding, level: finding.level === "warning" ? "error" : finding.level, source: "strict-app-quality" }))
     : specPackageFindings;
   const findings = [
     ...plan.findings,
     ...spec.findings,
+    ...compositionChecklist.findings,
     ...strictEscalatedFindings,
     ...((validation.report.findings || []).map((finding) => ({ ...finding, source: "package-validation" }))),
     ...((uiQuality.report.findings || []).map((finding) => ({ ...finding, source: "generated-ui-quality" }))),
     ...strictVisual.findings,
+    ...compositionQuality.findings,
   ];
   const errors = findings.filter((finding) => finding.level === "error").length
     + (validation.exitCode && validation.errors === 0 ? 1 : 0)
@@ -710,6 +1014,20 @@ function main() {
     packageType: decodedPackage.packageType,
     plan,
     spec,
+    compositionChecklist: {
+      exists: compositionChecklist.exists,
+      path: compositionChecklist.path,
+      application: compositionChecklist.application,
+      version: compositionChecklist.version,
+      pages: compositionChecklist.pages?.map((page) => ({
+        id: page.id,
+        title: page.title,
+        type: page.type,
+        required: page.required,
+        sections: asArray(page.sections).map((section) => ({ id: section.id, title: section.title, status: section.status || (section.required === false ? "optional" : "required") })),
+      })) || [],
+      summary: compositionQuality.summary,
+    },
     inventory,
     strict: {
       strictAppQuality: args.strictAppQuality,

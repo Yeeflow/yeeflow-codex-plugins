@@ -16,6 +16,8 @@ Approved mockup pages:
 4. Compliance Review Workspace
 5. Vendor Print Page
 
+Machine-readable validator input: `docs/generated-app-plans/vendor-onboarding-v4-composition-checklist.normalized.json`
+
 ## Global Pre-Generation Gates
 
 - [ ] The composition checklist is reviewed and approved before package generation starts.
@@ -73,6 +75,50 @@ Required shared visual fields:
 - [ ] `Last Review Date`
 - [ ] `Onboarding Completion %`
 - [ ] `Vendor Code`
+
+## Enforceable Section Registry
+
+Every required section below has a stable section ID, required status, explicit Yeeflow controls, data source, fields, layout rules, action bindings or action deferrals, fallback rule, validator rule, and pass/fail condition in the normalized JSON checklist.
+
+| Page ID | Section ID | Status | Validator Scope |
+| --- | --- | --- | --- |
+| `vendor_management_dashboard` | `header_action_area` | required | title/subtitle/actions/navigation |
+| `vendor_management_dashboard` | `kpi_card_row` | required | KPI card controls, source fields, card/grid styling |
+| `vendor_management_dashboard` | `onboarding_progress_section` | required | progress control, Vendor completion field, card layout |
+| `vendor_management_dashboard` | `urgent_compliance_alert` | required | business-specific alert content and risk/document fields |
+| `vendor_management_dashboard` | `onboarding_status_board` | required | Kanban/Collection source, item template fields, item actions |
+| `vendor_management_dashboard` | `vendors_data_table` | required | Vendors Data table with Field/FieldName columns |
+| `vendor_management_dashboard` | `quick_links` | required | icon/list/card links with valid navigation actions |
+| `vendor_management_dashboard` | `recent_activity_timeline` | required | Timeline/Collection fields from Vendor Activity / History |
+| `vendor_detail_view_page` | `detail_header_summary_card` | required | Vendors View form header fields and actions |
+| `vendor_detail_view_page` | `onboarding_steps_bar` | required | six-stage steps bar |
+| `vendor_detail_view_page` | `detail_tabs_or_sections` | required | Overview/Documents/Compliance/Tasks/History tabs or sections |
+| `vendor_detail_view_page` | `overview_details` | required | vendor profile and contract/payment fields |
+| `vendor_detail_view_page` | `documents_section` | required | related documents table/cards and document fallback |
+| `vendor_detail_view_page` | `compliance_section` | required | review cards/table, risk score, alert |
+| `vendor_detail_view_page` | `tasks_section` | required | task cards/table and safe actions |
+| `vendor_detail_view_page` | `history_timeline` | required | activity date/title/type/actor/description |
+| `new_vendor_request_form` | `request_intro_alert` | required | intake title, instructions, required-document alert |
+| `new_vendor_request_form` | `vendor_information` | required | vendor identity fields |
+| `new_vendor_request_form` | `contact_information` | required | contact fields |
+| `new_vendor_request_form` | `business_justification` | required | justification and budget fields |
+| `new_vendor_request_form` | `payment_contract_information` | required | payment, contract, tax, bank, renewal fields |
+| `new_vendor_request_form` | `required_documents_checklist` | required | Dynamic Sub List or related-list fallback |
+| `new_vendor_request_form` | `footer_actions` | required | Save Draft and Submit Request bindings or explicit deferral |
+| `compliance_review_workspace` | `workspace_header_filters` | required | page title, subtitle, queue controls |
+| `compliance_review_workspace` | `risk_status_board` | required | risk/status Kanban or Collection |
+| `compliance_review_workspace` | `selected_vendor_summary` | required | selected vendor/review card or approved fallback |
+| `compliance_review_workspace` | `risk_progress_indicator` | required | risk score progress control |
+| `compliance_review_workspace` | `high_risk_alert` | required | business-specific risk alert |
+| `compliance_review_workspace` | `missing_documents_table` | required | Vendor Documents table with Field/FieldName columns |
+| `compliance_review_workspace` | `review_action_area` | required | valid review actions or inactive documented deferrals |
+| `vendor_print_page` | `print_header` | required | print header fields and status badges |
+| `vendor_print_page` | `vendor_summary` | required | key vendor/contact/payment fields |
+| `vendor_print_page` | `compliance_summary` | required | risk/status/latest review fields |
+| `vendor_print_page` | `document_checklist` | required | Vendor Documents checklist/table |
+| `vendor_print_page` | `approval_review_timeline` | required | activity timeline/table |
+| `vendor_print_page` | `qr_barcode_vendor_code` | required | QR/barcode or safe Vendor Code fallback |
+| `vendor_print_page` | `print_styling` | required | print-specific layout/CSS and no mutating actions |
 
 ## 1. Vendor Management Dashboard
 
