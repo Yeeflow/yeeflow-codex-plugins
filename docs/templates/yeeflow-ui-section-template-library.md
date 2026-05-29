@@ -338,3 +338,33 @@ Each template includes:
 - Validation rules: selected IDs/count variables and actions resolve.
 - Allowed fallback: omit active bulk toolbar and document deferred reason.
 - Proof status: runtime-proven in focused Collection/Kanban action package for scoped behavior.
+
+## Reference Corpus Coverage
+
+The template library is now mapped against four existing Yeeflow reference exports. These exports are treated as export evidence only unless a separate focused runtime proof exists.
+
+| Template ID | Reference evidence | Current proof status | Remaining limitation |
+| --- | --- | --- | --- |
+| `dashboard_header_action_bar` | Projects Center_2 dashboard actions; Company Overview dashboard headers | export-proven | Action targets must still resolve per generated package. |
+| `kpi_card_row` | Sales Management summary controls; Projects Center summaries | needs-golden-proof | Existing exports prove metrics/summary controls, not the polished four-card KPI row required for Vendor Onboarding. |
+| `progress_summary_card` | Company Overview progress controls; Projects Center progress indicators | export-proven | Aggregate/binding formulas remain package-specific. |
+| `business_alert_card` | Company Overview Alert controls | export-proven | Business-specific copy is not proven by generic reference alert content and remains mandatory. |
+| `data_table_section` | Sales Management dashboard and Account view Data tables with `Field`/`FieldName` columns | runtime-proven | Row actions and filters remain separate checks. |
+| `kanban_status_board` | Company Overview Kanban; Data Lists Kanban views; Projects/Sales Kanban views | runtime-proven | Drag/drop and all action variants require focused runtime proof. |
+| `collection_card_board` | Company Overview Collection of activity; Projects Center card collections | runtime-proven | Some export collections are sparse, so generated cards must still meet dynamic-field minimums. |
+| `quick_links_icon_list` | Projects Center action buttons; Company Overview Icon list | export-proven | Full quick-link navigation cards need action validation. |
+| `recent_activity_timeline` | Company Overview vertical/horizontal timeline controls | export-proven | Timeline interaction beyond render is not proven. |
+| `detail_view_header_summary` | Company Overview, Projects Center, and Sales detail/view pages | export-proven | Badge styling and actions need package validation. |
+| `tabbed_detail_page` | Company Overview Tab/Toggle pages; Projects detail navigation | export-proven | Exact generated host shape must match dashboard or form host. |
+| `sectioned_new_edit_form` | Data Lists custom forms; Sales New/Edit forms; Projects edit forms | export-proven | Card polish and spacing still need template conformance. |
+| `required_documents_checklist` | Data Lists Dynamic Sub List; Projects document forms | export-proven | Vendor-style checklist lifecycle still needs golden or focused validation. |
+| `related_records_section` | Projects detail related collections; Sales Account related Data tables | export-proven | Related-list filters/current-record context must resolve per package. |
+| `print_page_summary` | No clear print-page layout in inspected exports | needs-golden-proof | New golden reference still needed. |
+| `print_page_document_checklist` | No clear print document checklist in inspected exports | needs-golden-proof | New golden reference still needed. |
+| `print_page_qr_barcode_section` | Company Overview QR Code and Barcode controls | needs-golden-proof | QR/barcode print-page integration still needs proof. |
+| `kanban_card_with_dynamic_fields` | Company Overview Kanban item template with dynamic fields/actions | runtime-proven | Generated packages must resolve action targets and current-item fields. |
+| `collection_card_with_dynamic_fields` | Company Overview Collection item template with dynamic fields/actions | runtime-proven | Generated packages must resolve action targets and current-item fields. |
+| `item_action_bar_edit_delete_update` | Company Overview item action buttons; prior focused runtime proof | runtime-proven | Runtime mutation claim remains scoped to focused proof package. |
+| `selection_bulk_toolbar` | Company Overview bulk Mark completed/Delete selected actions; prior focused runtime proof | runtime-proven | Selected IDs/count variables must resolve per generated package. |
+
+Reference corpus conclusion: the existing exports are enough to strengthen most dashboard, custom form, Data table, Kanban/Collection, timeline, and action templates. A new golden app is still needed for polished KPI card rows and print-page composition, especially print summary, print document checklist, and QR/barcode integration on print pages.

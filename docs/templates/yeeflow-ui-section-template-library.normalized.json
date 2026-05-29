@@ -8,356 +8,1215 @@
       "category": "dashboard",
       "purpose": "Dashboard title, subtitle, and safe primary or secondary actions.",
       "whenToUse": "Any generated dashboard with navigation or work-entry actions.",
-      "requiredControls": ["container", "grid", "text", "button"],
-      "requiredChildControls": ["title_text", "subtitle_text", "action_area"],
+      "requiredControls": [
+        "container",
+        "grid",
+        "text",
+        "button"
+      ],
+      "requiredChildControls": [
+        "title_text",
+        "subtitle_text",
+        "action_area"
+      ],
       "requiredDataBindings": [],
       "requiredFields": [],
-      "layoutRules": ["safe_padding", "grid_row", "section_spacing"],
-      "styleRules": ["typography_hierarchy", "aligned_actions", "no_default_button_label"],
-      "actionRules": ["active_buttons_require_binding"],
-      "validationRules": ["section_exists", "controls_present", "action_bindings_present", "no_placeholder_content"],
+      "layoutRules": [
+        "safe_padding",
+        "grid_row",
+        "section_spacing"
+      ],
+      "styleRules": [
+        "typography_hierarchy",
+        "aligned_actions",
+        "no_default_button_label"
+      ],
+      "actionRules": [
+        "active_buttons_require_binding"
+      ],
+      "validationRules": [
+        "section_exists",
+        "controls_present",
+        "action_bindings_present",
+        "no_placeholder_content"
+      ],
       "allowedFallback": "Use static action notes when navigation/form actions are not safely supported.",
-      "proofStatus": "inferred"
+      "proofStatus": "export-proven",
+      "sourceExports": [
+        "Projects Center_2.yap",
+        "Company Overview (3).yap"
+      ],
+      "observedControls": [
+        "container",
+        "heading",
+        "action-button",
+        "collection"
+      ],
+      "observedPatterns": [
+        "safe padded dashboard root",
+        "header action buttons such as All projects and My projects",
+        "dashboard text hierarchy"
+      ],
+      "limitations": [
+        "active navigation/action semantics still require validation per package"
+      ]
     },
     {
       "templateId": "kpi_card_row",
       "category": "dashboard",
       "purpose": "Operational metric cards with labels, values, and context.",
       "whenToUse": "Dashboard KPI rows, workload summaries, compliance totals, and expiry counts.",
-      "requiredControls": ["container", "grid", "text", "dynamic-field"],
-      "requiredChildControls": ["kpi_card", "kpi_label", "kpi_value", "kpi_context"],
-      "requiredDataBindings": ["source_list_or_documented_aggregate_fallback"],
+      "requiredControls": [
+        "container",
+        "grid",
+        "text",
+        "dynamic-field"
+      ],
+      "requiredChildControls": [
+        "kpi_card",
+        "kpi_label",
+        "kpi_value",
+        "kpi_context"
+      ],
+      "requiredDataBindings": [
+        "source_list_or_documented_aggregate_fallback"
+      ],
       "requiredFields": [],
-      "layoutRules": ["safe_padding", "grid_row", "card_container", "section_spacing"],
-      "styleRules": ["card_background_or_border", "internal_padding", "value_typography", "responsive_columns"],
+      "layoutRules": [
+        "safe_padding",
+        "grid_row",
+        "card_container",
+        "section_spacing"
+      ],
+      "styleRules": [
+        "card_background_or_border",
+        "internal_padding",
+        "value_typography",
+        "responsive_columns"
+      ],
       "actionRules": [],
-      "validationRules": ["section_exists", "card_structure_present", "not_plain_text_only", "data_binding_present"],
+      "validationRules": [
+        "section_exists",
+        "card_structure_present",
+        "not_plain_text_only",
+        "data_binding_present"
+      ],
       "allowedFallback": "Static aggregate placeholders only when labeled and documented as deferred aggregate binding.",
-      "proofStatus": "needs-golden-proof"
+      "proofStatus": "needs-golden-proof",
+      "sourceExports": [
+        "Sales_Management_AD.yap",
+        "Projects Center_2.yap"
+      ],
+      "partialEvidence": true,
+      "observedControls": [
+        "summary",
+        "container",
+        "heading",
+        "progress"
+      ],
+      "observedPatterns": [
+        "sales dashboard summary metrics",
+        "project dashboard summaries and progress indicators"
+      ],
+      "limitations": [
+        "existing exports show metric/summary controls but not the exact polished four-card KPI row required for Vendor Onboarding"
+      ]
     },
     {
       "templateId": "progress_summary_card",
       "category": "dashboard",
       "purpose": "Progress, score, or completion summary in a styled card.",
       "whenToUse": "Completion, risk score, review progress, or onboarding state summaries.",
-      "requiredControls": ["container", "progress-circle", "progress-bar", "text", "dynamic-field"],
-      "requiredChildControls": ["card_title", "progress_visual", "progress_value", "summary_text"],
-      "requiredDataBindings": ["progress_or_score_field_or_fallback"],
+      "requiredControls": [
+        "container",
+        "progress-circle",
+        "progress-bar",
+        "text",
+        "dynamic-field"
+      ],
+      "requiredChildControls": [
+        "card_title",
+        "progress_visual",
+        "progress_value",
+        "summary_text"
+      ],
+      "requiredDataBindings": [
+        "progress_or_score_field_or_fallback"
+      ],
       "requiredFields": [],
-      "layoutRules": ["card_container", "section_spacing"],
-      "styleRules": ["visual_and_text_alignment", "business_label"],
+      "layoutRules": [
+        "card_container",
+        "section_spacing"
+      ],
+      "styleRules": [
+        "visual_and_text_alignment",
+        "business_label"
+      ],
       "actionRules": [],
-      "validationRules": ["section_exists", "data_binding_present", "card_structure_present"],
+      "validationRules": [
+        "section_exists",
+        "data_binding_present",
+        "card_structure_present"
+      ],
       "allowedFallback": "Progress bar may replace Progress circle.",
-      "proofStatus": "export-proven"
+      "proofStatus": "export-proven",
+      "sourceExports": [
+        "Company Overview (3).yap",
+        "Projects Center_2.yap"
+      ],
+      "observedControls": [
+        "progress-circle",
+        "progress-bar",
+        "progress",
+        "container",
+        "heading"
+      ],
+      "observedPatterns": [
+        "progress controls embedded with related text and dynamic fields"
+      ],
+      "limitations": [
+        "binding and aggregate calculation must still be validated per package"
+      ]
     },
     {
       "templateId": "business_alert_card",
       "category": "dashboard",
       "purpose": "Business-specific risk, warning, or action alert.",
       "whenToUse": "Compliance risks, expiring documents, review blockers, or required actions.",
-      "requiredControls": ["container", "alert", "text", "dynamic-field"],
-      "requiredChildControls": ["alert_title", "alert_description", "supporting_context"],
-      "requiredDataBindings": ["risk_status_date_or_action_context"],
+      "requiredControls": [
+        "container",
+        "alert",
+        "text",
+        "dynamic-field"
+      ],
+      "requiredChildControls": [
+        "alert_title",
+        "alert_description",
+        "supporting_context"
+      ],
+      "requiredDataBindings": [
+        "risk_status_date_or_action_context"
+      ],
       "requiredFields": [],
-      "layoutRules": ["card_container", "section_spacing"],
-      "styleRules": ["severity_context", "no_default_alert_copy"],
-      "actionRules": ["optional_actions_require_binding"],
-      "validationRules": ["section_exists", "no_placeholder_content", "data_binding_present"],
+      "layoutRules": [
+        "card_container",
+        "section_spacing"
+      ],
+      "styleRules": [
+        "severity_context",
+        "no_default_alert_copy"
+      ],
+      "actionRules": [
+        "optional_actions_require_binding"
+      ],
+      "validationRules": [
+        "section_exists",
+        "no_placeholder_content",
+        "data_binding_present"
+      ],
       "allowedFallback": "Static business-specific alert content if dynamic alert binding is deferred.",
-      "proofStatus": "export-proven"
+      "proofStatus": "export-proven",
+      "sourceExports": [
+        "Company Overview (3).yap"
+      ],
+      "partialEvidence": true,
+      "observedControls": [
+        "alert",
+        "container",
+        "text"
+      ],
+      "observedPatterns": [
+        "Alert advanced control appears in dashboard pages"
+      ],
+      "limitations": [
+        "reference alert content is generic in places, so business-specific alert copy remains a hard generation requirement"
+      ]
     },
     {
       "templateId": "data_table_section",
       "category": "dashboard",
       "purpose": "Configured table of records with source-bound columns.",
       "whenToUse": "Record lists, review queues, related records, and operational tables.",
-      "requiredControls": ["data-list"],
-      "requiredChildControls": ["section_title", "configured_columns"],
-      "requiredDataBindings": ["attrs.data.list", "attrs.listarr[].Field", "attrs.listarr[].FieldName"],
+      "requiredControls": [
+        "data-list"
+      ],
+      "requiredChildControls": [
+        "section_title",
+        "configured_columns"
+      ],
+      "requiredDataBindings": [
+        "attrs.data.list",
+        "attrs.listarr[].Field",
+        "attrs.listarr[].FieldName"
+      ],
       "requiredFields": [],
-      "layoutRules": ["section_spacing"],
-      "styleRules": ["section_grouping", "no_edge_dumped_table"],
-      "actionRules": ["row_actions_optional_and_bound"],
-      "validationRules": ["section_exists", "data_binding_present", "required_fields_present"],
+      "layoutRules": [
+        "section_spacing"
+      ],
+      "styleRules": [
+        "section_grouping",
+        "no_edge_dumped_table"
+      ],
+      "actionRules": [
+        "row_actions_optional_and_bound"
+      ],
+      "validationRules": [
+        "section_exists",
+        "data_binding_present",
+        "required_fields_present"
+      ],
       "allowedFallback": "Collection/list cards with equivalent fields if Data table is unsupported.",
-      "proofStatus": "runtime-proven"
+      "proofStatus": "runtime-proven",
+      "sourceExports": [
+        "Sales_Management_AD.yap"
+      ],
+      "observedControls": [
+        "data-list"
+      ],
+      "observedPatterns": [
+        "dashboard data table with Field and FieldName columns bound to Accounts",
+        "related data tables on Account view for Contacts and Opportunities"
+      ],
+      "limitations": [
+        "row actions and filter behavior are separate validation/runtime boundaries"
+      ]
     },
     {
       "templateId": "kanban_status_board",
       "category": "dashboard",
       "purpose": "Status, risk, or category board with meaningful cards.",
       "whenToUse": "Onboarding boards, review queues, risk boards, and task boards.",
-      "requiredControls": ["kanban", "container", "text", "dynamic-field"],
-      "requiredChildControls": ["board_title", "lanes", "item_template"],
-      "requiredDataBindings": ["source_list", "category_field", "current_item_context"],
+      "requiredControls": [
+        "kanban",
+        "container",
+        "text",
+        "dynamic-field"
+      ],
+      "requiredChildControls": [
+        "board_title",
+        "lanes",
+        "item_template"
+      ],
+      "requiredDataBindings": [
+        "source_list",
+        "category_field",
+        "current_item_context"
+      ],
       "requiredFields": [],
-      "layoutRules": ["card_container", "section_spacing"],
-      "styleRules": ["card_like_items", "badges", "no_title_only_cards"],
-      "actionRules": ["item_actions_require_binding_when_present"],
+      "layoutRules": [
+        "card_container",
+        "section_spacing"
+      ],
+      "styleRules": [
+        "card_like_items",
+        "badges",
+        "no_title_only_cards"
+      ],
+      "actionRules": [
+        "item_actions_require_binding_when_present"
+      ],
       "itemTemplate": {
-        "controls": ["kanban"],
+        "controls": [
+          "kanban"
+        ],
         "minDynamicFields": 3,
         "requiresActions": false
       },
-      "validationRules": ["item_template_dynamic_fields", "required_fields_present", "action_bindings_present"],
+      "validationRules": [
+        "item_template_dynamic_fields",
+        "required_fields_present",
+        "action_bindings_present"
+      ],
       "allowedFallback": "Use collection_card_board with same field/action contract.",
-      "proofStatus": "runtime-proven"
+      "proofStatus": "runtime-proven",
+      "sourceExports": [
+        "Company Overview (3).yap",
+        "Data Lists (4).yap",
+        "Projects Center_2.yap",
+        "Sales_Management_AD.yap"
+      ],
+      "observedControls": [
+        "kanban",
+        "dynamic-field",
+        "dynamic-user",
+        "dynamic-image",
+        "action-button"
+      ],
+      "observedPatterns": [
+        "Kanban dashboard item template with dynamic fields and item actions",
+        "data-list Kanban views for operational lists"
+      ],
+      "limitations": [
+        "drag/drop and all item action variants need focused runtime proof per generated package"
+      ]
     },
     {
       "templateId": "collection_card_board",
       "category": "dashboard",
       "purpose": "Card board or grouped card list with dynamic item templates.",
       "whenToUse": "Queues, related-card boards, quick review cards, and timeline fallbacks.",
-      "requiredControls": ["collection", "container", "text", "dynamic-field"],
-      "requiredChildControls": ["board_title", "item_template"],
-      "requiredDataBindings": ["source_list", "current_item_context"],
+      "requiredControls": [
+        "collection",
+        "container",
+        "text",
+        "dynamic-field"
+      ],
+      "requiredChildControls": [
+        "board_title",
+        "item_template"
+      ],
+      "requiredDataBindings": [
+        "source_list",
+        "current_item_context"
+      ],
       "requiredFields": [],
-      "layoutRules": ["card_container", "section_spacing"],
-      "styleRules": ["card_hierarchy", "badges_or_status", "no_blank_cards"],
-      "actionRules": ["item_actions_require_binding_when_present"],
+      "layoutRules": [
+        "card_container",
+        "section_spacing"
+      ],
+      "styleRules": [
+        "card_hierarchy",
+        "badges_or_status",
+        "no_blank_cards"
+      ],
+      "actionRules": [
+        "item_actions_require_binding_when_present"
+      ],
       "itemTemplate": {
-        "controls": ["collection"],
+        "controls": [
+          "collection"
+        ],
         "minDynamicFields": 3,
         "requiresActions": false
       },
-      "validationRules": ["item_template_dynamic_fields", "required_fields_present", "action_bindings_present"],
+      "validationRules": [
+        "item_template_dynamic_fields",
+        "required_fields_present",
+        "action_bindings_present"
+      ],
       "allowedFallback": "Use Data table with equivalent columns and documented reason.",
-      "proofStatus": "runtime-proven"
+      "proofStatus": "runtime-proven",
+      "sourceExports": [
+        "Company Overview (3).yap",
+        "Projects Center_2.yap"
+      ],
+      "observedControls": [
+        "collection",
+        "dynamic-field",
+        "dynamic-user",
+        "dynamic-file",
+        "dynamic-image",
+        "action-button"
+      ],
+      "observedPatterns": [
+        "Collection of activity cards with dynamic fields and item actions",
+        "project dashboard and detail-page card collections"
+      ],
+      "limitations": [
+        "some project collections use low dynamic field counts, so generated cards must still meet template minimums"
+      ]
     },
     {
       "templateId": "quick_links_icon_list",
       "category": "dashboard",
       "purpose": "Navigation shortcuts to common app tasks.",
       "whenToUse": "Dashboards that need fast access to forms, workspaces, or views.",
-      "requiredControls": ["icon-list", "container", "grid", "button", "text"],
-      "requiredChildControls": ["link_label", "icon_or_marker", "target_context"],
-      "requiredDataBindings": ["navigation_target_for_active_links"],
+      "requiredControls": [
+        "icon-list",
+        "container",
+        "grid",
+        "button",
+        "text"
+      ],
+      "requiredChildControls": [
+        "link_label",
+        "icon_or_marker",
+        "target_context"
+      ],
+      "requiredDataBindings": [
+        "navigation_target_for_active_links"
+      ],
       "requiredFields": [],
-      "layoutRules": ["card_container", "grid_row", "section_spacing"],
-      "styleRules": ["compact_cards_or_icon_rows", "no_unlabeled_buttons"],
-      "actionRules": ["active_links_require_binding"],
-      "validationRules": ["section_exists", "action_bindings_present", "no_placeholder_content"],
+      "layoutRules": [
+        "card_container",
+        "grid_row",
+        "section_spacing"
+      ],
+      "styleRules": [
+        "compact_cards_or_icon_rows",
+        "no_unlabeled_buttons"
+      ],
+      "actionRules": [
+        "active_links_require_binding"
+      ],
+      "validationRules": [
+        "section_exists",
+        "action_bindings_present",
+        "no_placeholder_content"
+      ],
       "allowedFallback": "Use static shortcut notes when navigation action schema is unsafe.",
-      "proofStatus": "inferred"
+      "proofStatus": "export-proven",
+      "sourceExports": [
+        "Projects Center_2.yap",
+        "Company Overview (3).yap"
+      ],
+      "partialEvidence": true,
+      "observedControls": [
+        "action-button",
+        "icon",
+        "icon-list",
+        "container"
+      ],
+      "observedPatterns": [
+        "dashboard action buttons for All projects and My projects",
+        "Icon list advanced control in Company Overview"
+      ],
+      "limitations": [
+        "full quick-link card navigation pattern still needs package-specific action validation"
+      ]
     },
     {
       "templateId": "recent_activity_timeline",
       "category": "dashboard",
       "purpose": "Chronological activity, history, or milestone feed.",
       "whenToUse": "Recent activity, history, approvals, and review timelines.",
-      "requiredControls": ["timeline-v", "collection", "container", "dynamic-field"],
-      "requiredChildControls": ["date", "title", "type_or_status", "actor", "description"],
-      "requiredDataBindings": ["activity_or_history_source_list"],
-      "requiredFields": ["Activity Date", "Activity Title"],
-      "layoutRules": ["section_spacing"],
-      "styleRules": ["chronological_grouping", "not_plain_list"],
+      "requiredControls": [
+        "timeline-v",
+        "collection",
+        "container",
+        "dynamic-field"
+      ],
+      "requiredChildControls": [
+        "date",
+        "title",
+        "type_or_status",
+        "actor",
+        "description"
+      ],
+      "requiredDataBindings": [
+        "activity_or_history_source_list"
+      ],
+      "requiredFields": [
+        "Activity Date",
+        "Activity Title"
+      ],
+      "layoutRules": [
+        "section_spacing"
+      ],
+      "styleRules": [
+        "chronological_grouping",
+        "not_plain_list"
+      ],
       "actionRules": [],
-      "validationRules": ["section_exists", "data_binding_present", "required_fields_present"],
+      "validationRules": [
+        "section_exists",
+        "data_binding_present",
+        "required_fields_present"
+      ],
       "allowedFallback": "Use Collection with timeline-style item template.",
-      "proofStatus": "export-proven"
+      "proofStatus": "export-proven",
+      "sourceExports": [
+        "Company Overview (3).yap"
+      ],
+      "observedControls": [
+        "timeline-v",
+        "timeline-h",
+        "collection",
+        "dynamic-field",
+        "dynamic-user",
+        "dynamic-file",
+        "dynamic-image"
+      ],
+      "observedPatterns": [
+        "vertical and horizontal timeline pages with dynamic item fields",
+        "collection fallback for activity display"
+      ],
+      "limitations": [
+        "runtime interaction beyond render is not proven by these exports"
+      ]
     },
     {
       "templateId": "detail_view_header_summary",
       "category": "data-list-form",
       "purpose": "Record detail summary header.",
       "whenToUse": "Primary list View forms and detail pages.",
-      "requiredControls": ["container", "grid", "text", "dynamic-field", "dynamic-user"],
-      "requiredChildControls": ["title_field", "status_badge", "risk_or_priority_badge", "owner_or_user"],
-      "requiredDataBindings": ["current_list_item"],
+      "requiredControls": [
+        "container",
+        "grid",
+        "text",
+        "dynamic-field",
+        "dynamic-user"
+      ],
+      "requiredChildControls": [
+        "title_field",
+        "status_badge",
+        "risk_or_priority_badge",
+        "owner_or_user"
+      ],
+      "requiredDataBindings": [
+        "current_list_item"
+      ],
       "requiredFields": [],
-      "layoutRules": ["safe_padding", "card_container", "grid_row", "section_spacing"],
-      "styleRules": ["header_hierarchy", "badge_like_statuses"],
-      "actionRules": ["active_actions_require_binding"],
-      "validationRules": ["section_exists", "required_fields_present", "card_structure_present"],
+      "layoutRules": [
+        "safe_padding",
+        "card_container",
+        "grid_row",
+        "section_spacing"
+      ],
+      "styleRules": [
+        "header_hierarchy",
+        "badge_like_statuses"
+      ],
+      "actionRules": [
+        "active_actions_require_binding"
+      ],
+      "validationRules": [
+        "section_exists",
+        "required_fields_present",
+        "card_structure_present"
+      ],
       "allowedFallback": "Read-only header without buttons when actions are unsafe.",
-      "proofStatus": "export-proven"
+      "proofStatus": "export-proven",
+      "sourceExports": [
+        "Company Overview (3).yap",
+        "Projects Center_2.yap",
+        "Sales_Management_AD.yap"
+      ],
+      "observedControls": [
+        "container",
+        "heading",
+        "dynamic-field",
+        "dynamic-user",
+        "picture",
+        "icon"
+      ],
+      "observedPatterns": [
+        "project/task/company detail pages with status, owner, picture/date, and field summary sections"
+      ],
+      "limitations": [
+        "status badge styling and action behavior need generated package validation"
+      ]
     },
     {
       "templateId": "tabbed_detail_page",
       "category": "data-list-form",
       "purpose": "Tabbed or sectioned detail page shell.",
       "whenToUse": "Detail pages with overview, documents, compliance, tasks, and history.",
-      "requiredControls": ["tabs", "container", "toggle", "divider"],
-      "requiredChildControls": ["overview_section", "documents_section", "compliance_section", "tasks_section", "history_section"],
-      "requiredDataBindings": ["current_record_and_related_lists"],
+      "requiredControls": [
+        "tabs",
+        "container",
+        "toggle",
+        "divider"
+      ],
+      "requiredChildControls": [
+        "overview_section",
+        "documents_section",
+        "compliance_section",
+        "tasks_section",
+        "history_section"
+      ],
+      "requiredDataBindings": [
+        "current_record_and_related_lists"
+      ],
       "requiredFields": [],
-      "layoutRules": ["safe_padding", "section_spacing"],
-      "styleRules": ["clear_section_navigation", "no_empty_tab_bodies"],
-      "actionRules": ["section_actions_optional_and_bound"],
-      "validationRules": ["section_exists", "controls_present", "no_placeholder_content"],
+      "layoutRules": [
+        "safe_padding",
+        "section_spacing"
+      ],
+      "styleRules": [
+        "clear_section_navigation",
+        "no_empty_tab_bodies"
+      ],
+      "actionRules": [
+        "section_actions_optional_and_bound"
+      ],
+      "validationRules": [
+        "section_exists",
+        "controls_present",
+        "no_placeholder_content"
+      ],
       "allowedFallback": "Sectioned layout when Tabs are not safely supported.",
-      "proofStatus": "export-proven"
+      "proofStatus": "export-proven",
+      "sourceExports": [
+        "Company Overview (3).yap",
+        "Projects Center_2.yap"
+      ],
+      "observedControls": [
+        "aktabs",
+        "ak-tabs-tab",
+        "toggle",
+        "toggle-panel",
+        "dropbar",
+        "container",
+        "collection",
+        "kanban"
+      ],
+      "observedPatterns": [
+        "dashboard Tab and Toggle control pages",
+        "Project detail page with tab/dropbar-like navigation and related sections"
+      ],
+      "limitations": [
+        "exact generated Tab host shape must match target page host"
+      ]
     },
     {
       "templateId": "sectioned_new_edit_form",
       "category": "data-list-form",
       "purpose": "Business section cards for New/Edit forms.",
       "whenToUse": "Data entry and request intake forms.",
-      "requiredControls": ["container", "grid", "field", "dynamic-field", "text"],
-      "requiredChildControls": ["section_title", "grouped_fields"],
-      "requiredDataBindings": ["host_list_fields"],
+      "requiredControls": [
+        "container",
+        "grid",
+        "field",
+        "dynamic-field",
+        "text"
+      ],
+      "requiredChildControls": [
+        "section_title",
+        "grouped_fields"
+      ],
+      "requiredDataBindings": [
+        "host_list_fields"
+      ],
       "requiredFields": [],
-      "layoutRules": ["safe_padding", "section_card", "grid_row", "section_spacing"],
-      "styleRules": ["section_cards", "two_column_desktop_grid", "clear_labels"],
-      "actionRules": ["save_submit_require_form_action_binding"],
-      "validationRules": ["section_exists", "required_fields_present", "card_structure_present"],
+      "layoutRules": [
+        "safe_padding",
+        "section_card",
+        "grid_row",
+        "section_spacing"
+      ],
+      "styleRules": [
+        "section_cards",
+        "two_column_desktop_grid",
+        "clear_labels"
+      ],
+      "actionRules": [
+        "save_submit_require_form_action_binding"
+      ],
+      "validationRules": [
+        "section_exists",
+        "required_fields_present",
+        "card_structure_present"
+      ],
       "allowedFallback": "Single-column section cards when grid settings are unsafe.",
-      "proofStatus": "export-proven"
+      "proofStatus": "export-proven",
+      "sourceExports": [
+        "Data Lists (4).yap",
+        "Projects Center_2.yap",
+        "Sales_Management_AD.yap"
+      ],
+      "observedControls": [
+        "container",
+        "flex-grid",
+        "input",
+        "datepicker",
+        "lookup",
+        "identity-picker",
+        "textarea",
+        "richtext",
+        "radio"
+      ],
+      "observedPatterns": [
+        "Data Lists custom forms with field grids",
+        "Sales opportunity/account New/Edit sections",
+        "Project and task edit forms"
+      ],
+      "limitations": [
+        "visual card polish still must be enforced by templates"
+      ]
     },
     {
       "templateId": "required_documents_checklist",
       "category": "data-list-form",
       "purpose": "Document requirements and file upload/status checklist.",
       "whenToUse": "Vendor intake, compliance, and document tracking forms.",
-      "requiredControls": ["list", "data-list", "container", "field", "dynamic-file"],
-      "requiredChildControls": ["document_type", "required_flag", "file_attachment", "expiry_or_review_status"],
-      "requiredDataBindings": ["document_sub_list_or_related_documents_list"],
-      "requiredFields": ["Document Type", "Required"],
-      "layoutRules": ["section_card", "section_spacing"],
-      "styleRules": ["checklist_rows", "clear_document_headers"],
-      "actionRules": ["upload_add_remove_actions_require_binding"],
-      "validationRules": ["section_exists", "data_binding_present", "required_fields_present"],
+      "requiredControls": [
+        "list",
+        "data-list",
+        "container",
+        "field",
+        "dynamic-file"
+      ],
+      "requiredChildControls": [
+        "document_type",
+        "required_flag",
+        "file_attachment",
+        "expiry_or_review_status"
+      ],
+      "requiredDataBindings": [
+        "document_sub_list_or_related_documents_list"
+      ],
+      "requiredFields": [
+        "Document Type",
+        "Required"
+      ],
+      "layoutRules": [
+        "section_card",
+        "section_spacing"
+      ],
+      "styleRules": [
+        "checklist_rows",
+        "clear_document_headers"
+      ],
+      "actionRules": [
+        "upload_add_remove_actions_require_binding"
+      ],
+      "validationRules": [
+        "section_exists",
+        "data_binding_present",
+        "required_fields_present"
+      ],
       "allowedFallback": "Related Vendor Documents Data table when Dynamic Sub List is not safe.",
-      "proofStatus": "export-proven"
+      "proofStatus": "export-proven",
+      "sourceExports": [
+        "Data Lists (4).yap",
+        "Projects Center_2.yap"
+      ],
+      "partialEvidence": true,
+      "observedControls": [
+        "list",
+        "file-upload",
+        "dynamic-file",
+        "data-list"
+      ],
+      "observedPatterns": [
+        "Dynamic Sub List field in Data Lists forms",
+        "Projects document upload/detail forms"
+      ],
+      "limitations": [
+        "Vendor-style required document checklist with upload/review lifecycle still needs golden proof or focused package validation"
+      ]
     },
     {
       "templateId": "related_records_section",
       "category": "data-list-form",
       "purpose": "Related child records on a detail page.",
       "whenToUse": "Documents, reviews, tasks, or history related to a primary record.",
-      "requiredControls": ["data-list", "collection", "timeline-v", "document", "container"],
-      "requiredChildControls": ["section_title", "configured_columns_or_item_template"],
-      "requiredDataBindings": ["related_source_list"],
+      "requiredControls": [
+        "data-list",
+        "collection",
+        "timeline-v",
+        "document",
+        "container"
+      ],
+      "requiredChildControls": [
+        "section_title",
+        "configured_columns_or_item_template"
+      ],
+      "requiredDataBindings": [
+        "related_source_list"
+      ],
       "requiredFields": [],
-      "layoutRules": ["section_card", "section_spacing"],
-      "styleRules": ["grouped_table_or_cards", "clear_section_title"],
-      "actionRules": ["related_record_actions_optional_and_bound"],
-      "validationRules": ["section_exists", "data_binding_present", "required_fields_present"],
+      "layoutRules": [
+        "section_card",
+        "section_spacing"
+      ],
+      "styleRules": [
+        "grouped_table_or_cards",
+        "clear_section_title"
+      ],
+      "actionRules": [
+        "related_record_actions_optional_and_bound"
+      ],
+      "validationRules": [
+        "section_exists",
+        "data_binding_present",
+        "required_fields_present"
+      ],
       "allowedFallback": "Read-only related list/table with documented filter-binding gap.",
-      "proofStatus": "inferred"
+      "proofStatus": "export-proven",
+      "sourceExports": [
+        "Projects Center_2.yap",
+        "Sales_Management_AD.yap"
+      ],
+      "observedControls": [
+        "collection",
+        "kanban",
+        "data-list",
+        "document",
+        "container"
+      ],
+      "observedPatterns": [
+        "Project detail page related task/issue/collection sections",
+        "Sales Account view related Contacts and Opportunities data tables"
+      ],
+      "limitations": [
+        "relationship filters and current-record context must be validated per generated package"
+      ]
     },
     {
       "templateId": "print_page_summary",
       "category": "data-list-form",
       "purpose": "Read-only print-oriented record summary.",
       "whenToUse": "Printable record or vendor summary pages.",
-      "requiredControls": ["container", "grid", "text", "dynamic-field", "divider"],
-      "requiredChildControls": ["print_header", "summary_fields", "status_badges"],
-      "requiredDataBindings": ["current_list_item"],
+      "requiredControls": [
+        "container",
+        "grid",
+        "text",
+        "dynamic-field",
+        "divider"
+      ],
+      "requiredChildControls": [
+        "print_header",
+        "summary_fields",
+        "status_badges"
+      ],
+      "requiredDataBindings": [
+        "current_list_item"
+      ],
       "requiredFields": [],
-      "layoutRules": ["print_layout", "safe_padding", "section_spacing", "no_mutating_actions"],
-      "styleRules": ["print_spacing", "section_dividers", "read_only"],
-      "actionRules": ["no_mutating_actions"],
-      "validationRules": ["section_exists", "required_fields_present", "no_mutating_actions"],
+      "layoutRules": [
+        "print_layout",
+        "safe_padding",
+        "section_spacing",
+        "no_mutating_actions"
+      ],
+      "styleRules": [
+        "print_spacing",
+        "section_dividers",
+        "read_only"
+      ],
+      "actionRules": [
+        "no_mutating_actions"
+      ],
+      "validationRules": [
+        "section_exists",
+        "required_fields_present",
+        "no_mutating_actions"
+      ],
       "allowedFallback": "Use record code text when QR/barcode controls are unsafe.",
-      "proofStatus": "export-proven"
+      "proofStatus": "needs-golden-proof",
+      "sourceExports": [],
+      "observedControls": [],
+      "observedPatterns": [],
+      "limitations": [
+        "No inspected reference export contained a clear custom Print Page layout"
+      ]
     },
     {
       "templateId": "print_page_document_checklist",
       "category": "data-list-form",
       "purpose": "Printable document checklist/status rows.",
       "whenToUse": "Print pages with document evidence or required documents.",
-      "requiredControls": ["data-list", "list", "container", "text"],
-      "requiredChildControls": ["document_type", "status", "expiry", "reviewer_or_notes"],
-      "requiredDataBindings": ["related_documents_or_sub_list"],
-      "requiredFields": ["Document Type", "Review Status"],
-      "layoutRules": ["print_layout", "section_spacing", "no_mutating_actions"],
-      "styleRules": ["compact_print_rows", "clear_headers"],
-      "actionRules": ["no_actions"],
-      "validationRules": ["section_exists", "data_binding_present", "required_fields_present"],
+      "requiredControls": [
+        "data-list",
+        "list",
+        "container",
+        "text"
+      ],
+      "requiredChildControls": [
+        "document_type",
+        "status",
+        "expiry",
+        "reviewer_or_notes"
+      ],
+      "requiredDataBindings": [
+        "related_documents_or_sub_list"
+      ],
+      "requiredFields": [
+        "Document Type",
+        "Review Status"
+      ],
+      "layoutRules": [
+        "print_layout",
+        "section_spacing",
+        "no_mutating_actions"
+      ],
+      "styleRules": [
+        "compact_print_rows",
+        "clear_headers"
+      ],
+      "actionRules": [
+        "no_actions"
+      ],
+      "validationRules": [
+        "section_exists",
+        "data_binding_present",
+        "required_fields_present"
+      ],
       "allowedFallback": "Static checklist rows only with documented data-binding gap.",
-      "proofStatus": "export-proven"
+      "proofStatus": "needs-golden-proof",
+      "sourceExports": [],
+      "observedControls": [],
+      "observedPatterns": [],
+      "limitations": [
+        "No inspected reference export contained a print document checklist"
+      ]
     },
     {
       "templateId": "print_page_qr_barcode_section",
       "category": "data-list-form",
       "purpose": "Scannable or textual record identity on print output.",
       "whenToUse": "Print pages requiring QR, barcode, or safe record code fallback.",
-      "requiredControls": ["qrcode", "barcode", "container", "text", "dynamic-field"],
-      "requiredChildControls": ["code_value", "label", "fallback_text"],
-      "requiredDataBindings": ["record_code_field"],
-      "requiredFields": ["Vendor Code"],
-      "layoutRules": ["print_layout", "section_spacing"],
-      "styleRules": ["compact_identity_block"],
-      "actionRules": ["no_actions"],
-      "validationRules": ["section_exists", "required_fields_present"],
+      "requiredControls": [
+        "qrcode",
+        "barcode",
+        "container",
+        "text",
+        "dynamic-field"
+      ],
+      "requiredChildControls": [
+        "code_value",
+        "label",
+        "fallback_text"
+      ],
+      "requiredDataBindings": [
+        "record_code_field"
+      ],
+      "requiredFields": [
+        "Vendor Code"
+      ],
+      "layoutRules": [
+        "print_layout",
+        "section_spacing"
+      ],
+      "styleRules": [
+        "compact_identity_block"
+      ],
+      "actionRules": [
+        "no_actions"
+      ],
+      "validationRules": [
+        "section_exists",
+        "required_fields_present"
+      ],
       "allowedFallback": "Plain Vendor Code field when QR/barcode is unsafe.",
-      "proofStatus": "export-proven"
+      "proofStatus": "needs-golden-proof",
+      "sourceExports": [
+        "Company Overview (3).yap"
+      ],
+      "partialEvidence": true,
+      "observedControls": [
+        "qrcode",
+        "barcode",
+        "dynamic-field"
+      ],
+      "observedPatterns": [
+        "QR Code and Barcode controls appear on Company Overview View page"
+      ],
+      "limitations": [
+        "Print-page integration of QR/barcode still needs golden proof"
+      ]
     },
     {
       "templateId": "kanban_card_with_dynamic_fields",
       "category": "item-template",
       "purpose": "Standard Kanban item template with dynamic fields and actions.",
       "whenToUse": "Any required Kanban item card.",
-      "requiredControls": ["kanban", "dynamic-field"],
-      "requiredChildControls": ["title", "status_or_risk_badge", "owner_or_date", "action_area"],
-      "requiredDataBindings": ["current_kanban_item_context"],
+      "requiredControls": [
+        "kanban",
+        "dynamic-field"
+      ],
+      "requiredChildControls": [
+        "title",
+        "status_or_risk_badge",
+        "owner_or_date",
+        "action_area"
+      ],
+      "requiredDataBindings": [
+        "current_kanban_item_context"
+      ],
       "requiredFields": [],
-      "layoutRules": ["card_container", "section_spacing"],
-      "styleRules": ["card_hierarchy", "no_title_only_cards"],
-      "actionRules": ["view_action_when_required"],
+      "layoutRules": [
+        "card_container",
+        "section_spacing"
+      ],
+      "styleRules": [
+        "card_hierarchy",
+        "no_title_only_cards"
+      ],
+      "actionRules": [
+        "view_action_when_required"
+      ],
       "itemTemplate": {
-        "controls": ["kanban"],
+        "controls": [
+          "kanban"
+        ],
         "minDynamicFields": 3,
         "requiresActions": true
       },
-      "validationRules": ["item_template_dynamic_fields", "required_fields_present", "action_bindings_present"],
+      "validationRules": [
+        "item_template_dynamic_fields",
+        "required_fields_present",
+        "action_bindings_present"
+      ],
       "allowedFallback": "Collection card template with same field/action contract.",
-      "proofStatus": "runtime-proven"
+      "proofStatus": "runtime-proven",
+      "sourceExports": [
+        "Company Overview (3).yap"
+      ],
+      "observedControls": [
+        "kanban",
+        "dynamic-field",
+        "dynamic-user",
+        "dynamic-image",
+        "action-button"
+      ],
+      "observedPatterns": [
+        "Kanban item template with 10 dynamic controls and edit/delete actions"
+      ],
+      "limitations": [
+        "new generated packages must still resolve action targets and current-item fields"
+      ]
     },
     {
       "templateId": "collection_card_with_dynamic_fields",
       "category": "item-template",
       "purpose": "Standard Collection item template with dynamic fields and actions.",
       "whenToUse": "Any required Collection card board or card list.",
-      "requiredControls": ["collection", "dynamic-field"],
-      "requiredChildControls": ["title", "status_or_risk", "owner_or_date", "action_area"],
-      "requiredDataBindings": ["current_collection_item_context"],
+      "requiredControls": [
+        "collection",
+        "dynamic-field"
+      ],
+      "requiredChildControls": [
+        "title",
+        "status_or_risk",
+        "owner_or_date",
+        "action_area"
+      ],
+      "requiredDataBindings": [
+        "current_collection_item_context"
+      ],
       "requiredFields": [],
-      "layoutRules": ["card_container", "grid_row"],
-      "styleRules": ["card_hierarchy", "no_blank_cards"],
-      "actionRules": ["view_edit_update_delete_only_when_bound"],
+      "layoutRules": [
+        "card_container",
+        "grid_row"
+      ],
+      "styleRules": [
+        "card_hierarchy",
+        "no_blank_cards"
+      ],
+      "actionRules": [
+        "view_edit_update_delete_only_when_bound"
+      ],
       "itemTemplate": {
-        "controls": ["collection"],
+        "controls": [
+          "collection"
+        ],
         "minDynamicFields": 3,
         "requiresActions": true
       },
-      "validationRules": ["item_template_dynamic_fields", "required_fields_present", "action_bindings_present"],
+      "validationRules": [
+        "item_template_dynamic_fields",
+        "required_fields_present",
+        "action_bindings_present"
+      ],
       "allowedFallback": "Data table with equivalent columns and documented reason.",
-      "proofStatus": "runtime-proven"
+      "proofStatus": "runtime-proven",
+      "sourceExports": [
+        "Company Overview (3).yap"
+      ],
+      "observedControls": [
+        "collection",
+        "dynamic-field",
+        "dynamic-user",
+        "dynamic-file",
+        "dynamic-image",
+        "action-button"
+      ],
+      "observedPatterns": [
+        "Collection item template with 9 dynamic controls and item actions"
+      ],
+      "limitations": [
+        "new generated packages must still resolve action targets and current-item fields"
+      ]
     },
     {
       "templateId": "item_action_bar_edit_delete_update",
       "category": "item-template",
       "purpose": "Local item action row for cards.",
       "whenToUse": "Cards requiring edit, delete, update, or workflow actions.",
-      "requiredControls": ["button", "icon"],
-      "requiredChildControls": ["action_label_or_icon", "action_id", "current_item_context"],
-      "requiredDataBindings": ["current_item_listdataid", "target_layout_or_fields"],
+      "requiredControls": [
+        "button",
+        "icon"
+      ],
+      "requiredChildControls": [
+        "action_label_or_icon",
+        "action_id",
+        "current_item_context"
+      ],
+      "requiredDataBindings": [
+        "current_item_listdataid",
+        "target_layout_or_fields"
+      ],
       "requiredFields": [],
-      "layoutRules": ["section_spacing"],
-      "styleRules": ["compact_action_row", "destructive_action_distinction"],
-      "actionRules": ["all_item_actions_resolve"],
-      "validationRules": ["action_bindings_present", "required_fields_present"],
+      "layoutRules": [
+        "section_spacing"
+      ],
+      "styleRules": [
+        "compact_action_row",
+        "destructive_action_distinction"
+      ],
+      "actionRules": [
+        "all_item_actions_resolve"
+      ],
+      "validationRules": [
+        "action_bindings_present",
+        "required_fields_present"
+      ],
       "allowedFallback": "Static action notes with explicit deferred reason.",
-      "proofStatus": "runtime-proven"
+      "proofStatus": "runtime-proven",
+      "sourceExports": [
+        "Company Overview (3).yap"
+      ],
+      "observedControls": [
+        "action-button"
+      ],
+      "observedPatterns": [
+        "Edit item, Delete Item, Mark as completed item action buttons"
+      ],
+      "limitations": [
+        "runtime mutation proof remains scoped to previous focused package"
+      ]
     },
     {
       "templateId": "selection_bulk_toolbar",
       "category": "item-template",
       "purpose": "Selection-aware bulk action toolbar.",
       "whenToUse": "Multi-select update/delete/review operations.",
-      "requiredControls": ["container", "text", "button"],
-      "requiredChildControls": ["selected_count", "bulk_action_buttons"],
-      "requiredDataBindings": ["selected_ids_variable", "selected_count_variable"],
+      "requiredControls": [
+        "container",
+        "text",
+        "button"
+      ],
+      "requiredChildControls": [
+        "selected_count",
+        "bulk_action_buttons"
+      ],
+      "requiredDataBindings": [
+        "selected_ids_variable",
+        "selected_count_variable"
+      ],
       "requiredFields": [],
-      "layoutRules": ["card_container", "section_spacing"],
-      "styleRules": ["toolbar_visibility_when_selected"],
-      "actionRules": ["bulk_buttons_require_binding"],
-      "validationRules": ["action_bindings_present", "data_binding_present"],
+      "layoutRules": [
+        "card_container",
+        "section_spacing"
+      ],
+      "styleRules": [
+        "toolbar_visibility_when_selected"
+      ],
+      "actionRules": [
+        "bulk_buttons_require_binding"
+      ],
+      "validationRules": [
+        "action_bindings_present",
+        "data_binding_present"
+      ],
       "allowedFallback": "Omit active bulk toolbar and document deferred reason.",
-      "proofStatus": "runtime-proven"
+      "proofStatus": "runtime-proven",
+      "sourceExports": [
+        "Company Overview (3).yap"
+      ],
+      "observedControls": [
+        "action-button",
+        "collection"
+      ],
+      "observedPatterns": [
+        "bulk Mark as completed and Delete selected items actions around Collection controls"
+      ],
+      "limitations": [
+        "selected ID/count variable wiring must be validated per generated package"
+      ]
     }
   ]
 }
