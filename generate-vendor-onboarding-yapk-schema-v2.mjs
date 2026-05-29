@@ -6,12 +6,12 @@ import { fetchYeeflowUniqueIds, loadYeeflowApiEnvironment, summarizeIds } from "
 
 const GZIP_PREFIX = "[______gizp______]";
 const SOURCE_YAP = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.12-current-dashboard-data-table-fields-fixed.yap";
-const OUTPUT_YAPK = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.14-yapk-portalinfo-array.yapk";
-const REPORT = ".tmp/vendor-onboarding-compliance-management/vendor-onboarding-yapk-v1.14-portalinfo-array-report.json";
+const OUTPUT_YAPK = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.15-yapk-portalinfo-null.yapk";
+const REPORT = ".tmp/vendor-onboarding-compliance-management/vendor-onboarding-yapk-v1.15-portalinfo-null-report.json";
 const TITLE = "Vendor Onboarding & Compliance Management";
 const DESCRIPTION = "Generated Yeeflow application package from the approved Vendor Onboarding UI implementation spec.";
 const ICON_URL = "{\"b\":\"#E6F7FF\",\"i\":\"fa-regular fa-building-shield\",\"c\":\"#008DA6\"}";
-const VERSION = "1.14-yapk-portalinfo-array";
+const VERSION = "1.15-yapk-portalinfo-null";
 const APP_ID = 41;
 const LARGE_INTEGER_RE = /^-?\d{16,}$/;
 
@@ -193,7 +193,7 @@ function buildAppPackageInfo(listExportInfo) {
     Knowledges: [],
     Themes: [],
     Components: [],
-    PortalInfo: [],
+    PortalInfo: null,
     Childs: childs,
   };
 }
@@ -246,7 +246,7 @@ async function main() {
     Description: DESCRIPTION,
     IconUrl: ICON_URL,
     Resource: resource,
-    Notes: "Server-signed YAPK schema v2 candidate generated from the v1.12 import-proven Vendor Onboarding YAP content, with no-portal PortalInfo emitted as an empty array. Manual runtime import proof is required.",
+    Notes: "Server-signed YAPK schema v2 candidate generated from the v1.12 import-proven Vendor Onboarding YAP content, with no-portal PortalInfo emitted as null. Manual runtime import proof is required.",
     Author: "Yeeflow Builder",
     Date: utcNowNoMillis(),
     Version: VERSION,
@@ -277,7 +277,7 @@ async function main() {
     resource: {
       encoding: "base64(Brotli(JSON.stringify(AppPackageInfo)))",
       decodedShape: "AppPackageInfo",
-      portalInfoShape: "empty array",
+      portalInfoShape: "null",
       decodedTextBytes: Buffer.byteLength(appPackageText),
       brotliBytes: Buffer.from(resource, "base64").length,
     },

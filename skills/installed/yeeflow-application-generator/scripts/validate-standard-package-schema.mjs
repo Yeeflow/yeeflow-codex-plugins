@@ -527,7 +527,7 @@ function summarizeDecoded(decoded, type) {
 
 function normalizeYapkDecodedForSchema(decoded) {
   if (!isObject(decoded)) return decoded;
-  if (!Array.isArray(decoded.PortalInfo)) return decoded;
+  if (decoded.PortalInfo !== null) return decoded;
   return { ...decoded, PortalInfo: {} };
 }
 
@@ -539,15 +539,23 @@ function inspectYapkPortalInfo(decoded) {
       scope: "decodedResource",
       path: "$.PortalInfo",
       code: "YAPK_PORTALINFO_EMPTY_OBJECT_INVALID",
-      message: "Product import feedback requires PortalInfo to be [] when no portal is included; do not emit an empty object.",
+      message: "Product import feedback requires PortalInfo to be null when no portal is included; do not emit an empty object.",
     });
-  } else if (decoded.PortalInfo !== undefined && !Array.isArray(decoded.PortalInfo) && !isObject(decoded.PortalInfo)) {
+  } else if (Array.isArray(decoded.PortalInfo)) {
+    errors.push({
+      scope: "decodedResource",
+      path: "$.PortalInfo",
+      code: "YAPK_PORTALINFO_ARRAY_INVALID",
+      message: "Product import feedback requires PortalInfo to be null when no portal is included; do not emit an array.",
+      length: decoded.PortalInfo.length,
+    });
+  } else if (decoded.PortalInfo !== undefined && decoded.PortalInfo !== null && !isObject(decoded.PortalInfo)) {
     errors.push({
       scope: "decodedResource",
       path: "$.PortalInfo",
       code: "YAPK_PORTALINFO_INVALID",
-      message: "PortalInfo must be [] for no portal or a portal object when a portal is included.",
-      actualType: decoded.PortalInfo === null ? "null" : typeof decoded.PortalInfo,
+      message: "PortalInfo must be null for no portal or a portal object when a portal is included.",
+      actualType: typeof decoded.PortalInfo,
     });
   }
   return errors;
