@@ -5,6 +5,12 @@ description: generate, inspect, validate, package, debug, and improve yeeflow da
 
 # Yeeflow Data List Generator
 
+## Full Application Visual Quality Gate
+
+Vendor Onboarding full UI v2 proved that import/install success is not enough. Do not call a generated package a full UI application unless it implements the approved plan and mockup-derived pages, forms, controls, bindings, and actions at usable quality. Blank or generic Data List custom forms are quality failures. Default/plain buttons without action bindings are quality failures. Default alert copy such as `Alert` or `Here is the description` is a quality failure. Kanban and Collection controls without meaningful dynamic item templates and item actions are quality failures.
+
+For full application generation, run `scripts/inspect-generated-app-quality.mjs --package <package> --spec <approved-spec.md> --strict-visual-app-quality` before handoff. The strict gate must fail missing planned pages/forms, missing print pages, underbuilt dashboards, missing safe padding/card structure, placeholder controls, default buttons, missing actions, empty Kanban/Collection templates, and undocumented deferred scope. Do not return a minimal or technically importable scaffold when the user asked for the full approved application.
+
 Business Travel schema-practice carry-forward: generated data-list and document-library child resources must include `ListModel.Flags = 1`, keep `ListModel.Type` within the schema-v2 enum, and use `ListModel.Status = 1` when Status is emitted. `Defs` and `Layouts` must be arrays, not `null`. FieldIndex/FieldName suffix synchronization, unique identifiers, and valid InternalName rules remain hard gates before import.
 
 Pivot Table runtime-proof carry-forward: the v1 generated package imported but its seeded `ListDatas` rows did not appear and manual Add failed because data-list field definitions were cloned by array position, crossing `FieldName` and `FieldType` storage metadata. The v2 package cloned definitions by `FieldName`, included 20 safe rows, and the user confirmed rows, Pivot Tables, and Add new item worked. Future generated data lists, especially analytics/demo lists, must keep storage families aligned (`Text* -> Text`, `Datetime* -> Datetime/date`, `Decimal* -> Decimal/number`, `Bigint* -> Bigint/integer`, `Bit* -> Bit/boolean`) and validate seed-row keys against those fields before handoff.
