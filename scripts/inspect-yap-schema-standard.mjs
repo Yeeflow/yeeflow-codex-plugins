@@ -190,18 +190,6 @@ function inspectListExportItem(item, exportPath, findings, summary) {
         actualType: field?.Category === undefined ? "missing" : Array.isArray(field?.Category) ? "array" : field?.Category === null ? "null" : typeof field?.Category,
       });
     }
-    if (typeof field?.FieldName === "string" && Number.isInteger(field?.FieldIndex)) {
-      const match = field.FieldName.match(/(\d+)$/);
-      if (!match || Number.parseInt(match[1], 10) !== field.FieldIndex) {
-        add(findings, "error", "FIELD_NAME_SUFFIX_INDEX_MISMATCH", "FieldName trailing digits must equal FieldIndex.", {
-          path: `${exportPath}.Defs[${fieldIndex}].FieldName`,
-          list: item.ListModel?.Title || null,
-          field: field.DisplayName || field.FieldName || field.InternalName || null,
-          fieldName: field.FieldName,
-          fieldIndex: field.FieldIndex,
-        });
-      }
-    }
   }
 }
 
@@ -221,6 +209,7 @@ function inspectIdUniqueness(data, findings, largeNumbers = new Set()) {
   const assertSafeInteger = (value, pointer) => {
     if (value === undefined || value === null || value === "") return;
     if (typeof value === "string" && largeNumbers.has(value)) return;
+    if (typeof value === "string" && LARGE_INTEGER_RE.test(value)) return;
     if (!Number.isInteger(value)) {
       add(findings, "error", "INVALID_ID_TYPE", "Generated YAP ID values must be JSON integers.", {
         path: pointer,

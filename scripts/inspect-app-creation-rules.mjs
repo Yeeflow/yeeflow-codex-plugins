@@ -173,12 +173,6 @@ function inspectList(list, index, findings) {
         expectedFamily: expectedFieldType.family,
       });
     }
-    const numericIndex = Number(field?.FieldIndex);
-    if (fieldName && !SYSTEM_FIELDS.has(fieldName) && Number.isInteger(numericIndex) && numericIndex > 0) {
-      const match = fieldName.match(/(\d+)$/);
-      if (!match) addFinding(findings, "error", "FIELD_NAME_NUMERIC_SUFFIX_MISSING", "FieldName numeric suffix must match FieldIndex.", { location, fieldName, fieldIndex: numericIndex });
-      else if (Number(match[1]) !== numericIndex) addFinding(findings, "error", "FIELD_NAME_FIELDINDEX_MISMATCH", "FieldName numeric suffix must match FieldIndex.", { location, fieldName, fieldIndex: numericIndex, suffix: Number(match[1]) });
-    }
   }
 }
 

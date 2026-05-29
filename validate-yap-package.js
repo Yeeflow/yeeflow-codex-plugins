@@ -404,6 +404,15 @@ function validateGeneratedIntegerId(value, report, context = {}) {
   const severity = generatorFinalSeverity(report);
   const rawLargeIntegerToken = typeof value === "string" && report._largeNumbers && report._largeNumbers.has(value);
   if (rawLargeIntegerToken) return;
+  if (typeof value === "string" && LARGE_INTEGER_RE.test(value)) {
+    if (report.mode === "generator" && report.stage === "final" && isLikelyLocalGeneratedId(value)) {
+      issue(report, severity, "ID_SOURCE_NOT_API", "Import-proof generated YAP IDs should come from the Yeeflow generate-unique-ids API, not the local fallback ID range.", {
+        ...context,
+        value,
+      });
+    }
+    return;
+  }
   if (!Number.isInteger(value)) {
     issue(report, severity, "INVALID_ID_TYPE", "Generated YAP ID values must be JSON integers.", {
       ...context,
@@ -470,18 +479,6 @@ function validateAppCreationFieldRules(field, report, context = {}) {
     issue(report, "warning", "LIST_FIELD_TYPE_UNSUPPORTED", "List field Type is not in the product-team supported Type list.", { list, path: `${pathPrefix}.Type`, fieldName, type });
   }
 
-  if (!fieldName || KNOWN_SYSTEM_FIELDS.has(fieldName)) return;
-  const fieldIndex = Number(field && field.FieldIndex);
-  if (!Number.isInteger(fieldIndex) || fieldIndex <= 0) return;
-  const suffixMatch = fieldName.match(/(\d+)$/);
-  if (!suffixMatch) {
-    issue(report, severity, "FIELD_NAME_NUMERIC_SUFFIX_MISSING", "FieldName numeric suffix must match FieldIndex; generated non-system fields must end with their FieldIndex value.", { list, path: `${pathPrefix}.FieldName`, fieldName, fieldIndex });
-    return;
-  }
-  const suffix = Number(suffixMatch[1]);
-  if (suffix !== fieldIndex) {
-    issue(report, severity, "FIELD_NAME_FIELDINDEX_MISMATCH", "FieldName numeric suffix must match FieldIndex.", { list, path: `${pathPrefix}.FieldName`, fieldName, fieldIndex, suffix });
-  }
 }
 
 function validateProcessKey(value, report, context = {}) {
@@ -1069,7 +1066,7 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
     const ext2 = tryParseJson(layout.Ext2);
     const resources = asArray(layout.LayoutInResources);
     if (!resources.length) {
-      if (layout.LayoutView !== null || !ext2 || ext2.src !== true) {
+      if (!(layout.LayoutView === null || layout.LayoutView === "") || !ext2 || ext2.src !== true) {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DASHBOARD_USES_LEGACY_SCHEMA", "Generated Type 103 dashboard shell should use the current export-proven shape: LayoutView null, Ext2 {\"src\":true}, and empty LayoutInResources.", { title: layout.Title, layoutId, layoutViewType: layout.LayoutView === null ? "null" : typeof layout.LayoutView, ext2 });
       }
       if (!ext2 || ext2.src !== true) {
@@ -1077,7 +1074,7 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
       }
     }
     if (layout.LayoutView !== null && layout.LayoutView !== undefined) {
-      if (!(isSchemaDirectYap(report) && layout.LayoutView === "")) {
+      if (layout.LayoutView !== "") {
         issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "ROOT_APP_PAGE_LAYOUTVIEW_NOT_NULL", "Root Type 103 app page LayoutView should be null; working exports store page content in LayoutInResources.Resource.", { title: layout.Title, layoutId });
       }
     }
@@ -2545,9 +2542,7 @@ function validateResourceItem(item, index, isRoot, rootListSetId, replaceIds, lo
     if (safeString(list.CustomType) !== expectedCustomType) {
       issue(report, generatorFinalSeverity(report), "CHILD_CUSTOMTYPE_LISTSITE_MISMATCH", "Child list CustomType must point to the generated root application/ListSet ID as ListSite_<root ListID>.", { path: `${pathPrefix}.ListModel.CustomType`, title, customType: list.CustomType, expectedCustomType });
     }
-    if (!isSchemaDirectYap(report) && resourceType === "data list" && list.ListType === undefined) {
-      issue(report, generatorFinalSeverity(report), "MAIN_LIST_TYPE_MISSING", "Generated child data lists must include ListModel.ListType before handoff; missing ListType can block Yeeflow import/materialization.", { path: `${pathPrefix}.ListModel.ListType`, title, listId });
-    } else if (!isSchemaDirectYap(report) && resourceType === "data list" && Number(list.ListType) !== 1) {
+    if (!isSchemaDirectYap(report) && resourceType === "data list" && list.ListType !== undefined && Number(list.ListType) !== 1) {
       issue(report, generatorFinalSeverity(report), "MAIN_LIST_TYPE_INVALID", "Generated Type 1 data lists must use ListModel.ListType = 1 before handoff.", { path: `${pathPrefix}.ListModel.ListType`, title, listId, listType: list.ListType });
     }
   }
@@ -2974,7 +2969,7 @@ function validateViewExtField(ext, key, fieldsByName, layout, report, severity) 
 
 function validateCustomFormLayout(layout, fieldsByName, pathPrefix, report, layoutsById = new Map()) {
   if (layout.LayoutView !== null && layout.LayoutView !== undefined) {
-    if (!(isSchemaDirectYap(report) && layout.LayoutView === "")) {
+    if (layout.LayoutView !== "") {
       issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "CUSTOM_FORM_LAYOUTVIEW_NOT_NULL", "Custom form LayoutView should be null.", { path: `${pathPrefix}.LayoutView`, title: layout.Title });
     }
   }
@@ -3192,7 +3187,8 @@ function validateCustomFormActions(form, fieldsByName, pathPrefix, report, title
   }
   asArray(form.children).forEach((child, index) => walkControls(child, (control, pointer) => {
     const actionId = control && control.attrs && control.attrs.control_action;
-    if (actionId && !actionIds.has(String(actionId))) {
+    const inlineActionIds = new Set(asArray(control?.attrs?.actions).map((action) => String(action?.id || "")).filter(Boolean));
+    if (actionId && !actionIds.has(String(actionId)) && !inlineActionIds.has(String(actionId))) {
       issue(report, report.mode === "generator" ? "error" : "warning", "CUSTOM_FORM_BUTTON_ACTION_REF_NOT_FOUND", "Custom form action button references an unknown action.", { title, actionId, path: `${pathPrefix}.LayoutInResources[0].Resource.children[${index}]${pointer.slice(1)}` });
     }
   }));

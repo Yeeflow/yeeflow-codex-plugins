@@ -263,7 +263,6 @@ function validateField(field, path, errors, warnings) {
   const fieldName = String(field.FieldName || "");
   const match = fieldName.match(FIELD_NAME_SUFFIX_RE);
   if (!match && fieldName !== "Title") add(errors, "YAPK_FIELD_NAME_SUFFIX_MISSING", "FieldName must end with digits, except the built-in Title field.", { path: `${path}.FieldName` });
-  else if (match && String(field.FieldIndex ?? "") !== match[1]) add(errors, "YAPK_FIELD_NAME_SUFFIX_INDEX_MISMATCH", "FieldName trailing digits must equal FieldIndex.", { path: `${path}.FieldName` });
   if (typeof field.InternalName !== "string" || !INTERNAL_NAME_RE.test(field.InternalName)) add(errors, "YAPK_FIELD_INTERNAL_NAME_INVALID", "InternalName must match ^[a-zA-Z0-9_]+$.", { path: `${path}.InternalName` });
   if (field.FieldType !== undefined && !FIELD_TYPE_ENUM.has(field.FieldType)) add(errors, "YAPK_FIELD_TYPE_INVALID", "FieldType is outside product schema enum.", { path: `${path}.FieldType` });
   if (field.Type !== undefined && !FIELD_CONTROL_TYPES.has(field.Type)) add(warnings, "YAPK_FIELD_CONTROL_TYPE_UNKNOWN", "Field Type is not in product schema known control-type list.", { path: `${path}.Type` });

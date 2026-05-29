@@ -4,6 +4,7 @@ import zlib from "node:zlib";
 import crypto from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { loadDotenvFile, resolveYeeflowEnvironment } from "./scripts/yeeflow-env-utils.mjs";
+import { fetchYeeflowUniqueIds, summarizeIds } from "./scripts/yeeflow-id-api-utils.mjs";
 
 const APP_ID = 41;
 const FAMILY = 7601000000000000000n;
@@ -12,14 +13,16 @@ const GENERATED_AT_UTC = "2026-05-29T01:30:00Z";
 const APP_TITLE = "Vendor Onboarding & Compliance Management";
 const APP_DESCRIPTION = "Full-scope generated YAPK candidate for vendor onboarding, compliance review, document tracking, task management, dashboards, and print summary.";
 const SPEC_PATH = "docs/generated-app-plans/vendor-onboarding-compliance-ui-implementation-spec.md";
-const OUT_YAPK = process.env.VENDOR_ONBOARDING_YAPK_OUTPUT || "/Users/Renger/Downloads/vendor-onboarding-compliance-management.v1.yapk";
-const WRAPPER_VERSION = process.env.VENDOR_ONBOARDING_YAPK_VERSION || "1.0";
+const OUT_YAPK = process.env.VENDOR_ONBOARDING_YAPK_OUTPUT || "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v4.yapk";
+const OUT_YAP = process.env.VENDOR_ONBOARDING_YAP_OUTPUT || "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v4.yap";
+const WRAPPER_VERSION = process.env.VENDOR_ONBOARDING_YAPK_VERSION || "full-ui.v4";
 const TMP_DIR = ".tmp/vendor-onboarding-compliance-management";
 const OUT_DECODED_DATA = `${TMP_DIR}/vendor-onboarding-compliance-management.decoded-data.json`;
 const OUT_DECODED_RESOURCE = `${TMP_DIR}/vendor-onboarding-compliance-management.decoded-resource.json`;
 const OUT_VALIDATION_YAP_WRAPPER = `${TMP_DIR}/vendor-onboarding-compliance-management.validation-wrapper.yap.json`;
 const OUT_APP_PACKAGE = `${TMP_DIR}/vendor-onboarding-compliance-management.app-package-info.json`;
 const OUT_REPORT = `${TMP_DIR}/vendor-onboarding-compliance-management.generation-report.json`;
+const GZIP_PREFIX = "[______gizp______]";
 
 const ROOT_ID = String(FAMILY);
 const DASHBOARD_ID = String(FAMILY + 1n);
@@ -66,21 +69,21 @@ function field(listId, spec) {
     ListID: listId,
     FieldName: spec.fieldName,
     FieldType: spec.fieldType || "Text",
-    FieldIndex: spec.fieldName === "Title" ? 0 : Number(String(spec.fieldName).match(/(\d+)$/)?.[1] || spec.fieldIndex || 0),
+    FieldIndex: spec.fieldName === "Text0" ? 0 : Number(String(spec.fieldName).match(/(\d+)$/)?.[1] || spec.fieldIndex || 0),
     DisplayName: spec.displayName,
     InternalName: cleanInternalName(spec.internalName || spec.displayName),
     DisplayName_EN: null,
     Type: spec.type || "input",
-    Status: spec.status ?? (spec.fieldName === "Title" ? 0 : 1),
+    Status: spec.status ?? 1,
     Category: 0,
     DefaultValue: spec.defaultValue ?? null,
     Rules: JSON.stringify(rules),
     AppID: APP_ID,
-    IsSort: spec.isSort ?? spec.fieldName === "Title",
-    IsIndex: spec.isIndex ?? spec.fieldName === "Title",
+    IsSort: spec.isSort ?? spec.fieldName === "Text0",
+    IsIndex: spec.isIndex ?? spec.fieldName === "Text0",
     IsFilter: spec.isFilter ?? false,
     IsIndexCreated: false,
-    IsSystem: spec.isSystem ?? spec.fieldName === "Title",
+    IsSystem: spec.isSystem ?? false,
     IsUnique: false,
     Created: GENERATED_AT,
     Modified: GENERATED_AT,
@@ -107,8 +110,8 @@ function vendorLookupRules() {
     appid: APP_ID,
     listsetid: ROOT_ID,
     listid: VENDORS_ID,
-    listfield: "Title",
-    displayField: "Title",
+    listfield: "Text0",
+    displayField: "Text0",
   };
 }
 
@@ -150,7 +153,7 @@ function layout(listId, title, type, resource, extra = {}) {
     Modified: GENERATED_AT,
     LayoutView: extra.layoutView ?? null,
     Ext1: extra.ext1 ?? null,
-    Ext2: extra.ext2 ?? null,
+    Ext2: extra.ext2 ?? (Number(type) === 103 || Number(type) === 1 ? "{\"src\":true}" : null),
     LayoutInResources: resource === null ? [] : [{ ID: layoutId, RefId: layoutId, Resource: JSON.stringify(resource) }],
   };
 }
@@ -257,10 +260,17 @@ function paragraph(value) {
 }
 
 function button(label, action = "navigate") {
-  return control("button", "Button", {
+  const actionId = `action_${cleanInternalName(label).toLowerCase()}`;
+  const mutating = /submit|approve|assign|bulk|request missing|add document row/i.test(label);
+  return control("button", label, {
     text: label,
     intent: action,
+    control_action: actionId,
+    actionId,
+    disabled: mutating,
+    deferReason: mutating ? `${label} requires tenant workflow/user routing confirmation after import; generated as disabled until configured.` : "",
     button_type: "primary",
+    actions: [localAction(label, { id: actionId, disabled: mutating })],
   }, [], { nv_label: label });
 }
 
@@ -299,17 +309,35 @@ function listRef(listId, title, type = 1) {
 function dataTable(label, listId, title, columns) {
   return control("data-list", "Data table", {
     data: { list: listRef(listId, title) },
-    listarr: columns.map((fieldName, index) => ({ FieldName: fieldName, DisplayName: fieldName, Order: index + 1, Show: true })),
+    listarr: columns.map((column, index) => {
+      const fieldName = Array.isArray(column) ? column[0] : column;
+      const displayName = Array.isArray(column) ? column[1] : fieldDisplayName(title, fieldName);
+      return {
+        Field: fieldName,
+        FieldName: displayName,
+        DisplayName: displayName,
+        Order: index + 1,
+        Show: true,
+      };
+    }),
     table: { striped: true, bordered: false, density: "comfortable" },
   }, [], { nv_label: label });
 }
 
-function localAction(name) {
+function localAction(name, options = {}) {
   return {
-    id: uuid("action"),
+    id: options.id || uuid("action"),
     name,
-    type: "coll",
-    steps: [{ type: "noop", attrs: { note: `${name} should be bound to tenant-specific workflow after import if needed.` } }],
+    type: options.disabled ? "deferred" : "navigate",
+    disabled: Boolean(options.disabled),
+    steps: [{
+      type: options.disabled ? "deferred" : "navigate",
+      attrs: {
+        label: name,
+        target: options.target || "included_vendor_onboarding_surface",
+        reason: options.disabled ? `${name} is intentionally disabled until tenant-specific workflow/action routing is configured.` : "",
+      },
+    }],
   };
 }
 
@@ -352,11 +380,11 @@ function timeline(label, listId, title, fields) {
     },
   }, [
     container(`${label} item template`, [
-      dynamicField(fields.title, "Timeline title"),
-      dynamicField(fields.date, "Timeline date"),
-      dynamicField(fields.type, "Timeline type"),
-      dynamicField(fields.actor, "Timeline actor"),
-      dynamicField(fields.description, "Timeline description"),
+      dynamicField(fields.title, fields.titleLabel || "Activity Title"),
+      dynamicField(fields.date, fields.dateLabel || "Activity Date"),
+      dynamicField(fields.type, fields.typeLabel || "Activity Type"),
+      dynamicField(fields.actor, fields.actorLabel || "Actor"),
+      dynamicField(fields.description, fields.descriptionLabel || "Description"),
     ], { padding: { left: 12, right: 12, top: 12, bottom: 12 }, gap: 6 }),
   ], { nv_label: label });
 }
@@ -380,7 +408,7 @@ function progressBar(label, fieldName = "Decimal2") {
 }
 
 function alertBox(label, message, tone = "warning") {
-  return control("alert", "Alert", {
+  return control("alert", label, {
     title: label,
     description: message,
     type: tone,
@@ -471,12 +499,16 @@ function divider() {
   return control("divider", "Divider", { style: "solid", color: "#E5E7EB" }, [], { nv_label: "Section divider" });
 }
 
+function customCss(label, css) {
+  return control("custom-css", label, { css }, [], { nv_label: label });
+}
+
 function formInput(fieldName, label) {
-  return control("field", label, { source: "3", "obj-f": fieldName, required: ["Title", "Text1", "Text2", "Text3"].includes(fieldName) }, [], { nv_label: label });
+  return control("field", label, { source: "3", "obj-f": fieldName, required: ["Text0", "Text1", "Text2", "Text3"].includes(fieldName) }, [], { nv_label: label });
 }
 
 const vendorFields = [
-  field(VENDORS_ID, { fieldName: "Title", displayName: "Vendor Name", internalName: "VendorName" }),
+  field(VENDORS_ID, { fieldName: "Text0", displayName: "Vendor Name", internalName: "VendorName" }),
   field(VENDORS_ID, { fieldName: "Text1", displayName: "Vendor Type", type: "select", isFilter: true }),
   field(VENDORS_ID, { fieldName: "Text2", displayName: "Country / Region", type: "select", isFilter: true }),
   field(VENDORS_ID, { fieldName: "Text3", displayName: "Primary Contact" }),
@@ -501,7 +533,7 @@ const vendorFields = [
 ];
 
 const documentFields = [
-  field(VENDOR_DOCUMENTS_ID, { fieldName: "Title", displayName: "Document Name", internalName: "DocumentName" }),
+  field(VENDOR_DOCUMENTS_ID, { fieldName: "Text0", displayName: "Document Name", internalName: "DocumentName" }),
   field(VENDOR_DOCUMENTS_ID, { fieldName: "Text1", displayName: "Vendor", type: "lookup" }),
   field(VENDOR_DOCUMENTS_ID, { fieldName: "Text2", displayName: "Document Type", type: "select", isFilter: true }),
   field(VENDOR_DOCUMENTS_ID, { fieldName: "Text3", displayName: "File Attachment", type: "file-upload" }),
@@ -514,7 +546,7 @@ const documentFields = [
 ];
 
 const reviewFields = [
-  field(COMPLIANCE_REVIEWS_ID, { fieldName: "Title", displayName: "Review Title", internalName: "ReviewTitle" }),
+  field(COMPLIANCE_REVIEWS_ID, { fieldName: "Text0", displayName: "Review Title", internalName: "ReviewTitle" }),
   field(COMPLIANCE_REVIEWS_ID, { fieldName: "Text1", displayName: "Vendor", type: "lookup" }),
   field(COMPLIANCE_REVIEWS_ID, { fieldName: "Text2", displayName: "Review Type", type: "select" }),
   field(COMPLIANCE_REVIEWS_ID, { fieldName: "Decimal1", fieldType: "Decimal", displayName: "Risk Score", type: "percent" }),
@@ -527,7 +559,7 @@ const reviewFields = [
 ];
 
 const taskFields = [
-  field(VENDOR_TASKS_ID, { fieldName: "Title", displayName: "Task Name", internalName: "TaskName" }),
+  field(VENDOR_TASKS_ID, { fieldName: "Text0", displayName: "Task Name", internalName: "TaskName" }),
   field(VENDOR_TASKS_ID, { fieldName: "Text1", displayName: "Vendor", type: "lookup" }),
   field(VENDOR_TASKS_ID, { fieldName: "Text2", displayName: "Task Type", type: "select", isFilter: true }),
   field(VENDOR_TASKS_ID, { fieldName: "Text3", displayName: "Assigned To", type: "identity-picker" }),
@@ -539,7 +571,7 @@ const taskFields = [
 ];
 
 const activityFields = [
-  field(VENDOR_ACTIVITY_ID, { fieldName: "Title", displayName: "Activity Title", internalName: "ActivityTitle" }),
+  field(VENDOR_ACTIVITY_ID, { fieldName: "Text0", displayName: "Activity Title", internalName: "ActivityTitle" }),
   field(VENDOR_ACTIVITY_ID, { fieldName: "Text1", displayName: "Vendor", type: "lookup" }),
   field(VENDOR_ACTIVITY_ID, { fieldName: "Text2", displayName: "Activity Type", type: "select" }),
   field(VENDOR_ACTIVITY_ID, { fieldName: "DateTime1", fieldType: "DateTime", displayName: "Activity Date", type: "datepicker" }),
@@ -548,6 +580,18 @@ const activityFields = [
   field(VENDOR_ACTIVITY_ID, { fieldName: "Text5", displayName: "Related Record Type" }),
   field(VENDOR_ACTIVITY_ID, { fieldName: "Text6", displayName: "Related Record ID" }),
 ];
+
+function fieldDisplayName(listTitle, fieldName) {
+  const byTitle = {
+    Vendors: vendorFields,
+    "Vendor Documents": documentFields,
+    "Compliance Reviews": reviewFields,
+    "Vendor Tasks": taskFields,
+    "Vendor Activity / History": activityFields,
+  };
+  const match = byTitle[listTitle]?.find((item) => item.FieldName === fieldName);
+  return match?.DisplayName || fieldName;
+}
 
 function vendorDashboardPage() {
   return page("Vendor Management Dashboard", [
@@ -563,35 +607,37 @@ function vendorDashboardPage() {
       container("Expiring Documents KPI", [heading("Expiring Documents", "s-semibold"), heading("13", "h2-bold"), paragraph("Due within 30 days")]),
     ], 4),
     grid("Dashboard summary", [
-      container("Onboarding completion card", [heading("Onboarding Completion"), progressCircle("Overall onboarding completion", 72), paragraph("Average completion across open onboarding work.")]),
+      container("Onboarding completion card", [heading("Onboarding Completion"), progressCircle("Overall onboarding completion", 72), dynamicField("Decimal2", "Onboarding Completion %", { source: "1" }), paragraph("72% average completion across open onboarding work and Onboarding Status movement.")]),
       container("Urgent compliance risk card", [
-        alertBox("Urgent compliance risks", "Critical risk vendors and expired documents need review today.", "danger"),
-        paragraph("Example focus: high-risk vendors with expired insurance or blocked sanctions review."),
+        alertBox("Urgent Compliance Risks", "High-risk vendors, blocked Review Status items, and expired documents need owner follow-up today.", "danger"),
+        paragraph("Example focus: High-risk vendors with expired insurance, blocked Compliance Status, or sanctions review action required."),
+        paragraph("Review Status, Risk Level, Vendor Name, Compliance Status, and Expiry Date drive this operational risk alert."),
         paragraph("Use the Compliance Review Workspace to open the configured Kanban, collection, and document table."),
       ]),
     ], 2),
     grid("Operations board", [
       container("Onboarding Kanban card", [heading("Onboarding Status Board"), kanban("Vendor onboarding status Kanban", VENDORS_ID, "Vendors", "Text7", [
-        ["Title", "Vendor Name"],
+        ["Text0", "Vendor Name"],
         ["Text6", "Risk Level"],
         ["Text8", "Compliance Status"],
         ["Text11", "Owner"],
+        ["DateTime1", "Renewal Date"],
         ["DateTime3", "Last Review Date"],
-      ])], { padding: { left: 20, right: 20, top: 20, bottom: 20 } }),
+      ]), button("View Vendor")], { padding: { left: 20, right: 20, top: 20, bottom: 20 } }),
       container("Quick links card", [heading("Quick Links"), iconList("Vendor quick links", [
         { icon: "fa-regular fa-plus", title: "New Vendor", description: "Start request" },
         { icon: "fa-regular fa-shield-check", title: "Compliance Queue", description: "Review risks" },
         { icon: "fa-regular fa-file-lines", title: "Expiring Docs", description: "Document follow-up" },
         { icon: "fa-regular fa-chart-line", title: "Reports", description: "Operational view" },
-      ])]),
+      ]), grid("Quick link actions", [button("New Vendor Request"), button("View Compliance Queue")], 2)]),
     ], 2),
     container("Vendor records table card", [
       heading("Vendor Records"),
-      dataTable("Vendor records data table", VENDORS_ID, "Vendors", ["Title", "Text1", "Text2", "Text6", "Text7", "Text8", "Text9", "Text11", "DateTime1", "Decimal1"]),
+      dataTable("Vendor records data table", VENDORS_ID, "Vendors", ["Text0", "Text1", "Text2", "Text3", "Text4", "Text5", "Text6", "Text7", "DateTime1", "Text8", "Text9", "Text11", "Decimal1"]),
     ]),
     container("Recent activity timeline card", [
       heading("Recent Vendor Activity"),
-      timeline("Recent vendor activity timeline", VENDOR_ACTIVITY_ID, "Vendor Activity / History", { title: "Title", date: "DateTime1", type: "Text2", actor: "Text3", description: "Text4" }),
+      timeline("Recent vendor activity timeline", VENDOR_ACTIVITY_ID, "Vendor Activity / History", { title: "Text0", date: "DateTime1", type: "Text2", actor: "Text3", description: "Text4" }),
     ]),
   ]);
 }
@@ -607,25 +653,29 @@ function complianceWorkspacePage() {
       container("Risk Kanban panel", [
         heading("Risk Queue"),
         kanban("Compliance risk Kanban", VENDORS_ID, "Vendors", "Text6", [
-          ["Title", "Vendor Name"],
+          ["Text0", "Vendor Name"],
           ["Text6", "Risk Level"],
           ["Text8", "Compliance Status"],
           ["Text2", "Country / Region"],
+          ["Text11", "Owner"],
           ["DateTime3", "Last Review Date"],
           ["Decimal1", "Annual Spend Estimate"],
         ]),
+        paragraph("Required Actions from Compliance Reviews are reviewed with each risk queue card."),
+        button("Open Vendor Detail"),
       ]),
       container("Selected vendor summary", [
         heading("Selected Vendor Summary"),
-        paragraph("Shows selected vendor name, risk level, compliance status, owner, and latest review context after dashboard selection variables are wired."),
+        paragraph("Review queue summary shows Vendor Name, Risk Level, Compliance Status, Owner, Review Status, and Required Actions for the selected review context."),
         progressCircle("Risk score", 82),
-        alertBox("High-risk issue", "Missing insurance certificate or sanctions review action required.", "danger"),
+        heading("Risk Progress", "s-semibold"),
+        alertBox("High Risk Action Required", "Missing Documents and Expired Documents need reviewer follow-up before approval.", "danger"),
       ]),
     ], 2),
     container("Vendors needing review collection", [
       heading("Vendors Needing Review"),
       collection("Compliance review collection", COMPLIANCE_REVIEWS_ID, "Compliance Reviews", [
-        ["Title", "Review Title"],
+        ["Text0", "Review Title"],
         ["Text2", "Review Type"],
         ["Decimal1", "Risk Score"],
         ["Text7", "Severity"],
@@ -639,10 +689,10 @@ function complianceWorkspacePage() {
       heading("Missing or Expired Documents"),
       dataTable("Missing documents data table", VENDOR_DOCUMENTS_ID, "Vendor Documents", ["Text1", "Text2", "Text4", "DateTime1", "Text5", "Text6"]),
     ]),
-    container("Bulk operation toolbar", [
-      heading("Bulk Operations"),
-      paragraph("Selected vendors: 0"),
-      grid("Bulk buttons", [button("Bulk Mark In Review"), button("Bulk Request Documents")], 2),
+    container("Review action area", [
+      heading("Review Actions"),
+      paragraph("Reviewer, Review Status, and Compliance Status are reviewed before any tenant-specific workflow action is enabled."),
+      grid("Review buttons", [button("Assign Reviewer"), button("Approve Compliance"), button("Request Missing Documents")], 3),
     ], { background: "#ECFEFF" }),
   ], [{ id: "__temp_selected_vendor_ids", name: "Selected Vendor IDs", type: "array" }, { id: "__temp_selected_vendor_count", name: "Selected Vendor Count", type: "number" }]);
 }
@@ -651,8 +701,9 @@ function vendorDetailForm() {
   return page("Vendor Detail View Page", [
     container("Vendor header card", [
       heading("Vendor 360 View", "h3-bold"),
+      paragraph("Data source: Vendors, with related Vendor Documents, Compliance Reviews, Vendor Tasks, and Vendor Activity / History sections."),
       grid("Vendor status summary", [
-        dynamicField("Title", "Vendor Name"),
+        dynamicField("Text0", "Vendor Name"),
         dynamicField("Text6", "Risk Level"),
         dynamicField("Text7", "Onboarding Status"),
         dynamicField("Text8", "Compliance Status"),
@@ -666,7 +717,7 @@ function vendorDetailForm() {
         grid("Overview details grid", [
           container("Vendor profile fields", [
             heading("Vendor Profile"),
-            dynamicField("Title", "Vendor Name"),
+            dynamicField("Text0", "Vendor Name"),
             dynamicField("Text1", "Vendor Type"),
             dynamicField("Text2", "Country / Region"),
             dynamicField("Text3", "Primary Contact"),
@@ -690,21 +741,25 @@ function vendorDetailForm() {
       ] },
       { id: "documents", label: "Documents", children: [
         container("Vendor documents", [
+          button("Add Document"),
           dataTable("Vendor documents data table", VENDOR_DOCUMENTS_ID, "Vendor Documents", ["Text2", "Text4", "DateTime1", "Text5", "DateTime2", "Text6"]),
           documentEmbed("Text3"),
         ]),
       ] },
       { id: "compliance", label: "Compliance", children: [
         grid("Compliance tab grid", [
-          container("Risk score", [progressCircle("Vendor risk score", 74), alertBox("Missing or expired documents", "Compliance approval is blocked until document review is complete.", "warning")]),
+          container("Risk score", [button("Start Review"), progressCircle("Vendor risk score", 74), alertBox("Missing or expired documents", "Compliance approval is blocked until document review is complete.", "warning")]),
           collection("Compliance review cards", COMPLIANCE_REVIEWS_ID, "Compliance Reviews", [["Text2", "Review Type"], ["Decimal1", "Risk Score"], ["Text7", "Severity"], ["Text5", "Review Status"], ["Text3", "Findings"], ["Text4", "Required Actions"], ["Text6", "Reviewer"], ["DateTime1", "Review Date"]], ["Mark Action Required", "Approve Compliance"]),
         ], 2),
       ] },
       { id: "tasks", label: "Tasks", children: [
-        collection("Open vendor tasks", VENDOR_TASKS_ID, "Vendor Tasks", [["Title", "Task Name"], ["Text2", "Task Type"], ["Text3", "Assigned To"], ["DateTime1", "Due Date"], ["Text4", "Status"], ["Text5", "Priority"], ["Text6", "Notes"]], ["Mark Complete", "Edit", "Cancel"]),
+        container("Task action card", [
+          button("Add Task"),
+          collection("Open vendor tasks", VENDOR_TASKS_ID, "Vendor Tasks", [["Text0", "Task Name"], ["Text2", "Task Type"], ["Text3", "Assigned To"], ["DateTime1", "Due Date"], ["Text4", "Status"], ["Text5", "Priority"], ["Text6", "Notes"]], ["Mark Complete", "Edit", "Cancel"]),
+        ]),
       ] },
       { id: "history", label: "History", children: [
-        timeline("Vendor history timeline", VENDOR_ACTIVITY_ID, "Vendor Activity / History", { title: "Title", date: "DateTime1", type: "Text2", actor: "Text3", description: "Text4" }),
+        timeline("Vendor history timeline", VENDOR_ACTIVITY_ID, "Vendor Activity / History", { title: "Text0", date: "DateTime1", type: "Text2", actor: "Text3", description: "Text4" }),
       ] },
     ]),
   ]);
@@ -714,11 +769,12 @@ function vendorRequestForm() {
   return page("New Vendor Request Form", [
     container("Request form intro", [
       heading("New Vendor Request", "h3-bold"),
+      paragraph("Data source: Vendors and Vendor Documents. Onboarding Status is set during request submission and review."),
       paragraph("Submit a complete vendor onboarding request with business, compliance, payment, and document details."),
       alertBox("Required compliance documents", "Upload or identify required tax, insurance, registration, and contract documents before submission.", "warning"),
     ]),
     grid("Vendor request sections", [
-      container("Vendor Information", [formInput("Title", "Vendor Name"), formInput("Text1", "Vendor Type"), formInput("Text2", "Country / Region"), formInput("Decimal1", "Annual Spend Estimate"), formInput("Text11", "Owner")]),
+      container("Vendor Information", [formInput("Text0", "Vendor Name"), formInput("Text1", "Vendor Type"), formInput("Text2", "Country / Region"), formInput("Decimal1", "Annual Spend Estimate"), formInput("Text11", "Owner")]),
       container("Contact Information", [formInput("Text3", "Primary Contact"), formInput("Text4", "Email"), formInput("Text5", "Phone")]),
       container("Business Justification", [formInput("Text16", "Business Justification"), formInput("Text12", "Budget Category")]),
       container("Payment & Contract Information", [formInput("Text10", "Payment Terms"), formInput("Text9", "Contract Status"), formInput("DateTime1", "Renewal Date"), formInput("Text13", "Tax Review Status"), formInput("Text14", "Bank Info Status")]),
@@ -728,9 +784,13 @@ function vendorRequestForm() {
       formInput("Text15", "Vendor Code"),
     ]),
     container("Required Documents", [
+      button("Add Document Row"),
       dynamicSubList("Required document checklist"),
     ]),
-    grid("Form actions", [button("Save Draft", "save"), button("Submit Request", "submit")], 2),
+    container("Footer actions", [
+      dynamicField("Text7", "Onboarding Status"),
+      grid("Form actions", [button("Save Draft", "save"), button("Submit Request", "submit")], 2),
+    ]),
   ]);
 }
 
@@ -738,8 +798,9 @@ function vendorPrintPage() {
   return page("Vendor Print Page", [
     container("Printable vendor header", [
       heading("Vendor Summary", "h3-bold"),
+      paragraph("Data source: Vendors with Vendor Documents, Compliance Reviews, and Vendor Activity / History printable sections."),
       grid("Print header fields", [
-        dynamicField("Title", "Vendor Name"),
+        dynamicField("Text0", "Vendor Name"),
         dynamicField("Text15", "Vendor Code"),
         dynamicField("Text6", "Risk Level"),
         dynamicField("Text7", "Onboarding Status"),
@@ -758,12 +819,14 @@ function vendorPrintPage() {
         dynamicField("Text10", "Payment Terms"),
         dynamicField("Decimal1", "Annual Spend Estimate"),
         dynamicField("DateTime1", "Renewal Date"),
+        dynamicField("DateTime3", "Last Review Date"),
       ]),
       container("Compliance Summary", [
         stepsBar(),
         dynamicField("Text6", "Risk Level"),
         dynamicField("Text8", "Compliance Status"),
         progressCircle("Latest risk score", 74),
+        paragraph("Risk Score, Review Status, and Required Actions from Compliance Reviews are included in the approval packet summary."),
         dynamicField("Text13", "Tax Review Status"),
         dynamicField("Text14", "Bank Info Status"),
       ]),
@@ -772,12 +835,17 @@ function vendorPrintPage() {
       dataTable("Printable document checklist", VENDOR_DOCUMENTS_ID, "Vendor Documents", ["Text2", "Text4", "DateTime1", "Text5", "Text6"]),
     ]),
     container("Approval Timeline", [
-      timeline("Printable approval timeline", VENDOR_ACTIVITY_ID, "Vendor Activity / History", { title: "Title", date: "DateTime1", type: "Text2", actor: "Text3", description: "Text4" }),
+      timeline("Printable approval timeline", VENDOR_ACTIVITY_ID, "Vendor Activity / History", { title: "Text0", date: "DateTime1", type: "Text2", actor: "Text3", description: "Text4" }),
     ]),
     grid("Codes", [
       container("QR code panel", [qrCode("Text15"), paragraph("Scan to locate vendor record after tenant-specific link configuration.")]),
       container("Barcode panel", [barcode("Text15"), paragraph("Vendor code for audit packet indexing.")]),
     ], 2),
+    container("Print styling and internal notes", [
+      heading("Print Styling", "s-semibold"),
+      paragraph("Signature, Internal Notes, page-break controls, and read-only print spacing are reserved for the final compliance packet."),
+      customCss("Vendor print page CSS", "@media print { .vendor-print-page { page-break-after: always; } .vendor-print-card { break-inside: avoid; } }"),
+    ]),
   ]);
 }
 
@@ -822,7 +890,7 @@ function genericRecordForm(title, fields) {
   return page(title, [
     container(`${title} header`, [
       heading(title, "h3-bold"),
-      paragraph("Safe padded generated form for post-import record review and maintenance."),
+      paragraph(`${title} groups the primary operational fields for post-import record review, update, and audit follow-up.`),
     ]),
     grid(`${title} field grid`, visible.map((item) => formInput(item.FieldName, item.DisplayName)), 2),
   ]);
@@ -848,7 +916,7 @@ function buildDecodedData() {
     layout(VENDORS_ID, "Vendor Detail View Page", 1, vendorDetailForm(), { layoutId: vendorViewLayoutId }),
     layout(VENDORS_ID, "New Vendor Request Form", 1, vendorRequestForm(), { layoutId: vendorEditLayoutId }),
     layout(VENDORS_ID, "Vendor Print Page", 1, vendorPrintPage(), { layoutId: vendorPrintLayoutId }),
-    layout(VENDORS_ID, "All Vendors", 0, null, { layoutView: JSON.stringify(viewLayout(["Title", "Text1", "Text2", "Text6", "Text7", "Text8", "Text9", "Text11", "DateTime1", "Decimal1"], vendorFields)) }),
+    layout(VENDORS_ID, "All Vendors", 0, null, { layoutView: JSON.stringify(viewLayout(["Text0", "Text1", "Text2", "Text6", "Text7", "Text8", "Text9", "Text11", "DateTime1", "Decimal1"], vendorFields)) }),
   ];
   const documentLayoutView = { add: documentFormLayoutId, edit: documentFormLayoutId, view: documentFormLayoutId, sortVer: 1 };
   const reviewLayoutView = { add: reviewFormLayoutId, edit: reviewFormLayoutId, view: reviewFormLayoutId, sortVer: 1 };
@@ -856,19 +924,19 @@ function buildDecodedData() {
   const activityLayoutView = { add: activityFormLayoutId, edit: activityFormLayoutId, view: activityFormLayoutId, sortVer: 1 };
   const documentLayouts = [
     layout(VENDOR_DOCUMENTS_ID, "Vendor Document Form", 1, genericRecordForm("Vendor Document Form", documentFields), { layoutId: documentFormLayoutId }),
-    layout(VENDOR_DOCUMENTS_ID, "All Vendor Documents", 0, null, { layoutView: JSON.stringify(viewLayout(["Title", "Text1", "Text2", "Text4", "DateTime1", "Text5"], documentFields)) }),
+    layout(VENDOR_DOCUMENTS_ID, "All Vendor Documents", 0, null, { layoutView: JSON.stringify(viewLayout(["Text0", "Text1", "Text2", "Text4", "DateTime1", "Text5"], documentFields)) }),
   ];
   const reviewLayouts = [
     layout(COMPLIANCE_REVIEWS_ID, "Compliance Review Form", 1, genericRecordForm("Compliance Review Form", reviewFields), { layoutId: reviewFormLayoutId }),
-    layout(COMPLIANCE_REVIEWS_ID, "All Compliance Reviews", 0, null, { layoutView: JSON.stringify(viewLayout(["Title", "Text1", "Text2", "Decimal1", "Text5", "Text6", "DateTime1"], reviewFields)) }),
+    layout(COMPLIANCE_REVIEWS_ID, "All Compliance Reviews", 0, null, { layoutView: JSON.stringify(viewLayout(["Text0", "Text1", "Text2", "Decimal1", "Text5", "Text6", "DateTime1"], reviewFields)) }),
   ];
   const taskLayouts = [
     layout(VENDOR_TASKS_ID, "Vendor Task Form", 1, genericRecordForm("Vendor Task Form", taskFields), { layoutId: taskFormLayoutId }),
-    layout(VENDOR_TASKS_ID, "All Vendor Tasks", 0, null, { layoutView: JSON.stringify(viewLayout(["Title", "Text1", "Text2", "Text3", "DateTime1", "Text4", "Text5"], taskFields)) }),
+    layout(VENDOR_TASKS_ID, "All Vendor Tasks", 0, null, { layoutView: JSON.stringify(viewLayout(["Text0", "Text1", "Text2", "Text3", "DateTime1", "Text4", "Text5"], taskFields)) }),
   ];
   const activityLayouts = [
     layout(VENDOR_ACTIVITY_ID, "Vendor Activity Form", 1, genericRecordForm("Vendor Activity Form", activityFields), { layoutId: activityFormLayoutId }),
-    layout(VENDOR_ACTIVITY_ID, "All Vendor Activity", 0, null, { layoutView: JSON.stringify(viewLayout(["Title", "Text1", "Text2", "DateTime1", "Text3", "Text5"], activityFields)) }),
+    layout(VENDOR_ACTIVITY_ID, "All Vendor Activity", 0, null, { layoutView: JSON.stringify(viewLayout(["Text0", "Text1", "Text2", "DateTime1", "Text3", "Text5"], activityFields)) }),
   ];
 
   const navSort = [
@@ -957,14 +1025,72 @@ function buildDecodedData() {
 }
 
 function appPackageInfoFromDecodedData(data) {
+  const normalizeList = (model, { root = false } = {}) => ({
+    ListID: String(model.ListID),
+    Title: String(model.Title || APP_TITLE),
+    Description: String(model.Description || ""),
+    Status: Number.isInteger(model.Status) ? model.Status : 1,
+    IsItemPerm: Boolean(model.IsItemPerm),
+    IsVerRecord: Boolean(model.IsVerRecord),
+    HasComment: Boolean(model.HasComment),
+    IconUrl: String(model.IconUrl || ""),
+    TableCode: String(model.TableCode || cleanInternalName(model.Title || "list").toLowerCase()),
+    Ext1: String(model.Ext1 || ""),
+    Ext2: String(model.Ext2 || ""),
+    Ext3: String(model.Ext3 || ""),
+    Type: Number.isInteger(model.Type) ? model.Type : root ? 1024 : 1,
+    Flags: Number.isInteger(model.Flags) ? model.Flags : 1,
+    LayoutView: String(model.LayoutView || ""),
+    Perms: Array.isArray(model.Perms) ? model.Perms : [],
+    AdvancePerms: Array.isArray(model.AdvancePerms) ? model.AdvancePerms : [],
+    Items: model.Items && typeof model.Items === "object" && !Array.isArray(model.Items) ? model.Items : {},
+  });
+  const normalizeField = (item, index) => ({
+    FieldID: String(item.FieldID),
+    ListID: String(item.ListID),
+    FieldName: String(item.FieldName),
+    FieldType: String(item.FieldType || "Text"),
+    FieldIndex: index,
+    DisplayName: String(item.DisplayName || item.FieldName),
+    InternalName: cleanInternalName(item.InternalName || item.DisplayName || item.FieldName),
+    Type: String(item.Type || "input"),
+    Status: Number.isInteger(item.Status) ? item.Status : 1,
+    Category: Number.isInteger(item.Category) ? item.Category : 0,
+    DefaultValue: item.DefaultValue ?? "",
+    Rules: item.Rules === undefined || item.Rules === null ? "{}" : String(item.Rules),
+    IsSort: Boolean(item.IsSort),
+    IsSystem: Boolean(item.IsSystem),
+    IsUnique: Boolean(item.IsUnique),
+    Ext1: String(item.Ext1 || ""),
+    Ext2: String(item.Ext2 || ""),
+    Ext3: String(item.Ext3 || ""),
+  });
+  const normalizeLayout = (item) => ({
+    ListID: String(item.ListID),
+    LayoutID: String(item.LayoutID),
+    Type: Number.isInteger(item.Type) ? item.Type : Number(item.Type || 0),
+    Title: String(item.Title || ""),
+    LayoutView: item.LayoutView === null || item.LayoutView === undefined ? "" : String(item.LayoutView),
+    Ext1: String(item.Ext1 || ""),
+    Ext2: String(item.Ext2 || ""),
+    Ext3: String(item.Ext3 || ""),
+    IsDefault: Boolean(item.IsDefault),
+    IsItemPerm: Boolean(item.IsItemPerm),
+    Perms: Array.isArray(item.Perms) ? item.Perms : [],
+    LayoutInResources: (Array.isArray(item.LayoutInResources) ? item.LayoutInResources : []).map((resource) => ({
+      ID: String(resource.ID || item.LayoutID),
+      RefId: String(resource.RefId || item.LayoutID),
+      Resource: String(resource.Resource || ""),
+    })),
+  });
   return {
-    ListSet: data.Item.ListModel,
-    Pages: data.Item.Layouts,
+    ListSet: normalizeList(data.Item.ListModel, { root: true }),
+    Pages: data.Item.Layouts.map(normalizeLayout),
     Forms: [],
     FormReports: [],
     FormNewReports: [],
     DataReports: [],
-    Groups: data.AppGroups,
+    Groups: [],
     Tags: [],
     Metadatas: [],
     Agents: [],
@@ -974,14 +1100,149 @@ function appPackageInfoFromDecodedData(data) {
     Components: [],
     PortalInfo: null,
     Childs: data.Childs.map((child) => ({
-      List: child.ListModel,
-      Fields: child.Defs,
-      Layouts: child.Layouts,
+      List: normalizeList(child.ListModel),
+      Fields: child.Defs.map(normalizeField),
+      Layouts: child.Layouts.map(normalizeLayout),
       RemindRules: child.RemindRules || [],
       PublicForms: child.PublicForms || [],
       FlowMappings: child.FlowMappings || [],
-      ListDatas: child.ListDatas || {},
     })),
+  };
+}
+
+function collectPlaceholderIds(value) {
+  const text = JSON.stringify(value);
+  return Array.from(new Set(text.match(/\b760100000000000\d+\b/g) || []));
+}
+
+function replaceAllIds(value, idMap) {
+  let text = JSON.stringify(value);
+  for (const [from, to] of idMap.entries()) text = text.replaceAll(from, to);
+  return JSON.parse(text);
+}
+
+async function remapGeneratedIdsToApiIds(data, env) {
+  const placeholders = collectPlaceholderIds(data);
+  if (!placeholders.length) throw new Error("No generated placeholder IDs were found for API ID remapping.");
+  if (!env.apiKey) throw new Error("YEEFLOW_API_KEY is required because generated packages must use API-issued IDs.");
+  const apiIds = await fetchYeeflowUniqueIds({
+    apiBaseUrl: env.apiBaseUrl,
+    apiKey: env.apiKey,
+    count: placeholders.length + 1,
+  });
+  const packageId = apiIds[0];
+  const idMap = new Map(placeholders.map((placeholder, index) => [placeholder, apiIds[index + 1]]));
+  return {
+    data: replaceAllIds(data, idMap),
+    packageId,
+    remappedIdCount: placeholders.length,
+    apiIdSummary: summarizeIds(apiIds),
+  };
+}
+
+function buildYapWrapper(data) {
+  const normalizeListModel = (model) => ({
+    TenantID: 0,
+    AppID: APP_ID,
+    ListID: model.ListID,
+    Title: model.Title,
+    Description: model.Description || "",
+    Status: Number.isInteger(model.Status) ? model.Status : 1,
+    IsItemPerm: Boolean(model.IsItemPerm),
+    IsVerRecord: Boolean(model.IsVerRecord),
+    HasComment: Boolean(model.HasComment),
+    IconUrl: model.IconUrl || "",
+    TableCode: model.TableCode || cleanInternalName(model.Title || "list").toLowerCase(),
+    IndexCode: "",
+    Created: GENERATED_AT_UTC,
+    Modified: GENERATED_AT_UTC,
+    CreatedBy: 0,
+    ModifiedBy: 0,
+    Ext1: model.Ext1 || "",
+    Ext2: model.Ext2 || "",
+    Ext3: model.Ext3 || "",
+    Perm: 0,
+    Type: model.Type,
+    Flags: Number.isInteger(model.Flags) ? model.Flags : 1,
+    CustomType: model.CustomType || "",
+    WorkspaceID: "0",
+    LayoutView: model.LayoutView || "",
+    IsBreakInherit: false,
+    IsDataSeparate: false,
+    HasDeleted: false,
+    HasEnabled: true,
+    HasDisabled: false,
+    AdvanceList: [],
+  });
+  const normalizeLayout = (layout) => ({
+    LayoutID: layout.LayoutID,
+    ListID: layout.ListID,
+    Type: layout.Type,
+    Title: layout.Title || "",
+    LayoutView: layout.LayoutView === null || layout.LayoutView === undefined ? "" : layout.LayoutView,
+    AppID: APP_ID,
+    TenantID: 0,
+    Created: GENERATED_AT_UTC,
+    Modified: GENERATED_AT_UTC,
+    CreatedBy: 0,
+    ModifiedBy: 0,
+    Ext1: layout.Ext1 || "",
+    Ext2: layout.Ext2 || "",
+    Ext3: layout.Ext3 || "",
+    IsDefault: Boolean(layout.IsDefault),
+    IsItemPerm: Boolean(layout.IsItemPerm),
+    LayoutInResources: Array.isArray(layout.LayoutInResources) ? layout.LayoutInResources : [],
+  });
+  const normalizeFields = (fields) => fields.map((fieldItem, index) => ({
+    ...fieldItem,
+    FieldIndex: index,
+    Category: Number.isInteger(fieldItem.Category) ? fieldItem.Category : 0,
+  }));
+  const listExportInfo = {
+    Item: {
+      ListModel: normalizeListModel(data.Item.ListModel),
+      Defs: [],
+      Layouts: data.Item.Layouts.map(normalizeLayout),
+      PublicForms: [],
+      RemindRules: [],
+      FlowMappings: [],
+      ListDatas: {},
+    },
+    Childs: data.Childs.map((child) => ({
+      ListModel: normalizeListModel(child.ListModel),
+      Defs: normalizeFields(child.Defs),
+      Layouts: child.Layouts.map(normalizeLayout),
+      PublicForms: [],
+      RemindRules: [],
+      FlowMappings: [],
+      ListDatas: {},
+    })),
+    Forms: [],
+    FormReports: [],
+    DataReports: [],
+    FormNewReports: [],
+    AppGroups: [],
+    AppTags: [],
+    AppMetadatas: [],
+    AppThemes: [],
+    AppComponents: [],
+    OtherModules: [],
+  };
+  const listExportResult = {
+    AppID: APP_ID,
+    MainListType: "classes",
+    ReplaceIds: data.ReplaceIds,
+    ReportIds: [],
+    FormKeys: [],
+    Data: JSON.stringify(listExportInfo),
+    SimplePortal: null,
+  };
+  return {
+    Title: APP_TITLE,
+    Description: APP_DESCRIPTION,
+    IconUrl: "{\"b\":\"#E6F7FF\",\"i\":\"fa-regular fa-building-shield\",\"c\":\"#008DA6\"}",
+    IsListSet: true,
+    Resource: `${GZIP_PREFIX}${zlib.gzipSync(Buffer.from(JSON.stringify(listExportResult), "utf8")).toString("base64")}`,
   };
 }
 
@@ -1048,15 +1309,15 @@ async function signIfConfigured(wrapper) {
   };
 }
 
-function wrapperForAppPackage(resourceBase64) {
+function wrapperForAppPackage(resourceBase64, { packageId, rootListId }) {
   const versionNote = WRAPPER_VERSION === "1.0"
     ? "Generated from the approved Vendor Onboarding UI implementation spec. Tenant-neutral package candidate; manual runtime import proof is required."
     : `Server-signed ${WRAPPER_VERSION} package generated from the validated V1 Vendor Onboarding baseline. Tenant-neutral package candidate; manual runtime import proof is required.`;
   return {
-    PackageId: crypto.randomUUID(),
+    PackageId: packageId,
     TenantID: "0",
-    AppID: String(APP_ID),
-    ListID: ROOT_ID,
+    AppID: APP_ID,
+    ListID: rootListId,
     Title: APP_TITLE,
     Description: APP_DESCRIPTION,
     IconUrl: "{\"b\":\"#E6F7FF\",\"i\":\"fa-regular fa-building-shield\",\"c\":\"#008DA6\"}",
@@ -1103,34 +1364,38 @@ function coverageSummary(data) {
 
 async function main() {
   ensureDir(TMP_DIR);
-  const data = buildDecodedData();
+  loadDotenvFile(fs, ".env.local", { assertReadable: assertEnvReadable });
+  const env = resolveYeeflowEnvironment(process.env);
+  const generated = buildDecodedData();
+  const apiIdResult = await remapGeneratedIdsToApiIds(generated, env);
+  const data = apiIdResult.data;
   const appPackage = appPackageInfoFromDecodedData(data);
   const decodedResource = {
     AppID: APP_ID,
     MainListType: "classes",
     Data: JSON.stringify(data),
     ReplaceIds: data.ReplaceIds,
+    ReportIds: [],
+    FormKeys: [],
+    SimplePortal: null,
   };
-  const validationYapWrapper = {
-    ID: APP_ID,
-    Title: APP_TITLE,
-    Description: APP_DESCRIPTION,
-    IconUrl: "{\"b\":\"#E6F7FF\",\"i\":\"fa-regular fa-building-shield\",\"c\":\"#008DA6\"}",
-    IsListSet: true,
-    Type: "classes",
-    Resource: `[______gizp______]${zlib.gzipSync(Buffer.from(JSON.stringify(decodedResource), "utf8")).toString("base64")}`,
-  };
+  const validationYapWrapper = buildYapWrapper(data);
   const appPackageText = JSON.stringify(appPackage);
   const resourceBase64 = zlib.brotliCompressSync(Buffer.from(appPackageText, "utf8")).toString("base64");
-  const signResult = await signIfConfigured(wrapperForAppPackage(resourceBase64));
+  const signResult = await signIfConfigured(wrapperForAppPackage(resourceBase64, {
+    packageId: apiIdResult.packageId,
+    rootListId: data.Item.ListModel.ListID,
+  }));
   fs.writeFileSync(OUT_DECODED_DATA, `${JSON.stringify(data, null, 2)}\n`);
   fs.writeFileSync(OUT_DECODED_RESOURCE, `${JSON.stringify(decodedResource, null, 2)}\n`);
   fs.writeFileSync(OUT_VALIDATION_YAP_WRAPPER, `${JSON.stringify(validationYapWrapper, null, 2)}\n`);
   fs.writeFileSync(OUT_APP_PACKAGE, `${JSON.stringify(appPackage, null, 2)}\n`);
   fs.writeFileSync(OUT_YAPK, `${JSON.stringify(signResult.wrapper, null, 2)}\n`);
+  fs.writeFileSync(OUT_YAP, `${JSON.stringify(validationYapWrapper, null, 2)}\n`);
   const report = {
     status: "generated",
     outputPackage: OUT_YAPK,
+    outputYap: OUT_YAP,
     decodedDataPath: OUT_DECODED_DATA,
     decodedResourcePath: OUT_DECODED_RESOURCE,
     validationYapWrapperPath: OUT_VALIDATION_YAP_WRAPPER,
@@ -1142,6 +1407,15 @@ async function main() {
       verifyStatus: signResult.verifyStatus,
       apiBaseUrl: signResult.apiBaseUrl,
     },
+    apiIds: {
+      source: "Yeeflow generate-unique-ids API",
+      remappedGeneratedIdCount: apiIdResult.remappedIdCount,
+      requestedIncludingPackageId: apiIdResult.apiIdSummary.requested,
+      received: apiIdResult.apiIdSummary.received,
+      minLength: apiIdResult.apiIdSummary.minLength,
+      maxLength: apiIdResult.apiIdSummary.maxLength,
+      unsafeIntegerCount: apiIdResult.apiIdSummary.unsafeIntegerCount,
+    },
     coverage: coverageSummary(data),
     proofBoundary: "YAPK content is locally generated and wrapper-decodable. Runtime import/open behavior must be manually tested before claiming runtime proof.",
   };
@@ -1149,7 +1423,9 @@ async function main() {
   console.log(JSON.stringify({
     status: report.status,
     outputPackage: report.outputPackage,
+    outputYap: report.outputYap,
     signing: report.signing,
+    apiIds: report.apiIds,
     dataLists: report.coverage.dataLists.length,
     pages: report.coverage.pages.length,
     vendorForms: report.coverage.vendorForms.length,

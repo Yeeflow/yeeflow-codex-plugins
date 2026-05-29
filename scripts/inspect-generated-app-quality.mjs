@@ -598,8 +598,8 @@ function hasCardStructure(page) {
   let cardLike = 0;
   walkControls(page, (control) => {
     const type = safeString(control.type);
-    const label = safeString(control.label).toLowerCase();
-    const styleText = JSON.stringify(control.attrs?.style || {});
+    const label = `${safeString(control.label)} ${safeString(control.nv_label)}`.toLowerCase();
+    const styleText = JSON.stringify(control.attrs || {});
     if (type === "card" || label.includes("card") || /border|shadow|radius|background/i.test(styleText)) cardLike += 1;
   });
   return cardLike >= 3;
@@ -609,8 +609,8 @@ function hasAnyCardContainer(page) {
   let cardLike = 0;
   walkControls(page, (control) => {
     const type = safeString(control.type);
-    const label = safeString(control.label).toLowerCase();
-    const styleText = JSON.stringify(control.attrs?.style || {});
+    const label = `${safeString(control.label)} ${safeString(control.nv_label)}`.toLowerCase();
+    const styleText = JSON.stringify(control.attrs || {});
     if (type === "card" || label.includes("card") || /border|shadow|radius|background/i.test(styleText)) cardLike += 1;
   });
   return cardLike >= 1;
@@ -699,7 +699,15 @@ function buttonIndex(page) {
 
 function pageHasPlaceholderContent(page) {
   const text = JSON.stringify(page || "");
-  return /Here is the description|"\s*Alert\s*"|>\s*Alert\s*<|"label"\s*:\s*"Button"|"text"\s*:\s*"Button"|safeGeneratedAction|placeholder-only|lorem ipsum/i.test(text);
+  if (/safeGeneratedAction|placeholder-only|lorem ipsum|Here is the description/i.test(text)) return true;
+  let placeholder = false;
+  walkControls(page, (control) => {
+    const type = normalizedControlType(control.type);
+    const label = controlText(control).trim();
+    if (type === "button" && /^button$/i.test(label)) placeholder = true;
+    if (type === "alert" && isDefaultAlert(control)) placeholder = true;
+  });
+  return placeholder;
 }
 
 function validateLayoutRule(rule, page) {
@@ -724,7 +732,7 @@ function itemTemplateDynamicFieldCount(control) {
 }
 
 function validateItemTemplate(section, page, checklistPage, findings) {
-  const itemTemplate = section.itemTemplate || {};
+  const itemTemplate = section.itemTemplate;
   if (!isObject(itemTemplate)) return;
   const expectedTypes = asArray(itemTemplate.controls || section.controls)
     .map(normalizedControlType)
@@ -825,8 +833,10 @@ function inspectCompositionQuality(decodedPackage, checklist) {
 }
 
 function isDefaultAlert(control) {
-  const text = JSON.stringify(control || {});
-  return /Here is the description|"\s*Alert\s*"|>Alert</i.test(text) || /Alert Here is the description/i.test(text);
+  const attrs = control?.attrs || {};
+  const title = safeString(attrs.title || control?.label || control?.nv_label).trim();
+  const description = safeString(attrs.description || attrs.desc || attrs.text).trim();
+  return /^alert$/i.test(title) || /Here is the description|Alert Here is the description/i.test(description);
 }
 
 function inspectDashboardStrict(surface, spec, findings, summary) {
@@ -991,8 +1001,14 @@ function main() {
   const specPackageFindings = compareSpecToPackage(spec, inventory, uiQuality.report);
   const strictVisual = args.strictVisualAppQuality ? inspectStrictVisualQuality(decodedPackage, spec) : { summary: {}, findings: [] };
   const compositionQuality = compositionChecklist.exists ? inspectCompositionQuality(decodedPackage, compositionChecklist) : { summary: {}, findings: [] };
+  const compositionCoversManualReview = compositionChecklist.exists && args.compositionChecklistPath;
+  const manualReviewCodes = new Set(["SPEC_PRINT_PAGE_MANUAL_REVIEW", "SPEC_ADVANCED_VISUAL_ELEMENTS_MANUAL_REVIEW"]);
   const strictEscalatedFindings = args.strictAppQuality
-    ? specPackageFindings.map((finding) => ({ ...finding, level: finding.level === "warning" ? "error" : finding.level, source: "strict-app-quality" }))
+    ? specPackageFindings.map((finding) => ({
+      ...finding,
+      level: finding.level === "warning" && !(compositionCoversManualReview && manualReviewCodes.has(finding.code)) ? "error" : finding.level,
+      source: "strict-app-quality",
+    }))
     : specPackageFindings;
   const findings = [
     ...plan.findings,

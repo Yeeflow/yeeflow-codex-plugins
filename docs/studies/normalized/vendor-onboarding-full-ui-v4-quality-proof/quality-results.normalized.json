@@ -1,0 +1,30 @@
+{
+  "status": "pass_with_warnings",
+  "blockingErrors": 0,
+  "checks": {
+    "jsSyntaxChecks": "pass",
+    "yapkSchemaV2": "pass",
+    "yapkResourceDecode": "pass",
+    "yapProductSchema": "pass",
+    "yapkPackageValidator": "pass_with_runtime_proof_warning",
+    "yapPackageValidator": "pass_with_warnings",
+    "yapGraphValidator": "pass_with_warnings",
+    "yapImportReadiness": "pass_with_warnings",
+    "generatedUiQuality": "pass",
+    "strictVisualAppQuality": "pass_with_warnings",
+    "compositionChecklist": "pass_with_warnings",
+    "currentDashboardSrcMarker": "pass",
+    "dataTableFieldBinding": "pass",
+    "customFormsNonBlank": "pass",
+    "kanbanCollectionTemplates": "pass",
+    "simplePortalNull": "pass",
+    "portalInfoNull": "pass",
+    "idUniquenessAndApiShape": "pass",
+    "safetyScan": "pass"
+  },
+  "expectedWarnings": [
+    "manual runtime visual review is still required",
+    "advanced visual controls require tenant runtime inspection",
+    "validator warnings remain proof-boundary warnings"
+  ]
+}

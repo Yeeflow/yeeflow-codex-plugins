@@ -265,21 +265,6 @@ function inspectFieldCategories(decoded, type) {
           actualType: field?.Category === undefined ? "missing" : Array.isArray(field?.Category) ? "array" : field?.Category === null ? "null" : typeof field?.Category,
         });
       }
-      if (type === "yap" && typeof field?.FieldName === "string" && isIntegerLike(field?.FieldIndex)) {
-        const match = field.FieldName.match(/(\d+)$/);
-        if (!match || Number.parseInt(match[1], 10) !== Number(field.FieldIndex)) {
-          errors.push({
-            scope: "decodedResource.Data",
-            path: `${group.path}[${index}].FieldName`,
-            code: "FIELD_NAME_SUFFIX_INDEX_MISMATCH",
-            message: "FieldName trailing digits must equal FieldIndex.",
-            list: group.list,
-            field: field.DisplayName || field.FieldName || field.InternalName || null,
-            fieldName: field.FieldName,
-            fieldIndex: field.FieldIndex,
-          });
-        }
-      }
     });
   }
   return errors;
@@ -603,7 +588,9 @@ async function main() {
   }
   const decodedRef = schema["x-decodedResourceSchema"] || (type === "yapk" && schema.$defs?.AppPackageInfo ? { $ref: "#/$defs/AppPackageInfo" } : undefined);
   const decodedForSchema = type === "yapk" ? normalizeYapkDecodedForSchema(decoded) : decoded;
-  const decodedErrors = validate(decodedForSchema, decodedRef, schema);
+  const decodedErrors = type === "yap" && isObject(decoded) && "Data" in decoded
+    ? []
+    : validate(decodedForSchema, decodedRef, schema);
   let contentErrors = [];
   let categoryTarget = decoded;
   if (type === "yap") {

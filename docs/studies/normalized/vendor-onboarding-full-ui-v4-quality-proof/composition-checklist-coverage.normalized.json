@@ -1,0 +1,41 @@
+{
+  "compositionChecklist": "docs/generated-app-plans/vendor-onboarding-v4-composition-checklist.normalized.json",
+  "status": "pass_with_warnings",
+  "requiredPages": 5,
+  "implementedPages": 5,
+  "requiredSections": 37,
+  "implementedSections": 37,
+  "blockingErrors": 0,
+  "pages": [
+    {
+      "id": "vendor_management_dashboard",
+      "title": "Vendor Management Dashboard",
+      "requiredSections": 8,
+      "implementedSections": 8
+    },
+    {
+      "id": "vendor_detail_view_page",
+      "title": "Vendor Detail View Page",
+      "requiredSections": 8,
+      "implementedSections": 8
+    },
+    {
+      "id": "new_vendor_request_form",
+      "title": "New Vendor Request Form",
+      "requiredSections": 7,
+      "implementedSections": 7
+    },
+    {
+      "id": "compliance_review_workspace",
+      "title": "Compliance Review Workspace",
+      "requiredSections": 7,
+      "implementedSections": 7
+    },
+    {
+      "id": "vendor_print_page",
+      "title": "Vendor Print Page",
+      "requiredSections": 7,
+      "implementedSections": 7
+    }
+  ]
+}

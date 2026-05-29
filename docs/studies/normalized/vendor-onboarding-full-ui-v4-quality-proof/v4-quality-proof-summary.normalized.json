@@ -1,0 +1,27 @@
+{
+  "application": "Vendor Onboarding & Compliance Management",
+  "proof": "full-ui-v4-quality-proof",
+  "date": "2026-05-29",
+  "branch": "codex/vendor-onboarding-full-ui-v4-quality-proof",
+  "packages": {
+    "yapk": "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v4.yapk",
+    "yap": "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v4.yap"
+  },
+  "packageFilesCommitted": false,
+  "implementedAreas": [
+    "Vendor Management Dashboard",
+    "Compliance Review Workspace",
+    "Vendor Detail View Page",
+    "New Vendor Request Form",
+    "Vendor Print Page"
+  ],
+  "dataLists": [
+    "Vendors",
+    "Vendor Documents",
+    "Compliance Reviews",
+    "Vendor Tasks",
+    "Vendor Activity / History"
+  ],
+  "proofBoundary": "local-generation-validation-and-yapk-sign-verify-only",
+  "manualRuntimeTestRequired": true
+}

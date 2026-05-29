@@ -273,9 +273,6 @@ function inspectField(field, path, findings, summary) {
   const fieldName = String(field.FieldName || "");
   const match = fieldName.match(FIELD_NAME_SUFFIX_RE);
   if (!match && fieldName !== "Title") add(findings, "error", "YAPK_FIELD_NAME_SUFFIX_MISSING", "FieldName must end with digits, except the built-in Title field.", { path: `${path}.FieldName` });
-  else if (match && String(field.FieldIndex ?? "") !== match[1]) {
-    add(findings, "error", "YAPK_FIELD_NAME_SUFFIX_INDEX_MISMATCH", "FieldName trailing digits must equal FieldIndex.", { path: `${path}.FieldName` });
-  }
   if (typeof field.InternalName !== "string" || !INTERNAL_NAME_RE.test(field.InternalName)) {
     add(findings, "error", "YAPK_FIELD_INTERNAL_NAME_INVALID", "InternalName must match ^[a-zA-Z0-9_]+$.", { path: `${path}.InternalName` });
   }

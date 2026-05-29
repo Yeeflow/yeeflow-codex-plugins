@@ -1,0 +1,15 @@
+{
+  "activeDefaultButtonsAllowed": false,
+  "actionPolicy": "buttons must use meaningful labels and configured local navigation or documented deferred state",
+  "deferredActions": [
+    {
+      "area": "New Vendor Request Form",
+      "reason": "tenant-specific record mutation and submission behavior needs runtime configuration before it should be treated as working workflow execution"
+    },
+    {
+      "area": "Compliance Review Workspace",
+      "reason": "bulk review and document-request actions are represented as documented deferred controls unless tenant workflows are configured"
+    }
+  ],
+  "proofBoundary": "deferred actions are visible design affordances, not runtime execution proof"
+}

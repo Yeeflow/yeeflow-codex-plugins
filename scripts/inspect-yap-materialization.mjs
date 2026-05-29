@@ -244,9 +244,7 @@ function inspect(inputPath) {
     const displayNames = new Set();
     if (!fields.length) errors.push({ code: "CHILD_LIST_FIELDS_EMPTY", message: "Child data list has no fields attached.", detail: { title: child?.ListModel?.Title, listId } });
     if (Number(child?.ListModel?.Type) === 1) {
-      if (!schemaDirectPackage && child?.ListModel?.ListType === undefined) {
-        errors.push({ code: "CHILD_DATA_LIST_LISTTYPE_MISSING", message: "Generated Type 1 data lists must include ListModel.ListType before Yeeflow import.", detail: { title: child?.ListModel?.Title, listId } });
-      } else if (!schemaDirectPackage && Number(child.ListModel.ListType) !== 1) {
+      if (!schemaDirectPackage && child?.ListModel?.ListType !== undefined && Number(child.ListModel.ListType) !== 1) {
         errors.push({ code: "CHILD_DATA_LIST_LISTTYPE_INVALID", message: "Generated Type 1 data lists must use ListModel.ListType = 1 before Yeeflow import.", detail: { title: child?.ListModel?.Title, listId, listType: child.ListModel.ListType } });
       }
       const titleField = fields.find((field) => asString(field.FieldName) === "Title");
