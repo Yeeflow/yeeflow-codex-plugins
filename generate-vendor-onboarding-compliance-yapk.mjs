@@ -12,9 +12,10 @@ const GENERATED_AT_UTC = "2026-05-29T01:30:00Z";
 const APP_TITLE = "Vendor Onboarding & Compliance Management";
 const APP_DESCRIPTION = "Full-scope generated YAPK candidate for vendor onboarding, compliance review, document tracking, task management, dashboards, and print summary.";
 const SPEC_PATH = "docs/generated-app-plans/vendor-onboarding-compliance-ui-implementation-spec.md";
-const OUT_YAPK = process.env.VENDOR_ONBOARDING_YAPK_OUTPUT || "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v1.yapk";
-const OUT_YAP = process.env.VENDOR_ONBOARDING_YAP_OUTPUT || "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v1.yap";
-const WRAPPER_VERSION = process.env.VENDOR_ONBOARDING_YAPK_VERSION || "full-ui.v1";
+const OUT_YAPK = process.env.VENDOR_ONBOARDING_YAPK_OUTPUT || "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v2-src-dashboard.yapk";
+const OUT_YAP = process.env.VENDOR_ONBOARDING_YAP_OUTPUT || "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v2-src-dashboard.yap";
+const WRAPPER_VERSION = process.env.VENDOR_ONBOARDING_YAPK_VERSION || "full-ui.v2-src-dashboard";
+const CURRENT_DASHBOARD_EXT2 = "{\"src\":true}";
 const TMP_DIR = ".tmp/vendor-onboarding-compliance-management";
 const OUT_DECODED_DATA = `${TMP_DIR}/vendor-onboarding-compliance-management.decoded-data.json`;
 const OUT_DECODED_RESOURCE = `${TMP_DIR}/vendor-onboarding-compliance-management.decoded-resource.json`;
@@ -141,6 +142,7 @@ function autoFieldRules(spec) {
 
 function layout(listId, title, type, resource, extra = {}) {
   const layoutId = extra.layoutId || nextId();
+  const isDashboard = Number(type) === 103;
   return {
     LayoutID: layoutId,
     ListID: listId,
@@ -151,7 +153,7 @@ function layout(listId, title, type, resource, extra = {}) {
     Modified: GENERATED_AT,
     LayoutView: extra.layoutView ?? null,
     Ext1: extra.ext1 ?? null,
-    Ext2: extra.ext2 ?? null,
+    Ext2: extra.ext2 ?? (isDashboard ? CURRENT_DASHBOARD_EXT2 : null),
     LayoutInResources: resource === null ? [] : [{ ID: layoutId, RefId: layoutId, Resource: JSON.stringify(resource) }],
   };
 }

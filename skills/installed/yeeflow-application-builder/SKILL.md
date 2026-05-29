@@ -567,3 +567,6 @@ Validation and proof boundaries:
 - Do not claim QR scan behavior, Barcode scan behavior, external iframe content loading, non-empty document preview, dynamic value changes, or Approval Form/Public Form host behavior unless those exact behaviors are tested.
 - Keep generated .yap files, decoded payloads, screenshots, and private data out of commits.
 <!-- advanced-controls-runtime-proof:end -->
+
+
+Missing `Ext2.src` on inline Type 103 dashboards is also a generated-final error. The current dashboard marker is required for every generated dashboard page, not only blank shells; otherwise Yeeflow opens the retired legacy dashboard renderer.

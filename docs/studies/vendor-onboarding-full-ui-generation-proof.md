@@ -8,10 +8,10 @@ Approved spec: `docs/generated-app-plans/vendor-onboarding-compliance-ui-impleme
 
 ## Package Outputs
 
-- Preferred YAPK: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v1.yapk`
-- YAP fallback: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v1.yap`
+- Preferred YAPK: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v2-src-dashboard.yapk`
+- YAP fallback: `/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v2-src-dashboard.yap`
 
-The generated package files are intentionally kept outside the repository and are not committed.
+The generated package files are intentionally kept outside the repository and are not committed. v2 replaces the earlier v1 candidate because v1 installed as YAPK but its Type 103 dashboard pages lacked the `Ext2 = "{\"src\":true}"` marker and therefore opened in the retired legacy dashboard renderer.
 
 ## Generation Rules Used
 
@@ -30,6 +30,7 @@ The generated package files are intentionally kept outside the repository and ar
 - YAPK no-portal packages use `PortalInfo: null`.
 - YAPK is server-signed and verified through the existing setsign/verifysign flow.
 - Current dashboard shell is used for generated dashboards.
+- Every generated `Type = 103` dashboard includes `Ext2 = "{\"src\":true}"`, even when it has inline `LayoutInResources` content.
 - Dashboard Data table columns include both `Field` source binding and `FieldName` display label.
 - Dashboard `attrs.data.list` includes `AppID`, `ListID`, `Type`, `Title`, and `ListSetID`.
 
@@ -91,6 +92,7 @@ YAPK:
 - setsign result: 32-byte server signature
 - verifysign result: HTTP 200
 - `scripts/validate-standard-package-schema.mjs` with `yapk-schema_v2.json`: pass, 0 errors
+- Decoded YAPK `Pages[]` dashboard marker check: both dashboards have `Ext2 = "{\"src\":true}"` and one inline resource
 - `scripts/inspect-yapk-schema-standard.mjs`: pass, 0 errors, 0 warnings
 - `validate-yapk-package.js`: pass with one expected runtime-proof warning
 - `inspect-generated-app-quality.mjs` on YAPK: YAPK-specific package inventory is not yet supported by that inspector; it incorrectly routes the file through YAP checks. The separate YAPK validators above are authoritative for YAPK structure.
@@ -98,6 +100,7 @@ YAPK:
 YAP fallback:
 
 - `scripts/validate-standard-package-schema.mjs` with product-team YAP schema: pass, 0 errors
+- Decoded YAP root dashboard marker check: both dashboards have `Ext2 = "{\"src\":true}"` and one inline resource
 - `scripts/inspect-yap-schema-standard.mjs`: pass, 0 errors, 0 warnings
 - `validate-yap-package.js --mode generator --stage final`: pass with warnings
 - `validate-yap-graph.js`: pass with warnings, 0 errors
@@ -124,14 +127,14 @@ Warning themes:
 
 ## Proof Boundary
 
-This proof confirms package generation, server signing, schema conformance, local import-readiness checks, current-dashboard structure, Data table source-field bindings, and spec-oriented structural coverage.
+This proof confirms package generation, server signing, schema conformance, local import-readiness checks, mandatory `Ext2.src` current-dashboard markers, Data table source-field bindings, and spec-oriented structural coverage.
 
 It does not prove successful Yeeflow runtime import/install of the full UI package. The generated packages must still be manually imported and visually checked in Yeeflow, because several rich UI controls and tenant-specific action bindings are runtime-sensitive.
 
 ## Manual Test Checklist
 
-1. Import/install `/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v1.yapk`.
-2. If YAPK import fails, try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v1.yap`.
+1. Import/install `/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v2-src-dashboard.yapk`.
+2. If YAPK import fails, try `/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v2-src-dashboard.yap`.
 3. Verify all five intended app areas exist.
 4. Open Vendor Management Dashboard and confirm it uses the current dashboard version.
 5. Check dashboard padding, KPI cards, cards/sections, and grid spacing.

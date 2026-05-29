@@ -98,6 +98,15 @@ function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
+function safeJsonParse(value) {
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
 function add(findings, level, code, message, detail = {}) {
   findings.push({ level, code, message, detail });
 }
@@ -469,6 +478,18 @@ function inspectAppPackage(decoded, findings) {
   }
   if (decoded.PortalInfo !== undefined && decoded.PortalInfo !== null && !Array.isArray(decoded.PortalInfo) && !isObject(decoded.PortalInfo)) {
     add(findings, "error", "YAPK_PORTALINFO_INVALID", "PortalInfo must be null for no portal or a portal object when a portal is included.", { path: "PortalInfo", actualType: typeof decoded.PortalInfo });
+  }
+  for (const [index, page] of asArray(decoded.Pages).entries()) {
+    if (Number(page?.Type) !== 103) continue;
+    const ext2 = safeJsonParse(page.Ext2);
+    if (!ext2 || ext2.src !== true) {
+      add(findings, "error", "DASHBOARD_CURRENT_VERSION_MARKER_MISSING", "YAPK Type 103 dashboard pages must include Ext2 {\"src\":true}; otherwise Yeeflow opens the retired legacy dashboard renderer.", {
+        path: `Pages[${index}].Ext2`,
+        title: page.Title || null,
+        layoutId: page.LayoutID || null,
+        hasInlineResource: asArray(page.LayoutInResources).length > 0,
+      });
+    }
   }
   summary.pages = asArray(decoded.Pages).length;
   summary.formReports = asArray(decoded.FormReports).length;

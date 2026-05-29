@@ -1068,13 +1068,11 @@ function validateRootAppShell(data, wrapper, replaceIds, listsById, fieldsByList
     const layoutId = safeString(layout.LayoutID);
     const ext2 = tryParseJson(layout.Ext2);
     const resources = asArray(layout.LayoutInResources);
-    if (!resources.length) {
-      if (layout.LayoutView !== null || !ext2 || ext2.src !== true) {
-        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DASHBOARD_USES_LEGACY_SCHEMA", "Generated Type 103 dashboard shell should use the current export-proven shape: LayoutView null, Ext2 {\"src\":true}, and empty LayoutInResources.", { title: layout.Title, layoutId, layoutViewType: layout.LayoutView === null ? "null" : typeof layout.LayoutView, ext2 });
-      }
-      if (!ext2 || ext2.src !== true) {
-        issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DASHBOARD_CURRENT_VERSION_MARKER_MISSING", "Generated dashboard shell is missing the current-version Ext2 {\"src\":true} marker.", { title: layout.Title, layoutId });
-      }
+    if (!ext2 || ext2.src !== true) {
+      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DASHBOARD_CURRENT_VERSION_MARKER_MISSING", "Generated Type 103 dashboard is missing the current-version Ext2 {\"src\":true} marker. Yeeflow routes pages without this marker through the retired legacy dashboard renderer.", { title: layout.Title, layoutId, hasInlineResource: resources.length > 0 });
+    }
+    if (!resources.length && (layout.LayoutView !== null || !ext2 || ext2.src !== true)) {
+      issue(report, report.mode === "generator" && report.stage === "final" ? "error" : "warning", "DASHBOARD_USES_LEGACY_SCHEMA", "Generated Type 103 dashboard shell should use the current export-proven shape: LayoutView null, Ext2 {\"src\":true}, and empty LayoutInResources.", { title: layout.Title, layoutId, layoutViewType: layout.LayoutView === null ? "null" : typeof layout.LayoutView, ext2 });
     }
     if (layout.LayoutView !== null && layout.LayoutView !== undefined) {
       if (!(isSchemaDirectYap(report) && layout.LayoutView === "")) {

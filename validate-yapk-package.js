@@ -353,6 +353,7 @@ function validateAppPackage(decoded, errors, warnings) {
   for (const [index, form] of asArray(decoded.Forms).entries()) validateNoRule(form, `Forms[${index}]`, errors, counts);
   for (const [index, child] of asArray(decoded.Childs).entries()) validateListPackage(child, `Childs[${index}]`, errors, warnings, counts);
   validateGeneratedYapkIds(decoded, errors);
+  validateDashboardShells(decoded, errors);
   validateDashboardDataTables(decoded, errors);
   const placeholders = [];
   walk(decoded, (value, pointer) => {
@@ -417,6 +418,30 @@ function validateGeneratedYapkIds(decoded, errors) {
       safeId(layout.ListID, `Childs[${childIndex}].Layouts[${layoutIndex}].ListID`);
       safeId(layout.LayoutID, `Childs[${childIndex}].Layouts[${layoutIndex}].LayoutID`, true);
       duplicate(layoutIds, layout.LayoutID, "DUPLICATE_LAYOUT_ID", "LayoutID values must be globally unique.", { path: `Childs[${childIndex}].Layouts[${layoutIndex}].LayoutID`, list: title, layout: layout.Title || null });
+    }
+  }
+}
+
+function parseMaybeJson(value) {
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function validateDashboardShells(decoded, errors) {
+  for (const [index, page] of asArray(decoded.Pages).entries()) {
+    if (Number(page?.Type) !== 103) continue;
+    const ext2 = parseMaybeJson(page.Ext2);
+    if (!ext2 || ext2.src !== true) {
+      add(errors, "DASHBOARD_CURRENT_VERSION_MARKER_MISSING", "YAPK Type 103 dashboard pages must include Ext2 {\"src\":true}; otherwise Yeeflow opens the retired legacy dashboard renderer.", {
+        path: `Pages[${index}].Ext2`,
+        title: page.Title || null,
+        layoutId: page.LayoutID || null,
+        hasInlineResource: asArray(page.LayoutInResources).length > 0,
+      });
     }
   }
 }

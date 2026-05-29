@@ -316,10 +316,13 @@ function inspectDashboards(data, listsById, findings, summary) {
   const rootLayouts = asArray(data?.Item?.Layouts);
   rootLayouts.forEach((layout, layoutIndex) => {
     if (Number(layout.Type) !== 103) return;
+    const ext2 = parseMaybeJson(layout.Ext2);
+    if (!ext2 || ext2.src !== true) {
+      add(findings, "error", "DASHBOARD_CURRENT_VERSION_MARKER_MISSING", "Generated Type 103 dashboards must include Ext2 {\"src\":true}; otherwise Yeeflow opens the retired legacy dashboard renderer.", { layoutIndex, title: safeString(layout.Title), layoutId: safeString(layout.LayoutID), hasInlineResource: asArray(layout.LayoutInResources).length > 0 });
+    }
     const resource = asArray(layout.LayoutInResources)[0]?.Resource;
     const page = parseMaybeJson(resource);
     if (!page) {
-      const ext2 = parseMaybeJson(layout.Ext2);
       const currentDashboardShell = layout.LayoutView === null && ext2 && ext2.src === true && Array.isArray(layout.LayoutInResources) && layout.LayoutInResources.length === 0;
       if (currentDashboardShell) {
         summary.dashboardPages += 1;

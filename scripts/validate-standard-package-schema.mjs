@@ -561,6 +561,27 @@ function inspectYapkPortalInfo(decoded) {
   return errors;
 }
 
+function inspectYapkDashboards(decoded) {
+  const errors = [];
+  if (!isObject(decoded)) return errors;
+  for (const [index, page] of asArray(decoded.Pages).entries()) {
+    if (Number(page?.Type) !== 103) continue;
+    const ext2 = safeParseJson(page.Ext2);
+    if (!ext2 || ext2.src !== true) {
+      errors.push({
+        scope: "decodedResource",
+        path: `$.Pages[${index}].Ext2`,
+        code: "DASHBOARD_CURRENT_VERSION_MARKER_MISSING",
+        message: "YAPK Type 103 dashboard pages must include Ext2 {\"src\":true}; otherwise Yeeflow opens the retired legacy dashboard renderer.",
+        title: page.Title || null,
+        layoutId: page.LayoutID || null,
+        hasInlineResource: asArray(page.LayoutInResources).length > 0,
+      });
+    }
+  }
+  return errors;
+}
+
 function safeParseJson(value) {
   try {
     return parseJsonPreservingLargeInts(value);
@@ -618,7 +639,8 @@ async function main() {
   const categoryErrors = inspectFieldCategories(categoryTarget, type);
   const idErrors = type === "yap" && categoryTarget ? inspectYapIds(categoryTarget) : type === "yapk" ? inspectYapkIds(decoded) : [];
   const portalErrors = type === "yapk" ? inspectYapkPortalInfo(decoded) : [];
-  const errors = [...wrapperErrors.map((error) => ({ scope: "wrapper", ...error })), ...decodedErrors.map((error) => ({ scope: "decodedResource", ...error })), ...contentErrors, ...categoryErrors, ...idErrors, ...portalErrors];
+  const dashboardErrors = type === "yapk" ? inspectYapkDashboards(decoded) : [];
+  const errors = [...wrapperErrors.map((error) => ({ scope: "wrapper", ...error })), ...decodedErrors.map((error) => ({ scope: "decodedResource", ...error })), ...contentErrors, ...categoryErrors, ...idErrors, ...portalErrors, ...dashboardErrors];
 
   console.log(JSON.stringify({
     input: path.basename(input),

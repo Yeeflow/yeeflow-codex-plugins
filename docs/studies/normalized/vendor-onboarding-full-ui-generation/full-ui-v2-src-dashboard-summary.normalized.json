@@ -1,8 +1,8 @@
 {
-  "packageName": "Vendor Onboarding & Compliance Management full UI v1",
+  "packageName": "Vendor Onboarding & Compliance Management full UI v2 src-dashboard",
   "outputs": {
-    "yapk": "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v1.yapk",
-    "yap": "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v1.yap"
+    "yapk": "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v2-src-dashboard.yapk",
+    "yap": "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v2-src-dashboard.yap"
   },
   "sourceOfTruth": {
     "approvedSpec": "docs/generated-app-plans/vendor-onboarding-compliance-ui-implementation-spec.md",
@@ -16,6 +16,7 @@
     "fieldCategoryInteger": true,
     "fieldIndexUniqueWithinList": true,
     "currentDashboardShell": true,
+    "allType103DashboardsHaveExt2Src": true,
     "dashboardDataTableFieldAndFieldName": true,
     "yapkPortalInfo": null
   },
