@@ -537,6 +537,137 @@ function isDefaultAlert(control) {
   return values.some((value) => /^alert$/i.test(value.trim()) || /Here is the description/i.test(value));
 }
 
+function styleText(control) {
+  return JSON.stringify(control?.attrs || {});
+}
+
+function hasMainContentLayout(page) {
+  let hasMain = false;
+  let hasContent = false;
+  walkControls(page, (control) => {
+    const label = `${safeString(control.nv_label)} ${safeString(control.label)}`.toLowerCase();
+    if (/\bmain\b/.test(label)) hasMain = true;
+    if (/\bcontent\b/.test(label)) hasContent = true;
+  });
+  return hasMain && hasContent;
+}
+
+function hasWeakSpacingMetadata(control) {
+  const gap = control?.attrs?.style?.gap;
+  if (Array.isArray(gap)) return true;
+  if (gap === undefined || gap === null || gap === "") return false;
+  const numeric = Number(String(gap).replace(/px$/, ""));
+  return Number.isFinite(numeric) && numeric < 16;
+}
+
+function countRuntimeLikelyCards(page) {
+  let count = 0;
+  walkControls(page, (control) => {
+    if (safeString(control.type) !== "container") return;
+    const attrs = control.attrs || {};
+    const common = attrs.common || {};
+    const padding = common.padding || {};
+    const pad = Number(padding.left || 0) + Number(padding.right || 0) + Number(padding.top || 0) + Number(padding.bottom || 0);
+    const background = JSON.stringify(common.background || "");
+    const border = JSON.stringify(common.border || "");
+    const hasVisibleSurface = /classic|color|background/i.test(background) && /width|radius|color/i.test(border);
+    const label = `${safeString(control.nv_label)} ${safeString(control.label)}`.toLowerCase();
+    const isStructuralShell = /padded page|dashboard header|workspace header|\bmain\b|\bcontent\b/.test(label);
+    if (hasVisibleSurface && pad >= 48 && !isStructuralShell) count += 1;
+  });
+  return count;
+}
+
+function countGridLikeContainers(page) {
+  let count = 0;
+  walkControls(page, (control) => {
+    if (safeString(control.type) !== "container") return;
+    const columns = Number(control.attrs?.grid?.columns || 0);
+    const direction = JSON.stringify(control.attrs?.style?.direction || "");
+    if (columns >= 2 || /row/i.test(direction)) count += 1;
+  });
+  return count;
+}
+
+function hasRuntimeRenderableAlertContent(control) {
+  if (safeString(control.type) !== "alert") return true;
+  const text = JSON.stringify(control || {});
+  const hasSpecificCopy = /risk|compliance|expired|document|review|vendor|sanction|insurance/i.test(text);
+  const hasOnlyWeakAttrs = Boolean(control.attrs?.title || control.attrs?.description) && asArray(control.children).length === 0;
+  return hasSpecificCopy && !hasOnlyWeakAttrs;
+}
+
+function isWeakGeneratedAction(control) {
+  const attrs = control?.attrs || {};
+  const action = attrs.action || control.action;
+  if (isObject(action) && action.safeGeneratedAction) return true;
+  if (isObject(action) && action.type === "navigate" && !action.url && !action.pageId && !action.layoutId && !action.listId && !action.steps?.length) return true;
+  const localActions = asArray(attrs.actions);
+  return localActions.some((item) => asArray(item.steps).some((step) => safeString(step.type) === "noop"));
+}
+
+function countWeakActions(page) {
+  let count = 0;
+  walkControls(page, (control) => {
+    const type = safeString(control.type);
+    if ((type === "button" || type === "kanban" || type === "collection" || type === "icon_list") && isWeakGeneratedAction(control)) count += 1;
+    for (const item of asArray(control.attrs?.items)) {
+      if (isWeakGeneratedAction(item)) count += 1;
+    }
+  });
+  return count;
+}
+
+function hasKpiCardIssue(page) {
+  let kpiRow = null;
+  walkControls(page, (control) => {
+    const label = `${safeString(control.nv_label)} ${safeString(control.label)}`.toLowerCase();
+    if (!kpiRow && safeString(control.type) === "container" && /kpi/.test(label)) kpiRow = control;
+  });
+  if (!kpiRow) return true;
+  const cards = asArray(kpiRow.children).filter((child) => safeString(child.type) === "container");
+  if (cards.length < 4) return true;
+  return cards.some((card) => {
+    const text = styleText(card);
+    const controlCounts = countControls(card).counts;
+    const hasVisualCue = /icon|accent|badge|status|var\(--c--(primary|success|warning|danger)\)|#(?!fff|ffffff|f7fafc|e5e7eb|f3f4f6|f9fafb)[0-9a-f]{3,6}/i.test(text);
+    const hasEnoughContent = (controlCounts.heading || 0) + (controlCounts["dynamic-field"] || 0) >= 3;
+    return !hasVisualCue || !hasEnoughContent;
+  });
+}
+
+function dashboardSpecificRequirements(title) {
+  if (/Vendor Management Dashboard/i.test(title)) {
+    return [
+      { key: "header/action area", pattern: /header|action|new vendor|request/i },
+      { key: "KPI cards row", pattern: /kpi|total vendors|pending onboarding|high risk|expiring documents/i },
+      { key: "progress section", pattern: /progress|completion/i },
+      { key: "alert section", pattern: /urgent|risk|alert|compliance/i },
+      { key: "status board", pattern: /kanban|status board|onboarding status/i },
+      { key: "data table", pattern: /data-list|vendor records/i },
+      { key: "quick links", pattern: /quick links|icon_list/i },
+      { key: "recent activity", pattern: /recent activity|timeline/i },
+    ];
+  }
+  if (/Compliance Review Workspace/i.test(title)) {
+    return [
+      { key: "review queue controls", pattern: /queue|filter|start compliance|bulk request/i },
+      { key: "risk board", pattern: /risk queue|kanban|high-risk/i },
+      { key: "selected vendor summary", pattern: /selected vendor summary|vendor summary/i },
+      { key: "risk progress indicator", pattern: /progress-circle|risk score|progress/i },
+      { key: "issues alert", pattern: /alert|issue|missing|expired|risk/i },
+      { key: "missing documents table", pattern: /missing|expired documents|data-list/i },
+      { key: "review action area", pattern: /bulk operations|approve|assign|review action/i },
+    ];
+  }
+  return [];
+}
+
+function missingDashboardRequirements(title, page) {
+  const text = JSON.stringify(page || {});
+  return dashboardSpecificRequirements(title).filter((requirement) => !requirement.pattern.test(text));
+}
+
 function inspectDashboardStrict(surface, spec, findings, summary) {
   const { title, page, layout } = surface;
   const ext2 = parseMaybeJson(layout.Ext2);
@@ -558,7 +689,35 @@ function inspectDashboardStrict(surface, spec, findings, summary) {
   const buttons = counts.button || 0;
   const alerts = counts.alert || 0;
   const itemTemplates = (counts.kanban || 0) + (counts.collection || 0) + (counts["timeline-v"] || 0) + (counts["timeline-h"] || 0);
-  summary.dashboards.push({ title, totalControls: total, counts, dataTables, buttons, alerts, itemTemplates });
+  const runtimeLikelyCards = countRuntimeLikelyCards(page);
+  const gridLikeContainers = countGridLikeContainers(page);
+  const weakActions = countWeakActions(page);
+  const hasMainContent = hasMainContentLayout(page);
+  const missingRequirements = missingDashboardRequirements(title, page);
+  const visualScore = [
+    total >= 40,
+    runtimeLikelyCards >= 6,
+    gridLikeContainers >= 3,
+    hasMainContent,
+    weakActions === 0,
+    missingRequirements.length === 0,
+    !hasKpiCardIssue(page),
+  ].filter(Boolean).length;
+  summary.dashboards.push({
+    title,
+    totalControls: total,
+    counts,
+    dataTables,
+    buttons,
+    alerts,
+    itemTemplates,
+    runtimeLikelyCards,
+    gridLikeContainers,
+    weakActions,
+    hasMainContent,
+    visualScore,
+    missingMockupSections: missingRequirements.map((item) => item.key),
+  });
   if (!hasSafePadding(page)) {
     strictAdd(findings, "DASHBOARD_PADDING_MISSING", "Dashboard lacks clearly detectable safe outer padding; full UI pages must not place major content against the window edge.", { title });
   }
@@ -567,6 +726,28 @@ function inspectDashboardStrict(surface, spec, findings, summary) {
   }
   if (total < 18 || dataTables === 1 && total < 30) {
     strictAdd(findings, "DASHBOARD_LAYOUT_TOO_PLAIN", "Dashboard is too plain for a full application proof and appears closer to an importable scaffold than a designed page.", { title, totalControls: total, dataTables });
+  }
+  if (!hasMainContent || runtimeLikelyCards < 6 || visualScore < 5) {
+    strictAdd(findings, "DASHBOARD_VISUAL_RICHNESS_TOO_LOW", "Dashboard has controls, but the rendered-design richness is too low for the approved mockups.", { title, runtimeLikelyCards, gridLikeContainers, hasMainContent, visualScore });
+  }
+  let weakSpacing = 0;
+  walkControls(page, (control) => {
+    if (safeString(control.type) === "container" && hasWeakSpacingMetadata(control)) weakSpacing += 1;
+  });
+  if (!hasMainContent || weakSpacing > 0) {
+    strictAdd(findings, "DASHBOARD_SECTION_SPACING_TOO_WEAK", "Dashboard spacing relies on weak or non-renderable metadata and may render as a cramped/plain page.", { title, weakSpacing, hasMainContent });
+  }
+  if (!hasMainContent || gridLikeContainers < 3) {
+    strictAdd(findings, "DASHBOARD_GRID_STRUCTURE_MISSING", "Dashboard lacks the required Main/Content layout and robust multi-column/grid section structure.", { title, gridLikeContainers, hasMainContent });
+  }
+  if (hasKpiCardIssue(page) && /Vendor Management Dashboard/i.test(title)) {
+    strictAdd(findings, "KPI_CARD_STRUCTURE_TOO_PLAIN", "KPI cards are present only as plain text blocks or lack visual cues such as icons, status accents, or reliable card styling.", { title });
+  }
+  for (const requirement of missingRequirements) {
+    strictAdd(findings, "DASHBOARD_MOCKUP_SECTION_MISSING", "Dashboard is missing a required mockup/spec section.", { title, section: requirement.key });
+  }
+  if (visualScore < 6 || weakActions > 0 || missingRequirements.length > 0) {
+    strictAdd(findings, "DASHBOARD_MOCKUP_FIDELITY_TOO_LOW", "Dashboard structure does not provide enough design fidelity to the approved mockup to be called a successful full UI.", { title, visualScore, weakActions, missingSections: missingRequirements.map((item) => item.key) });
   }
   if (/Vendor Management Dashboard/i.test(title) && spec.expected?.kpiCards && (counts.container || 0) < 8) {
     strictAdd(findings, "DASHBOARD_EXPECTED_KPI_CARDS_MISSING", "Vendor Management Dashboard should include a clear KPI card row matching the approved spec.", { title });
@@ -578,11 +759,17 @@ function inspectDashboardStrict(surface, spec, findings, summary) {
       strictAdd(findings, "DASHBOARD_DEFAULT_ALERT_CONTENT", "Dashboard alert uses default placeholder content instead of meaningful compliance-risk copy.", { title, pointer, label });
       strictAdd(findings, "SPEC_CONTROL_PLACEHOLDER_ONLY", "A planned alert/control exists only as placeholder/default text.", { title, pointer, controlType: type });
     }
+    if (type === "alert" && !hasRuntimeRenderableAlertContent(control)) {
+      strictAdd(findings, "ALERT_CONTENT_TOO_GENERIC", "Dashboard alert content is not configured in a runtime-renderable, business-specific shape.", { title, pointer, label });
+    }
     if (type === "button") {
       if (!label || /^button$/i.test(label.trim())) strictAdd(findings, "DEFAULT_BUTTON_LABEL", "Generated dashboard button has a generic/default label.", { title, pointer, label });
       if (!hasActionBinding(control)) {
         strictAdd(findings, "BUTTON_ACTION_MISSING", "Generated dashboard button has no configured action binding.", { title, pointer, label });
         strictAdd(findings, "DASHBOARD_BUTTON_ACTION_MISSING", "Dashboard contains buttons that do not expose configured actions.", { title, pointer, label });
+      }
+      if (isWeakGeneratedAction(control)) {
+        strictAdd(findings, "BUTTON_VISUAL_OR_ACTION_TOO_WEAK", "Dashboard button has a label but only a weak generated action placeholder, not a real configured navigation/action.", { title, pointer, label });
       }
     }
     if (type === "kanban" || type === "collection") {
@@ -597,11 +784,46 @@ function inspectDashboardStrict(surface, spec, findings, summary) {
       }
       const actionCount = asArray(control.attrs?.actions).length;
       if (actionCount === 0) strictAdd(findings, "ITEM_TEMPLATE_ACTIONS_MISSING", "Kanban/Collection item template has no configured item actions where the spec expects actionable cards.", { title, pointer, controlType: type });
+      if (isWeakGeneratedAction(control)) strictAdd(findings, "ITEM_TEMPLATE_ACTIONS_MISSING", "Kanban/Collection item actions are placeholders or no-op steps rather than real actions.", { title, pointer, controlType: type });
     }
   });
   if (itemTemplates === 0 && /Compliance Review Workspace|Vendor Management Dashboard/i.test(title)) {
     strictAdd(findings, "EXPECTED_ACTION_MISSING", "Expected dashboard operations board/card actions are missing or not detectable.", { title });
   }
+}
+
+function formRequirementPatterns(title) {
+  if (/Vendor Detail View Page/i.test(title)) {
+    return [
+      { key: "vendor header", pattern: /header|vendor name|status|risk|owner/i },
+      { key: "review steps", pattern: /steps-bar|Request Submitted|Procurement Review|Compliance Review|Legal Review|Finance Review|Approved/i },
+      { key: "tabs or major sections", pattern: /tabs|Overview|Documents|Compliance|Tasks|History/i },
+      { key: "related documents", pattern: /document|Vendor Documents|document-embed/i },
+      { key: "related reviews", pattern: /review|Compliance Reviews/i },
+      { key: "related tasks", pattern: /task|Vendor Tasks/i },
+      { key: "history", pattern: /history|timeline/i },
+    ];
+  }
+  if (/New Vendor Request Form/i.test(title)) {
+    return [
+      { key: "vendor information", pattern: /Vendor Information|Vendor Name|Vendor Type/i },
+      { key: "contact information", pattern: /Contact Information|Email|Phone/i },
+      { key: "business justification", pattern: /Business Justification/i },
+      { key: "payment and contract", pattern: /Payment|Contract|Annual Spend/i },
+      { key: "required documents", pattern: /Required Documents|document checklist|dynamic-file|file/i },
+    ];
+  }
+  if (/Vendor Print Page/i.test(title)) {
+    return [
+      { key: "printable header", pattern: /print|header|Vendor Summary/i },
+      { key: "vendor summary", pattern: /Vendor Name|Vendor Type|Risk Level|Onboarding Status/i },
+      { key: "compliance summary", pattern: /Compliance|Review|Risk/i },
+      { key: "document checklist", pattern: /Document|Checklist/i },
+      { key: "approval timeline", pattern: /timeline|approval|steps-bar/i },
+      { key: "qr or barcode", pattern: /qr-code|barcode|QR|Barcode/i },
+    ];
+  }
+  return [];
 }
 
 function inspectCustomFormStrict(surface, findings, summary) {
@@ -612,9 +834,24 @@ function inspectCustomFormStrict(surface, findings, summary) {
   }
   const { counts, total } = countControls(page);
   const fieldControls = (counts.field || 0) + (counts["dynamic-field"] || 0) + (counts["dynamic-user"] || 0) + (counts["dynamic-file"] || 0);
-  summary.customForms.push({ list: listTitle, title, totalControls: total, counts, fieldControls });
+  const hasMainContent = hasMainContentLayout(page);
+  const runtimeLikelyCards = countRuntimeLikelyCards(page);
+  const formRequirements = formRequirementPatterns(title);
+  const formText = JSON.stringify(page || {});
+  const missingFormSections = formRequirements.filter((requirement) => !requirement.pattern.test(formText));
+  summary.customForms.push({ list: listTitle, title, totalControls: total, counts, fieldControls, hasMainContent, runtimeLikelyCards, missingMockupSections: missingFormSections.map((item) => item.key) });
   if (total < 10 || fieldControls < 4) {
     strictAdd(findings, "FORM_LAYOUT_TOO_MINIMAL", "Custom form exists but is too minimal to count as a designed full-application form.", { list: listTitle, title, totalControls: total, fieldControls });
+  }
+  if (formRequirements.length && (!hasMainContent || runtimeLikelyCards < 4 || missingFormSections.length)) {
+    const code = /Detail View/i.test(title) ? "DETAIL_VIEW_FORM_UNDERBUILT"
+      : /New Vendor/i.test(title) ? "NEW_FORM_UNDERBUILT"
+        : /Print Page/i.test(title) ? "PRINT_PAGE_UNDERBUILT"
+          : "FORM_LAYOUT_TOO_MINIMAL";
+    strictAdd(findings, code, "Custom form has controls, but does not meet the approved mockup section richness.", { list: listTitle, title, hasMainContent, runtimeLikelyCards, missingSections: missingFormSections.map((item) => item.key) });
+    for (const requirement of missingFormSections) {
+      strictAdd(findings, "FORM_MOCKUP_SECTION_MISSING", "Custom form is missing a required mockup/spec section.", { list: listTitle, title, section: requirement.key });
+    }
   }
   if (/Safe padded generated form/i.test(JSON.stringify(page))) {
     strictAdd(findings, "SPEC_CONTROL_PLACEHOLDER_ONLY", "Custom form uses generated scaffold copy rather than the approved form design.", { list: listTitle, title });

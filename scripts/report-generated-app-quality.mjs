@@ -53,6 +53,8 @@ function main() {
   lines.push(`Errors: ${report.errors || 0}`);
   lines.push(`Warnings: ${report.warnings || 0}`);
   lines.push("");
+  lines.push("Import success does not equal app-quality success.");
+  lines.push("");
   if (Array.isArray(strict.expectedPages) && strict.expectedPages.length) {
     lines.push("Expected pages:");
     strict.expectedPages.forEach((page) => lines.push(`- ${page}`));
@@ -62,6 +64,10 @@ function main() {
     lines.push("Dashboards:");
     strict.dashboards.forEach((dashboard) => {
       lines.push(`- ${dashboard.title}: ${dashboard.totalControls} controls, ${dashboard.dataTables} data tables, ${dashboard.buttons} buttons, ${dashboard.alerts} alerts, ${dashboard.itemTemplates} item-template controls`);
+      lines.push(`  Visual richness score: ${dashboard.visualScore ?? "n/a"}; runtime-like cards: ${dashboard.runtimeLikelyCards ?? "n/a"}; grid-like containers: ${dashboard.gridLikeContainers ?? "n/a"}; weak actions: ${dashboard.weakActions ?? "n/a"}`);
+      if (Array.isArray(dashboard.missingMockupSections) && dashboard.missingMockupSections.length) {
+        lines.push(`  Missing/weak mockup sections: ${dashboard.missingMockupSections.join(", ")}`);
+      }
     });
     lines.push("");
   }
@@ -69,6 +75,10 @@ function main() {
     lines.push("Custom forms:");
     strict.customForms.forEach((form) => {
       lines.push(`- ${form.list} / ${form.title}: ${form.totalControls} controls, ${form.fieldControls} field controls`);
+      lines.push(`  Main/Content layout: ${form.hasMainContent ? "yes" : "no"}; runtime-like cards: ${form.runtimeLikelyCards ?? "n/a"}`);
+      if (Array.isArray(form.missingMockupSections) && form.missingMockupSections.length) {
+        lines.push(`  Missing/weak form sections: ${form.missingMockupSections.join(", ")}`);
+      }
     });
     lines.push("");
   }

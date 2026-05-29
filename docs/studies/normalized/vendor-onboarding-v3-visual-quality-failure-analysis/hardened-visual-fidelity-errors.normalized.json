@@ -1,0 +1,18 @@
+{
+  "new_or_strengthened_errors": [
+    "DASHBOARD_VISUAL_RICHNESS_TOO_LOW",
+    "KPI_CARD_STRUCTURE_TOO_PLAIN",
+    "DASHBOARD_SECTION_SPACING_TOO_WEAK",
+    "DASHBOARD_GRID_STRUCTURE_MISSING",
+    "ALERT_CONTENT_TOO_GENERIC",
+    "BUTTON_VISUAL_OR_ACTION_TOO_WEAK",
+    "DASHBOARD_MOCKUP_FIDELITY_TOO_LOW",
+    "DASHBOARD_MOCKUP_SECTION_MISSING",
+    "DETAIL_VIEW_FORM_UNDERBUILT",
+    "NEW_FORM_UNDERBUILT",
+    "PRINT_PAGE_UNDERBUILT",
+    "FORM_MOCKUP_SECTION_MISSING"
+  ],
+  "negative_example": "vendor-onboarding-compliance-management.full-ui.v3",
+  "expected_after_hardening": "v3 fails strict visual app quality before user testing"
+}

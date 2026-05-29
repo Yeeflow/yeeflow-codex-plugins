@@ -11,6 +11,10 @@ Vendor Onboarding full UI v2 proved that import/install success is not enough. D
 
 For full application generation, run `scripts/inspect-generated-app-quality.mjs --package <package> --spec <approved-spec.md> --strict-visual-app-quality` before handoff. The strict gate must fail missing planned pages/forms, missing print pages, underbuilt dashboards, missing safe padding/card structure, placeholder controls, default buttons, missing actions, empty Kanban/Collection templates, and undocumented deferred scope. Do not return a minimal or technically importable scaffold when the user asked for the full approved application.
 
+## Visual Fidelity Runtime Review Addendum
+
+Vendor Onboarding full UI v3 proved that passing structural strict validation is still not enough when runtime review shows a plain or underdesigned page. Strict visual quality must evaluate design richness, not just object existence. A dashboard with plain text blocks, a table, weak metadata-only styling, or generated placeholder actions is not a successful full UI when the approved mockup expects a modern SaaS layout. KPI cards must render as designed card-like sections with reliable visual cues; buttons must have meaningful labels and real configured actions rather than safeGeneratedAction/no-op placeholders; alerts must use runtime-renderable business-specific content; Kanban/Collection controls must have useful item templates and real item actions; custom forms must be designed, sectioned, and non-blank. If runtime screenshots or user review show the generated package looks far from the approved mockups, mark the proof failed and harden the validator before generating another package. Do not report full app generation success unless the package passes design/spec fidelity checks and the result is plausibly close to the approved mockups.
+
 ## Public Tenant Safety
 
 - Use `YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1` for live API calls.

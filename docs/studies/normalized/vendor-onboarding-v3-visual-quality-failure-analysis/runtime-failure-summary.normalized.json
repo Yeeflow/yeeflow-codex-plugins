@@ -1,0 +1,17 @@
+{
+  "package_paths": {
+    "yapk": "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v3.yapk",
+    "yap": "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v3.yap"
+  },
+  "runtime_visual_result": "failed",
+  "technical_import_result": "installed_or_imported_for_review",
+  "observed_failures": [
+    "vendor_management_dashboard_plain_underdesigned",
+    "compliance_review_workspace_plain_underdesigned",
+    "controls_present_but_not_visually_designed",
+    "spacing_padding_card_hierarchy_poor",
+    "alerts_and_buttons_weak",
+    "mockup_fidelity_low"
+  ],
+  "proof_conclusion": "v3 is a failed visual quality proof despite previous strict validator pass"
+}

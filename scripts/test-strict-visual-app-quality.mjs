@@ -156,6 +156,52 @@ try {
   expectCode("good table but underbuilt", runInspector(writeCase(tempDir, "good-table-underbuilt", underbuiltWithGoodTable), spec), "DASHBOARD_LAYOUT_TOO_PLAIN");
   results.push({ case: "good Data table still fails strict visual quality when underbuilt", expected: "DASHBOARD_LAYOUT_TOO_PLAIN", status: "pass" });
 
+  const plainKpiAndTable = basePackage();
+  plainKpiAndTable.Item.Layouts[0].LayoutInResources = resource(page([
+    control("heading", { headc: { title: { value: "Vendor Management Dashboard" } } }),
+    control("container", {}, [
+      control("heading", { headc: { title: { value: "Total Vendors" } } }),
+      control("heading", { headc: { title: { value: "128" } } }),
+    ], "KPI cards"),
+    control("data-list", {
+      data: { list: { AppID: 41, ListID: "vendors", Type: 1, Title: "Vendors", ListSetID: "root" } },
+      listarr: [{ Field: "Text0", FieldName: "Vendor Name" }, { Field: "Text1", FieldName: "Status" }],
+    }),
+  ]));
+  const plainKpiOutput = runInspector(writeCase(tempDir, "plain-kpi-table", plainKpiAndTable), spec);
+  expectCode("plain KPI/table dashboard", plainKpiOutput, "DASHBOARD_VISUAL_RICHNESS_TOO_LOW");
+  expectCode("plain KPI/table dashboard", plainKpiOutput, "KPI_CARD_STRUCTURE_TOO_PLAIN");
+  results.push({ case: "dashboard with title plus KPI text plus table fails design richness", expected: "DASHBOARD_VISUAL_RICHNESS_TOO_LOW", status: "pass" });
+
+  const weakAction = basePackage();
+  weakAction.Item.Layouts[0].LayoutInResources = resource(page([
+    control("button", {
+      text: "Open Queue",
+      action: { type: "navigate", target: "open-queue", safeGeneratedAction: true },
+    }),
+  ]));
+  expectCode("weak generated action", runInspector(writeCase(tempDir, "weak-action", weakAction), spec), "BUTTON_VISUAL_OR_ACTION_TOO_WEAK");
+  results.push({ case: "button with weak generated action fails", expected: "BUTTON_VISUAL_OR_ACTION_TOO_WEAK", status: "pass" });
+
+  const missingKanban = basePackage();
+  missingKanban.Item.Layouts[0].LayoutInResources = resource(page([
+    control("heading", { headc: { title: { value: "Vendor Management Dashboard" } } }),
+    control("data-list", {
+      data: { list: { AppID: 41, ListID: "vendors", Type: 1, Title: "Vendors", ListSetID: "root" } },
+      listarr: [{ Field: "Text0", FieldName: "Vendor Name" }],
+    }),
+  ]));
+  expectCode("mockup expects Kanban", runInspector(writeCase(tempDir, "missing-kanban", missingKanban), spec), "DASHBOARD_MOCKUP_SECTION_MISSING");
+  results.push({ case: "mockup expects Kanban but generated page lacks it fails", expected: "DASHBOARD_MOCKUP_SECTION_MISSING", status: "pass" });
+
+  const currentV3 = "/Users/Renger/Downloads/vendor-onboarding-compliance-management.full-ui.v3.yapk";
+  if (fs.existsSync(currentV3)) {
+    const currentV3Output = runInspector(currentV3, spec);
+    expectCode("current v3 negative example", currentV3Output, "DASHBOARD_VISUAL_RICHNESS_TOO_LOW");
+    expectCode("current v3 negative example", currentV3Output, "BUTTON_VISUAL_OR_ACTION_TOO_WEAK");
+    results.push({ case: "current full UI v3 package now fails strict visual quality", expected: "DASHBOARD_VISUAL_RICHNESS_TOO_LOW", status: "pass" });
+  }
+
   console.log(JSON.stringify({ status: "pass", cases: results }, null, 2));
 } finally {
   fs.rmSync(tempDir, { recursive: true, force: true });

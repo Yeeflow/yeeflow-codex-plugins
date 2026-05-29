@@ -1,0 +1,12 @@
+{
+  "false_positive_root_causes": [
+    "validator_counted_control_existence",
+    "validator_trusted_json_style_metadata_without_runtime_visible_design_proof",
+    "validator_accepted_plain_kpi_text_as_kpi_cards",
+    "validator_accepted_generated_safe_action_placeholders",
+    "validator_accepted_alert_metadata_that_runtime_rendered_as_default",
+    "validator_did_not_require_mockup_section_fidelity",
+    "validator_did_not_require_main_content_layout_structure"
+  ],
+  "old_gate_limitation": "structural existence was treated as visual quality"
+}
