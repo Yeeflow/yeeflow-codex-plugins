@@ -24,7 +24,7 @@ dist/yeeflow-builder-plugin-0.6.3.zip
 
 Current release status:
 
-- v0.6.3 RC1: ready for private Git marketplace smoke testing; final tag not created.
+- v0.6.3 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.6.3-rc1`; final tag `yeeflow-builder-plugin-v0.6.3`.
 - v0.1.0 private Git marketplace install: passed.
 - v0.2.0 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.2.0-rc1`.
 - v0.3.0 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.3.0-rc1`.
@@ -56,7 +56,7 @@ Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.3-rc1
+yeeflow-builder-plugin-v0.6.3
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -82,7 +82,7 @@ Smoke prompts tested:
 
 ## Release Notes
 
-### v0.6.3 RC1
+### v0.6.3
 
 Previous final version: `0.6.2`.
 
@@ -90,18 +90,18 @@ RC version: `0.6.3`.
 
 RC tag: `yeeflow-builder-plugin-v0.6.3-rc1`.
 
-Private marketplace install smoke test: pending.
+Private marketplace install smoke test: passed.
 
-Final tag: not created yet.
+Final tag: `yeeflow-builder-plugin-v0.6.3`.
 
 Bundled skill count: `21`.
 
 Included milestone: reference app template corpus, Vendor Onboarding v4.1 hard checks, Yeeflow system schema specification, dashboard generation hardening, data-list schema validation, and updated skill guidance.
 
-Verified marketplace install values for RC smoke:
+Verified marketplace install values for the final v0.6.3 release:
 
 - Source: `https://github.com/Yeeflow/yeeflow-codex-plugins.git`
-- Git ref: `yeeflow-builder-plugin-v0.6.3-rc1`
+- Git ref: `yeeflow-builder-plugin-v0.6.3`
 - Sparse paths: `.agents/plugins/marketplace.json`, `dist/yeeflow-builder-plugin`
 - Expected marketplace: `Yeeflow Internal`
 - Expected plugin: `Yeeflow Builder`
@@ -118,8 +118,8 @@ Main improvements:
 
 Proof boundary:
 
-- v0.6.3 RC1 is build-ready for private marketplace smoke testing only.
-- The final `yeeflow-builder-plugin-v0.6.3` tag must wait until marketplace smoke passes and is documented.
+- v0.6.3 records the accepted private marketplace smoke pass for tested RC tag `yeeflow-builder-plugin-v0.6.3-rc1`.
+- The final `yeeflow-builder-plugin-v0.6.3` tag records the accepted release state.
 - Vendor lookup picker no-record behavior remains a known product-team follow-up.
 
 ### v0.6.2

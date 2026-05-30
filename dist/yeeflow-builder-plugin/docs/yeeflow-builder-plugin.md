@@ -2,7 +2,7 @@
 
 The Yeeflow Builder Plugin is a skills-only Codex plugin for Yeeflow application builders. It packages proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth or MCP servers. API-backed helper scripts require local environment variables and must not hardcode a tenant-specific URL.
 
-Package status: v0.6.3 RC1 is ready for private marketplace smoke testing. Latest final release tag remains `yeeflow-builder-plugin-v0.6.2`; final `yeeflow-builder-plugin-v0.6.3` must wait until RC smoke passes. The official public Git install source is `https://github.com/Yeeflow/yeeflow-codex-plugins.git`.
+Package status: v0.6.3 passed private marketplace smoke testing and is finalized as `yeeflow-builder-plugin-v0.6.3`. The official public Git install source is `https://github.com/Yeeflow/yeeflow-codex-plugins.git`.
 
 ## Package Contents
 
@@ -146,9 +146,9 @@ Dashboard KPIs, charts, and tables must be data-bound, not static mockups. Runti
 
 Local validation is not the same as Yeeflow runtime proof. Accepted baselines must record what was structurally validated, what was runtime tested, what remains unproven, and what fallback was used.
 
-## v0.6.3 RC1 Scope
+## v0.6.3 Scope
 
-v0.6.3 RC1 adds the reference app UI section template corpus, Vendor Onboarding v4.1 hard checks, Yeeflow system schema specification, dashboard generation hardening, data-list schema validation, and updated skill guidance while preserving v0.6.2 import-generation fixes and earlier capability milestones.
+v0.6.3 adds the reference app UI section template corpus, Vendor Onboarding v4.1 hard checks, Yeeflow system schema specification, dashboard generation hardening, data-list schema validation, and updated skill guidance while preserving v0.6.2 import-generation fixes and earlier capability milestones.
 
 Included application-generation hardening:
 
@@ -173,9 +173,9 @@ Reference app corpus:
 - Online Library (1) / multi-item print QR
 - Sales Quotation (1) / single-item print QR
 
-Install smoke result: pending for RC tag `yeeflow-builder-plugin-v0.6.3-rc1`, official source `https://github.com/Yeeflow/yeeflow-codex-plugins.git`, sparse paths `.agents/plugins/marketplace.json` and `dist/yeeflow-builder-plugin`, expected version `0.6.3`, and bundled skill count `21`.
+Install smoke result: passed for tested RC tag `yeeflow-builder-plugin-v0.6.3-rc1`, official source `https://github.com/Yeeflow/yeeflow-codex-plugins.git`, sparse paths `.agents/plugins/marketplace.json` and `dist/yeeflow-builder-plugin`, expected version `0.6.3`, and bundled skill count `21`. Final tag: `yeeflow-builder-plugin-v0.6.3`.
 
-Proof boundary: v0.6.3 RC1 is ready for smoke testing only. The final v0.6.3 tag should not be created until marketplace smoke passes. Vendor lookup picker no-record behavior remains a known product-team follow-up.
+Proof boundary: v0.6.3 records the accepted private marketplace smoke pass for tested RC tag `yeeflow-builder-plugin-v0.6.3-rc1`. Vendor lookup picker no-record behavior remains a known product-team follow-up.
 
 ## v0.5.23 Scope
 
