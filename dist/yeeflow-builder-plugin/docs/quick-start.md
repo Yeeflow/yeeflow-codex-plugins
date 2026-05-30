@@ -9,7 +9,7 @@ Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.3-rc1
+yeeflow-builder-plugin-v0.6.3
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -161,7 +161,7 @@ Record whether import, open, rendering, save, submit, workflow, or other runtime
 ## Troubleshooting Checklist
 
 - Confirm the install source is the official Yeeflow repo.
-- Confirm the Git ref is `yeeflow-builder-plugin-v0.6.3-rc1`.
+- Confirm the Git ref is `yeeflow-builder-plugin-v0.6.3`.
 - On macOS, confirm `git --version` works before adding the marketplace.
 - Confirm sparse paths include both marketplace and plugin folder paths.
 - Confirm `.env.local` is present only locally and is gitignored.

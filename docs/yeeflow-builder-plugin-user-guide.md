@@ -21,7 +21,7 @@ Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.3-rc1
+yeeflow-builder-plugin-v0.6.3
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -217,7 +217,7 @@ Runtime proof must state exactly what was tested, what passed, and what remains 
 
 - Plugin does not appear: re-add the marketplace and verify sparse paths.
 - Plugin marketplace add fails on macOS with `xcode-select`: install or reset Apple Command Line Tools, verify `git --version`, then retry the marketplace add.
-- Wrong version: check the Git ref is `yeeflow-builder-plugin-v0.6.3-rc1`.
+- Wrong version: check the Git ref is `yeeflow-builder-plugin-v0.6.3`.
 - API check fails: verify `.env.local`, `YEEFLOW_API_BASE_URL`, `YEEFLOW_API_KEY`, and any active `YEEFLOW_PROFILE`; do not paste secrets into chat.
 - Import fails: run validators first and inspect blocking errors before retrying.
 - Runtime behavior differs by tenant: replace tenant-specific users, groups, positions, or external connections with safe placeholders or explicit post-import configuration.

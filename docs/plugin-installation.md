@@ -25,7 +25,7 @@ Use this when Codex asks to add a plugin marketplace from a GitHub repo, Git URL
 ./dist/yeeflow-builder-plugin
 ```
 
-Latest final install status: v0.6.3 passed private marketplace smoke testing with `yeeflow-builder-plugin-v0.6.3-rc1`.
+Latest final install status: v0.6.3 passed private marketplace smoke testing and is finalized as `yeeflow-builder-plugin-v0.6.3`.
 
 v0.6.3 install smoke test result:
 

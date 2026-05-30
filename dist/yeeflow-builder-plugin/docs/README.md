@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository publishes official Yeeflow Codex plugin packages for builders who use Codex to plan, generate, validate, and test Yeeflow application work. The current release candidate is the Yeeflow Builder Plugin v0.6.3 RC1.
+This repository publishes official Yeeflow Codex plugin packages for builders who use Codex to plan, generate, validate, and test Yeeflow application work. The current final release is the Yeeflow Builder Plugin v0.6.3.
 
 The repository is safe to share publicly: it is designed to contain plugin metadata, bundled skills, validators, sanitized documentation, and release artifacts. It must not contain tenant credentials, raw Yeeflow exports, decoded payloads, runtime screenshots, private tenant URLs, or generated runtime packages.
 
@@ -10,13 +10,13 @@ The repository is safe to share publicly: it is designed to contain plugin metad
 
 - `.agents/plugins/marketplace.json` for Codex marketplace installation.
 - `dist/yeeflow-builder-plugin` with the bundled Yeeflow Builder Plugin.
-- `dist/yeeflow-builder-plugin-0.6.3.zip` as the current RC archive.
+- `dist/yeeflow-builder-plugin-0.6.3.zip` as the current release archive.
 - Public installation and usage documentation in `docs/`.
 - Sanitized validators, generation helpers, and proof-boundary notes.
 
 ## Yeeflow Builder Plugin
 
-Yeeflow Builder helps Codex work with Yeeflow application packages and reusable Yeeflow building patterns. Version 0.6.3 RC1 includes:
+Yeeflow Builder helps Codex work with Yeeflow application packages and reusable Yeeflow building patterns. Version 0.6.3 includes:
 
 - Reference app UI section template corpus and template-conformance guidance.
 - Vendor Onboarding v4.1 application-generation hard checks.
@@ -46,7 +46,7 @@ Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.3-rc1
+yeeflow-builder-plugin-v0.6.3
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -215,13 +215,13 @@ This workflow helps preserve design quality and reduces underbuilt/simple output
 
 ## Versioning And Releases
 
-The current release candidate is:
+The current final release is:
 
 ```text
-yeeflow-builder-plugin-v0.6.3-rc1
+yeeflow-builder-plugin-v0.6.3
 ```
 
-Latest final release remains `yeeflow-builder-plugin-v0.6.2`. Latest RC is `yeeflow-builder-plugin-v0.6.3-rc1`. Do not move published release tags.
+Latest final release is `yeeflow-builder-plugin-v0.6.3`. Do not move published release tags.
 
 ## Support / Feedback
 
