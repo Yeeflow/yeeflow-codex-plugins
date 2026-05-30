@@ -47,7 +47,7 @@ const VENDOR_ONBOARDING_EXPECTED_PAGES = [
 function usage(exitCode = 1) {
   const text = [
     "Usage:",
-    "  node scripts/inspect-generated-app-quality.mjs --package <app.yap|app.yapk|decoded-data.json> [--plan <plan.md>] [--spec <ui-implementation-spec.md>] [--composition-checklist <checklist.normalized.json>] [--template-library <templates.normalized.json>] [--strict-app-quality] [--strict-visual-app-quality] [--json-out <report.json>]",
+    "  node scripts/inspect-generated-app-quality.mjs --package <app.yap|app.yapk|decoded-data.json> [--plan <plan.md>] [--spec <ui-implementation-spec.md>] [--composition-checklist <checklist.normalized.json>] [--template-library <templates.normalized.json>] [--checklist-page <page_id>] [--strict-app-quality] [--strict-visual-app-quality] [--json-out <report.json>]",
     "",
     "Combines app-plan presence checks, UI implementation spec checks, package inventory, generated UI quality checks, and strict full-application visual quality gates.",
   ].join("\n");
@@ -63,6 +63,7 @@ function parseArgs(argv) {
     specPath: "",
     compositionChecklistPath: "",
     templateLibraryPath: "",
+    checklistPageIds: [],
     jsonOut: "",
     strictAppQuality: false,
     strictVisualAppQuality: false,
@@ -74,6 +75,7 @@ function parseArgs(argv) {
     else if (arg === "--spec") args.specPath = argv[++index] || "";
     else if (arg === "--composition-checklist") args.compositionChecklistPath = argv[++index] || "";
     else if (arg === "--template-library") args.templateLibraryPath = argv[++index] || "";
+    else if (arg === "--checklist-page" || arg === "--page") args.checklistPageIds.push(argv[++index] || "");
     else if (arg === "--json-out") args.jsonOut = argv[++index] || "";
     else if (arg === "--strict-app-quality") args.strictAppQuality = true;
     else if (arg === "--strict-visual-app-quality") {
@@ -431,7 +433,7 @@ function inspectTemplateLibrary(libraryPath) {
   };
 }
 
-function inspectCompositionChecklist(checklistPath, templateLibrary = { exists: false, templatesById: new Map() }) {
+function inspectCompositionChecklist(checklistPath, templateLibrary = { exists: false, templatesById: new Map() }, selectedPageIds = []) {
   const findings = [];
   if (!checklistPath) {
     return { exists: false, pages: [], findings };
@@ -459,13 +461,18 @@ function inspectCompositionChecklist(checklistPath, templateLibrary = { exists: 
     });
     return { exists: false, pages: [], findings };
   }
-  const pages = asArray(parsed.pages);
+  const selected = new Set(asArray(selectedPageIds).map(safeString).filter(Boolean));
+  const allPages = asArray(parsed.pages);
+  const pages = selected.size
+    ? allPages.filter((page) => selected.has(safeString(page.id)) || selected.has(safeString(page.title)))
+    : allPages;
   if (!pages.length) {
     findings.push({
       level: "error",
-      code: "COMPOSITION_CHECKLIST_PAGES_MISSING",
-      message: "Composition checklist must include a nonempty pages array.",
+      code: selected.size ? "COMPOSITION_CHECKLIST_PAGE_FILTER_EMPTY" : "COMPOSITION_CHECKLIST_PAGES_MISSING",
+      message: selected.size ? "Composition checklist page filter did not match any pages." : "Composition checklist must include a nonempty pages array.",
       path: checklistPath,
+      selectedPages: Array.from(selected),
       source: "composition-checklist",
     });
   }
@@ -509,7 +516,38 @@ function inspectCompositionChecklist(checklistPath, templateLibrary = { exists: 
     application: safeString(parsed.application),
     version: safeString(parsed.version),
     pages,
+    selectedPages: Array.from(selected),
     findings,
+  };
+}
+
+function scopedSpecForChecklistPages(spec, compositionChecklist, selectedPageIds = []) {
+  const selected = new Set(asArray(selectedPageIds).map(safeString).filter(Boolean));
+  if (!selected.size) return spec;
+  const pages = asArray(compositionChecklist.pages);
+  const titles = pages
+    .filter((page) => selected.has(safeString(page.id)) || selected.has(safeString(page.title)))
+    .map((page) => safeString(page.title))
+    .filter(Boolean);
+  const selectedSections = pages.flatMap((page) => asArray(page.sections));
+  const sectionText = JSON.stringify(selectedSections).toLowerCase();
+  return {
+    ...spec,
+    expectedPages: titles,
+    expected: {
+      dashboards: pages.some((page) => safeString(page.type).toLowerCase() === "dashboard") || /dashboard/.test(sectionText),
+      customForms: pages.some((page) => /form|print|view|new/i.test(safeString(page.type))),
+      dataTables: /data-list|data table|table/.test(sectionText),
+      itemTemplates: /kanban|collection|timeline/.test(sectionText),
+      printPage: /print/.test(sectionText),
+      documentEmbed: /document-embed/.test(sectionText),
+      qrBarcode: /qr|barcode/.test(sectionText),
+      customCss: /custom css/.test(sectionText),
+      customCode: /custom code/.test(sectionText),
+      kpiCards: /kpi|metric|summary/.test(sectionText),
+      actions: /button|action|binding/.test(sectionText),
+    },
+    scopedToChecklistPages: Array.from(selected),
   };
 }
 
@@ -789,8 +827,16 @@ function buttonIndex(page) {
 }
 
 function pageHasPlaceholderContent(page) {
-  const text = JSON.stringify(page || "");
-  return /Here is the description|"\s*Alert\s*"|>\s*Alert\s*<|"label"\s*:\s*"Button"|"text"\s*:\s*"Button"|safeGeneratedAction|placeholder-only|lorem ipsum/i.test(text);
+  let found = false;
+  walkControls(page, (control) => {
+    const type = normalizedControlType(control.type);
+    const label = controlText(control).trim();
+    const raw = JSON.stringify(control || "");
+    if (type === "alert" && isDefaultAlert(control)) found = true;
+    if (type === "button" && (!label || /^button$/i.test(label))) found = true;
+    if (/Here is the description|safeGeneratedAction|placeholder-only|lorem ipsum/i.test(raw)) found = true;
+  });
+  return found;
 }
 
 function validateLayoutRule(rule, page) {
@@ -1128,8 +1174,10 @@ function inspectCompositionQuality(decodedPackage, checklist, templateLibrary = 
 }
 
 function isDefaultAlert(control) {
-  const text = JSON.stringify(control || {});
-  return /Here is the description|"\s*Alert\s*"|>Alert</i.test(text) || /Alert Here is the description/i.test(text);
+  const attrs = control?.attrs || {};
+  const title = safeString(attrs.title || control.title || control.label).trim();
+  const description = safeString(attrs.description || attrs.desc || control.description).trim();
+  return /^alert$/i.test(title) || /Here is the description/i.test(description) || /Alert Here is the description/i.test(`${title} ${description}`);
 }
 
 function inspectDashboardStrict(surface, spec, findings, summary) {
@@ -1247,7 +1295,7 @@ function inspectStrictVisualQuality(decodedPackage, spec) {
       strictAdd(findings, code, "Approved UI mockup/spec page is missing from the generated app package.", { page });
     }
   }
-  if (surfaces.dashboards.length < 2 && spec.expected?.dashboards) {
+  if (!spec.scopedToChecklistPages?.length && surfaces.dashboards.length < 2 && spec.expected?.dashboards) {
     strictAdd(findings, "FULL_APP_SCOPE_NOT_MET", "Full app spec expects multiple dashboard/workspace surfaces, but package has too few dashboards.", { dashboardCount: surfaces.dashboards.length });
   }
   if (surfaces.customForms.length === 0 && spec.expected?.customForms) {
@@ -1287,9 +1335,10 @@ function main() {
   const templateLibraryPath = args.templateLibraryPath ? path.resolve(args.templateLibraryPath) : "";
   const decodedPackage = decodePackage(packagePath);
   const plan = inspectPlan(planPath);
-  const spec = inspectSpec(specPath);
+  const rawSpec = inspectSpec(specPath);
   const templateLibrary = inspectTemplateLibrary(templateLibraryPath);
-  const compositionChecklist = inspectCompositionChecklist(compositionChecklistPath, templateLibrary);
+  const compositionChecklist = inspectCompositionChecklist(compositionChecklistPath, templateLibrary, args.checklistPageIds);
+  const spec = scopedSpecForChecklistPages(rawSpec, compositionChecklist, args.checklistPageIds);
   const validation = runJsonStep("package-validation", process.execPath, packageValidatorArgs(repoRoot, packagePath));
   const uiQuality = runJsonStep("generated-ui-quality", process.execPath, [path.join(repoRoot, "scripts/inspect-generated-ui-quality.mjs"), packagePath]);
   const inventory = packageInventory(validation.report, decodedPackage);
@@ -1336,6 +1385,7 @@ function main() {
       path: compositionChecklist.path,
       application: compositionChecklist.application,
       version: compositionChecklist.version,
+      selectedPages: compositionChecklist.selectedPages || [],
       pages: compositionChecklist.pages?.map((page) => ({
         id: page.id,
         title: page.title,
