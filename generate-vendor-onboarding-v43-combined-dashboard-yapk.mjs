@@ -8,11 +8,11 @@ import { loadDotenvFile, resolveYeeflowEnvironment } from "./scripts/yeeflow-env
 
 const APP_ID = 41;
 const SOURCE_YAPK = process.env.VENDOR_ONBOARDING_V43_SOURCE_YAPK
-  || "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.6 - dashboard style improvement.yapk";
-const OUT_YAPK = process.env.VENDOR_ONBOARDING_V43_YAPK
   || "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.7 - style and list form routing.yapk";
+const OUT_YAPK = process.env.VENDOR_ONBOARDING_V43_YAPK
+  || "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.8 - split dashboard 02.yapk";
 const TMP_DIR = ".tmp/vendor-onboarding-v43-combined-dashboard";
-const GENERATED_AT_UTC = "2026-05-30T07:40:00Z";
+const GENERATED_AT_UTC = "2026-05-30T08:05:00Z";
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -492,7 +492,7 @@ function dashboardOverview(rootId, vendorsId) {
   ]);
 }
 
-function dashboardOperations(rootId, vendorsId, activityId) {
+function dashboardProgress(rootId, vendorsId) {
   return contentShell("Vendor Management Dashboard 02", [
       sectionContainer([
         flexContainer([
@@ -507,6 +507,11 @@ function dashboardOperations(rootId, vendorsId, activityId) {
         ], { background: "#FFF7ED", borderColor: "#FDBA74" }),
         ], { direction: "row", gap: "--sp--s300", align: "stretch" }),
       ], "Progress and alert section", { padding: "--sp--s0", borderColor: "transparent", background: "transparent" }),
+  ]);
+}
+
+function dashboardOperations(rootId, vendorsId, activityId) {
+  return contentShell("Vendor Management Dashboard 03", [
       sectionContainer([
         flexContainer([
         container([
@@ -657,6 +662,7 @@ async function main() {
   const activityId = listByTitle(decoded, "Vendor Activity / History").List.ListID;
   const dashboardId = decoded.Pages[0].LayoutID;
   const dashboard2Id = decoded.Pages[1]?.LayoutID || allocator.next("dashboard:secondary");
+  const dashboard3Id = decoded.Pages[2]?.LayoutID || allocator.next("dashboard:tertiary");
   const dashboardLayout = {
     ...decoded.Pages[0],
     ListID: rootId,
@@ -685,9 +691,24 @@ async function main() {
     IsDefault: false,
     IsItemPerm: false,
     Perms: [],
-    LayoutInResources: [{ ID: dashboard2Id, RefId: dashboard2Id, Resource: JSON.stringify(dashboardOperations(rootId, vendorsId, activityId)) }],
+    LayoutInResources: [{ ID: dashboard2Id, RefId: dashboard2Id, Resource: JSON.stringify(dashboardProgress(rootId, vendorsId)) }],
   };
-  decoded.Pages = [dashboardLayout, dashboardLayout2];
+  const dashboardLayout3 = {
+    ...(decoded.Pages[2] || decoded.Pages[0]),
+    ListID: rootId,
+    LayoutID: dashboard3Id,
+    Type: 103,
+    Title: "Vendor Management Dashboard 03",
+    LayoutView: "",
+    Ext1: "",
+    Ext2: JSON.stringify({ src: true }),
+    Ext3: "",
+    IsDefault: false,
+    IsItemPerm: false,
+    Perms: [],
+    LayoutInResources: [{ ID: dashboard3Id, RefId: dashboard3Id, Resource: JSON.stringify(dashboardOperations(rootId, vendorsId, activityId)) }],
+  };
+  decoded.Pages = [dashboardLayout, dashboardLayout2, dashboardLayout3];
   updateNavigation(decoded, decoded.Pages);
   const existingIdsAfter = collectLargeIds(decoded);
   const missingExistingIds = [...existingIdsBefore].filter((id) => !existingIdsAfter.has(id));
@@ -698,11 +719,11 @@ async function main() {
   const upgradeWrapper = {
     ...wrapper,
     PackageId: crypto.randomUUID(),
-    Title: "Vendor Onboarding & Compliance Management v4.6 Main Content Structure",
-    Description: "Two-dashboard update based on the v4.5 reference dashboard Main > Content page structure.",
-    Notes: "Uses reference dashboard page attrs with content-area padding zero, Main > Content containers, flex_grid with displayLabel off, configured display fields, 10 sample rows per list, and dynamic controls only inside Kanban.",
+    Title: "Vendor Onboarding & Compliance Management v4.8 Split Dashboard 02",
+    Description: "Three-dashboard update splitting Dashboard 02 content into smaller pages.",
+    Notes: "Keeps Dashboard 01 and list form routing fixes, splits Dashboard 02 into progress/alert and operations pages, uses Main > Content structure, and keeps dynamic controls only inside Kanban.",
     Date: GENERATED_AT_UTC,
-    Version: "4.6 - main content structure",
+    Version: "4.8 - split dashboard 02",
     Resource: resourceBase64,
     Sign: "",
   };

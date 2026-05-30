@@ -1,4 +1,4 @@
-# Vendor Onboarding v4.7 Style and List Form Routing YAPK Proof
+# Vendor Onboarding v4.8 Split Dashboard 02 YAPK Proof
 
 ## Summary
 
@@ -6,7 +6,7 @@ This proof regenerates only the YAPK upgrade package for the Vendor Onboarding d
 
 Output package:
 
-- `/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.7 - style and list form routing.yapk`
+- `/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.8 - split dashboard 02.yapk`
 
 Source package studied:
 
@@ -24,7 +24,7 @@ Source package studied:
 - Every data list includes 10 synthetic sample records for runtime testing.
 - Dashboard page structure must follow the reference `Sample Overview duplicated from another app`: page content-area padding is `--sp--s0`, page background is neutral light, the top-level container is `Main`, the next container is `Content`, and all visible sections are children of `Content`.
 - `Vendor Management Dashboard` preserves the user-updated inline-width header/action container behavior and tighter gaps from the style-improved package.
-- `Vendor Management Dashboard 02` avoids layout `flex_grid` controls and uses flex `container` rows for the progress/alert and operational sections.
+- `Vendor Management Dashboard 02` is split into two smaller dashboards: Dashboard 02 for progress/alert and Dashboard 03 for operational queue/vendor records.
 - Child data-list `List.LayoutView` routing is populated with `add`, `edit`, `opentype`, `sort`, and `view` keys so default add/edit/view loading has an explicit list-level route map.
 
 ## Generated Dashboards
@@ -32,7 +32,8 @@ Source package studied:
 The package splits the dashboard into two pages:
 
 - `Vendor Management Dashboard`: header/action area and KPI card row only.
-- `Vendor Management Dashboard 02`: progress, alert, Kanban, recent activity, and Vendors table sections using container row layout rather than Grid layout.
+- `Vendor Management Dashboard 02`: progress and alert section only.
+- `Vendor Management Dashboard 03`: Kanban operational queue, recent activity, and Vendors table sections.
 
 The dashboards include:
 
@@ -77,29 +78,30 @@ Synthetic sample data was generated for each list:
 
 YAPK strict product schema validation:
 
-- Command: `node scripts/validate-standard-package-schema.mjs "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.7 - style and list form routing.yapk"`
+- Command: `node scripts/validate-standard-package-schema.mjs "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.8 - split dashboard 02.yapk"`
 - Result: pass
 - Errors: 0
 
 YAPK package validator:
 
-- Command: `node validate-yapk-package.js "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.7 - style and list form routing.yapk"`
+- Command: `node validate-yapk-package.js "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.8 - split dashboard 02.yapk"`
 - Result: pass
 - Errors: 0
 - Warnings: 1 runtime-proof reminder
 
 YAPK schema standard inspector:
 
-- Command: `node scripts/inspect-yapk-schema-standard.mjs "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.7 - style and list form routing.yapk"`
+- Command: `node scripts/inspect-yapk-schema-standard.mjs "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.8 - split dashboard 02.yapk"`
 - Result: pass
 
 Targeted dashboard control audit:
 
-- dashboard pages: 2
+- dashboard pages: 3
 - dashboards with page content-area padding zero: 2
 - dashboards with `Main > Content` container structure: 2
 - `Vendor Management Dashboard` `flex_grid` controls: 1
 - `Vendor Management Dashboard 02` `flex_grid` controls: 0
+- `Vendor Management Dashboard 03` `flex_grid` controls: 0
 - `flex_grid` controls without `displayLabel: [null, false]`: 0
 - `flex_grid` controls with `nv_label`: 0
 - `action_button` controls: 2
@@ -122,15 +124,16 @@ This is a local generation and validation proof for a YAPK upgrade package. Runt
 
 ## Manual Test Checklist
 
-- Upload `/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.7 - style and list form routing.yapk` as an upgrade to the current Vendor Onboarding application.
+- Upload `/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.8 - split dashboard 02.yapk` as an upgrade to the current Vendor Onboarding application.
 - Confirm upgrade succeeds.
 - Open `Vendor Management Dashboard`.
 - Verify the Navigator tree starts with `Main > Content`.
 - Verify the header/action area and KPI row render without any visible Grid caption row.
 - Open `Vendor Management Dashboard 02`.
-- Verify the Navigator tree starts with `Main > Content`.
-- Verify the remaining dashboard sections render without any visible Grid caption row.
-- Verify Dashboard 02 no longer shows layout issues from multiple Grid controls.
+- Verify it contains only the progress and alert section.
+- Open `Vendor Management Dashboard 03`.
+- Verify it contains the operational queue and vendor records sections.
+- Verify Dashboard 02 and 03 no longer show layout issues from a crowded combined page.
 - Verify padded containers show expected card background, border, radius, and spacing.
 - Verify buttons render as proper Yeeflow buttons.
 - Verify the Kanban renders and dynamic controls appear only inside Kanban cards.
