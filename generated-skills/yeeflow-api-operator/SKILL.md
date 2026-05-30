@@ -11,7 +11,7 @@ description: Safely use Yeeflow REST APIs from Codex when local credentials are 
 - For live API calls, prefer `YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1` and `YEEFLOW_API_KEY`; do not ask users to paste secrets into chat.
 - Use `YEEFLOW_TENANT_URL` only for tenant/app links, for example `https://<yourdomain>.yeeflow.com`; never use a tenant URL as the API base.
 - Treat `YEEFLOW_BASE_URL` as a legacy API base URL alias only, not as a tenant URL.
-- Support `YEEFLOW_PROFILE` where scripts support profiles. It selects one active local tenant profile per run using `YEEFLOW_<PROFILE>_API_KEY`, `YEEFLOW_<PROFILE>_TENANT_URL`, and `YEEFLOW_<PROFILE>_TENANT_ID`.
+- Support `YEEFLOW_PROFILE` where scripts support profiles. It selects one active local tenant profile per run using `YEEFLOW_<PROFILE>_API_KEY`, `YEEFLOW_<PROFILE>_TENANT_URL`, and `YEEFLOW_<PROFILE>_TENANT_ID`. Package automation also reads `YEEFLOW_<PROFILE>_WORKSPACE_ID` when a profile is active.
 - Validate and redact environment variables before API calls and never print API keys, raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, or generated runtime packages.
 - Keep generated examples tenant-neutral unless the user explicitly requests a target-tenant-specific package and provides safe mappings.
 
@@ -19,7 +19,9 @@ description: Safely use Yeeflow REST APIs from Codex when local credentials are 
 
 Use this skill when Codex needs safe, credential-aware Yeeflow REST API access. The v1 boundary is read-only directory and master-data access for users, departments, locations, positions, user groups, group members, and position assignments.
 
-This skill is separate from package generation. It can support planning, validation, and runtime-test setup, but it must not create, update, delete, enable, disable, assign, remove, or mutate Yeeflow data.
+This skill is separate from package generation. It can support planning, validation, and runtime-test setup. Directory/master-data calls remain read-only by default.
+
+Package import/install/upgrade APIs are a separate, explicitly mutating path. Use them only when the user asks to automate package import, install, or upgrade, local package validation has passed, and the user approves execution. Never run package automation as part of normal lookup.
 
 ## When To Use
 
@@ -107,14 +109,14 @@ The product team published package automation APIs on 2026-05-29:
 Use the shared helper from the repository root:
 
 ```bash
+node scripts/yeeflow-package-api-automation.mjs --operation import-yap --package <file.yap>
 node scripts/yeeflow-package-api-automation.mjs --operation install-yapk --package <file.yapk>
 node scripts/yeeflow-package-api-automation.mjs --operation upgrade-yapk --package <file.yapk>
-node scripts/yeeflow-package-api-automation.mjs --operation import-yap --package <file.yap>
 ```
 
-New app delivery is YAPK-first. Generate/import YAP only when the user explicitly requests YAP or a fallback/debug task is specifically about YAP. WorkspaceID is required for import/install/upgrade and is read from `YEEFLOW_WORKSPACE_ID` or the active profile-specific workspace variable; `--workspace-id` is only a redacted one-run override. The helper defaults to dry run. Add `--execute` only after explicit user approval. Runtime proof found that `POST /files/upload` may return `text/plain` containing JSON metadata fields; parse that JSON when possible, pass only redacted `PackageFile` metadata into install/upgrade, and never print uploaded file IDs.
+WorkspaceID is required for import/install/upgrade and is read from `YEEFLOW_WORKSPACE_ID` or the active profile-specific workspace variable; `--workspace-id` is only a redacted one-run override. The helper defaults to dry run. Add `--execute` only after explicit user approval. Runtime proof found that `POST /files/upload` may return `text/plain` containing JSON metadata fields; parse that JSON when possible, pass only redacted `PackageFile` metadata into install/upgrade, and never print uploaded file IDs. It prints env-var presence, package name/size, request summary, HTTP/API status, response keys, and redacted data shape only. It must not print API keys, raw API responses, raw package `Resource`, raw `Sign`, decoded payloads, private URLs, tenant IDs, or uploaded file IDs.
 
-Before executing package automation, validate the package locally with the relevant `.yap` or `.yapk` validators, confirm the target workspace is disposable or approved, and record the proof boundary. The helper classifies API results as `success`, `already_installed`, `api_rejected`, or `http_rejected`; use `already_installed` to recommend upgrade flow, manual test cleanup, or a renamed/new-version package. A successful API response is not a substitute for visible runtime verification of the imported/installed/upgraded app.
+New app delivery is YAPK-first. Generate/import YAP only when the user explicitly requests YAP or a fallback/debug task is specifically about YAP. Before executing package automation, validate the package locally with the relevant `.yap` or `.yapk` validators, confirm the target workspace is disposable or approved, and record the proof boundary. The helper classifies API results as `success`, `already_installed`, `api_rejected`, or `http_rejected`; use `already_installed` to recommend upgrade flow, manual test cleanup, or a renamed/new-version package. YAPK upload plus install is runtime-proven at API-acceptance level; browser app rendering remains a separate runtime proof. YAP import remains not proven when the API returns non-zero status. A successful API response is not a substitute for visible runtime verification of the imported/installed/upgraded app.
 
 ## Safety And Redaction
 
@@ -168,6 +170,7 @@ For assignment-routing coverage, read `docs/studies/yeeflow-api-operator-assignm
 
 - Missing `.env.local`: explain where to create it and what variables are required.
 - Missing `YEEFLOW_API_KEY`: ask the user to store the key locally; do not ask them to paste it.
+- Missing `YEEFLOW_WORKSPACE_ID` for package automation: ask the user to store it locally or configure the active profile workspace variable; do not print the value.
 - Authentication/authorization failure: report HTTP/API status and likely causes such as expired key, wrong tenant/account, insufficient permission, or wrong base; do not echo credentials.
 - `404` on the configured API base: verify `YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1`; do not substitute the tenant URL as the API base.
 - Non-JSON or unexpected responses: report status and response shape only; do not dump body content.
