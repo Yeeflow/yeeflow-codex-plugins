@@ -104,6 +104,8 @@ Include app-level checks when relevant:
 
 When runtime planning needs to confirm that users, departments, locations, or positions exist, use `yeeflow-api-operator` for safe read-only lookup only when local credentials are present and the call scope is approved. Use it to support approval-routing tests or select safe test identities only when explicitly allowed. Do not dump private user data, run write APIs, or make API access mandatory for import/open validation.
 
+For API-backed package import/install/upgrade runtime tests, use the package automation helper only after explicit approval and local validation. Classify API success separately from runtime success: `POST /listset/package/import`, `/install`, or `/upgrade` can prove that the server accepted an action, but the app still needs visible open/render/data/form/dashboard verification before the package is accepted as runtime-proven. Record only redacted status summaries and never commit raw API responses.
+
 ## What To Test
 
 Load [runtime-test-checklist.md](references/runtime-test-checklist.md) when creating or running a test plan. The checklist covers:

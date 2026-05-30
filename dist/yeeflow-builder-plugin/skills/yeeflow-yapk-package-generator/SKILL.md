@@ -41,6 +41,10 @@ Signing and `verifysign` validate wrapper/resource integrity, not full business 
 
 Generation order for new content: build `AppPackageInfo`, validate decoded content, run workflow publish-readiness checks, scan placeholders, Brotli-compress `Resource`, base64 encode, update wrapper metadata, call `setsign`, call `verifysign`, and write the generated `.yapk` outside git, normally to Downloads. Never commit generated `.yapk` packages, raw `Resource`, raw `Sign`, decoded full payloads, API responses, tenant IDs, or private data.
 
+## API-Backed Install And Upgrade Automation
+
+When the user explicitly asks to automate `.yapk` install or upgrade, use `scripts/yeeflow-package-api-automation.mjs --operation install-yapk` or `--operation upgrade-yapk` only after schema, decode, graph, import-readiness, dashboard, data-list, and safety validation pass. The helper must run dry-run first and requires `--execute` before calling product APIs. Package automation uses `POST /files/upload` followed by `POST /listset/package/install` or `POST /listset/package/upgrade`; if the upload response does not expose package-file metadata, require explicit uploaded file metadata from a safe source. API success is not enough: verify the app opens and the intended upgrade changes render before recording runtime proof.
+
 Business Travel hardening rules: set `Flags = 1` on root app/list-set and child list resources; declare every workflow variable used by sequence flows, Set Variable nodes, task assignments, form bindings, summaries, and ContentList mappings; remove stale renamed variables from conditions; do not use placeholders such as `__POSITION_ID_REQUIRED_*`; direct position assignment requires a real numeric tenant position ID or a user-approved post-import binding/fallback. Preserve the proof boundary: these rules harden content validation and do not prove arbitrary YAPK-from-scratch generation for all app types or tenant-specific routing.
 
 Current proof boundary:

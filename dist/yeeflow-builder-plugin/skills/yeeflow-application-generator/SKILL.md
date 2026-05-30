@@ -115,6 +115,10 @@ For package type selection, use `docs/yeeflow-application-package-generation-rul
 
 Never import into Yeeflow or operate the UI unless the user explicitly asks. Preserve large numeric IDs as strings. Redact secret/token/client values.
 
+## API-Backed Import Automation
+
+When the user explicitly asks to automate `.yap` import after generation, use `scripts/yeeflow-package-api-automation.mjs --operation import-yap` only after local validation passes. The helper must run dry-run first and must require `--execute` before calling `POST /listset/package/import`. Never print API keys, raw package `Resource`, raw `Sign`, decoded payloads, raw API responses, tenant IDs, private URLs, or private IDs. Treat API import success as import/action proof only; still require runtime app-open and behavior checks before calling the generated app accepted.
+
 ## New Capability Runtime Gate
 
 When implementing a capability learned from exports but not yet focused-runtime-tested, keep the generated package and claims inside the proven boundary. Do not promote export-only schemas into broad generation rules or runtime-ready package behavior.

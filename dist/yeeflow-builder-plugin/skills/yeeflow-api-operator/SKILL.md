@@ -19,7 +19,9 @@ description: Safely use Yeeflow REST APIs from Codex when local credentials are 
 
 Use this skill when Codex needs safe, credential-aware Yeeflow REST API access. The v1 boundary is read-only directory and master-data access for users, departments, locations, positions, user groups, group members, and position assignments.
 
-This skill is separate from package generation. It can support planning, validation, and runtime-test setup, but it must not create, update, delete, enable, disable, assign, remove, or mutate Yeeflow data.
+This skill is separate from package generation. It can support planning, validation, and runtime-test setup. Directory/master-data calls remain read-only by default.
+
+Package import/install/upgrade APIs are a separate, explicitly mutating path. Use them only when the user asks to automate package import, install, or upgrade, local package validation has passed, and the user approves execution. Never run package automation as part of normal lookup.
 
 ## When To Use
 
@@ -38,7 +40,7 @@ Use the API only when local credentials are available and the user has asked for
 
 - Do not use this skill for normal Yeeflow package generation when no real org data is needed.
 - Do not ask the user to paste API keys into chat.
-- Do not run write APIs.
+- Do not run write APIs unless the user explicitly asks for package import/install/upgrade automation and you use the guarded package helper with `--execute`.
 - Do not commit `.env.local`, raw API responses, credentials, tokens, users, emails, phone numbers, tenant IDs, or private identifiers.
 - Do not add write operations until they are separately studied, safety-reviewed, and runtime-proven.
 
@@ -93,6 +95,27 @@ Report only:
 - redacted sample schema/shape
 
 For user/person data, show counts and redacted field shapes by default. Do not show full names, emails, phone numbers, or broad identity dumps. Return IDs only when explicitly needed for app generation or runtime testing, and keep scope narrow.
+
+## Package Automation Operations
+
+The product team published package automation APIs on 2026-05-29:
+
+- `POST /files/upload`
+- `POST /listset/package/import`
+- `POST /listset/package/install`
+- `POST /listset/package/upgrade`
+
+Use the shared helper from the repository root:
+
+```bash
+node scripts/yeeflow-package-api-automation.mjs --operation import-yap --package <file.yap> --workspace-id <workspace-id>
+node scripts/yeeflow-package-api-automation.mjs --operation install-yapk --package <file.yapk> --workspace-id <workspace-id>
+node scripts/yeeflow-package-api-automation.mjs --operation upgrade-yapk --package <file.yapk> --workspace-id <workspace-id>
+```
+
+The helper defaults to dry run. Add `--execute` only after explicit user approval. It prints env-var presence, package name/size, request summary, HTTP/API status, response keys, and redacted data shape only. It must not print API keys, raw API responses, raw package `Resource`, raw `Sign`, decoded payloads, private URLs, tenant IDs, or uploaded file IDs.
+
+Before executing package automation, validate the package locally with the relevant `.yap` or `.yapk` validators, confirm the target workspace is disposable or approved, and record the proof boundary. A successful API response is not a substitute for visible runtime verification of the imported/installed/upgraded app.
 
 ## Safety And Redaction
 

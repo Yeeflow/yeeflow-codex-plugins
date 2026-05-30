@@ -1,0 +1,340 @@
+#!/usr/bin/env node
+
+import fs from "node:fs";
+import path from "node:path";
+import { environmentPresence, loadDotenvFile, resolveYeeflowEnvironment } from "./yeeflow-env-utils.mjs";
+
+const OPERATIONS = new Set(["upload", "import-yap", "install-yapk", "upgrade-yapk"]);
+
+const args = parseArgs(process.argv.slice(2));
+
+if (args.help || !args.operation || !OPERATIONS.has(args.operation)) {
+  printUsage();
+  process.exit(args.help ? 0 : 1);
+}
+
+loadDotenvFile(fs, args.dotenv || ".env.local");
+const env = resolveYeeflowEnvironment(process.env);
+const packagePath = args.package ? path.resolve(args.package) : "";
+
+const plan = {
+  operation: args.operation,
+  execute: Boolean(args.execute),
+  environment: environmentPresence(env),
+  package: packagePath ? summarizePackagePath(packagePath) : null,
+};
+
+if (!args.execute) {
+  plan.note = "Dry run only. Add --execute to call Yeeflow package APIs.";
+}
+
+validateCommonInputs(args, env, packagePath);
+
+let result;
+if (!args.execute) {
+  result = await buildDryRunPlan(args, packagePath);
+} else {
+  result = await executeOperation(args, env, packagePath);
+}
+
+console.log(JSON.stringify({ ...plan, result }, null, 2));
+
+function printUsage() {
+  console.log(`Usage:
+  node scripts/yeeflow-package-api-automation.mjs --operation upload --package <file.yap|file.yapk> [--execute]
+  node scripts/yeeflow-package-api-automation.mjs --operation import-yap --package <file.yap> --workspace-id <id> [--app-id 41] [--execute]
+  node scripts/yeeflow-package-api-automation.mjs --operation install-yapk --package <file.yapk> --workspace-id <id> [--execute]
+  node scripts/yeeflow-package-api-automation.mjs --operation upgrade-yapk --package <file.yapk> --workspace-id <id> [--upgrade-check true|false] [--execute]
+
+Options:
+  --dotenv <path>                 Defaults to .env.local.
+  --upload-mode multipart|raw      Defaults to multipart. Product docs expose the endpoint but not the file-body contract.
+  --file-field <name>              Multipart field name. Defaults to file.
+  --package-file-id <id>           Skip upload and use an existing uploaded file id for install/upgrade.
+  --package-file-name <name>       Name for existing uploaded file metadata.
+  --package-file-size <bytes>      File size for existing uploaded file metadata.
+  --manage-json <json>             Import permissions array. Defaults to [].
+  --write-json <json>              Import permissions array. Defaults to [].
+  --read-json <json>               Import permissions array. Defaults to [].
+
+The helper never prints API keys, raw Resource, raw Sign, raw decoded payloads, or full API responses.`);
+}
+
+function parseArgs(argv) {
+  const parsed = {};
+  for (let i = 0; i < argv.length; i += 1) {
+    const token = argv[i];
+    if (!token.startsWith("--")) throw new Error(`Unexpected argument: ${token}`);
+    const key = token.slice(2).replace(/-([a-z])/g, (_, ch) => ch.toUpperCase());
+    if (key === "execute" || key === "help") {
+      parsed[key] = true;
+    } else {
+      const value = argv[i + 1];
+      if (!value || value.startsWith("--")) throw new Error(`Missing value for ${token}`);
+      parsed[key] = value;
+      i += 1;
+    }
+  }
+  return parsed;
+}
+
+function validateCommonInputs(options, env, resolvedPackagePath) {
+  if (options.execute && !env.apiKey) throw new Error("YEEFLOW_API_KEY is required. Store it locally; do not paste it into chat.");
+  if (options.execute && !env.apiBaseUrl) throw new Error("YEEFLOW_API_BASE_URL is required.");
+  if (["upload", "import-yap", "install-yapk", "upgrade-yapk"].includes(options.operation)) {
+    if (!resolvedPackagePath) throw new Error("--package is required.");
+    if (!fs.existsSync(resolvedPackagePath)) throw new Error(`Package file not found: ${resolvedPackagePath}`);
+  }
+  if (["import-yap", "install-yapk", "upgrade-yapk"].includes(options.operation) && !options.workspaceId) {
+    throw new Error("--workspace-id is required.");
+  }
+  if (options.operation === "import-yap" && !resolvedPackagePath.endsWith(".yap")) {
+    throw new Error("import-yap requires a .yap package.");
+  }
+  if (["install-yapk", "upgrade-yapk"].includes(options.operation) && !resolvedPackagePath.endsWith(".yapk")) {
+    throw new Error(`${options.operation} requires a .yapk package.`);
+  }
+}
+
+async function buildDryRunPlan(options, resolvedPackagePath) {
+  if (options.operation === "upload") {
+    return {
+      endpoint: "POST /files/upload",
+      uploadMode: options.uploadMode || "multipart",
+      request: { packageName: path.basename(resolvedPackagePath), fileSize: fs.statSync(resolvedPackagePath).size },
+    };
+  }
+  if (options.operation === "import-yap") {
+    return {
+      endpoint: "POST /listset/package/import",
+      request: redactImportBody(buildImportBody(options, resolvedPackagePath)),
+    };
+  }
+  const packageFile = buildExistingPackageFile(options, resolvedPackagePath) || {
+    Id: "[from upload response]",
+    Name: path.basename(resolvedPackagePath),
+    FileSize: fs.statSync(resolvedPackagePath).size,
+  };
+  return {
+    endpoint: options.operation === "install-yapk" ? "POST /listset/package/install" : "POST /listset/package/upgrade",
+    request: redactPackageActionBody(buildPackageActionBody(options, packageFile)),
+    uploadBeforeAction: !buildExistingPackageFile(options, resolvedPackagePath),
+  };
+}
+
+async function executeOperation(options, env, resolvedPackagePath) {
+  if (options.operation === "upload") {
+    return await uploadPackageFile(env, resolvedPackagePath, options);
+  }
+  if (options.operation === "import-yap") {
+    return await postJson(env, "/listset/package/import", buildImportBody(options, resolvedPackagePath), redactImportBody);
+  }
+  const existingPackageFile = buildExistingPackageFile(options, resolvedPackagePath);
+  const packageFile = existingPackageFile || normalizePackageFile(await uploadPackageFile(env, resolvedPackagePath, options), resolvedPackagePath);
+  const endpoint = options.operation === "install-yapk" ? "/listset/package/install" : "/listset/package/upgrade";
+  return await postJson(env, endpoint, buildPackageActionBody(options, packageFile), redactPackageActionBody);
+}
+
+async function uploadPackageFile(env, resolvedPackagePath, options) {
+  const uploadMode = options.uploadMode || "multipart";
+  const fileName = path.basename(resolvedPackagePath);
+  const fileBuffer = fs.readFileSync(resolvedPackagePath);
+  const url = new URL(`${env.apiBaseUrl}/files/upload`);
+  url.searchParams.set("isImg", "false");
+
+  const headers = { apiKey: env.apiKey };
+  let body;
+  if (uploadMode === "raw") {
+    headers["Content-Type"] = "application/octet-stream";
+    headers["x-file-name"] = encodeURIComponent(fileName);
+    body = fileBuffer;
+  } else if (uploadMode === "multipart") {
+    const form = new FormData();
+    form.append(options.fileField || "file", new Blob([fileBuffer]), fileName);
+    body = form;
+  } else {
+    throw new Error("--upload-mode must be multipart or raw.");
+  }
+
+  const response = await fetch(url, { method: "POST", headers, body });
+  return await summarizeResponse(response, "upload file content");
+}
+
+async function postJson(env, endpoint, body, redactBody) {
+  const response = await fetch(`${env.apiBaseUrl}${endpoint}`, {
+    method: "POST",
+    headers: {
+      apiKey: env.apiKey,
+      Accept: "application/json",
+      "Content-Type": "application/json-patch+json",
+    },
+    body: JSON.stringify(body),
+  });
+  const summary = await summarizeResponse(response, endpoint);
+  return {
+    request: redactBody(body),
+    response: summary,
+  };
+}
+
+async function summarizeResponse(response, label) {
+  const contentType = response.headers.get("content-type") || "";
+  const text = await response.text();
+  let parsed = null;
+  if (text && contentType.includes("application/json")) {
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      parsed = null;
+    }
+  }
+  if (!response.ok) {
+    return {
+      label,
+      ok: false,
+      httpStatus: response.status,
+      contentType,
+      responseKeys: parsed && typeof parsed === "object" ? Object.keys(parsed).slice(0, 20) : [],
+      apiStatus: parsed?.Status ?? parsed?.status ?? null,
+      messagePresent: Boolean(parsed?.Message ?? parsed?.message),
+    };
+  }
+  const summary = {
+    label,
+    ok: true,
+    httpStatus: response.status,
+    contentType,
+    responseKeys: parsed && typeof parsed === "object" ? Object.keys(parsed).slice(0, 20) : [],
+    apiStatus: parsed?.Status ?? parsed?.status ?? null,
+    messagePresent: Boolean(parsed?.Message ?? parsed?.message),
+    totalCount: parsed?.TotalCount ?? parsed?.totalCount ?? null,
+    dataShape: summarizeDataShape(parsed?.Data ?? parsed?.data),
+  };
+  const packageFile = extractPackageFile(parsed?.Data ?? parsed?.data);
+  if (packageFile) {
+    Object.defineProperty(summary, "_packageFile", { value: packageFile, enumerable: false });
+    summary.packageFile = { Id: "[redacted]", Name: packageFile.Name, FileSize: packageFile.FileSize };
+  }
+  return summary;
+}
+
+function buildImportBody(options, resolvedPackagePath) {
+  const wrapper = JSON.parse(fs.readFileSync(resolvedPackagePath, "utf8"));
+  if (typeof wrapper.Resource !== "string" || !wrapper.Resource) throw new Error(".yap package is missing Resource.");
+  return {
+    AppID: Number(options.appId || wrapper.AppID || 41),
+    WorkspaceID: options.workspaceId,
+    Title: options.title || wrapper.Title || path.basename(resolvedPackagePath, ".yap"),
+    Description: options.description || wrapper.Description || "",
+    IconUrl: options.iconUrl || wrapper.IconUrl || "",
+    Resource: wrapper.Resource,
+    Manage: parseJsonArrayOption(options.manageJson, "manage-json"),
+    Write: parseJsonArrayOption(options.writeJson, "write-json"),
+    Read: parseJsonArrayOption(options.readJson, "read-json"),
+  };
+}
+
+function buildPackageActionBody(options, packageFile) {
+  const body = {
+    WorkspaceID: options.workspaceId,
+    PackageFile: packageFile,
+  };
+  if (options.operation === "upgrade-yapk") {
+    body.UpgradeCheck = options.upgradeCheck === undefined ? true : parseBoolean(options.upgradeCheck, "upgrade-check");
+  }
+  return body;
+}
+
+function buildExistingPackageFile(options, resolvedPackagePath) {
+  if (!options.packageFileId) return null;
+  return {
+    Id: options.packageFileId,
+    Name: options.packageFileName || path.basename(resolvedPackagePath),
+    FileSize: Number(options.packageFileSize || fs.statSync(resolvedPackagePath).size),
+  };
+}
+
+function normalizePackageFile(uploadSummary, resolvedPackagePath) {
+  if (!uploadSummary?._packageFile) {
+    throw new Error("Upload completed but did not expose a package file Id in the redacted response summary. Pass --package-file-id/--package-file-name/--package-file-size if the upload API stores file metadata elsewhere.");
+  }
+  return uploadSummary._packageFile;
+}
+
+function summarizePackagePath(resolvedPackagePath) {
+  return {
+    name: path.basename(resolvedPackagePath),
+    ext: path.extname(resolvedPackagePath),
+    fileSize: fs.existsSync(resolvedPackagePath) ? fs.statSync(resolvedPackagePath).size : null,
+  };
+}
+
+function parseJsonArrayOption(value, label) {
+  if (!value) return [];
+  const parsed = JSON.parse(value);
+  if (!Array.isArray(parsed)) throw new Error(`--${label} must be a JSON array.`);
+  return parsed;
+}
+
+function parseBoolean(value, label) {
+  if (value === true || value === "true") return true;
+  if (value === false || value === "false") return false;
+  throw new Error(`--${label} must be true or false.`);
+}
+
+function redactImportBody(body) {
+  return {
+    ...body,
+    WorkspaceID: "[provided]",
+    Resource: "[redacted]",
+    Manage: summarizePermissionArray(body.Manage),
+    Write: summarizePermissionArray(body.Write),
+    Read: summarizePermissionArray(body.Read),
+  };
+}
+
+function redactPackageActionBody(body) {
+  return {
+    WorkspaceID: "[provided]",
+    PackageFile: body.PackageFile
+      ? {
+          Id: body.PackageFile.Id ? "[provided]" : null,
+          Name: body.PackageFile.Name,
+          FileSize: body.PackageFile.FileSize,
+        }
+      : null,
+    UpgradeCheck: body.UpgradeCheck,
+  };
+}
+
+function summarizePermissionArray(value) {
+  return Array.isArray(value) ? { count: value.length } : { count: 0 };
+}
+
+function summarizeDataShape(data) {
+  if (data === null || data === undefined) return null;
+  if (Array.isArray(data)) return { type: "array", count: data.length };
+  if (typeof data === "object") {
+    return {
+      type: "object",
+      keys: Object.keys(data).slice(0, 20),
+      actionFields: {
+        Continue: typeof data.Continue === "boolean" ? data.Continue : undefined,
+        Completed: typeof data.Completed === "boolean" ? data.Completed : undefined,
+        Status: data.Status ?? undefined,
+      },
+    };
+  }
+  return { type: typeof data };
+}
+
+function extractPackageFile(data) {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+  const id = data.Id ?? data.ID ?? data.id;
+  if (!id) return null;
+  return {
+    Id: String(id),
+    Name: data.Name || data.name || "uploaded-package",
+    FileSize: Number(data.FileSize || data.fileSize || 0),
+  };
+}
