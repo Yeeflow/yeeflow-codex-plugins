@@ -20,6 +20,17 @@ Each template includes:
 
 ## Dashboard Templates
 
+### Standard dashboard page shell
+
+All generated dashboard templates must be placed inside the export-proven page shell:
+
+- Page content area: full width with content-area padding set to zero.
+- Top-level Navigator structure: `Main` container, then `Content` container, then all visible dashboard sections.
+- `Main` and `Content` must have meaningful Navigator labels and must not leave sections as page-root siblings.
+- Layout-only Grid controls must have display caption/display label disabled.
+- Every control must have a meaningful Navigator label; default labels such as `Container`, `Grid`, `Text`, `Button`, `Summary`, `Dynamic field`, `Kanban`, and `Collection` are invalid for generated-final output.
+- Dynamic controls must remain inside row-context item templates such as Kanban, Collection, or Timeline.
+
 ### `dashboard_header_action_bar`
 
 - Purpose: Create a page-level dashboard header with title, subtitle, and safe primary/secondary actions.
@@ -39,16 +50,16 @@ Each template includes:
 
 - Purpose: Display operational metrics in card containers.
 - Use when: A dashboard needs high-level counts, risk totals, SLA/expiry counts, or workload metrics.
-- Required controls: Container, Grid, Text, Dynamic field or summary-compatible value control.
-- Required child controls: at least four card-like containers when the checklist expects four KPIs; each card needs label, value, context text, and optional status/accent.
-- Required data bindings: source lists or documented aggregate fallback.
+- Required controls: Container, Grid, Text, Summary.
+- Required child controls: at least four card-like containers when the checklist expects four KPIs; each card needs label, visible formatted value Text, context text, and optional status/accent. Add hidden Summary controls in a hidden container when flexible text display is needed.
+- Required data bindings: source lists through Summary controls, matching `page.exts[]` summary entries, `attrs.save_var`, dashboard `tempVars[]`, and visible Text controls bound to the temp variables.
 - Required fields: primary item field plus relevant status/date/risk fields.
 - Layout rules: `safe_padding`, `grid_row`, `card_container`, `section_spacing`.
 - Style rules: card background/border/shadow/radius where supported; 16px or greater gaps; value typography larger than label.
 - Required actions: none by default.
-- Validation rules: not plain text only, card structure present, required labels present, fields or fallback reason present.
-- Allowed fallback: labeled static aggregate placeholders only with documented aggregate-binding gap.
-- Proof status: inferred; needs golden proof for polished aggregate cards.
+- Validation rules: not plain text only, card structure present, required labels present, Summary controls resolve to source lists, `save_var` references declared temp variables, visible KPI values bind to temp variables, no static numeric KPI Text.
+- Allowed fallback: labeled static aggregate placeholders only with documented aggregate-binding gap and explicit user approval.
+- Proof status: export-proven and user-confirmed in Vendor Onboarding v4.1 using the Service Desk Pro Executive Dashboard summary-to-temp-variable pattern.
 
 ### `progress_summary_card`
 

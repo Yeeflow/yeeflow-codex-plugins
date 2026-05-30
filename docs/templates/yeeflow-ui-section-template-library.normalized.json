@@ -2,6 +2,16 @@
   "library": "Yeeflow UI Section Template Library",
   "version": "v1",
   "description": "Reusable templates for full Yeeflow application generation. Composition checklists reference templateId and validators enforce template conformance.",
+  "globalDashboardRules": [
+    "page_content_area_full_width",
+    "page_content_area_padding_zero",
+    "main_container_required",
+    "content_container_required",
+    "all_visible_sections_inside_main_content",
+    "layout_grid_display_label_disabled",
+    "meaningful_navigator_labels_required",
+    "dynamic_controls_only_inside_item_templates"
+  ],
   "templates": [
     {
       "templateId": "dashboard_header_action_bar",
@@ -76,7 +86,7 @@
         "container",
         "grid",
         "text",
-        "dynamic-field"
+        "summary"
       ],
       "requiredChildControls": [
         "kpi_card",
@@ -85,7 +95,11 @@
         "kpi_context"
       ],
       "requiredDataBindings": [
-        "source_list_or_documented_aggregate_fallback"
+        "summary_control_source_list",
+        "summary_ext_binding",
+        "summary_save_var",
+        "dashboard_temp_var",
+        "visible_text_temp_var_binding"
       ],
       "requiredFields": [],
       "layoutRules": [
@@ -106,9 +120,13 @@
         "section_exists",
         "card_structure_present",
         "not_plain_text_only",
-        "data_binding_present"
+        "data_binding_present",
+        "summary_controls_resolve",
+        "save_var_refs_temp_vars",
+        "visible_kpi_values_bind_temp_vars",
+        "no_static_numeric_kpi_text"
       ],
-      "allowedFallback": "Static aggregate placeholders only when labeled and documented as deferred aggregate binding.",
+      "allowedFallback": "Static aggregate placeholders only when labeled, explicitly approved, and documented as deferred aggregate binding.",
       "proofStatus": "export-proven",
       "sourceExports": [
         "Sales_Management_AD.yap",
@@ -135,10 +153,12 @@
         "project dashboard summaries and progress indicators",
         "NHIC dashboard uses a padded constrained dashboard body with filter row and multiple Summary controls inside row containers",
         "Service Desk Executive Dashboard uses a deep padded container hierarchy with 14 Summary controls, chart sections, filter controls, gaps, borders, and width-constrained rows",
-        "summary controls carry business labels, aggregate field settings, card padding, border/radius, and dashboard filter bindings"
+        "summary controls carry business labels, aggregate field settings, card padding, border/radius, and dashboard filter bindings",
+        "Vendor Onboarding v4.1 uses hidden Summary controls with attrs.save_var, dashboard tempVars, and visible formatted Text controls for KPI values"
       ],
       "limitations": [
-        "export-proven structure and binding only; aggregate correctness and runtime values still require package-specific validation"
+        "export-proven structure and binding only; aggregate correctness and runtime values still require package-specific validation",
+        "static numeric Text values are not acceptable for generated KPI cards unless explicitly approved as deferred placeholders"
       ]
     },
     {

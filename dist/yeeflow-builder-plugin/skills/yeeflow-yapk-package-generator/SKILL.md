@@ -11,6 +11,12 @@ Vendor Onboarding full UI v2 proved that import/install success is not enough. D
 
 For full application generation, run `scripts/inspect-generated-app-quality.mjs --package <package> --spec <approved-spec.md> --strict-visual-app-quality` before handoff. The strict gate must fail missing planned pages/forms, missing print pages, underbuilt dashboards, missing safe padding/card structure, placeholder controls, default buttons, missing actions, empty Kanban/Collection templates, and undocumented deferred scope. Do not return a minimal or technically importable scaffold when the user asked for the full approved application.
 
+## Vendor Onboarding v4.1 YAPK Hard Checks
+
+Treat the user-confirmed Vendor Onboarding v4.1 package family as a golden YAPK generation reference. For upgrade packages, preserve all existing IDs and allocate new IDs only for newly added resources. Dashboard pages must use the standard `Main > Content` shell with page content-area padding set to zero, layout Grid display captions disabled, meaningful Navigator labels on every control, and dynamic controls only inside row-context item templates such as Kanban, Collection, or Timeline. Active dashboard buttons must use the correct button/action control shape and bind to real actions, such as opening the Vendors new-item form or navigating to the compliance queue dashboard.
+
+KPI cards must not use static number Text controls. Use the Service Desk Pro Executive Dashboard pattern: hidden Summary controls calculate values, `attrs.save_var` writes them to dashboard temp variables, and visible formatted Text controls display the temp variable values. Generated data lists inside YAPK packages must pass system schema validation: native `Title`, no generated `Text0` primary field, unique field identifiers, `FieldName` suffix matching `FieldIndex`, valid storage family, populated select/multi-select choices, default view display fields, lookup display fields selected and resolved, and sample data seeded in lookup dependency order. The remaining Vendor lookup picker no-record behavior is a known product-team follow-up; do not weaken lookup display-field validation to work around it.
+
 ## Public Tenant Safety
 
 - Never hardcode a tenant-specific Yeeflow URL. Use `https://<yourdomain>.yeeflow.com` in docs and examples.

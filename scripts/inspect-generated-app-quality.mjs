@@ -254,6 +254,15 @@ function walkControls(control, visitor, pointer = "$", depth = 0) {
   }
 }
 
+function walkControlsWithAncestors(control, visitor, pointer = "$", ancestors = []) {
+  if (!isObject(control)) return;
+  visitor(control, pointer, ancestors);
+  const nextAncestors = ancestors.concat(control);
+  for (const key of ["children", "columns", "controls", "items", "rows", "cells"]) {
+    asArray(control[key]).forEach((child, index) => walkControlsWithAncestors(child, visitor, `${pointer}.${key}[${index}]`, nextAncestors));
+  }
+}
+
 function inspectPlan(planPath) {
   const findings = [];
   if (!planPath) {
@@ -647,6 +656,8 @@ function hasActionBinding(control) {
     attrs.action_id,
     attrs.click,
     attrs.onClick,
+    attrs["action-type"],
+    attrs.op && (attrs.data?.list || attrs.data?.page || attrs.data?.form || attrs.data?.workflow),
     control.action,
     control.actionId,
   ];
@@ -735,8 +746,10 @@ function normalizedControlType(type) {
     "data-grid": "data-list",
     "table-v2": "data-list",
     "action-button": "button",
+    "heading": "text",
     "flex-grid": "grid",
     "flex_grid": "grid",
+    "icon_list": "icon-list",
     "section": "container",
     "section-column": "container",
     "line": "divider",
@@ -934,6 +947,7 @@ function validateTemplateConformance(section, page, checklistPage, template, fin
   const types = controlTypeSet(page);
   for (const group of templateControlGroups(template)) {
     if (!group.some((type) => types.has(type))) {
+      if (group.includes("grid") && hasGridStructure(page)) continue;
       passed = false;
       templateAdd(findings, "TEMPLATE_REQUIRED_CONTROL_MISSING", "Generated section does not satisfy the referenced template's required controls.", {
         page: checklistPage.title,
@@ -1180,6 +1194,88 @@ function isDefaultAlert(control) {
   return /^alert$/i.test(title) || /Here is the description/i.test(description) || /Alert Here is the description/i.test(`${title} ${description}`);
 }
 
+function isFalseSetting(value) {
+  if (value === false) return true;
+  if (Array.isArray(value)) return value.some((item) => item === false);
+  return false;
+}
+
+function controlNavigatorLabel(control) {
+  return safeString(control?.nv_label || control?.label || control?.title).trim();
+}
+
+function hasDefaultNavigatorLabel(control) {
+  if (!safeString(control?.type)) return false;
+  const label = controlNavigatorLabel(control);
+  return /^(Container|Grid|Text|Dynamic field|Dynamic user|Kanban|Collection|Button|Summary|Icon|Text Editor)(\s*\d+)?$/i.test(label);
+}
+
+function hasMissingNavigatorLabel(control) {
+  return !!safeString(control?.type) && !controlNavigatorLabel(control);
+}
+
+function isLayoutGrid(control) {
+  const type = safeString(control?.type);
+  return type === "flex_grid" || normalizedControlType(type) === "grid";
+}
+
+function headingValue(control) {
+  const title = control?.attrs?.headc?.title || control?.attrs?.heads?.title || {};
+  if (title && typeof title === "object") return title.value;
+  return undefined;
+}
+
+function isStaticKpiNumber(control) {
+  if (normalizedControlType(control?.type) !== "text") return false;
+  const value = headingValue(control);
+  if (value == null) return false;
+  const label = controlNavigatorLabel(control);
+  return /^-?\d+(\.\d+)?%?$/.test(String(value).trim()) && /kpi|total|pending|risk|expiring|submitted|resolved|open|count|value/i.test(label);
+}
+
+function hasMainContentStructure(page) {
+  const main = asArray(page?.children)[0];
+  if (!main || normalizedControlType(main.type) !== "container") return false;
+  if (!/main/i.test(controlNavigatorLabel(main))) return false;
+  const content = asArray(main.children)[0];
+  return !!content && normalizedControlType(content.type) === "container" && /content/i.test(controlNavigatorLabel(content));
+}
+
+function dashboardStructureStatus(page) {
+  const children = asArray(page?.children);
+  const main = children[0];
+  const mainOk = !!main && normalizedControlType(main.type) === "container" && /^Main$/i.test(controlNavigatorLabel(main));
+  const mainChildren = asArray(main?.children);
+  const content = mainChildren[0];
+  const contentOk = !!content && normalizedControlType(content.type) === "container" && /^Content$/i.test(controlNavigatorLabel(content));
+  return {
+    mainOk,
+    contentOk,
+    invalidStructure: !mainOk || !contentOk || children.length > 1 || mainChildren.length > 1,
+  };
+}
+
+function pageContentPaddingIsNonZero(page) {
+  const text = JSON.stringify(page?.attrs || page?.settings || {});
+  const matches = text.match(/"padding(?:Top|Right|Bottom|Left)?"\s*:\s*("?)(-?\d+(?:\.\d+)?)\1/gi) || [];
+  return matches.some((match) => {
+    const value = Number(match.match(/-?\d+(?:\.\d+)?/)?.[0] || 0);
+    return Number.isFinite(value) && value !== 0;
+  });
+}
+
+function hasSummaryTempVarKpiPattern(page) {
+  const tempVars = asArray(page?.tempVars).map((item) => safeString(item?.id)).filter(Boolean);
+  const exts = asArray(page?.exts).filter((item) => safeString(item?.key) === "summary" || safeString(item?.category) === "___Pivot___");
+  let summarySaveVars = 0;
+  let visibleTempText = 0;
+  walkControls(page, (control) => {
+    if (safeString(control.type) === "summary" && control?.attrs?.save_var) summarySaveVars += 1;
+    if (normalizedControlType(control.type) === "text" && JSON.stringify(control?.attrs || {}).includes("__temp_")) visibleTempText += 1;
+  });
+  return tempVars.length >= 4 && exts.length >= 4 && summarySaveVars >= 4 && visibleTempText >= 4;
+}
+
 function inspectDashboardStrict(surface, spec, findings, summary) {
   const { title, page, layout } = surface;
   const ext2 = parseMaybeJson(layout.Ext2);
@@ -1205,6 +1301,19 @@ function inspectDashboardStrict(surface, spec, findings, summary) {
   if (!hasSafePadding(page)) {
     strictAdd(findings, "DASHBOARD_PADDING_MISSING", "Dashboard lacks clearly detectable safe outer padding; full UI pages must not place major content against the window edge.", { title });
   }
+  const structure = dashboardStructureStatus(page);
+  if (!structure.mainOk) {
+    strictAdd(findings, "DASHBOARD_MAIN_CONTAINER_MISSING", "Dashboard must use the standard top-level Main container.", { title });
+  }
+  if (!structure.contentOk) {
+    strictAdd(findings, "DASHBOARD_CONTENT_CONTAINER_MISSING", "Dashboard must place all visible page content inside Main > Content.", { title });
+  }
+  if (structure.invalidStructure) {
+    strictAdd(findings, "DASHBOARD_CONTENT_STRUCTURE_INVALID", "Dashboard content must follow Main > Content with no sibling page sections outside the Content container.", { title });
+  }
+  if (pageContentPaddingIsNonZero(page)) {
+    strictAdd(findings, "DASHBOARD_PAGE_PADDING_NOT_ZERO", "Dashboard page content-area padding should be zero; spacing belongs in the Main > Content containers.", { title });
+  }
   if (!hasCardStructure(page)) {
     strictAdd(findings, "DASHBOARD_CARD_STRUCTURE_MISSING", "Dashboard lacks enough card/section styling for the approved modern SaaS layout.", { title });
   }
@@ -1217,24 +1326,39 @@ function inspectDashboardStrict(surface, spec, findings, summary) {
   walkControls(page, (control, pointer) => {
     const type = safeString(control.type);
     const label = controlText(control);
+    const normalized = normalizedControlType(type);
+    if (hasMissingNavigatorLabel(control)) {
+      strictAdd(findings, "CONTROL_NAVIGATOR_LABEL_MISSING", "Generated controls must have explicit meaningful Navigator labels.", { title, pointer, controlType: type });
+    }
+    if (hasDefaultNavigatorLabel(control)) {
+      strictAdd(findings, "CONTROL_NAVIGATOR_LABEL_DEFAULT", "Generated controls must have meaningful Navigator labels instead of default names.", { title, pointer, controlType: type, label: controlNavigatorLabel(control) });
+    }
+    if (isLayoutGrid(control) && !isFalseSetting(control.displayLabel) && !isFalseSetting(control.attrs?.displayLabel)) {
+      strictAdd(findings, "GRID_DISPLAY_LABEL_NOT_DISABLED", "Layout-only Grid controls must have display caption/display label turned off.", { title, pointer, label: controlNavigatorLabel(control) });
+      strictAdd(findings, "GRID_DEFAULT_CAPTION_VISIBLE", "Grid captions such as the visible row label must not render on production dashboards.", { title, pointer, label: controlNavigatorLabel(control) });
+    }
+    if (isStaticKpiNumber(control)) {
+      strictAdd(findings, "KPI_STATIC_NUMBER_TEXT", "KPI card numeric values must be data-bound summary/temp-variable values, not static Text.", { title, pointer, label: controlNavigatorLabel(control), value: headingValue(control) });
+    }
     if (type === "alert" && isDefaultAlert(control)) {
       strictAdd(findings, "DASHBOARD_DEFAULT_ALERT_CONTENT", "Dashboard alert uses default placeholder content instead of meaningful compliance-risk copy.", { title, pointer, label });
       strictAdd(findings, "SPEC_CONTROL_PLACEHOLDER_ONLY", "A planned alert/control exists only as placeholder/default text.", { title, pointer, controlType: type });
     }
-    if (type === "button") {
+    if (normalized === "button") {
       if (!label || /^button$/i.test(label.trim())) strictAdd(findings, "DEFAULT_BUTTON_LABEL", "Generated dashboard button has a generic/default label.", { title, pointer, label });
       if (!hasActionBinding(control)) {
         strictAdd(findings, "BUTTON_ACTION_MISSING", "Generated dashboard button has no configured action binding.", { title, pointer, label });
+        strictAdd(findings, "ACTION_BUTTON_FORMAT_INVALID", "Generated active button must use the export-proven action_button/Button format with a real action binding.", { title, pointer, label });
         strictAdd(findings, "DASHBOARD_BUTTON_ACTION_MISSING", "Dashboard contains buttons that do not expose configured actions.", { title, pointer, label });
       }
     }
-    if (type === "kanban" || type === "collection") {
+    if (normalized === "kanban" || normalized === "collection") {
       const dynamicFields = [];
       walkControls(control, (node) => {
         if (safeString(node.type).startsWith("dynamic")) dynamicFields.push(node);
       });
       if (dynamicFields.length === 0) {
-        strictAdd(findings, type === "kanban" ? "KANBAN_ITEM_TEMPLATE_EMPTY" : "COLLECTION_ITEM_TEMPLATE_EMPTY", "Kanban/Collection item template has no meaningful dynamic fields.", { title, pointer, controlType: type });
+        strictAdd(findings, normalized === "kanban" ? "KANBAN_ITEM_TEMPLATE_EMPTY" : "COLLECTION_ITEM_TEMPLATE_EMPTY", "Kanban/Collection item template has no meaningful dynamic fields.", { title, pointer, controlType: type });
       } else if (dynamicFields.length < 3) {
         strictAdd(findings, "ITEM_TEMPLATE_TOO_MINIMAL", "Kanban/Collection item template is too minimal for a full application proof.", { title, pointer, controlType: type, dynamicFieldCount: dynamicFields.length });
       }
@@ -1242,8 +1366,37 @@ function inspectDashboardStrict(surface, spec, findings, summary) {
       if (actionCount === 0) strictAdd(findings, "ITEM_TEMPLATE_ACTIONS_MISSING", "Kanban/Collection item template has no configured item actions where the spec expects actionable cards.", { title, pointer, controlType: type });
     }
   });
+  walkControlsWithAncestors(page, (control, pointer, ancestors) => {
+    const rawType = safeString(control.type).toLowerCase();
+    if (!rawType.startsWith("dynamic")) return;
+    const scoped = ancestors.some((ancestor) => ["kanban", "collection", "timeline-v", "timeline-h"].includes(normalizedControlType(ancestor.type)));
+    if (!scoped) {
+      strictAdd(findings, "DYNAMIC_CONTROL_OUTSIDE_ITEM_TEMPLATE", "Dashboard Dynamic controls must stay inside Kanban, Collection, or Timeline item templates where row context exists.", { title, pointer, controlType: control.type });
+    }
+  });
+  if (/Vendor Management Dashboard/i.test(title)) {
+    const actionButtons = [];
+    walkControls(page, (control, pointer) => {
+      if (normalizedControlType(control.type) === "button") {
+        actionButtons.push({ pointer, label: controlText(control), hasAction: hasActionBinding(control), raw: JSON.stringify(control || {}) });
+      }
+    });
+    const newVendor = actionButtons.find((button) => /new vendor request/i.test(button.label));
+    if (newVendor && !newVendor.hasAction) {
+      strictAdd(findings, "NEW_VENDOR_ACTION_MISSING", "New Vendor Request must open the Vendors new-item form or be explicitly deferred.", { title, pointer: newVendor.pointer, label: newVendor.label });
+    }
+    const queue = actionButtons.find((button) => /view compliance queue/i.test(button.label));
+    if (queue && !queue.hasAction) {
+      strictAdd(findings, "COMPLIANCE_QUEUE_NAV_ACTION_MISSING", "View Compliance Queue must navigate to the compliance operations dashboard or be explicitly deferred.", { title, pointer: queue.pointer, label: queue.label });
+    }
+  }
   if (itemTemplates === 0 && /Compliance Review Workspace|Vendor Management Dashboard/i.test(title)) {
     strictAdd(findings, "EXPECTED_ACTION_MISSING", "Expected dashboard operations board/card actions are missing or not detectable.", { title });
+  }
+  if (/Vendor Management Dashboard|Executive Dashboard|Overview/i.test(title) && /kpi|metric|summary|total|pending|risk|expiring/i.test(JSON.stringify(page || {})) && !hasSummaryTempVarKpiPattern(page)) {
+    strictAdd(findings, "KPI_SUMMARY_TEMP_VAR_PATTERN_MISSING", "Dashboard KPI cards should follow the golden Summary-control to temp-variable display pattern when showing aggregate values.", { title });
+    strictAdd(findings, "SUMMARY_CONTROL_HIDDEN_VAR_PATTERN_MISSING", "Aggregate KPI dashboards must include hidden Summary controls saving values into dashboard temp variables.", { title });
+    strictAdd(findings, "KPI_TEXT_NOT_BOUND_TO_TEMP_VAR", "Visible KPI Text controls must display formatted dashboard temp-variable values rather than static numbers.", { title });
   }
 }
 
