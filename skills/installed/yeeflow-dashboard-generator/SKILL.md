@@ -124,10 +124,11 @@ Grid caption rule from Vendor Onboarding v4.2/v4.4: generated dashboard Grid con
 Default generated dashboards should:
 
 - set embedded page `attrs.hideHeaderAll = true`
-- set embedded page `attrs.container.padding` to `--sp--s0` on all sides
+- set embedded page `attrs.container.padding` to `[null, { top: "--sp--s0", right: "--sp--s0", bottom: "--sp--s0", left: "--sp--s0" }]`
 - set full-page background on embedded page `attrs.background` when needed
 - use a top-level container with `nv_label: "Main"`
 - place the main visible content inside a child container with `nv_label: "Content"`
+- place all visible dashboard sections inside `Main > Content`, not directly on the page root
 - keep Type `103` `LayoutView = null`, `Ext2 = "{\"src\":true}"`, and embedded page JSON in `LayoutInResources[0].Resource`
 - for generated root dashboard pages with embedded page JSON, set `LayoutInResources[0].ID` and `RefId` to the dashboard `LayoutID`; Design System Request Tracker v1 proved this renders the runtime dashboard, while a separate generated resource ID rendered an empty designer placeholder
 

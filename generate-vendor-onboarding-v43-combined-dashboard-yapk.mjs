@@ -8,11 +8,11 @@ import { loadDotenvFile, resolveYeeflowEnvironment } from "./scripts/yeeflow-env
 
 const APP_ID = 41;
 const SOURCE_YAPK = process.env.VENDOR_ONBOARDING_V43_SOURCE_YAPK
-  || "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.2 - dashboard control updates.yapk";
+  || "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.5 - add a reference dashboard.yapk";
 const OUT_YAPK = process.env.VENDOR_ONBOARDING_V43_YAPK
-  || "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.4 - two dashboard pages.yapk";
+  || "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.6 - main content structure.yapk";
 const TMP_DIR = ".tmp/vendor-onboarding-v43-combined-dashboard";
-const GENERATED_AT_UTC = "2026-05-30T06:45:00Z";
+const GENERATED_AT_UTC = "2026-05-30T07:10:00Z";
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -293,6 +293,12 @@ function container(children, options = {}) {
   return control("container", "Container", attrs, children);
 }
 
+function sectionContainer(children, nvLabel, options = {}) {
+  const node = container(children, options);
+  node.nv_label = nvLabel;
+  return node;
+}
+
 function flexContainer(children, options = {}) {
   return control("container", "Container", {
     style: {
@@ -302,6 +308,47 @@ function flexContainer(children, options = {}) {
       justify_content: [null, options.justify || "flex-start"],
     },
   }, children);
+}
+
+function contentShell(title, children) {
+  return {
+    title,
+    ver: "2.0",
+    filterVars: [],
+    tempVars: [],
+    attrs: {
+      hideHeaderAll: true,
+      container: {
+        padding: [null, { top: "--sp--s0", right: "--sp--s0", bottom: "--sp--s0", left: "--sp--s0" }],
+      },
+      background: {
+        type: "classic",
+        classic: { color: "var(--c--neutral-light)" },
+      },
+    },
+    children: [
+      control("container", "Container", {
+        style: {
+          gap: [null, "--sp--s0"],
+          direction: [null, "column"],
+          justify_content: [null, "flex-start"],
+          align_items: [null, "center"],
+        },
+      }, [
+        control("container", "Container", {
+          style: {
+            gap: [null, "--sp--s300"],
+            direction: [null, "column"],
+            justify_content: [null, "flex-start"],
+          },
+          common: {
+            padding: [null, { top: "--sp--s300", right: "--sp--s300", bottom: "--sp--s300", left: "--sp--s300" }],
+            background: { normal: { type: "classic", classic: { color: "var(--c--neutral-light)" } } },
+          },
+        }, children, { nv_label: "Content" }),
+      ], { nv_label: "Main" }),
+    ],
+  };
 }
 
 function grid(children, options = {}) {
@@ -415,50 +462,34 @@ function progressBlock() {
 }
 
 function dashboardOverview(rootId, vendorsId) {
-  return {
-    title: "Vendor Management Dashboard",
-    ver: "2.0",
-    filterVars: [],
-    tempVars: [],
-    attrs: {
-      hideHeaderAll: true,
-      common: { padding: { left: 28, right: 28, top: 28, bottom: 28 } },
-    },
-    children: [
-      container([
+  return contentShell("Vendor Management Dashboard", [
+      sectionContainer([
         flexContainer([
-          container([
+          sectionContainer([
             heading("Vendor Management Dashboard", "h3-bold"),
             heading("Monitor onboarding, compliance risk, documents, and vendor operations.", "s-regular", "var(--c--neutral-dark-hover)"),
-          ], { borderColor: "transparent", padding: "--sp--s200" }),
+          ], "Page header text", { borderColor: "transparent", padding: "--sp--s200" }),
           flexContainer([
             actionButton("New Vendor Request", "2"),
             actionButton("View Compliance Queue", "4"),
           ], { direction: "row", justify: "flex-end", align: "center" }),
         ], { direction: "row", justify: "space-between", align: "center", gap: "--sp--s300" }),
-      ], { padding: "--sp--s400" }),
-      grid([
+      ], "Page header", { padding: "--sp--s400" }),
+      sectionContainer([
+        grid([
         container([heading("Total Vendors", "s-semibold"), heading("128", "h2-bold"), heading("All active and onboarding vendors", "s-regular", "var(--c--neutral-dark-hover)")]),
         container([heading("Pending Onboarding", "s-semibold"), heading("24", "h2-bold"), heading("Requests awaiting review", "s-regular", "var(--c--neutral-dark-hover)")]),
         container([heading("High Risk Vendors", "s-semibold"), heading("7", "h2-bold"), heading("High or critical risk", "s-regular", "var(--c--neutral-dark-hover)")]),
         container([heading("Expiring Documents", "s-semibold"), heading("13", "h2-bold"), heading("Due within 30 days", "s-regular", "var(--c--neutral-dark-hover)")]),
-      ], { columns: 4, gap: 16, rowGap: 16 }),
-    ],
-  };
+        ], { columns: 4, gap: 16, rowGap: 16 }),
+      ], "Lifecycle KPI section", { padding: "--sp--s0", borderColor: "transparent", background: "transparent" }),
+  ]);
 }
 
 function dashboardOperations(rootId, vendorsId, activityId) {
-  return {
-    title: "Vendor Management Dashboard 02",
-    ver: "2.0",
-    filterVars: [],
-    tempVars: [],
-    attrs: {
-      hideHeaderAll: true,
-      common: { padding: { left: 28, right: 28, top: 28, bottom: 28 } },
-    },
-    children: [
-      grid([
+  return contentShell("Vendor Management Dashboard 02", [
+      sectionContainer([
+        grid([
         container([
           heading("Onboarding Completion", "h4-bold"),
           progressBlock(),
@@ -468,8 +499,10 @@ function dashboardOperations(rootId, vendorsId, activityId) {
           heading("Compliance Alert", "h4-bold"),
           alertControl(),
         ], { background: "#FFF7ED", borderColor: "#FDBA74" }),
-      ], { columns: 2, gap: 16, rowGap: 16 }),
-      grid([
+        ], { columns: 2, gap: 16, rowGap: 16 }),
+      ], "Progress and alert section", { padding: "--sp--s0", borderColor: "transparent", background: "transparent" }),
+      sectionContainer([
+        grid([
         container([
           heading("Onboarding Status Board", "h4-bold"),
           heading("Dynamic field and dynamic user controls are scoped inside the Kanban item template.", "s-regular", "var(--c--neutral-dark-hover)"),
@@ -479,13 +512,13 @@ function dashboardOperations(rootId, vendorsId, activityId) {
           heading("Recent Vendor Activity", "h4-bold"),
           timeline(rootId, activityId),
         ]),
-      ], { columns: 2, gap: 16, rowGap: 16 }),
-      container([
+        ], { columns: 2, gap: 16, rowGap: 16 }),
+      ], "Operational queue section", { padding: "--sp--s0", borderColor: "transparent", background: "transparent" }),
+      sectionContainer([
         heading("Vendor Records", "h4-bold"),
         dataTable(rootId, vendorsId),
-      ]),
-    ],
-  };
+      ], "Vendor records section"),
+  ]);
 }
 
 const SAMPLE_VENDORS = [
@@ -648,11 +681,11 @@ async function main() {
   const upgradeWrapper = {
     ...wrapper,
     PackageId: crypto.randomUUID(),
-    Title: "Vendor Onboarding & Compliance Management v4.4 Two Dashboard Pages",
-    Description: "Two-dashboard update based on the v4.2 product-edited Grid, Container, Button, and data-view examples.",
-    Notes: "Uses flex_grid with displayLabel off, tokenized container settings, action_button styles, configured data-list display fields, 10 sample rows per list, and keeps dynamic controls inside Kanban.",
+    Title: "Vendor Onboarding & Compliance Management v4.6 Main Content Structure",
+    Description: "Two-dashboard update based on the v4.5 reference dashboard Main > Content page structure.",
+    Notes: "Uses reference dashboard page attrs with content-area padding zero, Main > Content containers, flex_grid with displayLabel off, configured display fields, 10 sample rows per list, and dynamic controls only inside Kanban.",
     Date: GENERATED_AT_UTC,
-    Version: "4.4 - two dashboard pages",
+    Version: "4.6 - main content structure",
     Resource: resourceBase64,
     Sign: "",
   };

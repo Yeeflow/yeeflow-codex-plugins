@@ -1,6 +1,6 @@
 {
-  "outputYapk": "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.4 - two dashboard pages.yapk",
-  "sourceYapk": "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.2 - dashboard control updates.yapk",
+  "outputYapk": "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.6 - main content structure.yapk",
+  "sourceYapk": "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.5 - add a reference dashboard.yapk",
   "pages": [
     "Vendor Management Dashboard",
     "Vendor Management Dashboard 02"
@@ -64,11 +64,12 @@
       ]
     }
   ],
-  "existingIdsBefore": 54,
-  "missingExistingIds": 10,
-  "missingExistingIdsReason": "The previous diagnostic-only dashboard pages were intentionally removed to produce two simplified dashboard pages; retained app, first two dashboard, child list, field, and list-view IDs remain preserved.",
+  "existingIdsBefore": 45,
+  "missingExistingIds": 1,
+  "missingExistingIdsReason": "The reference-only sample dashboard page from the v4.5 study package was intentionally removed; retained Vendor dashboard, child list, field, and list-view IDs remain preserved.",
   "newIdsUsed": 40,
   "dynamicControlsRule": "Dynamic controls are only generated inside the Kanban item template.",
+  "pageStructureRule": "Both generated dashboards use page attrs.container.padding [null,{top/right/bottom/left:'--sp--s0'}], page neutral background, top-level Main container, nested Content container, and all visible sections inside Content.",
   "gridCaptionRule": "Generated flex_grid controls set displayLabel to [null,false] and omit nv_label so the Grid display caption stays off.",
   "signing": {
     "status": "signed_and_verified",

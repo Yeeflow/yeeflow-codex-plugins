@@ -1,4 +1,4 @@
-# Vendor Onboarding v4.4 Two Dashboard Pages YAPK Proof
+# Vendor Onboarding v4.6 Main Content Structure YAPK Proof
 
 ## Summary
 
@@ -6,11 +6,11 @@ This proof regenerates only the YAPK upgrade package for the Vendor Onboarding d
 
 Output package:
 
-- `/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.4 - two dashboard pages.yapk`
+- `/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.6 - main content structure.yapk`
 
 Source package studied:
 
-- `/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.2 - dashboard control updates.yapk`
+- `/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.5 - add a reference dashboard.yapk`
 
 ## User-Edited Control Findings Applied
 
@@ -22,6 +22,7 @@ Source package studied:
 - Dashboard dynamic controls are scoped inside the Kanban item template only. No Dynamic Field, Dynamic User, Dynamic Image, or Dynamic File controls are placed directly on the dashboard root or inside plain containers.
 - Every data list default view includes display fields.
 - Every data list includes 10 synthetic sample records for runtime testing.
+- Dashboard page structure must follow the reference `Sample Overview duplicated from another app`: page content-area padding is `--sp--s0`, page background is neutral light, the top-level container is `Main`, the next container is `Content`, and all visible sections are children of `Content`.
 
 ## Generated Dashboards
 
@@ -42,6 +43,14 @@ The dashboards include:
 
 The previous diagnostic pages are intentionally removed because this version tests two simpler dashboard pages.
 
+Each generated dashboard uses:
+
+- page `attrs.container.padding = [null, { top/right/bottom/left: "--sp--s0" }]`
+- page `attrs.background.classic.color = "var(--c--neutral-light)"`
+- top-level `container` with `nv_label = "Main"`
+- nested `container` with `nv_label = "Content"`
+- visible section containers inside `Content`
+
 ## Data Lists
 
 Synthetic sample data was generated for each list:
@@ -57,25 +66,27 @@ Synthetic sample data was generated for each list:
 
 YAPK strict product schema validation:
 
-- Command: `node scripts/validate-standard-package-schema.mjs "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.4 - two dashboard pages.yapk"`
+- Command: `node scripts/validate-standard-package-schema.mjs "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.6 - main content structure.yapk"`
 - Result: pass
 - Errors: 0
 
 YAPK package validator:
 
-- Command: `node validate-yapk-package.js "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.4 - two dashboard pages.yapk"`
+- Command: `node validate-yapk-package.js "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.6 - main content structure.yapk"`
 - Result: pass
 - Errors: 0
 - Warnings: 1 runtime-proof reminder
 
 YAPK schema standard inspector:
 
-- Command: `node scripts/inspect-yapk-schema-standard.mjs "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.4 - two dashboard pages.yapk"`
+- Command: `node scripts/inspect-yapk-schema-standard.mjs "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.6 - main content structure.yapk"`
 - Result: pass
 
 Targeted dashboard control audit:
 
 - dashboard pages: 2
+- dashboards with page content-area padding zero: 2
+- dashboards with `Main > Content` container structure: 2
 - `flex_grid` controls: 3
 - `flex_grid` controls without `displayLabel: [null, false]`: 0
 - `flex_grid` controls with `nv_label`: 0
@@ -98,11 +109,13 @@ This is a local generation and validation proof for a YAPK upgrade package. Runt
 
 ## Manual Test Checklist
 
-- Upload `/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.4 - two dashboard pages.yapk` as an upgrade to the current Vendor Onboarding application.
+- Upload `/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.6 - main content structure.yapk` as an upgrade to the current Vendor Onboarding application.
 - Confirm upgrade succeeds.
 - Open `Vendor Management Dashboard`.
+- Verify the Navigator tree starts with `Main > Content`.
 - Verify the header/action area and KPI row render without any visible Grid caption row.
 - Open `Vendor Management Dashboard 02`.
+- Verify the Navigator tree starts with `Main > Content`.
 - Verify the remaining dashboard sections render without any visible Grid caption row.
 - Verify padded containers show expected card background, border, radius, and spacing.
 - Verify buttons render as proper Yeeflow buttons.
