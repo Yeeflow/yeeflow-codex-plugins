@@ -15,12 +15,14 @@ if (args.help || !args.operation || !OPERATIONS.has(args.operation)) {
 
 loadDotenvFile(fs, args.dotenv || ".env.local");
 const env = resolveYeeflowEnvironment(process.env);
+args.workspaceId = args.workspaceId || env.workspaceId;
 const packagePath = args.package ? path.resolve(args.package) : "";
 
 const plan = {
   operation: args.operation,
   execute: Boolean(args.execute),
   environment: environmentPresence(env),
+  workspaceId: args.workspaceId ? "present" : "missing",
   package: packagePath ? summarizePackagePath(packagePath) : null,
 };
 
@@ -42,12 +44,13 @@ console.log(JSON.stringify({ ...plan, result }, null, 2));
 function printUsage() {
   console.log(`Usage:
   node scripts/yeeflow-package-api-automation.mjs --operation upload --package <file.yap|file.yapk> [--execute]
-  node scripts/yeeflow-package-api-automation.mjs --operation import-yap --package <file.yap> --workspace-id <id> [--app-id 41] [--execute]
-  node scripts/yeeflow-package-api-automation.mjs --operation install-yapk --package <file.yapk> --workspace-id <id> [--execute]
-  node scripts/yeeflow-package-api-automation.mjs --operation upgrade-yapk --package <file.yapk> --workspace-id <id> [--upgrade-check true|false] [--execute]
+  node scripts/yeeflow-package-api-automation.mjs --operation import-yap --package <file.yap> [--workspace-id <id override>] [--app-id 41] [--execute]
+  node scripts/yeeflow-package-api-automation.mjs --operation install-yapk --package <file.yapk> [--workspace-id <id override>] [--execute]
+  node scripts/yeeflow-package-api-automation.mjs --operation upgrade-yapk --package <file.yapk> [--workspace-id <id override>] [--upgrade-check true|false] [--execute]
 
 Options:
   --dotenv <path>                 Defaults to .env.local.
+  --workspace-id <id>             Optional override. Defaults to YEEFLOW_WORKSPACE_ID or active profile workspace id.
   --upload-mode multipart|raw      Defaults to multipart. Product docs expose the endpoint but not the file-body contract.
   --file-field <name>              Multipart field name. Defaults to file.
   --package-file-id <id>           Skip upload and use an existing uploaded file id for install/upgrade.
@@ -86,7 +89,7 @@ function validateCommonInputs(options, env, resolvedPackagePath) {
     if (!fs.existsSync(resolvedPackagePath)) throw new Error(`Package file not found: ${resolvedPackagePath}`);
   }
   if (["import-yap", "install-yapk", "upgrade-yapk"].includes(options.operation) && !options.workspaceId) {
-    throw new Error("--workspace-id is required.");
+    throw new Error("YEEFLOW_WORKSPACE_ID is required for package import/install/upgrade APIs. Store it in .env.local or pass --workspace-id as a redacted one-run override.");
   }
   if (options.operation === "import-yap" && !resolvedPackagePath.endsWith(".yap")) {
     throw new Error("import-yap requires a .yap package.");

@@ -203,9 +203,10 @@ YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
 YEEFLOW_API_KEY=<your Yeeflow API key>
 YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com
 YEEFLOW_TENANT_ID=<optional tenant id if required>
+YEEFLOW_WORKSPACE_ID=<your workspace id>
 ```
 
-`YEEFLOW_API_BASE_URL` is for API calls and should normally be `https://api.yeeflow.com/v1`. `YEEFLOW_TENANT_URL` is for tenant/app links and should be the tenant root, such as `https://<yourdomain>.yeeflow.com`. `YEEFLOW_BASE_URL` is a legacy API base URL alias only and must not mean tenant URL going forward. Never commit `.env.local`, API keys, tenant IDs, raw API responses, or private tenant URLs.
+`YEEFLOW_API_BASE_URL` is for API calls and should normally be `https://api.yeeflow.com/v1`. `YEEFLOW_TENANT_URL` is for tenant/app links and should be the tenant root, such as `https://<yourdomain>.yeeflow.com`. `YEEFLOW_BASE_URL` is a legacy API base URL alias only and must not mean tenant URL going forward. Never commit `.env.local`, API keys, tenant IDs, workspace IDs, raw API responses, or private tenant URLs.
 
 For a complete `.env.local` setup guide, see [Environment Configuration](environment-configuration.md).
 
@@ -218,10 +219,12 @@ YEEFLOW_PROFILE=dev
 YEEFLOW_DEV_API_KEY=<dev API key>
 YEEFLOW_DEV_TENANT_URL=https://devcompany.yeeflow.com
 YEEFLOW_DEV_TENANT_ID=<optional>
+YEEFLOW_DEV_WORKSPACE_ID=<dev workspace id>
 
 YEEFLOW_PROD_API_KEY=<prod API key>
 YEEFLOW_PROD_TENANT_URL=https://company.yeeflow.com
 YEEFLOW_PROD_TENANT_ID=<optional>
+YEEFLOW_PROD_WORKSPACE_ID=<prod workspace id>
 ```
 
 `YEEFLOW_PROFILE` is a local selector, not a Yeeflow server-side setting. If it is set to `prod`, scripts read `YEEFLOW_PROD_API_KEY`, `YEEFLOW_PROD_TENANT_URL`, and `YEEFLOW_PROD_TENANT_ID`; other profiles are inactive for that run.

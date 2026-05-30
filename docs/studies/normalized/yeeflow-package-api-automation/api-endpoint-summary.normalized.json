@@ -42,6 +42,7 @@
   "safety": {
     "defaultMode": "dry-run",
     "executeFlagRequired": true,
-    "redactedFields": ["apiKey", "Resource", "Sign", "tenant identifiers", "private URLs", "raw responses", "decoded payloads"]
+    "workspaceIdSource": "YEEFLOW_WORKSPACE_ID or active YEEFLOW_<PROFILE>_WORKSPACE_ID",
+    "redactedFields": ["apiKey", "Resource", "Sign", "tenant identifiers", "workspace identifiers", "private URLs", "raw responses", "decoded payloads"]
   }
 }

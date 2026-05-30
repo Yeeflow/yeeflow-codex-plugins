@@ -25,6 +25,7 @@ export function resolveYeeflowEnvironment(env = process.env) {
     "YEEFLOW_TENANT_URL",
   );
   const tenantId = firstNonEmpty(profile ? env[`${prefix}TENANT_ID`] : null, env.YEEFLOW_TENANT_ID);
+  const workspaceId = firstNonEmpty(profile ? env[`${prefix}WORKSPACE_ID`] : null, env.YEEFLOW_WORKSPACE_ID);
   const apiBaseUrl = normalizeApiBaseUrl(firstNonEmpty(env.YEEFLOW_API_BASE_URL, env.YEEFLOW_BASE_URL, DEFAULT_API_BASE_URL));
   return {
     apiBaseUrl,
@@ -33,6 +34,7 @@ export function resolveYeeflowEnvironment(env = process.env) {
     tenantId,
     tenantUrl,
     usedLegacyBaseUrl: Boolean(!env.YEEFLOW_API_BASE_URL && env.YEEFLOW_BASE_URL),
+    workspaceId,
   };
 }
 
@@ -44,6 +46,7 @@ export function environmentPresence(resolved) {
     YEEFLOW_PROFILE: resolved.profile || null,
     YEEFLOW_TENANT_ID_PRESENT: Boolean(resolved.tenantId),
     YEEFLOW_TENANT_URL_PRESENT: Boolean(resolved.tenantUrl),
+    YEEFLOW_WORKSPACE_ID_PRESENT: Boolean(resolved.workspaceId),
   };
 }
 
@@ -52,6 +55,17 @@ function firstNonEmpty(...values) {
     if (typeof value === "string" && value.trim()) return value.trim();
   }
   return "";
+}
+
+function parseDotenvValue(value) {
+  const trimmed = String(value ?? "").trim();
+  if (
+    (trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
 }
 
 function normalizeProfile(value) {

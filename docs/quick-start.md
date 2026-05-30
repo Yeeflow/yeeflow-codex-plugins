@@ -81,9 +81,12 @@ YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
 YEEFLOW_API_KEY=<your Yeeflow API key>
 YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com
 YEEFLOW_TENANT_ID=<optional tenant id if required>
+YEEFLOW_WORKSPACE_ID=<your workspace id>
 ```
 
 Use `YEEFLOW_API_BASE_URL` for API calls. The standard value is `https://api.yeeflow.com/v1`. Use `YEEFLOW_TENANT_URL` for browser/app links to your tenant root, such as `https://<yourdomain>.yeeflow.com`. Keep `.env.local` out of Git.
+
+`YEEFLOW_WORKSPACE_ID` is required only for package import/install/upgrade automation. Store it in `.env.local`, do not commit it, and rely on helper redaction instead of printing the value.
 
 For the complete setup, profile, and troubleshooting guide, see [Environment Configuration](environment-configuration.md).
 
@@ -96,13 +99,15 @@ YEEFLOW_PROFILE=dev
 YEEFLOW_DEV_API_KEY=<dev API key>
 YEEFLOW_DEV_TENANT_URL=https://devcompany.yeeflow.com
 YEEFLOW_DEV_TENANT_ID=<optional>
+YEEFLOW_DEV_WORKSPACE_ID=<dev workspace id>
 
 YEEFLOW_PROD_API_KEY=<prod API key>
 YEEFLOW_PROD_TENANT_URL=https://company.yeeflow.com
 YEEFLOW_PROD_TENANT_ID=<optional>
+YEEFLOW_PROD_WORKSPACE_ID=<prod workspace id>
 ```
 
-`YEEFLOW_PROFILE` is a local selector for plugin/scripts, not a Yeeflow server-side setting. Only one profile is active per run. Switch tenants by changing `YEEFLOW_PROFILE=dev`, `YEEFLOW_PROFILE=prod`, or another unique profile name such as `YEEFLOW_PROFILE=client_a`. Scripts read the matching `YEEFLOW_<PROFILE>_API_KEY`, `YEEFLOW_<PROFILE>_TENANT_URL`, and optional `YEEFLOW_<PROFILE>_TENANT_ID`.
+`YEEFLOW_PROFILE` is a local selector for plugin/scripts, not a Yeeflow server-side setting. Only one profile is active per run. Switch tenants by changing `YEEFLOW_PROFILE=dev`, `YEEFLOW_PROFILE=prod`, or another unique profile name such as `YEEFLOW_PROFILE=client_a`. Scripts read the matching `YEEFLOW_<PROFILE>_API_KEY`, `YEEFLOW_<PROFILE>_TENANT_URL`, optional `YEEFLOW_<PROFILE>_TENANT_ID`, and package automation `YEEFLOW_<PROFILE>_WORKSPACE_ID`.
 
 ## Verify Plugin Version
 

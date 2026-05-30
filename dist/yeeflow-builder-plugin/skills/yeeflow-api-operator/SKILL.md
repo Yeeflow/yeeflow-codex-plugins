@@ -11,7 +11,7 @@ description: Safely use Yeeflow REST APIs from Codex when local credentials are 
 - For live API calls, prefer `YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1` and `YEEFLOW_API_KEY`; do not ask users to paste secrets into chat.
 - Use `YEEFLOW_TENANT_URL` only for tenant/app links, for example `https://<yourdomain>.yeeflow.com`; never use a tenant URL as the API base.
 - Treat `YEEFLOW_BASE_URL` as a legacy API base URL alias only, not as a tenant URL.
-- Support `YEEFLOW_PROFILE` where scripts support profiles. It selects one active local tenant profile per run using `YEEFLOW_<PROFILE>_API_KEY`, `YEEFLOW_<PROFILE>_TENANT_URL`, and `YEEFLOW_<PROFILE>_TENANT_ID`.
+- Support `YEEFLOW_PROFILE` where scripts support profiles. It selects one active local tenant profile per run using `YEEFLOW_<PROFILE>_API_KEY`, `YEEFLOW_<PROFILE>_TENANT_URL`, and `YEEFLOW_<PROFILE>_TENANT_ID`. Package automation also reads `YEEFLOW_<PROFILE>_WORKSPACE_ID` when a profile is active.
 - Validate and redact environment variables before API calls and never print API keys, raw API responses, tenant IDs, private URLs, raw `Resource`, raw `Sign`, decoded payloads, or generated runtime packages.
 - Keep generated examples tenant-neutral unless the user explicitly requests a target-tenant-specific package and provides safe mappings.
 
@@ -53,14 +53,15 @@ YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
 YEEFLOW_API_KEY=<your Yeeflow API key>
 YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com
 YEEFLOW_TENANT_ID=<optional tenant id>
+YEEFLOW_WORKSPACE_ID=<your workspace id>
 ```
 
 Rules:
 
 - Load the API base from `YEEFLOW_API_BASE_URL`, with `YEEFLOW_BASE_URL` supported only as a legacy API base URL alias.
 - Load the key from `YEEFLOW_API_KEY` or, when `YEEFLOW_PROFILE` is set, from `YEEFLOW_<PROFILE>_API_KEY`.
-- Load tenant/app links from `YEEFLOW_TENANT_URL` or, when `YEEFLOW_PROFILE` is set, from `YEEFLOW_<PROFILE>_TENANT_URL`.
-- Never print the key or include it in logs, docs, commits, or final answers.
+- Load tenant/app links from `YEEFLOW_TENANT_URL` or, when `YEEFLOW_PROFILE` is set, from `YEEFLOW_<PROFILE>_TENANT_URL`. Load package automation workspace IDs from `YEEFLOW_WORKSPACE_ID`, or from `YEEFLOW_<PROFILE>_WORKSPACE_ID` when a profile is active.
+- Never print the key or include it in logs, docs, commits, or final answers. Never print workspace IDs either; report only present or missing.
 - Ensure `.env.local` is gitignored before running API checks.
 - If `.env.local` or the key is missing, explain setup steps and ask the user to store the key locally, not in chat.
 
@@ -108,12 +109,12 @@ The product team published package automation APIs on 2026-05-29:
 Use the shared helper from the repository root:
 
 ```bash
-node scripts/yeeflow-package-api-automation.mjs --operation import-yap --package <file.yap> --workspace-id <workspace-id>
-node scripts/yeeflow-package-api-automation.mjs --operation install-yapk --package <file.yapk> --workspace-id <workspace-id>
-node scripts/yeeflow-package-api-automation.mjs --operation upgrade-yapk --package <file.yapk> --workspace-id <workspace-id>
+node scripts/yeeflow-package-api-automation.mjs --operation import-yap --package <file.yap>
+node scripts/yeeflow-package-api-automation.mjs --operation install-yapk --package <file.yapk>
+node scripts/yeeflow-package-api-automation.mjs --operation upgrade-yapk --package <file.yapk>
 ```
 
-The helper defaults to dry run. Add `--execute` only after explicit user approval. It prints env-var presence, package name/size, request summary, HTTP/API status, response keys, and redacted data shape only. It must not print API keys, raw API responses, raw package `Resource`, raw `Sign`, decoded payloads, private URLs, tenant IDs, or uploaded file IDs.
+WorkspaceID is required for import/install/upgrade and is read from `YEEFLOW_WORKSPACE_ID` or the active profile-specific workspace variable; `--workspace-id` is only a redacted one-run override. The helper defaults to dry run. Add `--execute` only after explicit user approval. It prints env-var presence, package name/size, request summary, HTTP/API status, response keys, and redacted data shape only. It must not print API keys, raw API responses, raw package `Resource`, raw `Sign`, decoded payloads, private URLs, tenant IDs, or uploaded file IDs.
 
 Before executing package automation, validate the package locally with the relevant `.yap` or `.yapk` validators, confirm the target workspace is disposable or approved, and record the proof boundary. A successful API response is not a substitute for visible runtime verification of the imported/installed/upgraded app.
 
@@ -169,6 +170,7 @@ For assignment-routing coverage, read `docs/studies/yeeflow-api-operator-assignm
 
 - Missing `.env.local`: explain where to create it and what variables are required.
 - Missing `YEEFLOW_API_KEY`: ask the user to store the key locally; do not ask them to paste it.
+- Missing `YEEFLOW_WORKSPACE_ID` for package automation: ask the user to store it locally or configure the active profile workspace variable; do not print the value.
 - Authentication/authorization failure: report HTTP/API status and likely causes such as expired key, wrong tenant/account, insufficient permission, or wrong base; do not echo credentials.
 - `404` on the configured API base: verify `YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1`; do not substitute the tenant URL as the API base.
 - Non-JSON or unexpected responses: report status and response shape only; do not dump body content.

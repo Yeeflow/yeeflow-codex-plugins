@@ -114,6 +114,7 @@ YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
 YEEFLOW_API_KEY=<your Yeeflow API key>
 YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com
 YEEFLOW_TENANT_ID=<optional tenant id if required>
+YEEFLOW_WORKSPACE_ID=<your workspace id>
 ```
 
 Prompt to ask Codex to create the local file:
@@ -127,6 +128,7 @@ YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
 YEEFLOW_API_KEY=<my Yeeflow API key>
 YEEFLOW_TENANT_URL=https://<mycompany>.yeeflow.com
 YEEFLOW_TENANT_ID=<optional tenant id if required>
+YEEFLOW_WORKSPACE_ID=<your workspace id>
 
 Then verify .env.local is ignored by Git.
 ```
@@ -156,6 +158,20 @@ YEEFLOW_CLIENT_A_TENANT_ID=<optional>
 `YEEFLOW_PROFILE` selects only one active profile for the current run. If `YEEFLOW_PROFILE=prod`, scripts read `YEEFLOW_PROD_API_KEY`, `YEEFLOW_PROD_TENANT_URL`, and `YEEFLOW_PROD_TENANT_ID`; other profiles remain inactive. Profile names may contain letters, numbers, and underscores. Users can define any number of unique profiles.
 
 Use `YEEFLOW_API_BASE_URL` for API calls. The recommended value is `https://api.yeeflow.com/v1`; helper scripts normalize trailing slashes and avoid double `/v1`. Use `YEEFLOW_TENANT_URL` for app links such as `https://<yourdomain>.yeeflow.com`. `YEEFLOW_BASE_URL` is a legacy API base URL alias only and must not mean tenant URL going forward. Scripts must not print API keys or raw API responses.
+
+### Package Automation API Configuration
+
+Package import/install/upgrade automation also requires `YEEFLOW_WORKSPACE_ID` in local `.env.local`:
+
+```env
+YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
+YEEFLOW_API_KEY=<your api key>
+YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com
+YEEFLOW_TENANT_ID=<your tenant id if needed>
+YEEFLOW_WORKSPACE_ID=<your workspace id>
+```
+
+The workspace ID is required only for package import/install/upgrade APIs. Store it locally, never commit `.env.local`, and keep helper output redacted.
 
 ## Basic Usage Examples
 

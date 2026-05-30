@@ -96,9 +96,10 @@ YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
 YEEFLOW_API_KEY=<your Yeeflow API key>
 YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com
 YEEFLOW_TENANT_ID=<optional tenant id if required>
+YEEFLOW_WORKSPACE_ID=<your workspace id>
 ```
 
-`YEEFLOW_API_BASE_URL` is for API calls and should normally be `https://api.yeeflow.com/v1`. `YEEFLOW_TENANT_URL` is for tenant/app links and should be the tenant root, such as `https://<yourdomain>.yeeflow.com`. Do not use a tenant URL as the API base URL. `YEEFLOW_BASE_URL` is supported only as a legacy API base URL alias for older scripts; do not use it to mean tenant URL going forward. Do not paste API keys into chat, documentation, commits, or generated packages.
+`YEEFLOW_API_BASE_URL` is for API calls and should normally be `https://api.yeeflow.com/v1`. `YEEFLOW_TENANT_URL` is for tenant/app links and should be the tenant root, such as `https://<yourdomain>.yeeflow.com`. Do not use a tenant URL as the API base URL. `YEEFLOW_BASE_URL` is supported only as a legacy API base URL alias for older scripts; do not use it to mean tenant URL going forward. Do not paste API keys into chat, documentation, commits, or generated packages. `YEEFLOW_WORKSPACE_ID` is required only for package import/install/upgrade automation and must stay local.
 
 For full `.env.local` setup and troubleshooting, see [Environment Configuration](environment-configuration.md).
 
@@ -113,14 +114,17 @@ YEEFLOW_PROFILE=dev
 YEEFLOW_DEV_API_KEY=<dev API key>
 YEEFLOW_DEV_TENANT_URL=https://devcompany.yeeflow.com
 YEEFLOW_DEV_TENANT_ID=<optional>
+YEEFLOW_DEV_WORKSPACE_ID=<dev workspace id>
 
 YEEFLOW_PROD_API_KEY=<prod API key>
 YEEFLOW_PROD_TENANT_URL=https://company.yeeflow.com
 YEEFLOW_PROD_TENANT_ID=<optional>
+YEEFLOW_PROD_WORKSPACE_ID=<prod workspace id>
 
 YEEFLOW_CLIENT_A_API_KEY=<client A API key>
 YEEFLOW_CLIENT_A_TENANT_URL=https://client-a.yeeflow.com
 YEEFLOW_CLIENT_A_TENANT_ID=<optional>
+YEEFLOW_CLIENT_A_WORKSPACE_ID=<client A workspace id>
 ```
 
 If `YEEFLOW_PROFILE=prod`, scripts read only `YEEFLOW_PROD_API_KEY`, `YEEFLOW_PROD_TENANT_URL`, and `YEEFLOW_PROD_TENANT_ID` for that run. Other profiles remain available but inactive. Users can define any number of unique profiles using letters, numbers, and underscores.

@@ -15,7 +15,7 @@ Source docs:
 - `POST https://api.yeeflow.com/v1/listset/package/install`
 - `POST https://api.yeeflow.com/v1/listset/package/upgrade`
 
-All four endpoints use the `apiKey` header. Use `YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1` and `YEEFLOW_API_KEY` from local environment variables only.
+All four endpoints use the `apiKey` header. Use `YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1` and `YEEFLOW_API_KEY` from local environment variables only. Import, install, and upgrade also require `WorkspaceID`; the helper reads it from `YEEFLOW_WORKSPACE_ID` or the active profile-specific workspace variable such as `YEEFLOW_PROD_WORKSPACE_ID`.
 
 ## Endpoint Summary
 
@@ -36,27 +36,36 @@ node scripts/yeeflow-package-api-automation.mjs
 
 It defaults to dry run. It never prints API keys, raw package `Resource`, raw `Sign`, raw decoded payloads, tenant IDs, private URLs, or full API responses. It reports endpoint, package file name/size, request summary, HTTP/API status, response keys, and redacted data shape.
 
+`WorkspaceID` is required for import/install/upgrade payloads. Store it locally:
+
+```env
+YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
+YEEFLOW_API_KEY=<your api key>
+YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com
+YEEFLOW_TENANT_ID=<your tenant id if needed>
+YEEFLOW_WORKSPACE_ID=<your workspace id>
+```
+
+Dry-run output reports `workspaceId: "present"` or `workspaceId: "missing"` only. It does not print the actual workspace ID. `--workspace-id <id>` remains available as a one-run override, but the value is redacted in all helper output.
+
 Examples:
 
 ```bash
 node scripts/yeeflow-package-api-automation.mjs \
   --operation import-yap \
-  --package ~/Downloads/app.yap \
-  --workspace-id "<workspace-id>"
+  --package ~/Downloads/app.yap
 ```
 
 ```bash
 node scripts/yeeflow-package-api-automation.mjs \
   --operation install-yapk \
-  --package ~/Downloads/app.yapk \
-  --workspace-id "<workspace-id>"
+  --package ~/Downloads/app.yapk
 ```
 
 ```bash
 node scripts/yeeflow-package-api-automation.mjs \
   --operation upgrade-yapk \
   --package ~/Downloads/upgrade.yapk \
-  --workspace-id "<workspace-id>" \
   --upgrade-check true
 ```
 
@@ -72,7 +81,7 @@ Before any import/install/upgrade API call:
 4. Confirm package type:
    - `.yap` uses the import endpoint.
    - `.yapk` uses install or upgrade endpoint.
-5. Confirm `WorkspaceID` from an authorized safe workspace.
+5. Confirm `WorkspaceID` is present in `.env.local` as `YEEFLOW_WORKSPACE_ID` or the active profile-specific workspace variable. Do not print the value.
 6. Confirm the API profile and tenant in local `.env.local`, without printing secrets.
 7. Use dry-run output first.
 8. Use `--execute` only after explicit approval.

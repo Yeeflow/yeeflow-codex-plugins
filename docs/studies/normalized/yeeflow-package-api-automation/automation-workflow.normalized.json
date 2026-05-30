@@ -5,6 +5,7 @@
       "id": "import_yap",
       "steps": [
         "validate yap package locally",
+        "confirm WorkspaceID is present from local env or redacted CLI override",
         "read wrapper metadata without printing Resource",
         "dry run import body",
         "POST /listset/package/import only with explicit execute approval",
@@ -15,6 +16,7 @@
       "id": "install_yapk",
       "steps": [
         "validate yapk package locally",
+        "confirm WorkspaceID is present from local env or redacted CLI override",
         "upload file content or provide package-file metadata",
         "dry run install body",
         "POST /listset/package/install only with explicit execute approval",
@@ -26,6 +28,7 @@
       "steps": [
         "validate upgrade package locally",
         "confirm existing app and workspace scope",
+        "confirm WorkspaceID is present from local env or redacted CLI override",
         "upload file content or provide package-file metadata",
         "dry run upgrade body with UpgradeCheck",
         "POST /listset/package/upgrade only with explicit execute approval",
