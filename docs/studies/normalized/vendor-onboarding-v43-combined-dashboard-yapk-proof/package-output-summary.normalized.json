@@ -1,0 +1,76 @@
+{
+  "outputYapk": "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.3 - combined dashboard.yapk",
+  "sourceYapk": "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.2 - dashboard control updates.yapk",
+  "pages": [
+    "Vendor Management Dashboard"
+  ],
+  "childLists": [
+    {
+      "title": "Vendors",
+      "rows": 10,
+      "displayedFields": [
+        "Text0",
+        "Text1",
+        "Text2",
+        "Text3",
+        "Text4",
+        "Text5",
+        "Text6",
+        "Text7",
+        "Text8",
+        "Text9",
+        "Text10",
+        "Decimal11",
+        "Decimal12",
+        "Decimal13",
+        "DateTime14",
+        "Bit15",
+        "DateTime16"
+      ]
+    },
+    {
+      "title": "Vendor Documents",
+      "rows": 10,
+      "displayedFields": [
+        "Text0",
+        "Text1",
+        "Text2",
+        "Text3",
+        "DateTime4"
+      ]
+    },
+    {
+      "title": "Compliance Reviews",
+      "rows": 10,
+      "displayedFields": [
+        "Text0",
+        "Text1",
+        "Text2",
+        "Decimal3",
+        "DateTime4"
+      ]
+    },
+    {
+      "title": "Vendor Activity / History",
+      "rows": 10,
+      "displayedFields": [
+        "Text0",
+        "Text1",
+        "Text2",
+        "DateTime3",
+        "Text4",
+        "Text5"
+      ]
+    }
+  ],
+  "existingIdsBefore": 54,
+  "missingExistingIds": 11,
+  "missingExistingIdsReason": "The previous diagnostic-only dashboard pages were intentionally removed to produce one combined dashboard page; retained app, primary dashboard, child list, field, and list-view IDs remain preserved.",
+  "newIdsUsed": 40,
+  "dynamicControlsRule": "Dynamic controls are only generated inside the Kanban item template.",
+  "signing": {
+    "status": "signed_and_verified",
+    "signByteLength": 32,
+    "verifyStatus": 200
+  }
+}
