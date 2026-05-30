@@ -10,9 +10,9 @@ const APP_ID = 41;
 const SOURCE_YAPK = process.env.VENDOR_ONBOARDING_V43_SOURCE_YAPK
   || "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.2 - dashboard control updates.yapk";
 const OUT_YAPK = process.env.VENDOR_ONBOARDING_V43_YAPK
-  || "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.3 - combined dashboard.yapk";
+  || "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.4 - two dashboard pages.yapk";
 const TMP_DIR = ".tmp/vendor-onboarding-v43-combined-dashboard";
-const GENERATED_AT_UTC = "2026-05-30T06:10:00Z";
+const GENERATED_AT_UTC = "2026-05-30T06:45:00Z";
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -318,7 +318,8 @@ function grid(children, options = {}) {
     rgap: [null, options.rowGap || 16],
     rgapU: [null, "px"],
   }, children);
-  // Product-edited dashboard examples keep Grid display caption turned off by omitting nv_label.
+  // Product-edited dashboard examples keep Grid display caption turned off with displayLabel [null, false].
+  gridControl.displayLabel = [null, false];
   delete gridControl.nv_label;
   return gridControl;
 }
@@ -413,7 +414,7 @@ function progressBlock() {
   ], { direction: "row", align: "center", justify: "flex-start", gap: "--sp--s300" });
 }
 
-function combinedDashboard(rootId, vendorsId, activityId) {
+function dashboardOverview(rootId, vendorsId) {
   return {
     title: "Vendor Management Dashboard",
     ver: "2.0",
@@ -442,6 +443,21 @@ function combinedDashboard(rootId, vendorsId, activityId) {
         container([heading("High Risk Vendors", "s-semibold"), heading("7", "h2-bold"), heading("High or critical risk", "s-regular", "var(--c--neutral-dark-hover)")]),
         container([heading("Expiring Documents", "s-semibold"), heading("13", "h2-bold"), heading("Due within 30 days", "s-regular", "var(--c--neutral-dark-hover)")]),
       ], { columns: 4, gap: 16, rowGap: 16 }),
+    ],
+  };
+}
+
+function dashboardOperations(rootId, vendorsId, activityId) {
+  return {
+    title: "Vendor Management Dashboard 02",
+    ver: "2.0",
+    filterVars: [],
+    tempVars: [],
+    attrs: {
+      hideHeaderAll: true,
+      common: { padding: { left: 28, right: 28, top: 28, bottom: 28 } },
+    },
+    children: [
       grid([
         container([
           heading("Onboarding Completion", "h4-bold"),
@@ -556,11 +572,19 @@ function updateListViews(decoded) {
   }
 }
 
-function updateNavigation(decoded, dashboardPage) {
+function updateNavigation(decoded, dashboardPages) {
   const rootId = decoded.ListSet.ListID;
   const layoutView = JSON.parse(decoded.ListSet.LayoutView || "{}");
   layoutView.sort = [
-    { AppID: APP_ID, ListID: dashboardPage.LayoutID, ListSetID: rootId, Type: 103, IsHidden: false, Title: dashboardPage.Title, Icon: "fa-regular fa-chart-line" },
+    ...dashboardPages.map((dashboardPage, index) => ({
+      AppID: APP_ID,
+      ListID: dashboardPage.LayoutID,
+      ListSetID: rootId,
+      Type: 103,
+      IsHidden: false,
+      Title: dashboardPage.Title,
+      Icon: index === 0 ? "fa-regular fa-chart-line" : "fa-regular fa-grid-2",
+    })),
     ...decoded.Childs.map((child) => ({ AppID: APP_ID, ListID: child.List.ListID, ListSetID: rootId, Type: child.List.Type, IsHidden: false, Title: child.List.Title, Icon: "fa-regular fa-table-list" })),
   ];
   layoutView.sortVer = 1;
@@ -582,6 +606,7 @@ async function main() {
   const vendorsId = listByTitle(decoded, "Vendors").List.ListID;
   const activityId = listByTitle(decoded, "Vendor Activity / History").List.ListID;
   const dashboardId = decoded.Pages[0].LayoutID;
+  const dashboard2Id = decoded.Pages[1]?.LayoutID || allocator.next("dashboard:secondary");
   const dashboardLayout = {
     ...decoded.Pages[0],
     ListID: rootId,
@@ -595,10 +620,25 @@ async function main() {
     IsDefault: false,
     IsItemPerm: false,
     Perms: [],
-    LayoutInResources: [{ ID: dashboardId, RefId: dashboardId, Resource: JSON.stringify(combinedDashboard(rootId, vendorsId, activityId)) }],
+    LayoutInResources: [{ ID: dashboardId, RefId: dashboardId, Resource: JSON.stringify(dashboardOverview(rootId, vendorsId)) }],
   };
-  decoded.Pages = [dashboardLayout];
-  updateNavigation(decoded, dashboardLayout);
+  const dashboardLayout2 = {
+    ...(decoded.Pages[1] || decoded.Pages[0]),
+    ListID: rootId,
+    LayoutID: dashboard2Id,
+    Type: 103,
+    Title: "Vendor Management Dashboard 02",
+    LayoutView: "",
+    Ext1: "",
+    Ext2: JSON.stringify({ src: true }),
+    Ext3: "",
+    IsDefault: false,
+    IsItemPerm: false,
+    Perms: [],
+    LayoutInResources: [{ ID: dashboard2Id, RefId: dashboard2Id, Resource: JSON.stringify(dashboardOperations(rootId, vendorsId, activityId)) }],
+  };
+  decoded.Pages = [dashboardLayout, dashboardLayout2];
+  updateNavigation(decoded, decoded.Pages);
   const existingIdsAfter = collectLargeIds(decoded);
   const missingExistingIds = [...existingIdsBefore].filter((id) => !existingIdsAfter.has(id));
   if (missingExistingIds.some((id) => id === rootId || id === dashboardId || decoded.Childs.some((child) => child.List.ListID === id || child.Fields.some((field) => field.FieldID === id)))) {
@@ -608,11 +648,11 @@ async function main() {
   const upgradeWrapper = {
     ...wrapper,
     PackageId: crypto.randomUUID(),
-    Title: "Vendor Onboarding & Compliance Management v4.3 Combined Dashboard",
-    Description: "Combined dashboard update based on the v4.2 product-edited Grid, Container, Button, and data-view examples.",
-    Notes: "Uses flex_grid, tokenized container settings, action_button styles, configured data-list display fields, 10 sample rows per list, and keeps dynamic controls inside Kanban.",
+    Title: "Vendor Onboarding & Compliance Management v4.4 Two Dashboard Pages",
+    Description: "Two-dashboard update based on the v4.2 product-edited Grid, Container, Button, and data-view examples.",
+    Notes: "Uses flex_grid with displayLabel off, tokenized container settings, action_button styles, configured data-list display fields, 10 sample rows per list, and keeps dynamic controls inside Kanban.",
     Date: GENERATED_AT_UTC,
-    Version: "4.3 - combined dashboard controls",
+    Version: "4.4 - two dashboard pages",
     Resource: resourceBase64,
     Sign: "",
   };

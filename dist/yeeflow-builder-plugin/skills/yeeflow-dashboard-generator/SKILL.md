@@ -119,7 +119,7 @@ Each import-test package must use a fresh local ID family.
 
 When the active workspace contains `docs/yeeflow-application-design-system.md` and `docs/yeeflow-dashboard-design-standards.md`, use them as the default dashboard design standard. Use `docs/yeeflow-dashboard-ui-ux-patterns.md` for export-level evidence. The first official UI/UX reference export is `UI and UX design (1).yap`.
 
-Grid caption rule from Vendor Onboarding v4.2/v4.3: generated dashboard Grid controls use `type = "flex_grid"` and must keep display caption turned off. The product-edited examples do this by omitting the Grid `nv_label` caption field. Do not emit `nv_label: "Grid"` or any other visible caption label for generated `flex_grid` controls unless the user explicitly asks for a visible Grid caption.
+Grid caption rule from Vendor Onboarding v4.2/v4.4: generated dashboard Grid controls use `type = "flex_grid"` and must keep display caption turned off. The product-edited examples do this with `displayLabel: [null, false]`. Generated `flex_grid` controls must set `displayLabel: [null, false]`, and should not emit `nv_label: "Grid"` unless the user explicitly asks for a visible Grid caption.
 
 Default generated dashboards should:
 

@@ -1,4 +1,4 @@
-# Vendor Onboarding v4.3 Combined Dashboard YAPK Proof
+# Vendor Onboarding v4.4 Two Dashboard Pages YAPK Proof
 
 ## Summary
 
@@ -6,7 +6,7 @@ This proof regenerates only the YAPK upgrade package for the Vendor Onboarding d
 
 Output package:
 
-- `/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.3 - combined dashboard.yapk`
+- `/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.4 - two dashboard pages.yapk`
 
 Source package studied:
 
@@ -14,8 +14,8 @@ Source package studied:
 
 ## User-Edited Control Findings Applied
 
-- Grid controls must use the dashboard `flex_grid` control shape. The generated dashboard now uses `flex_grid` rather than a container-only grid emulation.
-- Grid controls must have display caption turned off. Product-edited examples do this by omitting the Grid `nv_label` caption field; generated `flex_grid` controls follow that pattern.
+- Grid controls must use the dashboard `flex_grid` control shape. The generated dashboards now use `flex_grid` rather than a container-only grid emulation.
+- Grid controls must have display caption turned off. Product-edited examples do this with `displayLabel: [null, false]`; generated `flex_grid` controls follow that pattern.
 - Dashboard section cards must use `container` controls with tokenized padding, background, border, and radius settings.
 - Button controls must use `action_button`. The generated dashboard no longer emits legacy `button` controls.
 - Containers use flex-style item settings for direction, alignment, justification, and element gap.
@@ -23,13 +23,14 @@ Source package studied:
 - Every data list default view includes display fields.
 - Every data list includes 10 synthetic sample records for runtime testing.
 
-## Generated Dashboard
+## Generated Dashboards
 
-The package consolidates the diagnostic control pages into one dashboard page:
+The package splits the dashboard into two pages:
 
-- `Vendor Management Dashboard`
+- `Vendor Management Dashboard`: header/action area and KPI card row only.
+- `Vendor Management Dashboard 02`: progress, alert, Kanban, recent activity, and Vendors table sections.
 
-The dashboard includes:
+The dashboards include:
 
 - Header/action area using padded containers and `action_button`
 - KPI card row using `flex_grid`
@@ -39,7 +40,7 @@ The dashboard includes:
 - Recent activity section
 - Vendors Data table with configured `Field` and `FieldName` columns
 
-The previous diagnostic pages are intentionally removed because this version tests a single combined dashboard page.
+The previous diagnostic pages are intentionally removed because this version tests two simpler dashboard pages.
 
 ## Data Lists
 
@@ -56,26 +57,28 @@ Synthetic sample data was generated for each list:
 
 YAPK strict product schema validation:
 
-- Command: `node scripts/validate-standard-package-schema.mjs "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.3 - combined dashboard.yapk"`
+- Command: `node scripts/validate-standard-package-schema.mjs "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.4 - two dashboard pages.yapk"`
 - Result: pass
 - Errors: 0
 
 YAPK package validator:
 
-- Command: `node validate-yapk-package.js "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.3 - combined dashboard.yapk"`
+- Command: `node validate-yapk-package.js "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.4 - two dashboard pages.yapk"`
 - Result: pass
 - Errors: 0
 - Warnings: 1 runtime-proof reminder
 
 YAPK schema standard inspector:
 
-- Command: `node scripts/inspect-yapk-schema-standard.mjs "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.3 - combined dashboard.yapk"`
+- Command: `node scripts/inspect-yapk-schema-standard.mjs "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.4 - two dashboard pages.yapk"`
 - Result: pass
 
 Targeted dashboard control audit:
 
+- dashboard pages: 2
 - `flex_grid` controls: 3
-- `flex_grid` controls with display caption field: 0
+- `flex_grid` controls without `displayLabel: [null, false]`: 0
+- `flex_grid` controls with `nv_label`: 0
 - `action_button` controls: 2
 - legacy `button` controls: 0
 - containers: 15
@@ -95,10 +98,12 @@ This is a local generation and validation proof for a YAPK upgrade package. Runt
 
 ## Manual Test Checklist
 
-- Upload `/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.3 - combined dashboard.yapk` as an upgrade to the current Vendor Onboarding application.
+- Upload `/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.4 - two dashboard pages.yapk` as an upgrade to the current Vendor Onboarding application.
 - Confirm upgrade succeeds.
 - Open `Vendor Management Dashboard`.
-- Verify the Grid/KPI row renders correctly.
+- Verify the header/action area and KPI row render without any visible Grid caption row.
+- Open `Vendor Management Dashboard 02`.
+- Verify the remaining dashboard sections render without any visible Grid caption row.
 - Verify padded containers show expected card background, border, radius, and spacing.
 - Verify buttons render as proper Yeeflow buttons.
 - Verify the Kanban renders and dynamic controls appear only inside Kanban cards.
