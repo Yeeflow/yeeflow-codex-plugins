@@ -1,0 +1,24 @@
+{
+  "proof": "vendor-onboarding-v41-page1-dashboard",
+  "packageType": "yapk",
+  "primaryPackagePath": "/Users/Renger/Downloads/vendor-onboarding-v41-page1-dashboard.yapk",
+  "optionalFallbackPath": "/Users/Renger/Downloads/vendor-onboarding-v41-page1-dashboard.yap",
+  "fallbackStatus": "generated_but_not_claimed_import_ready",
+  "appId": 41,
+  "scope": "page_1_dashboard_only",
+  "implementedPages": [
+    "Vendor Management Dashboard"
+  ],
+  "omittedByDesign": [
+    "Vendor Detail View Page",
+    "New Vendor Request Form",
+    "Compliance Review Workspace",
+    "Vendor Print Page"
+  ],
+  "supportingDataLists": [
+    "Vendors",
+    "Vendor Documents",
+    "Compliance Reviews",
+    "Vendor Activity / History"
+  ]
+}
