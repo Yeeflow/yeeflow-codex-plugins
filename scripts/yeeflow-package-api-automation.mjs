@@ -2,44 +2,48 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { environmentPresence, loadDotenvFile, resolveYeeflowEnvironment } from "./yeeflow-env-utils.mjs";
 
 const OPERATIONS = new Set(["upload", "import-yap", "install-yapk", "upgrade-yapk"]);
 
-const args = parseArgs(process.argv.slice(2));
-
-if (args.help || !args.operation || !OPERATIONS.has(args.operation)) {
-  printUsage();
-  process.exit(args.help ? 0 : 1);
+if (isMainModule()) {
+  await main();
 }
 
-loadDotenvFile(fs, args.dotenv || ".env.local");
-const env = resolveYeeflowEnvironment(process.env);
-args.workspaceId = args.workspaceId || env.workspaceId;
-const packagePath = args.package ? path.resolve(args.package) : "";
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
 
-const plan = {
-  operation: args.operation,
-  execute: Boolean(args.execute),
-  environment: environmentPresence(env),
-  workspaceId: args.workspaceId ? "present" : "missing",
-  package: packagePath ? summarizePackagePath(packagePath) : null,
-};
+  if (args.help || !args.operation || !OPERATIONS.has(args.operation)) {
+    printUsage();
+    process.exit(args.help ? 0 : 1);
+  }
 
-if (!args.execute) {
-  plan.note = "Dry run only. Add --execute to call Yeeflow package APIs.";
+  loadDotenvFile(fs, args.dotenv || ".env.local");
+  const env = resolveYeeflowEnvironment(process.env);
+  args.workspaceId = args.workspaceId || env.workspaceId;
+  const packagePath = args.package ? path.resolve(args.package) : "";
+
+  const plan = {
+    operation: args.operation,
+    execute: Boolean(args.execute),
+    environment: environmentPresence(env),
+    workspaceId: args.workspaceId ? "present" : "missing",
+    package: packagePath ? summarizePackagePath(packagePath) : null,
+  };
+
+  if (!args.execute) {
+    plan.note = "Dry run only. Add --execute to call Yeeflow package APIs.";
+  }
+
+  validateCommonInputs(args, env, packagePath);
+
+  const result = !args.execute
+    ? await buildDryRunPlan(args, packagePath)
+    : await executeOperation(args, env, packagePath);
+
+  console.log(JSON.stringify({ ...plan, result }, null, 2));
 }
-
-validateCommonInputs(args, env, packagePath);
-
-let result;
-if (!args.execute) {
-  result = await buildDryRunPlan(args, packagePath);
-} else {
-  result = await executeOperation(args, env, packagePath);
-}
-
-console.log(JSON.stringify({ ...plan, result }, null, 2));
 
 function printUsage() {
   console.log(`Usage:
@@ -184,7 +188,7 @@ async function summarizeResponse(response, label) {
   const contentType = response.headers.get("content-type") || "";
   const text = await response.text();
   let parsed = null;
-  if (text && contentType.includes("application/json")) {
+  if (text && (contentType.includes("application/json") || looksLikeJson(text))) {
     try {
       parsed = JSON.parse(text);
     } catch {
@@ -211,15 +215,19 @@ async function summarizeResponse(response, label) {
     apiStatus: parsed?.Status ?? parsed?.status ?? null,
     messagePresent: Boolean(parsed?.Message ?? parsed?.message),
     totalCount: parsed?.TotalCount ?? parsed?.totalCount ?? null,
-    dataShape: summarizeDataShape(parsed?.Data ?? parsed?.data),
+    textPresent: Boolean(text),
+    textLength: text.length,
+    dataShape: summarizeDataShape(parsed?.Data ?? parsed?.data ?? parsed),
   };
-  const packageFile = extractPackageFile(parsed?.Data ?? parsed?.data);
+  const packageFile = extractPackageFile(parsed?.Data ?? parsed?.data ?? parsed);
   if (packageFile) {
     Object.defineProperty(summary, "_packageFile", { value: packageFile, enumerable: false });
     summary.packageFile = { Id: "[redacted]", Name: packageFile.Name, FileSize: packageFile.FileSize };
   }
   return summary;
 }
+
+export { extractPackageFile, summarizeResponse };
 
 function buildImportBody(options, resolvedPackagePath) {
   const wrapper = JSON.parse(fs.readFileSync(resolvedPackagePath, "utf8"));
@@ -340,4 +348,13 @@ function extractPackageFile(data) {
     Name: data.Name || data.name || "uploaded-package",
     FileSize: Number(data.FileSize || data.fileSize || 0),
   };
+}
+
+function looksLikeJson(value) {
+  const text = String(value || "").trim();
+  return text.startsWith("{") || text.startsWith("[");
+}
+
+function isMainModule() {
+  return import.meta.url === pathToFileURL(process.argv[1] || "").href;
 }
