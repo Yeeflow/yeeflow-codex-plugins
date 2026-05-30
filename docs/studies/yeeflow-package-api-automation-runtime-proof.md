@@ -87,6 +87,67 @@ Upgrade was not executed.
 
 Deferred reason: upgrade should only run when a specific disposable target app is explicitly identified and the operation is confirmed to affect only that target. This run proved install using a disposable package but did not establish a safe upgrade target identity for a follow-up mutation.
 
+## New Generated YAPK End-to-End Install Proof
+
+This follow-up proof generated a new disposable YAPK package locally, validated it, uploaded it with the package file API, and installed it with the package install API.
+
+Package filename:
+
+- `package-api-smoke-test.v1.yapk`
+
+Generated app summary:
+
+- Application: `Package API Smoke Test`
+- Data list: `API Smoke Requests`
+- Dashboard: `API Smoke Dashboard`
+- Dashboard renderer: current dashboard with `Ext2` source marker
+- YAPK shape: `AppExportPackageInfo` with Brotli `AppPackageInfo`
+- Portal: no portal, `PortalInfo` is `null`
+- Sample data: included in the generated data list
+
+Local validation result:
+
+- YAPK package validation: passed with zero errors.
+- YAPK Resource decode/schema-standard inspector: passed.
+- Data-list system schema validation: passed with zero errors and zero warnings.
+- Generated UI quality inspector: passed with zero errors and zero warnings.
+- Full-application strict visual gate: not used as a pass/fail gate for this tiny disposable smoke app because it is intentionally not a full application.
+
+Dry-run result:
+
+- Upload dry-run shaped a multipart `POST /files/upload` request.
+- Install dry-run shaped a `POST /listset/package/install` request with redacted `WorkspaceID` and redacted `PackageFile` metadata.
+- API key, workspace ID, package file ID, Resource, and Sign were not printed.
+
+Upload proof result:
+
+- Endpoint: `POST /files/upload`
+- HTTP status: `200`
+- Success: true
+- Content type: `text/plain; charset=utf-8`
+- Response field names: `id`, `name`, `fileSize`
+- Upload metadata values: redacted
+
+Install proof result:
+
+- Endpoint: `POST /listset/package/install`
+- HTTP status: `200`
+- API status: `0`
+- Response field names: `Data`, `Status`, `TotalCount`
+- Returned data field names: `ID`, `Continue`, `Status`
+- Async/continuation signal: `Continue` was present and false.
+
+Conclusion: new generated YAPK API install is proven at API acceptance level for this disposable smoke package. This proves generation, signing, upload, and install API acceptance for the focused package. It does not prove browser/dashboard rendering or list add/save behavior after install.
+
+Manual runtime checklist:
+
+- Open the disposable/test Yeeflow workspace.
+- Confirm the `Package API Smoke Test` app exists.
+- Open `API Smoke Dashboard`.
+- Confirm the header card, KPI cards, business alert, and data table render.
+- Confirm `API Smoke Requests` default view shows display fields.
+- Add and save one test record, then delete it if desired.
+
 ## Confirmed Payload Shapes
 
 - Upload: multipart file upload to `POST /files/upload?isImg=false`; response metadata parsed from text/plain JSON.

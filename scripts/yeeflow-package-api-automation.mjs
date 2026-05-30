@@ -219,7 +219,7 @@ async function summarizeResponse(response, label) {
     textLength: text.length,
     dataShape: summarizeDataShape(parsed?.Data ?? parsed?.data ?? parsed),
   };
-  const packageFile = extractPackageFile(parsed?.Data ?? parsed?.data ?? parsed);
+  const packageFile = isUploadResponseLabel(label) ? extractPackageFile(parsed?.Data ?? parsed?.data ?? parsed) : null;
   if (packageFile) {
     Object.defineProperty(summary, "_packageFile", { value: packageFile, enumerable: false });
     summary.packageFile = { Id: "[redacted]", Name: packageFile.Name, FileSize: packageFile.FileSize };
@@ -342,17 +342,23 @@ function summarizeDataShape(data) {
 function extractPackageFile(data) {
   if (!data || typeof data !== "object" || Array.isArray(data)) return null;
   const id = data.Id ?? data.ID ?? data.id;
-  if (!id) return null;
+  const name = data.Name ?? data.name;
+  const fileSize = data.FileSize ?? data.fileSize;
+  if (!id || !name || fileSize === undefined || fileSize === null) return null;
   return {
     Id: String(id),
-    Name: data.Name || data.name || "uploaded-package",
-    FileSize: Number(data.FileSize || data.fileSize || 0),
+    Name: String(name),
+    FileSize: Number(fileSize),
   };
 }
 
 function looksLikeJson(value) {
   const text = String(value || "").trim();
   return text.startsWith("{") || text.startsWith("[");
+}
+
+function isUploadResponseLabel(label) {
+  return String(label || "").toLowerCase().includes("upload");
 }
 
 function isMainModule() {
