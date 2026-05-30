@@ -10,10 +10,23 @@
       "warnings": 1
     },
     {
+      "name": "YAPK strict product schema validation",
+      "command": "node scripts/validate-standard-package-schema.mjs /Users/Renger/Downloads/vendor-onboarding-v41-page1-dashboard.yapk",
+      "status": "pass",
+      "errors": 0
+    },
+    {
       "name": "YAPK schema v2 validation",
       "command": "node scripts/inspect-yapk-schema-standard.mjs /Users/Renger/Downloads/vendor-onboarding-v41-page1-dashboard.yapk",
       "status": "pass",
       "errors": 0
+    },
+    {
+      "name": "YAP product-team schema/import-rule validation",
+      "command": "node scripts/inspect-yap-schema-standard.mjs /Users/Renger/Downloads/vendor-onboarding-v41-page1-dashboard.yap",
+      "status": "pass",
+      "errors": 0,
+      "largeNumericIdsPreserved": 43
     },
     {
       "name": "Strict visual quality and composition checklist",
@@ -30,5 +43,6 @@
       "warnings": 0
     }
   ],
-  "proofBoundary": "dashboard_only_local_validation_not_runtime_install"
+  "proofBoundary": "dashboard_only_local_validation_not_runtime_install",
+  "manualRetestRequired": true
 }
