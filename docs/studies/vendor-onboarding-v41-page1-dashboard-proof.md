@@ -25,6 +25,13 @@ Supporting data lists included for dashboard bindings:
 - Compliance Reviews
 - Vendor Activity / History
 
+Synthetic sample data is included for runtime testing:
+
+- Vendors: 3 rows
+- Vendor Documents: 3 rows
+- Compliance Reviews: 2 rows
+- Vendor Activity / History: 3 rows
+
 The package uses AppID `41`, API-issued generated IDs, current dashboard Type `103`, and dashboard `Ext2` with `{"src":true}`. YAPK `PortalInfo` is `null`.
 
 ## Dashboard Sections Implemented
@@ -72,6 +79,15 @@ The root causes were package-shape issues:
 
 The regenerated files now use export-like YAPK list/layout/field metadata, raw large integer tokens in the YAP `Data` string, product-clean field storage names, `PortalInfo: null` for YAPK, and `SimplePortal: null` inside the YAP decoded resource.
 
+## Runtime Control Follow-Up Fix
+
+After manual YAPK installation, the dashboard showed that generated `grid` and `text` controls were not recognized as the correct Yeeflow controls. The generator was updated to use the export-proven runtime shapes:
+
+- Grid-like layout sections now emit `container` controls with grid/flex layout attributes.
+- Text content now emits `heading` controls with `headc.title.value` and typography settings.
+
+The regenerated YAPK and YAP dashboard resources contain no dashboard controls with `type: "grid"` or `type: "text"`.
+
 ## Validation Results
 
 YAPK package validation:
@@ -97,7 +113,7 @@ YAP product-team schema/import-rule validation:
 - Command: `node scripts/inspect-yap-schema-standard.mjs /Users/Renger/Downloads/vendor-onboarding-v41-page1-dashboard.yap`
 - Result: pass
 - Errors: 0
-- Large numeric IDs preserved: 43
+- Large numeric IDs preserved: 54
 
 Strict visual quality and composition checklist:
 
@@ -142,6 +158,7 @@ This proof does not prove:
 
 - Install `/Users/Renger/Downloads/vendor-onboarding-v41-page1-dashboard.yapk`.
 - Confirm the application opens with only the intended Page 1 dashboard plus supporting data lists.
+- Confirm sample records appear in Vendors, Vendor Documents, Compliance Reviews, and Vendor Activity / History.
 - Open Vendor Management Dashboard.
 - Verify the dashboard uses the current dashboard renderer, not the retired legacy renderer.
 - Confirm page padding, card boundaries, section spacing, and multi-column layout look materially stronger than v3/v4.

@@ -190,15 +190,22 @@ function control(type, label, attrs = {}, children = [], extra = {}) {
 }
 
 function text(value, role = "body", extra = {}) {
-  return control("text", value, {
-    text: value,
-    role,
-    style: {
-      typography: role,
-      color: extra.color || (role.includes("title") ? "#071638" : "#4B5563"),
-      weight: role.includes("title") || role.includes("value") ? 700 : 500,
-      size: extra.size || (role.includes("value") ? 32 : role.includes("title") ? 22 : 14),
+  const ty = role.includes("value")
+    ? "h2-bold"
+    : role.includes("page")
+      ? "h3-bold"
+      : role.includes("section")
+        ? "h4-bold"
+        : role.includes("label")
+          ? "s-semibold"
+          : "s-regular";
+  return control("heading", "Text", {
+    headc: { title: { value, variable: null } },
+    heads: {
+      ty: [null, ty],
+      color: extra.color || (role.includes("title") || role.includes("value") ? "var(--c--text)" : "var(--c--neutral-dark-hover)"),
     },
+    role,
   }, [], { nv_label: value });
 }
 
@@ -228,10 +235,10 @@ function container(label, children, options = {}) {
 }
 
 function grid(label, children, columns, sectionId = "") {
-  return control("grid", label, {
+  return control("container", "Grid", {
     templateSectionId: sectionId,
     grid: { columns, minColumnWidth: columns >= 4 ? 220 : 320 },
-    style: { direction: "row", gap: 16, align_items: "stretch", wrap: true },
+    style: { direction: [null, "row"], gap: [null, 16], align_items: [null, "stretch"], wrap: true },
     common: { padding: { left: 0, right: 0, top: 0, bottom: 0 } },
   }, children, { nv_label: label });
 }
@@ -535,15 +542,24 @@ function viewLayout(fields, defs) {
   });
 }
 
-function makeList(ids, listId, title, description, fieldSpecs, viewFields) {
+function makeList(ids, listId, title, description, fieldSpecs, viewFields, sampleRows = []) {
   const fields = fieldSpecs.map((spec) => makeField(ids, listId, spec));
   const viewId = ids.next(`layout:${title}:all`);
+  const listDatas = {};
+  for (const [index, row] of sampleRows.entries()) {
+    const listDataId = ids.next(`sample:${title}:${index + 1}`);
+    listDatas[listDataId] = {
+      ListDataID: listDataId,
+      Title: row.Title || row.Text0 || `${title} Sample ${index + 1}`,
+      ...row,
+    };
+  }
   return {
     ListModel: listModel(listId, title, description, 1, { sortVer: 1 }),
     Defs: fields,
     Layouts: [layout(listId, viewId, `All ${title}`, 0, null, { layoutView: viewLayout(viewFields, fields) })],
     LayoutInResources: [],
-    ListDatas: {},
+    ListDatas: listDatas,
     RemindRules: [],
     PublicForms: [],
     FlowMappings: [],
@@ -599,10 +615,79 @@ function buildDecodedData(ids) {
     { fieldName: "Text4", displayName: "Actor", type: "identity-picker" },
     { fieldName: "Text5", displayName: "Description", type: "textarea" },
   ];
-  const vendors = makeList(ids, vendorsId, "Vendors", "Master vendor records for dashboard review and onboarding status.", vendorFields, ["Text0", "Text2", "Text3", "Text9", "Text8", "Text10", "Text7", "DateTime14"]);
-  const documents = makeList(ids, documentsId, "Vendor Documents", "Document status records used by dashboard alert and document-risk metrics.", documentFields, ["Text0", "Text1", "Text2", "Text3", "DateTime4"]);
-  const reviews = makeList(ids, reviewsId, "Compliance Reviews", "Compliance review records used by dashboard risk and review status summaries.", reviewFields, ["Text0", "Text1", "Text2", "Decimal3", "DateTime4"]);
-  const activity = makeList(ids, activityId, "Vendor Activity / History", "Timeline events for dashboard activity proof.", activityFields, ["Text0", "Text1", "Text2", "DateTime3", "Text4"]);
+  const vendors = makeList(ids, vendorsId, "Vendors", "Master vendor records for dashboard review and onboarding status.", vendorFields, ["Text0", "Text2", "Text3", "Text9", "Text8", "Text10", "Text7", "DateTime14"], [
+    {
+      Text0: "Northstar Components",
+      Text1: "VEN-1001",
+      Text2: "Strategic Supplier",
+      Text3: "United States",
+      Text4: "Avery Stone",
+      Text5: "avery.stone@example.com",
+      Text6: "+1 555 0101",
+      Text7: "Procurement Manager",
+      Text8: "Compliance Review",
+      Text9: "High",
+      Text10: "Action Required",
+      Decimal11: 0.72,
+      Decimal12: 0.68,
+      Decimal13: 245000,
+      DateTime14: "2026-06-28 00:00:00",
+      Bit15: "0",
+      DateTime16: "2026-05-24 09:30:00",
+    },
+    {
+      Text0: "Blue Harbor Logistics",
+      Text1: "VEN-1002",
+      Text2: "Service Provider",
+      Text3: "Singapore",
+      Text4: "Mei Tan",
+      Text5: "mei.tan@example.com",
+      Text6: "+65 5550 0102",
+      Text7: "Operations Owner",
+      Text8: "Procurement Review",
+      Text9: "Medium",
+      Text10: "In Review",
+      Decimal11: 0.48,
+      Decimal12: 0.52,
+      Decimal13: 120000,
+      DateTime14: "2026-08-15 00:00:00",
+      Bit15: "0",
+      DateTime16: "2026-05-21 15:00:00",
+    },
+    {
+      Text0: "Evergreen Security Labs",
+      Text1: "VEN-1003",
+      Text2: "Technology Vendor",
+      Text3: "European Union",
+      Text4: "Jonas Weber",
+      Text5: "jonas.weber@example.com",
+      Text6: "+49 555 0103",
+      Text7: "Security Reviewer",
+      Text8: "Approved",
+      Text9: "Low",
+      Text10: "Approved",
+      Decimal11: 1,
+      Decimal12: 0.94,
+      Decimal13: 86000,
+      DateTime14: "2027-01-10 00:00:00",
+      Bit15: "1",
+      DateTime16: "2026-05-18 10:15:00",
+    },
+  ]);
+  const documents = makeList(ids, documentsId, "Vendor Documents", "Document status records used by dashboard alert and document-risk metrics.", documentFields, ["Text0", "Text1", "Text2", "Text3", "DateTime4"], [
+    { Text0: "Insurance Certificate", Text1: "Northstar Components", Text2: "Insurance Certificate", Text3: "Action Required", DateTime4: "2026-06-05 00:00:00" },
+    { Text0: "Tax Form W-9", Text1: "Northstar Components", Text2: "Tax Form", Text3: "In Review", DateTime4: "2026-12-31 00:00:00" },
+    { Text0: "Business Registration", Text1: "Blue Harbor Logistics", Text2: "Business Registration", Text3: "Approved", DateTime4: "2027-03-15 00:00:00" },
+  ]);
+  const reviews = makeList(ids, reviewsId, "Compliance Reviews", "Compliance review records used by dashboard risk and review status summaries.", reviewFields, ["Text0", "Text1", "Text2", "Decimal3", "DateTime4"], [
+    { Text0: "Sanctions and insurance review", Text1: "Northstar Components", Text2: "Action Required", Decimal3: 0.82, DateTime4: "2026-05-27 11:00:00" },
+    { Text0: "Annual compliance refresh", Text1: "Evergreen Security Labs", Text2: "Approved", Decimal3: 0.18, DateTime4: "2026-05-18 10:15:00" },
+  ]);
+  const activity = makeList(ids, activityId, "Vendor Activity / History", "Timeline events for dashboard activity proof.", activityFields, ["Text0", "Text1", "Text2", "DateTime3", "Text4"], [
+    { Text0: "Insurance certificate flagged", Text1: "Northstar Components", Text2: "Status Changed", DateTime3: "2026-05-28 14:35:00", Text4: "Compliance Reviewer", Text5: "Certificate expires within 30 days and needs replacement." },
+    { Text0: "Procurement review started", Text1: "Blue Harbor Logistics", Text2: "Request Submitted", DateTime3: "2026-05-27 09:20:00", Text4: "Procurement Manager", Text5: "Vendor request moved into procurement review." },
+    { Text0: "Compliance review approved", Text1: "Evergreen Security Labs", Text2: "Review Completed", DateTime3: "2026-05-18 10:15:00", Text4: "Security Reviewer", Text5: "Annual compliance refresh completed." },
+  ]);
   for (const child of [vendors, documents, reviews, activity]) child.ListModel.CustomType = `ListSite_${rootId}`;
   const rootLayoutView = {
     add: "default",
@@ -656,6 +741,7 @@ function buildDecodedData(ids) {
         ...[vendors, documents, reviews, activity].flatMap((child) => [
           ...child.Defs.map((field) => field.FieldID),
           ...child.Layouts.map((item) => item.LayoutID),
+          ...Object.keys(child.ListDatas || {}),
         ]),
       ])),
     },
@@ -664,7 +750,7 @@ function buildDecodedData(ids) {
 }
 
 function appPackageInfoFromData(data) {
-  const normalizeListModel = (list, { root = false } = {}) => ({
+  const normalizeListModel = (list, { root = false, items = {} } = {}) => ({
     ListID: list.ListID,
     Title: list.Title,
     Description: list.Description || "",
@@ -682,7 +768,7 @@ function appPackageInfoFromData(data) {
     LayoutView: list.LayoutView,
     Perms: [],
     AdvancePerms: [],
-    Items: {},
+    Items: items,
   });
   const normalizeField = (field) => ({
     ListID: field.ListID,
@@ -735,7 +821,7 @@ function appPackageInfoFromData(data) {
     Components: [],
     PortalInfo: null,
     Childs: data.Childs.map((child) => ({
-      List: normalizeListModel(child.ListModel),
+      List: normalizeListModel(child.ListModel, { items: child.ListDatas || {} }),
       Fields: child.Defs.map(normalizeField),
       Layouts: child.Layouts.map((item, index) => normalizeLayout(item, `${child.ListModel.Title} Layout ${index + 1}`)),
       RemindRules: child.RemindRules,

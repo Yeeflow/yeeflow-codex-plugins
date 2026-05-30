@@ -26,7 +26,7 @@
       "command": "node scripts/inspect-yap-schema-standard.mjs /Users/Renger/Downloads/vendor-onboarding-v41-page1-dashboard.yap",
       "status": "pass",
       "errors": 0,
-      "largeNumericIdsPreserved": 43
+      "largeNumericIdsPreserved": 54
     },
     {
       "name": "Strict visual quality and composition checklist",
@@ -43,6 +43,30 @@
       "warnings": 0
     }
   ],
+  "controlTypeScan": {
+    "dashboardControlTypes": [
+      "container",
+      "heading",
+      "button",
+      "dynamic-field",
+      "progress-circle",
+      "progress",
+      "alert",
+      "kanban",
+      "dynamic-user",
+      "icon_list",
+      "data-list",
+      "timeline-v"
+    ],
+    "unsupportedGridControls": 0,
+    "unsupportedTextControls": 0
+  },
+  "sampleData": {
+    "Vendors": 3,
+    "Vendor Documents": 3,
+    "Compliance Reviews": 2,
+    "Vendor Activity / History": 3
+  },
   "proofBoundary": "dashboard_only_local_validation_not_runtime_install",
   "manualRetestRequired": true
 }

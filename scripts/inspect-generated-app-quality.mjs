@@ -735,8 +735,10 @@ function normalizedControlType(type) {
     "data-grid": "data-list",
     "table-v2": "data-list",
     "action-button": "button",
+    "heading": "text",
     "flex-grid": "grid",
     "flex_grid": "grid",
+    "icon_list": "icon-list",
     "section": "container",
     "section-column": "container",
     "line": "divider",
@@ -934,6 +936,7 @@ function validateTemplateConformance(section, page, checklistPage, template, fin
   const types = controlTypeSet(page);
   for (const group of templateControlGroups(template)) {
     if (!group.some((type) => types.has(type))) {
+      if (group.includes("grid") && hasGridStructure(page)) continue;
       passed = false;
       templateAdd(findings, "TEMPLATE_REQUIRED_CONTROL_MISSING", "Generated section does not satisfy the referenced template's required controls.", {
         page: checklistPage.title,

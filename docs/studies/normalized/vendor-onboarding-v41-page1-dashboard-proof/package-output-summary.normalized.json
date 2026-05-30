@@ -21,6 +21,22 @@
     "Compliance Reviews",
     "Vendor Activity / History"
   ],
+  "sampleData": {
+    "Vendors": 3,
+    "Vendor Documents": 3,
+    "Compliance Reviews": 2,
+    "Vendor Activity / History": 3
+  },
+  "runtimeControlFix": {
+    "removedUnsupportedDashboardControlTypes": [
+      "grid",
+      "text"
+    ],
+    "exportProvenReplacements": {
+      "grid": "container with grid/flex layout attributes",
+      "text": "heading"
+    }
+  },
   "importFailureFix": {
     "yapkInitialRuntimeError": "The package you uploaded is incorrect, please check and try again.",
     "yapInitialRuntimeError": "Created failed",
