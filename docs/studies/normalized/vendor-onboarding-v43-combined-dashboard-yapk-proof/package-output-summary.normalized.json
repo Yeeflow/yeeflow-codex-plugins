@@ -68,6 +68,7 @@
   "missingExistingIdsReason": "The previous diagnostic-only dashboard pages were intentionally removed to produce one combined dashboard page; retained app, primary dashboard, child list, field, and list-view IDs remain preserved.",
   "newIdsUsed": 40,
   "dynamicControlsRule": "Dynamic controls are only generated inside the Kanban item template.",
+  "gridCaptionRule": "Generated flex_grid controls omit nv_label so the Grid display caption option stays off.",
   "signing": {
     "status": "signed_and_verified",
     "signByteLength": 32,

@@ -305,7 +305,7 @@ function flexContainer(children, options = {}) {
 }
 
 function grid(children, options = {}) {
-  return control("flex_grid", "Grid", {
+  const gridControl = control("flex_grid", "Grid", {
     ver: 1,
     columns: {
       "1": { list: Array.from({ length: options.columns || 2 }, () => ({ value: 1, unit: "fr" })), last: { value: 1, unit: "fr" } },
@@ -318,6 +318,9 @@ function grid(children, options = {}) {
     rgap: [null, options.rowGap || 16],
     rgapU: [null, "px"],
   }, children);
+  // Product-edited dashboard examples keep Grid display caption turned off by omitting nv_label.
+  delete gridControl.nv_label;
+  return gridControl;
 }
 
 function actionButton(label, style = "2") {

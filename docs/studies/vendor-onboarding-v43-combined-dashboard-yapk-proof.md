@@ -15,6 +15,7 @@ Source package studied:
 ## User-Edited Control Findings Applied
 
 - Grid controls must use the dashboard `flex_grid` control shape. The generated dashboard now uses `flex_grid` rather than a container-only grid emulation.
+- Grid controls must have display caption turned off. Product-edited examples do this by omitting the Grid `nv_label` caption field; generated `flex_grid` controls follow that pattern.
 - Dashboard section cards must use `container` controls with tokenized padding, background, border, and radius settings.
 - Button controls must use `action_button`. The generated dashboard no longer emits legacy `button` controls.
 - Containers use flex-style item settings for direction, alignment, justification, and element gap.
@@ -74,6 +75,7 @@ YAPK schema standard inspector:
 Targeted dashboard control audit:
 
 - `flex_grid` controls: 3
+- `flex_grid` controls with display caption field: 0
 - `action_button` controls: 2
 - legacy `button` controls: 0
 - containers: 15
