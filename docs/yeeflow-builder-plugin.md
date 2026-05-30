@@ -2,7 +2,7 @@
 
 The Yeeflow Builder Plugin is a skills-only Codex plugin for Yeeflow application builders. It packages proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth or MCP servers. API-backed helper scripts require local environment variables and must not hardcode a tenant-specific URL.
 
-Package status: v0.6.2 is finalized after the official marketplace smoke test for `yeeflow-builder-plugin-v0.6.2-rc1` passed. Latest final release tag: `yeeflow-builder-plugin-v0.6.2`. The official public Git install source is `https://github.com/Yeeflow/yeeflow-codex-plugins.git`.
+Package status: v0.6.3 RC1 is ready for private marketplace smoke testing. Latest final release tag remains `yeeflow-builder-plugin-v0.6.2`; final `yeeflow-builder-plugin-v0.6.3` must wait until RC smoke passes. The official public Git install source is `https://github.com/Yeeflow/yeeflow-codex-plugins.git`.
 
 ## Package Contents
 
@@ -145,6 +145,37 @@ Validation should include structural checks, app graph checks, child list valida
 Dashboard KPIs, charts, and tables must be data-bound, not static mockups. Runtime tests should confirm import behavior, navigation behavior, data binding, form behavior, workflow behavior, dashboard rendering, and exported-back differences where applicable.
 
 Local validation is not the same as Yeeflow runtime proof. Accepted baselines must record what was structurally validated, what was runtime tested, what remains unproven, and what fallback was used.
+
+## v0.6.3 RC1 Scope
+
+v0.6.3 RC1 adds the reference app UI section template corpus, Vendor Onboarding v4.1 hard checks, Yeeflow system schema specification, dashboard generation hardening, data-list schema validation, and updated skill guidance while preserving v0.6.2 import-generation fixes and earlier capability milestones.
+
+Included application-generation hardening:
+
+- Dashboard pages must use `Main > Content` structure with page content-area padding set to zero.
+- Layout Grid controls must have display label/caption disabled.
+- Every generated control must have a meaningful Navigator label.
+- Active buttons must use valid action-button bindings.
+- KPI cards should follow the Service Desk Pro Executive Dashboard pattern: hidden Summary controls save to dashboard temp variables, and visible Text controls display formatted temp-variable values.
+- Dashboard Dynamic controls must stay inside valid item-template contexts such as Kanban, Collection, or Timeline.
+- Data lists must preserve native `Title`, align `FieldName` / `FieldIndex` / storage family, populate select/multi-select choices, configure lookup display fields, include default display fields, and seed sample rows in lookup dependency order.
+
+Reference app corpus:
+
+- Company Overview (3)
+- Data Lists (4)
+- Projects Center_2
+- Sales_Management_AD
+- DEMO Innovation Ecosystem Platform / NHIC Innovation Overview
+- Service Desk Pro / Executive Dashboard
+- Online Library / Print Inventory
+- Sales Quotation / Print Page
+- Online Library (1) / multi-item print QR
+- Sales Quotation (1) / single-item print QR
+
+Install smoke result: pending for RC tag `yeeflow-builder-plugin-v0.6.3-rc1`, official source `https://github.com/Yeeflow/yeeflow-codex-plugins.git`, sparse paths `.agents/plugins/marketplace.json` and `dist/yeeflow-builder-plugin`, expected version `0.6.3`, and bundled skill count `21`.
+
+Proof boundary: v0.6.3 RC1 is ready for smoke testing only. The final v0.6.3 tag should not be created until marketplace smoke passes. Vendor lookup picker no-record behavior remains a known product-team follow-up.
 
 ## v0.5.23 Scope
 

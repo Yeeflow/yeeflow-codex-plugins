@@ -16,14 +16,15 @@ Plugin root:
 dist/yeeflow-builder-plugin/
 ```
 
-Current release archive:
+Current RC archive:
 
 ```text
-dist/yeeflow-builder-plugin-0.6.2.zip
+dist/yeeflow-builder-plugin-0.6.3.zip
 ```
 
 Current release status:
 
+- v0.6.3 RC1: ready for private Git marketplace smoke testing; final tag not created.
 - v0.1.0 private Git marketplace install: passed.
 - v0.2.0 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.2.0-rc1`.
 - v0.3.0 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.3.0-rc1`.
@@ -55,7 +56,7 @@ Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.2
+yeeflow-builder-plugin-v0.6.3-rc1
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -80,6 +81,46 @@ Smoke prompts tested:
 - Dashboard-generator data-bound document-library dashboard guidance.
 
 ## Release Notes
+
+### v0.6.3 RC1
+
+Previous final version: `0.6.2`.
+
+RC version: `0.6.3`.
+
+RC tag: `yeeflow-builder-plugin-v0.6.3-rc1`.
+
+Private marketplace install smoke test: pending.
+
+Final tag: not created yet.
+
+Bundled skill count: `21`.
+
+Included milestone: reference app template corpus, Vendor Onboarding v4.1 hard checks, Yeeflow system schema specification, dashboard generation hardening, data-list schema validation, and updated skill guidance.
+
+Verified marketplace install values for RC smoke:
+
+- Source: `https://github.com/Yeeflow/yeeflow-codex-plugins.git`
+- Git ref: `yeeflow-builder-plugin-v0.6.3-rc1`
+- Sparse paths: `.agents/plugins/marketplace.json`, `dist/yeeflow-builder-plugin`
+- Expected marketplace: `Yeeflow Internal`
+- Expected plugin: `Yeeflow Builder`
+- Expected version: `0.6.3`
+- Expected bundled skills: `21`
+
+Main improvements:
+
+- Adds the Yeeflow UI section template library and reference app corpus guidance.
+- Adds hard checks from the completed Vendor Onboarding v4.1 generation pass.
+- Adds system schema validation for generated data lists.
+- Hardens dashboards for `Main > Content`, Grid display label off, meaningful Navigator labels, action-button bindings, dynamic-control context, and KPI Summary-to-temp-variable cards.
+- Hardens data lists for native `Title`, field naming/index/storage-family validation, choice options, lookup display fields, default display fields, and sample-data dependency ordering.
+
+Proof boundary:
+
+- v0.6.3 RC1 is build-ready for private marketplace smoke testing only.
+- The final `yeeflow-builder-plugin-v0.6.3` tag must wait until marketplace smoke passes and is documented.
+- Vendor lookup picker no-record behavior remains a known product-team follow-up.
 
 ### v0.6.2
 

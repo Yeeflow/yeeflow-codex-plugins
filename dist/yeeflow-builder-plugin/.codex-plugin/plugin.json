@@ -1,7 +1,7 @@
 {
   "name": "yeeflow-builder",
-  "version": "0.6.2",
-  "description": "Private Codex plugin for building, validating, testing, and improving Yeeflow applications using Yeeflow-specific skills, including proven YAP/YAPK import-generation fixes, current dashboard generation, API ID handling, Data table binding validation, Advanced Controls learning, runtime proof, and tenant-neutral environment configuration guidance.",
+  "version": "0.6.3",
+  "description": "Private Codex plugin for building, validating, testing, and improving Yeeflow applications using Yeeflow-specific skills, including proven YAP/YAPK import-generation fixes, current dashboard generation, data-list schema validation, reference app UI templates, Vendor Onboarding v4.1 hard checks, Advanced Controls learning, runtime proof, and tenant-neutral environment configuration guidance.",
   "visibility": "private/internal",
   "category": "developer/productivity/internal tools",
   "keywords": [
@@ -51,7 +51,7 @@
   "interface": {
     "displayName": "Yeeflow Builder",
     "shortDescription": "Private Yeeflow application-building skills for Codex.",
-    "longDescription": "Private Codex plugin for planning Yeeflow applications from requirements, generating and validating new .yap packages, learning from exported Yeeflow packages, inspecting and validating .yapk existing-application version packages, applying proven YAP/YAPK import-generation rules, schema-backed YAPK Resource decode guidance, preserving signing/resource proof boundaries, generating current-dashboard shells and Data table bindings, generating forms, lists, dashboards, advanced controls, Pivot Table analytics controls, Collection/Kanban actions, Kanban/Collection/Timeline Dynamic controls, Dynamic Sub List and Print Page patterns, expressions, workflows, document-library patterns, and custom code controls, orchestrating runtime tests, validating package materialization, generated data-list seed/add-readiness, action target readiness, approval request-page publish readiness, safely checking read-only Yeeflow directory API connectivity from local environment variables, and managing private plugin releases.",
+    "longDescription": "Private Codex plugin for planning Yeeflow applications from requirements, generating and validating new .yap packages, learning from exported Yeeflow packages, inspecting and validating .yapk existing-application version packages, applying proven YAP/YAPK import-generation rules, schema-backed YAPK Resource decode guidance, preserving signing/resource proof boundaries, generating current-dashboard shells and Data table bindings, generating forms, lists, dashboards, advanced controls, Pivot Table analytics controls, Collection/Kanban actions, Kanban/Collection/Timeline Dynamic controls, Dynamic Sub List and Print Page patterns, expressions, workflows, document-library patterns, and custom code controls, enforcing reference-app UI templates, Vendor Onboarding v4.1 dashboard/data-list hard checks, data-list system schema rules, KPI Summary-to-temp-variable patterns, and lookup display-field validation, orchestrating runtime tests, validating package materialization, generated data-list seed/add-readiness, action target readiness, approval request-page publish readiness, safely checking read-only Yeeflow directory API connectivity from local environment variables, and managing private plugin releases.",
     "developerName": "Yeeflow",
     "category": "Developer Tools",
     "capabilities": [
@@ -65,7 +65,7 @@
       "Run the safe Yeeflow directory API connectivity smoke test.",
       "Update the Yeeflow Builder Plugin release.",
       "What Collection and Kanban actions support is included in v0.5.27?",
-      "What YAP and YAPK generation fixes are included in v0.6.2?"
+      "What application generation hard checks are included in v0.6.3?"
     ],
     "brandColor": "#2563EB",
     "composerIcon": "./assets/icon.png",
