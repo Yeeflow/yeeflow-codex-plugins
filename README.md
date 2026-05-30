@@ -24,6 +24,7 @@ Yeeflow Builder helps Codex work with Yeeflow application packages and reusable 
 - Dashboard hardening for `Main > Content`, Grid display-label off, meaningful Navigator labels, action-button bindings, dynamic-control context, and KPI Summary-to-temp-variable cards.
 - Data-list hardening for native `Title`, field naming/index/storage validation, choice options, lookup display fields, default display fields, and sample-data dependency ordering.
 - Proven YAP/YAPK import-generation fixes from Vendor Onboarding runtime proof.
+- YAPK-first application delivery defaults for new app creation, with YAP explicit-only.
 - Current dashboard generation fixes and Data table `Field` / `FieldName` binding validation.
 - API-issued ID handling, large ID preservation, unique ID validation, `Field.Category` integer checks, and `PortalInfo: null` for no-portal YAPK packages.
 - Tenant-neutral public sharing hardening and `.env.local` profile guidance.
@@ -172,6 +173,14 @@ YEEFLOW_WORKSPACE_ID=<your workspace id>
 ```
 
 The workspace ID is required only for package import/install/upgrade APIs. Store it locally, never commit `.env.local`, and keep helper output redacted.
+
+## Application Delivery Defaults
+
+For new Yeeflow application creation, generate a YAPK package by default. Generate a YAP file only when the user explicitly asks for YAP or when a fallback/debug task specifically requires it. Validate the YAPK locally before upload or install.
+
+If `.env.local` contains both `YEEFLOW_API_KEY` and `YEEFLOW_WORKSPACE_ID`, ask whether the user wants to automatically install the generated app into that workspace. Do not auto-install without confirmation.
+
+For changes to an existing app, generate a new versioned YAPK package. Use the upgrade package API only when the target application/package is clearly identified, safe, and explicitly confirmed. If install returns a known duplicate/already-installed response, report that the package appears to already be installed and suggest upgrade flow, manual test cleanup, or a renamed/new-version package.
 
 ## Basic Usage Examples
 

@@ -155,6 +155,14 @@ Manual runtime checklist:
 - Install: JSON body with redacted `WorkspaceID` and `PackageFile.{Id,Name,FileSize}` from upload metadata.
 - Upgrade: dry-run only, JSON body with redacted `WorkspaceID`, `PackageFile.{Id,Name,FileSize}`, and `UpgradeCheck`.
 
+## Standard Delivery Workflow Update
+
+New Yeeflow application generation now defaults to YAPK. Generate YAP only when the user explicitly asks for YAP or when a fallback/debug task specifically requires it. If `.env.local` includes API credentials and a workspace ID, ask the user whether to auto-install the generated YAPK before calling upload/install APIs.
+
+Existing application changes should use a new versioned YAPK package. Use upgrade APIs only after the target application/package is clearly identified, safe, and explicitly confirmed.
+
+Package API result summaries now classify responses as `success`, `already_installed`, `api_rejected`, or `http_rejected`. A known duplicate/already-installed non-zero install response should be reported as: "The package appears to already be installed in this workspace." Keep raw response text redacted.
+
 ## Safety Boundary
 
 No `.env.local`, generated packages, uploaded package contents, raw API responses, raw `Resource`, raw `Sign`, decoded payloads, screenshots, private URLs, tenant IDs, workspace IDs, uploaded file IDs, app IDs, or package IDs are committed or recorded here.

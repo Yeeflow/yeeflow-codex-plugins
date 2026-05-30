@@ -38,7 +38,7 @@ Use the API only when local credentials are available and the user has asked for
 
 - Do not use this skill for normal Yeeflow package generation when no real org data is needed.
 - Do not ask the user to paste API keys into chat.
-- Do not run write APIs.
+- Do not run write APIs unless the user explicitly asks for package import/install/upgrade automation and you use the guarded package helper with `--execute`.
 - Do not commit `.env.local`, raw API responses, credentials, tokens, users, emails, phone numbers, tenant IDs, or private identifiers.
 - Do not add write operations until they are separately studied, safety-reviewed, and runtime-proven.
 
@@ -51,14 +51,15 @@ YEEFLOW_API_BASE_URL=https://api.yeeflow.com/v1
 YEEFLOW_API_KEY=<your Yeeflow API key>
 YEEFLOW_TENANT_URL=https://<yourdomain>.yeeflow.com
 YEEFLOW_TENANT_ID=<optional tenant id>
+YEEFLOW_WORKSPACE_ID=<your workspace id>
 ```
 
 Rules:
 
 - Load the API base from `YEEFLOW_API_BASE_URL`, with `YEEFLOW_BASE_URL` supported only as a legacy API base URL alias.
 - Load the key from `YEEFLOW_API_KEY` or, when `YEEFLOW_PROFILE` is set, from `YEEFLOW_<PROFILE>_API_KEY`.
-- Load tenant/app links from `YEEFLOW_TENANT_URL` or, when `YEEFLOW_PROFILE` is set, from `YEEFLOW_<PROFILE>_TENANT_URL`.
-- Never print the key or include it in logs, docs, commits, or final answers.
+- Load tenant/app links from `YEEFLOW_TENANT_URL` or, when `YEEFLOW_PROFILE` is set, from `YEEFLOW_<PROFILE>_TENANT_URL`. Load package automation workspace IDs from `YEEFLOW_WORKSPACE_ID`, or from `YEEFLOW_<PROFILE>_WORKSPACE_ID` when a profile is active.
+- Never print the key or include it in logs, docs, commits, or final answers. Never print workspace IDs either; report only present or missing.
 - Ensure `.env.local` is gitignored before running API checks.
 - If `.env.local` or the key is missing, explain setup steps and ask the user to store the key locally, not in chat.
 
@@ -93,6 +94,27 @@ Report only:
 - redacted sample schema/shape
 
 For user/person data, show counts and redacted field shapes by default. Do not show full names, emails, phone numbers, or broad identity dumps. Return IDs only when explicitly needed for app generation or runtime testing, and keep scope narrow.
+
+## Package Automation Operations
+
+The product team published package automation APIs on 2026-05-29:
+
+- `POST /files/upload`
+- `POST /listset/package/import`
+- `POST /listset/package/install`
+- `POST /listset/package/upgrade`
+
+Use the shared helper from the repository root:
+
+```bash
+node scripts/yeeflow-package-api-automation.mjs --operation install-yapk --package <file.yapk>
+node scripts/yeeflow-package-api-automation.mjs --operation upgrade-yapk --package <file.yapk>
+node scripts/yeeflow-package-api-automation.mjs --operation import-yap --package <file.yap>
+```
+
+New app delivery is YAPK-first. Generate/import YAP only when the user explicitly requests YAP or a fallback/debug task is specifically about YAP. WorkspaceID is required for import/install/upgrade and is read from `YEEFLOW_WORKSPACE_ID` or the active profile-specific workspace variable; `--workspace-id` is only a redacted one-run override. The helper defaults to dry run. Add `--execute` only after explicit user approval. Runtime proof found that `POST /files/upload` may return `text/plain` containing JSON metadata fields; parse that JSON when possible, pass only redacted `PackageFile` metadata into install/upgrade, and never print uploaded file IDs.
+
+Before executing package automation, validate the package locally with the relevant `.yap` or `.yapk` validators, confirm the target workspace is disposable or approved, and record the proof boundary. The helper classifies API results as `success`, `already_installed`, `api_rejected`, or `http_rejected`; use `already_installed` to recommend upgrade flow, manual test cleanup, or a renamed/new-version package. A successful API response is not a substitute for visible runtime verification of the imported/installed/upgraded app.
 
 ## Safety And Redaction
 

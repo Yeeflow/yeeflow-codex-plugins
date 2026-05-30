@@ -112,6 +112,14 @@ YEEFLOW_WORKSPACE_ID=<your workspace id>
 
 The workspace ID is used in the `WorkspaceID` request field for package import, install, and upgrade APIs. Helper scripts report only whether it is present or missing; they must not print the actual value.
 
+## Delivery Workflow Behavior
+
+When `YEEFLOW_API_KEY` is present, new app generation should default to YAPK. When `YEEFLOW_WORKSPACE_ID` is also present, Codex should ask whether to auto-install the generated YAPK. The helper must not auto-install without confirmation.
+
+Application changes use versioned YAPK packages. Upgrade automation requires the API key, workspace ID, a clearly identified safe target application/package, local validation, and explicit user confirmation.
+
+Install result summaries classify API status `0` as `success`, known duplicate/existing-install responses as `already_installed`, unknown non-zero API statuses as `api_rejected`, and non-2xx HTTP statuses as `http_rejected`. Raw response bodies and IDs stay redacted.
+
 ## Legacy `YEEFLOW_BASE_URL`
 
 Older scripts may still read `YEEFLOW_BASE_URL`. Treat it only as a legacy API base URL alias. Do not use `YEEFLOW_BASE_URL` to mean tenant URL going forward. Prefer `YEEFLOW_API_BASE_URL` for API calls and `YEEFLOW_TENANT_URL` for tenant/app links.

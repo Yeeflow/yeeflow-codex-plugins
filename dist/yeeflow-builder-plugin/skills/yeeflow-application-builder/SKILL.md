@@ -118,6 +118,12 @@ YAPK-from-scratch rule: when the requested deliverable is a generated `.yapk`, t
 
 YAPK schema v2 rule from Vendor Onboarding v1.13-v1.15: generated `.yapk` output must be `AppExportPackageInfo` with `Resource = base64(Brotli(AppPackageInfo JSON))`. Do not put YAP `ListExportResult` in YAPK `Resource`. Use `Childs[].Fields`, not `Defs`; preserve `LongAsString` fields as strings; emit `PortalInfo: null` when no portal is included; keep `AppID = 41` where the import rules require it; use API-issued IDs for new generated package/object IDs; and validate current-dashboard Data table `Field` bindings before signing.
 
+## YAPK-First Application Delivery Workflow
+
+New Yeeflow application delivery defaults to `.yapk`, not `.yap`. Generate `.yap` only when the user explicitly asks for YAP, when a product-team/debug task is specifically about YAP import, or when a documented fallback requires it. For new apps, build and validate the inner `AppPackageInfo`, then produce a YAPK package for manual install or package-API install.
+
+Before delivery, inspect local environment presence without printing values. If `YEEFLOW_API_KEY` and `YEEFLOW_WORKSPACE_ID` are present, ask whether the user wants automatic installation into the configured workspace; never auto-install without explicit confirmation. For existing app changes, generate a versioned YAPK and use upgrade automation only after the target app/package is clearly identified, safe, and confirmed. Classify package API results as `success`, `already_installed`, `api_rejected`, or `http_rejected`; handle `already_installed` by recommending upgrade flow, cleanup, or a renamed/new-version package rather than retrying blindly.
+
 This skill is the top-level application-building controller. It coordinates proven generator skills:
 
 - `yeeflow-application-generator`
@@ -249,7 +255,7 @@ Think like an experienced business consultant and Yeeflow solution architect:
 - do not mark dashboard runtime proof as passed only because a page renders; verify source-list bindings, dashboard `exts`, ReportIds, and at least one value/list/empty-state coming from the expected data source
 - runtime-unproven features must be marked as required focused proof items or deferred with fallback behavior before final package claims
 - workflow routing variables must be required, auto-derived, or protected by fallback branches so no approval path can dead-end on empty/unexpected values
-- decide package type before generation: output `.yap` for a new/cloned application, and output `.yapk` only for an existing-app upgrade from a Yeeflow Version management baseline package
+- decide package type before generation: output `.yapk` for a new/cloned application by default, output `.yap` only when explicitly requested or needed for a documented fallback/debug task, and output versioned `.yapk` for an existing-app upgrade from a Yeeflow Version management baseline package
 - for `.yapk` upgrades, preserve app identity and stable object IDs; do not apply fresh-ID `.yap` import-generation rules unless adding newly proven resources
 
 ## Default Lifecycle
@@ -263,7 +269,7 @@ For requirement-to-application requests, load `references/requirement-to-yap-gen
 5. Wait for user answers when business-critical decisions are missing
 6. Apply confirmed answers to plan/spec and update the saved Markdown plan
 7. Generation-readiness review
-8. Generate the correct package type only if ready: `.yap` for new applications, `.yapk` for existing-app upgrades when a safe baseline exists
+8. Generate the correct package type only if ready: `.yapk` for new applications by default, `.yap` only when explicitly requested or fallback/debug scoped, and versioned `.yapk` for existing-app upgrades when a safe baseline exists
 9. Local validation
 10. Runtime import testing when requested or included in the user's build/test request
 11. Runtime issue fixing
@@ -276,10 +282,10 @@ For requirement-to-application requests, load `references/requirement-to-yap-gen
 
 Before generation, clarify whether the user wants:
 
-- a new application package (`.yap`) for import as a separate app, or
+- a new application package (`.yapk` by default, or `.yap` only when explicitly requested) for import/install as a separate app, or
 - an existing application upgrade package (`.yapk`) for Application Settings -> Version management -> Upgrade application.
 
-For new applications, use normal `.yap` rules: fresh ID family, safe FlowKey/form key, `ReplaceIds`, full local app/form/list validation, and import as a new app.
+For new applications, default to the YAPK delivery workflow: fresh generated identity, safe FlowKey/form key, full local app/form/list validation, decoded `AppPackageInfo` validation, and YAPK install as a new app. Use normal `.yap` rules only when the user explicitly requests a `.yap` or the task is a YAP fallback/debug proof.
 
 Materialization hard rules for new `.yap` packages:
 

@@ -90,6 +90,14 @@ Use `YEEFLOW_API_BASE_URL` for API calls. The standard value is `https://api.yee
 
 For the complete setup, profile, and troubleshooting guide, see [Environment Configuration](environment-configuration.md).
 
+## Create Or Deliver An Application
+
+New application creation defaults to YAPK. Ask Codex for YAP only when you specifically need a `.yap` file or a debugging fallback.
+
+If local `.env.local` contains `YEEFLOW_API_KEY` and `YEEFLOW_WORKSPACE_ID`, Codex should ask before automatically installing the generated YAPK into the configured workspace. Without confirmation, Codex should only generate and validate the YAPK and provide manual install guidance.
+
+For existing app changes, Codex should create a new versioned YAPK package and use the upgrade package API only after the target application is clearly identified and approved.
+
 Optional multi-tenant profile mode:
 
 ```env

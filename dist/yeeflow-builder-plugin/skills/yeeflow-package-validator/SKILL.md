@@ -66,7 +66,9 @@ YAPK schema v2 validation rule from Vendor Onboarding v1.13-v1.15: validate `.ya
 
 Validate before import. Do not runtime-test a package with blocking structural, graph, wrapper, workflow, list, field, materialization, FlowKey, or unsafe `.yapk` issues.
 
-New application creation may output `.yap`. Existing app upgrade `.yapk` validation should defer to `yeeflow-yapk-package-generator`. Product schema defines `.yapk` as `AppExportPackageInfo` with `Resource` described as Brotli-compressed `AppPackageInfo`. Treat `.yapk` content generation as proof-boundary-sensitive until the exact generated content type passes Resource decode/edit/encode/sign/verify/runtime-upgrade.
+New application creation defaults to `.yapk`; `.yap` should be generated only when explicitly requested or when a fallback/debug task specifically requires it. Existing app upgrade `.yapk` validation should defer to `yeeflow-yapk-package-generator`. Product schema defines `.yapk` as `AppExportPackageInfo` with `Resource` described as Brotli-compressed `AppPackageInfo`. Treat `.yapk` content generation as proof-boundary-sensitive until the exact generated content type passes Resource decode/edit/encode/sign/verify/runtime-upgrade.
+
+When package API automation is in scope, validate request shaping before execution and require explicit confirmation for install/upgrade. API result summaries should classify `success`, `already_installed`, `api_rejected`, and `http_rejected` so duplicate/already-installed responses do not get mixed with unknown validation failures.
 
 Validation is not runtime proof. When validating a newly learned capability, report whether the package is export-proven, validator-backed, import-proven, configuration-visible, render-only, partial, or runtime-proven. Use validator hard errors only for proven invalid generated shapes; otherwise prefer warnings/dependencies and require a focused runtime baseline before broad runtime claims.
 

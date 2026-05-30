@@ -17,6 +17,12 @@ Treat the user-confirmed Vendor Onboarding v4.1 package family as a golden YAPK 
 
 KPI cards must not use static number Text controls. Use the Service Desk Pro Executive Dashboard pattern: hidden Summary controls calculate values, `attrs.save_var` writes them to dashboard temp variables, and visible formatted Text controls display the temp variable values. Generated data lists inside YAPK packages must pass system schema validation: native `Title`, no generated `Text0` primary field, unique field identifiers, `FieldName` suffix matching `FieldIndex`, valid storage family, populated select/multi-select choices, default view display fields, lookup display fields selected and resolved, and sample data seeded in lookup dependency order. The remaining Vendor lookup picker no-record behavior is a known product-team follow-up; do not weaken lookup display-field validation to work around it.
 
+## YAPK-First Application Delivery Workflow
+
+YAPK is the default package type for new app delivery as well as existing app upgrades. Generate YAP only when explicitly requested or when a fallback/debug task is specifically about YAP import. For a new app, validate decoded application content first, then wrap as `AppExportPackageInfo` with Brotli/base64 `AppPackageInfo`.
+
+If package API automation is requested and `YEEFLOW_API_KEY` plus `YEEFLOW_WORKSPACE_ID` are present, ask before auto-installing a new YAPK. For existing app changes, generate a versioned YAPK and call upgrade automation only after the target app/package is clearly identified and confirmed. Classify API results as `success`, `already_installed`, `api_rejected`, or `http_rejected`; keep duplicate/already-installed responses separate from unknown failures and suggest upgrade, cleanup, or renamed/new-version delivery.
+
 ## Public Tenant Safety
 
 - Never hardcode a tenant-specific Yeeflow URL. Use `https://<yourdomain>.yeeflow.com` in docs and examples.

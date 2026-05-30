@@ -196,23 +196,37 @@ async function summarizeResponse(response, label) {
     }
   }
   if (!response.ok) {
+    const classification = classifyApiResult({
+      httpStatus: response.status,
+      apiStatus: parsed?.Status ?? parsed?.status ?? null,
+      message: parsed?.Message ?? parsed?.message ?? "",
+    });
     return {
       label,
       ok: false,
+      resultClass: classification.resultClass,
       httpStatus: response.status,
       contentType,
       responseKeys: parsed && typeof parsed === "object" ? Object.keys(parsed).slice(0, 20) : [],
       apiStatus: parsed?.Status ?? parsed?.status ?? null,
+      messageClass: classification.messageClass,
       messagePresent: Boolean(parsed?.Message ?? parsed?.message),
     };
   }
+  const classification = classifyApiResult({
+    httpStatus: response.status,
+    apiStatus: parsed?.Status ?? parsed?.status ?? null,
+    message: parsed?.Message ?? parsed?.message ?? "",
+  });
   const summary = {
     label,
-    ok: true,
+    ok: classification.resultClass === "success",
+    resultClass: classification.resultClass,
     httpStatus: response.status,
     contentType,
     responseKeys: parsed && typeof parsed === "object" ? Object.keys(parsed).slice(0, 20) : [],
     apiStatus: parsed?.Status ?? parsed?.status ?? null,
+    messageClass: classification.messageClass,
     messagePresent: Boolean(parsed?.Message ?? parsed?.message),
     totalCount: parsed?.TotalCount ?? parsed?.totalCount ?? null,
     textPresent: Boolean(text),
@@ -227,7 +241,7 @@ async function summarizeResponse(response, label) {
   return summary;
 }
 
-export { extractPackageFile, summarizeResponse };
+export { classifyApiResult, extractPackageFile, summarizeResponse };
 
 function buildImportBody(options, resolvedPackagePath) {
   const wrapper = JSON.parse(fs.readFileSync(resolvedPackagePath, "utf8"));
@@ -359,6 +373,42 @@ function looksLikeJson(value) {
 
 function isUploadResponseLabel(label) {
   return String(label || "").toLowerCase().includes("upload");
+}
+
+function classifyApiResult({ httpStatus, apiStatus, message }) {
+  if (httpStatus < 200 || httpStatus >= 300) {
+    return { resultClass: "http_rejected", messageClass: classifyMessage(message) };
+  }
+  if (Number(apiStatus) === 0) {
+    return { resultClass: "success", messageClass: "none" };
+  }
+  if (isAlreadyInstalledMessage(message)) {
+    return { resultClass: "already_installed", messageClass: "already_installed" };
+  }
+  if (apiStatus !== null && apiStatus !== undefined) {
+    return { resultClass: "api_rejected", messageClass: classifyMessage(message) };
+  }
+  return { resultClass: "success", messageClass: classifyMessage(message) };
+}
+
+function classifyMessage(message) {
+  if (isAlreadyInstalledMessage(message)) return "already_installed";
+  return String(message || "").trim() ? "present_redacted" : "none";
+}
+
+function isAlreadyInstalledMessage(message) {
+  const text = String(message || "").toLowerCase();
+  return [
+    "already exists",
+    "already installed",
+    "duplicate",
+    "same application",
+    "package exists",
+    "app exists",
+    "已存在",
+    "已安装",
+    "重复",
+  ].some((keyword) => text.includes(keyword.toLowerCase()));
 }
 
 function isMainModule() {

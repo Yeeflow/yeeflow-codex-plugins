@@ -169,7 +169,13 @@ This improves structural/design fidelity. It does not promise pixel-perfect repr
 
 ## Working With YAP And YAPK Packages
 
-Use `.yap` for new application packages. Use `.yapk` for existing application upgrade packages and treat signing as a separate proof boundary.
+New app creation defaults to YAPK. Generate YAP only when you explicitly ask for a YAP file or when a fallback/debug task requires YAP. Do not spend time debugging YAP import unless the task is specifically about YAP.
+
+If local `.env.local` includes `YEEFLOW_API_KEY` and `YEEFLOW_WORKSPACE_ID`, Codex should ask whether to auto-install a generated YAPK. It must not auto-install without confirmation. For existing app changes, Codex should generate a versioned YAPK and use upgrade automation only after the target app/package is clearly identified and approved.
+
+Package API results are classified as `success`, `already_installed`, `api_rejected`, or `http_rejected`. If a package appears already installed, use upgrade flow, remove the existing test app manually, or generate a renamed/new-version package.
+
+Use YAPK for new app delivery and existing application upgrade packages, and treat signing as a separate proof boundary.
 
 Example prompt:
 
