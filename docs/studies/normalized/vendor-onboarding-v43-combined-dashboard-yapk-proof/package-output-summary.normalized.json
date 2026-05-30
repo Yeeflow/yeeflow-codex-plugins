@@ -1,6 +1,6 @@
 {
-  "outputYapk": "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.6 - main content structure.yapk",
-  "sourceYapk": "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.5 - add a reference dashboard.yapk",
+  "outputYapk": "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.7 - style and list form routing.yapk",
+  "sourceYapk": "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.6 - dashboard style improvement.yapk",
   "pages": [
     "Vendor Management Dashboard",
     "Vendor Management Dashboard 02"
@@ -64,13 +64,13 @@
       ]
     }
   ],
-  "existingIdsBefore": 45,
-  "missingExistingIds": 1,
-  "missingExistingIdsReason": "The reference-only sample dashboard page from the v4.5 study package was intentionally removed; retained Vendor dashboard, child list, field, and list-view IDs remain preserved.",
+  "existingIdsBefore": 44,
+  "missingExistingIds": 0,
+  "missingExistingIdsReason": "The package starts from the user style-improved two-dashboard YAPK and preserves existing dashboard, child list, field, and list-view IDs.",
   "newIdsUsed": 40,
   "dynamicControlsRule": "Dynamic controls are only generated inside the Kanban item template.",
-  "pageStructureRule": "Both generated dashboards use page attrs.container.padding [null,{top/right/bottom/left:'--sp--s0'}], page neutral background, top-level Main container, nested Content container, and all visible sections inside Content.",
-  "gridCaptionRule": "Generated flex_grid controls set displayLabel to [null,false] and omit nv_label so the Grid display caption stays off.",
+  "dashboard02GridRule": "Vendor Management Dashboard 02 uses flex containers for row layout and no flex_grid controls to avoid possible Grid property conflicts.",
+  "listLayoutViewRule": "Each child List.LayoutView includes add:'default', edit:'default', opentype:{view:'new'}, sort:[], and view pointing to the default Type 0 view LayoutID.",
   "signing": {
     "status": "signed_and_verified",
     "signByteLength": 32,

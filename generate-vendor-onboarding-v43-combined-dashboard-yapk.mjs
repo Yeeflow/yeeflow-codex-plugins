@@ -8,11 +8,11 @@ import { loadDotenvFile, resolveYeeflowEnvironment } from "./scripts/yeeflow-env
 
 const APP_ID = 41;
 const SOURCE_YAPK = process.env.VENDOR_ONBOARDING_V43_SOURCE_YAPK
-  || "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.5 - add a reference dashboard.yapk";
+  || "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.6 - dashboard style improvement.yapk";
 const OUT_YAPK = process.env.VENDOR_ONBOARDING_V43_YAPK
-  || "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.6 - main content structure.yapk";
+  || "/Users/Renger/Downloads/Vendor Onboarding & Compliance Management v4.1 Dashboard-4.7 - style and list form routing.yapk";
 const TMP_DIR = ".tmp/vendor-onboarding-v43-combined-dashboard";
-const GENERATED_AT_UTC = "2026-05-30T07:10:00Z";
+const GENERATED_AT_UTC = "2026-05-30T07:40:00Z";
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -266,6 +266,7 @@ function container(children, options = {}) {
       direction: [null, options.direction || "column"],
       align_items: [null, options.align || "stretch"],
       ...(options.justify ? { justify_content: [null, options.justify] } : {}),
+      ...(options.widthtype ? { widthtype: [null, options.widthtype] } : {}),
     },
     common: {
       padding: [null, {
@@ -306,6 +307,7 @@ function flexContainer(children, options = {}) {
       gap: [null, options.gap || "--sp--s150"],
       align_items: [null, options.align || "center"],
       justify_content: [null, options.justify || "flex-start"],
+      ...(options.widthtype ? { widthtype: [null, options.widthtype] } : {}),
     },
   }, children);
 }
@@ -388,10 +390,14 @@ function actionButton(label, style = "2") {
 }
 
 function alertControl() {
-  return control("alert", "High-risk vendor document alert", {
-    title: "High-risk vendors need document review",
-    description: "Critical or high-risk vendors with expiring insurance, missing tax forms, or blocked compliance reviews should be reviewed today.",
-    type: "danger",
+  return sectionContainer([
+    heading("High-risk vendors need document review", "s-semibold", "#9A3412"),
+    heading("Critical or high-risk vendors with expiring insurance, missing tax forms, or blocked compliance reviews should be reviewed today.", "s-regular", "#7C2D12"),
+  ], "High-risk vendor alert content", {
+    padding: "--sp--s300",
+    background: "#FFF7ED",
+    borderColor: "#FDBA74",
+    gap: "--sp--s100",
   });
 }
 
@@ -468,19 +474,19 @@ function dashboardOverview(rootId, vendorsId) {
           sectionContainer([
             heading("Vendor Management Dashboard", "h3-bold"),
             heading("Monitor onboarding, compliance risk, documents, and vendor operations.", "s-regular", "var(--c--neutral-dark-hover)"),
-          ], "Page header text", { borderColor: "transparent", padding: "--sp--s200" }),
+          ], "Page header text", { borderColor: "transparent", padding: "--sp--s200", gap: "--sp--s075", widthtype: "2" }),
           flexContainer([
             actionButton("New Vendor Request", "2"),
             actionButton("View Compliance Queue", "4"),
-          ], { direction: "row", justify: "flex-end", align: "center" }),
+          ], { direction: "row", justify: "flex-end", align: "center", widthtype: "2" }),
         ], { direction: "row", justify: "space-between", align: "center", gap: "--sp--s300" }),
       ], "Page header", { padding: "--sp--s400" }),
       sectionContainer([
         grid([
-        container([heading("Total Vendors", "s-semibold"), heading("128", "h2-bold"), heading("All active and onboarding vendors", "s-regular", "var(--c--neutral-dark-hover)")]),
-        container([heading("Pending Onboarding", "s-semibold"), heading("24", "h2-bold"), heading("Requests awaiting review", "s-regular", "var(--c--neutral-dark-hover)")]),
-        container([heading("High Risk Vendors", "s-semibold"), heading("7", "h2-bold"), heading("High or critical risk", "s-regular", "var(--c--neutral-dark-hover)")]),
-        container([heading("Expiring Documents", "s-semibold"), heading("13", "h2-bold"), heading("Due within 30 days", "s-regular", "var(--c--neutral-dark-hover)")]),
+        container([heading("Total Vendors", "s-semibold"), heading("128", "h2-bold"), heading("All active and onboarding vendors", "s-regular", "var(--c--neutral-dark-hover)")], { gap: "--sp--s100" }),
+        container([heading("Pending Onboarding", "s-semibold"), heading("24", "h2-bold"), heading("Requests awaiting review", "s-regular", "var(--c--neutral-dark-hover)")], { gap: "--sp--s100" }),
+        container([heading("High Risk Vendors", "s-semibold"), heading("7", "h2-bold"), heading("High or critical risk", "s-regular", "var(--c--neutral-dark-hover)")], { gap: "--sp--s100" }),
+        container([heading("Expiring Documents", "s-semibold"), heading("13", "h2-bold"), heading("Due within 30 days", "s-regular", "var(--c--neutral-dark-hover)")], { gap: "--sp--s100" }),
         ], { columns: 4, gap: 16, rowGap: 16 }),
       ], "Lifecycle KPI section", { padding: "--sp--s0", borderColor: "transparent", background: "transparent" }),
   ]);
@@ -489,7 +495,7 @@ function dashboardOverview(rootId, vendorsId) {
 function dashboardOperations(rootId, vendorsId, activityId) {
   return contentShell("Vendor Management Dashboard 02", [
       sectionContainer([
-        grid([
+        flexContainer([
         container([
           heading("Onboarding Completion", "h4-bold"),
           progressBlock(),
@@ -499,10 +505,10 @@ function dashboardOperations(rootId, vendorsId, activityId) {
           heading("Compliance Alert", "h4-bold"),
           alertControl(),
         ], { background: "#FFF7ED", borderColor: "#FDBA74" }),
-        ], { columns: 2, gap: 16, rowGap: 16 }),
+        ], { direction: "row", gap: "--sp--s300", align: "stretch" }),
       ], "Progress and alert section", { padding: "--sp--s0", borderColor: "transparent", background: "transparent" }),
       sectionContainer([
-        grid([
+        flexContainer([
         container([
           heading("Onboarding Status Board", "h4-bold"),
           heading("Dynamic field and dynamic user controls are scoped inside the Kanban item template.", "s-regular", "var(--c--neutral-dark-hover)"),
@@ -512,7 +518,7 @@ function dashboardOperations(rootId, vendorsId, activityId) {
           heading("Recent Vendor Activity", "h4-bold"),
           timeline(rootId, activityId),
         ]),
-        ], { columns: 2, gap: 16, rowGap: 16 }),
+        ], { direction: "row", gap: "--sp--s300", align: "stretch" }),
       ], "Operational queue section", { padding: "--sp--s0", borderColor: "transparent", background: "transparent" }),
       sectionContainer([
         heading("Vendor Records", "h4-bold"),
@@ -601,6 +607,17 @@ function updateListViews(decoded) {
         layout.IsDefault = true;
         layout.LayoutView = viewLayout(child, show);
       }
+    }
+    const defaultView = (child.Layouts || []).find((layout) => Number(layout.Type) === 0 && layout.IsDefault)
+      || (child.Layouts || []).find((layout) => Number(layout.Type) === 0);
+    if (defaultView) {
+      child.List.LayoutView = JSON.stringify({
+        add: "default",
+        edit: "default",
+        opentype: { view: "new" },
+        sort: [],
+        view: String(defaultView.LayoutID),
+      });
     }
   }
 }
