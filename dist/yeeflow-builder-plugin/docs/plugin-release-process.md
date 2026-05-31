@@ -19,11 +19,12 @@ dist/yeeflow-builder-plugin/
 Current RC archive:
 
 ```text
-dist/yeeflow-builder-plugin-0.6.3.zip
+dist/yeeflow-builder-plugin-0.6.4.zip
 ```
 
 Current release status:
 
+- v0.6.4 RC1 is prepared for private Git marketplace smoke testing with `yeeflow-builder-plugin-v0.6.4-rc1`; final tag pending smoke.
 - v0.6.3 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.6.3-rc1`; final tag `yeeflow-builder-plugin-v0.6.3`.
 - v0.1.0 private Git marketplace install: passed.
 - v0.2.0 private Git marketplace install: passed with `yeeflow-builder-plugin-v0.2.0-rc1`.
@@ -56,7 +57,7 @@ Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.3
+yeeflow-builder-plugin-v0.6.4-rc1
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -81,6 +82,49 @@ Smoke prompts tested:
 - Dashboard-generator data-bound document-library dashboard guidance.
 
 ## Release Notes
+
+### v0.6.4
+
+Previous final version: `0.6.3`.
+
+RC version: `0.6.4`.
+
+RC tag: `yeeflow-builder-plugin-v0.6.4-rc1`.
+
+Private marketplace install smoke test: pending.
+
+Final tag: pending smoke test. Do not create `yeeflow-builder-plugin-v0.6.4` until the RC is accepted.
+
+Bundled skill count: `21`.
+
+Included milestone: package API automation, WorkspaceID support, generated YAPK upload/install API proof, YAPK-first application delivery workflow, auto-install confirmation policy, upgrade target confirmation policy, and API result classification.
+
+Verified marketplace install values for the v0.6.4 RC smoke test:
+
+- Source: `https://github.com/Yeeflow/yeeflow-codex-plugins.git`
+- Git ref: `yeeflow-builder-plugin-v0.6.4-rc1`
+- Sparse paths: `.agents/plugins/marketplace.json`, `dist/yeeflow-builder-plugin`
+- Expected marketplace: `Yeeflow Internal`
+- Expected plugin: `Yeeflow Builder`
+- Expected version: `0.6.4`
+- Expected bundled skills: `21`
+
+Main improvements:
+
+- Adds guarded package API automation for upload, import, install, and upgrade request shaping.
+- Adds WorkspaceID support from local `.env.local` and active profiles.
+- Proves generated YAPK upload and install at API acceptance level.
+- Standardizes YAPK-first new application delivery; YAP is explicit-only or fallback/debug scoped.
+- Requires user confirmation before automatic install and target confirmation before upgrade.
+- Classifies API results as `success`, `already_installed`, `api_rejected`, or `http_rejected`.
+
+Proof boundary:
+
+- Generated YAPK upload is proven.
+- Generated YAPK install is proven at API acceptance level only.
+- YAP import remains not proven.
+- YAPK upgrade is deferred until a specific disposable upgrade target is confirmed.
+- Browser/runtime verification after API install remains manual/pending.
 
 ### v0.6.3
 

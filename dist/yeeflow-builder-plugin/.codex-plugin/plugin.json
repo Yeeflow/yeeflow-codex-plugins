@@ -1,7 +1,7 @@
 {
   "name": "yeeflow-builder",
-  "version": "0.6.3",
-  "description": "Private Codex plugin for building, validating, testing, and improving Yeeflow applications using Yeeflow-specific skills, including proven YAP/YAPK import-generation fixes, current dashboard generation, data-list schema validation, reference app UI templates, Vendor Onboarding v4.1 hard checks, Advanced Controls learning, runtime proof, and tenant-neutral environment configuration guidance.",
+  "version": "0.6.4",
+  "description": "Private Codex plugin for building, validating, testing, and improving Yeeflow applications using Yeeflow-specific skills, including package API automation, WorkspaceID support, YAPK-first application delivery, API result classification, proven YAP/YAPK import-generation fixes, current dashboard generation, data-list schema validation, reference app UI templates, Vendor Onboarding v4.1 hard checks, Advanced Controls learning, runtime proof, and tenant-neutral environment configuration guidance.",
   "visibility": "private/internal",
   "category": "developer/productivity/internal tools",
   "keywords": [
@@ -65,7 +65,7 @@
       "Run the safe Yeeflow directory API connectivity smoke test.",
       "Update the Yeeflow Builder Plugin release.",
       "What Collection and Kanban actions support is included in v0.5.27?",
-      "What application generation hard checks are included in v0.6.3?"
+      "What package API automation and YAPK-first delivery workflow are included in v0.6.4?"
     ],
     "brandColor": "#2563EB",
     "composerIcon": "./assets/icon.png",

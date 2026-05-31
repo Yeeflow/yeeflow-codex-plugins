@@ -25,6 +25,25 @@ Use this when Codex asks to add a plugin marketplace from a GitHub repo, Git URL
 ./dist/yeeflow-builder-plugin
 ```
 
+Current RC install target: v0.6.4 RC1 is ready for private marketplace smoke testing as `yeeflow-builder-plugin-v0.6.4-rc1`. The final `yeeflow-builder-plugin-v0.6.4` tag must wait until smoke testing passes.
+
+Use these values in Codex's Add marketplace dialog for the v0.6.4 RC smoke test:
+
+```text
+Source:
+https://github.com/Yeeflow/yeeflow-codex-plugins.git
+
+Git ref:
+yeeflow-builder-plugin-v0.6.4-rc1
+
+Sparse paths:
+.agents/plugins/marketplace.json
+dist/yeeflow-builder-plugin
+```
+
+Expected version: `0.6.4`
+Expected bundled skills: `21`
+
 Latest final install status: v0.6.3 passed private marketplace smoke testing and is finalized as `yeeflow-builder-plugin-v0.6.3`.
 
 v0.6.3 install smoke test result:
@@ -142,7 +161,7 @@ sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 git --version
 ```
 
-After `git --version` works, retry the marketplace install with the v0.6.3 values above.
+After `git --version` works, retry the marketplace install with the current RC or final release values above.
 
 ## Prompt To Ask Codex On macOS
 

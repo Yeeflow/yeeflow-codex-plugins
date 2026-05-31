@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository publishes official Yeeflow Codex plugin packages for builders who use Codex to plan, generate, validate, and test Yeeflow application work. The current final release is the Yeeflow Builder Plugin v0.6.3.
+This repository publishes official Yeeflow Codex plugin packages for builders who use Codex to plan, generate, validate, and test Yeeflow application work. The current release candidate is the Yeeflow Builder Plugin v0.6.4 RC1. The latest final release remains v0.6.3 until v0.6.4 marketplace smoke testing passes.
 
 The repository is safe to share publicly: it is designed to contain plugin metadata, bundled skills, validators, sanitized documentation, and release artifacts. It must not contain tenant credentials, raw Yeeflow exports, decoded payloads, runtime screenshots, private tenant URLs, or generated runtime packages.
 
@@ -10,14 +10,19 @@ The repository is safe to share publicly: it is designed to contain plugin metad
 
 - `.agents/plugins/marketplace.json` for Codex marketplace installation.
 - `dist/yeeflow-builder-plugin` with the bundled Yeeflow Builder Plugin.
-- `dist/yeeflow-builder-plugin-0.6.3.zip` as the current release archive.
+- `dist/yeeflow-builder-plugin-0.6.4.zip` as the current RC archive.
 - Public installation and usage documentation in `docs/`.
 - Sanitized validators, generation helpers, and proof-boundary notes.
 
 ## Yeeflow Builder Plugin
 
-Yeeflow Builder helps Codex work with Yeeflow application packages and reusable Yeeflow building patterns. Version 0.6.3 includes:
+Yeeflow Builder helps Codex work with Yeeflow application packages and reusable Yeeflow building patterns. Version 0.6.4 RC1 includes:
 
+- Package API automation for upload/import/install/upgrade dry-run and guarded execution workflows.
+- WorkspaceID-aware `.env.local` support for package import/install/upgrade APIs.
+- Generated YAPK upload and install API proof at API-acceptance level.
+- YAPK-first application delivery workflow, with YAP explicit-only or fallback/debug scoped.
+- Auto-install confirmation policy, upgrade target confirmation policy, and package API result classification.
 - Reference app UI section template corpus and template-conformance guidance.
 - Vendor Onboarding v4.1 application-generation hard checks.
 - Yeeflow system schema specification and data-list schema validation.
@@ -47,7 +52,7 @@ Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.3
+yeeflow-builder-plugin-v0.6.4-rc1
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -56,7 +61,7 @@ dist/yeeflow-builder-plugin
 
 Expected marketplace: `Yeeflow Internal`
 Expected plugin: `Yeeflow Builder`
-Expected version: `0.6.3`
+Expected version: `0.6.4`
 Expected bundled skills: `21`
 
 ## macOS Git Prerequisite
@@ -246,7 +251,13 @@ The current final release is:
 yeeflow-builder-plugin-v0.6.3
 ```
 
-Latest final release is `yeeflow-builder-plugin-v0.6.3`. Do not move published release tags.
+The current RC tag for marketplace smoke testing is:
+
+```text
+yeeflow-builder-plugin-v0.6.4-rc1
+```
+
+Latest final release is `yeeflow-builder-plugin-v0.6.3`. Do not move published release tags. Create `yeeflow-builder-plugin-v0.6.4` only after v0.6.4 marketplace smoke passes.
 
 ## Support / Feedback
 

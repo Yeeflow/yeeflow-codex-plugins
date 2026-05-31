@@ -2,7 +2,7 @@
 
 The Yeeflow Builder Plugin is a skills-only Codex plugin for Yeeflow application builders. It packages proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth or MCP servers. API-backed helper scripts require local environment variables and must not hardcode a tenant-specific URL.
 
-Package status: v0.6.3 passed private marketplace smoke testing and is finalized as `yeeflow-builder-plugin-v0.6.3`. The official public Git install source is `https://github.com/Yeeflow/yeeflow-codex-plugins.git`.
+Package status: v0.6.4 RC1 is prepared for private marketplace smoke testing as `yeeflow-builder-plugin-v0.6.4-rc1`. The latest final release remains `yeeflow-builder-plugin-v0.6.3` until v0.6.4 smoke testing passes. The official public Git install source is `https://github.com/Yeeflow/yeeflow-codex-plugins.git`.
 
 ## Package Contents
 
@@ -68,11 +68,11 @@ The builder should:
 1. Run business clarification gates before generation.
 2. Identify lists, approval forms, dashboards, expressions, workflows, and custom-code needs.
 3. Prefer native Yeeflow controls before custom code.
-4. Generate a new application package as `.yap`.
+4. Generate a new application package as `.yapk` by default. Generate `.yap` only when explicitly requested or fallback/debug scoped.
 5. Validate child lists, approval forms, expressions, dashboards, wrappers, and app graph relationships.
 6. Record runtime test planning and runtime results before accepting a baseline.
 
-New app creation outputs `.yap`.
+New app creation outputs `.yapk` by default.
 
 ## Tenant Configuration
 
@@ -134,9 +134,9 @@ Custom code support must only be claimed for contexts that are runtime-proven. P
 
 ## `.yap` vs `.yapk`
 
-New app creation outputs `.yap`.
+New app creation outputs `.yapk` by default. Generate `.yap` only when explicitly requested or when a fallback/debug task specifically requires it.
 
-Existing app upgrade `.yapk` is schema-backed as `AppExportPackageInfo`. v0.6.2 includes a focused, runtime-proven YAPK generation/install path for the Vendor Onboarding proof package using Brotli `AppPackageInfo`, server signing, LongAsString preservation, and `PortalInfo: null` for no-portal packages. Do not claim arbitrary externally edited `.yapk` upgrades beyond the proven path. Do not mutate generated `.yap` or `.yapk` files as part of plugin packaging.
+Existing app upgrade `.yapk` is schema-backed as `AppExportPackageInfo`. v0.6.4 adds package API automation and YAPK-first delivery policy while preserving the focused v0.6.2 YAPK generation/install path for the Vendor Onboarding proof package using Brotli `AppPackageInfo`, server signing, LongAsString preservation, and `PortalInfo: null` for no-portal packages. Do not claim arbitrary externally edited `.yapk` upgrades beyond the proven path. Do not mutate generated `.yap` or `.yapk` files as part of plugin packaging.
 
 For existing app work, use `.yapk` exports for inspection, validation, and change planning only unless a proven Yeeflow-safe upgrade mechanism exists.
 
@@ -147,6 +147,25 @@ Validation should include structural checks, app graph checks, child list valida
 Dashboard KPIs, charts, and tables must be data-bound, not static mockups. Runtime tests should confirm import behavior, navigation behavior, data binding, form behavior, workflow behavior, dashboard rendering, and exported-back differences where applicable.
 
 Local validation is not the same as Yeeflow runtime proof. Accepted baselines must record what was structurally validated, what was runtime tested, what remains unproven, and what fallback was used.
+
+## v0.6.4 Scope
+
+v0.6.4 adds package API automation, WorkspaceID support, generated YAPK upload/install API proof, YAPK-first application delivery workflow, auto-install confirmation policy, upgrade target confirmation policy, and package API result classification while preserving v0.6.3 application-generation hardening and earlier capability milestones.
+
+Included package automation hardening:
+
+- Package API helper supports upload, YAP import request shaping, YAPK install, and YAPK upgrade request shaping.
+- `.env.local` and active profile handling include `YEEFLOW_WORKSPACE_ID` for import/install/upgrade APIs.
+- Upload response parsing supports `text/plain` responses containing JSON metadata.
+- New application generation defaults to YAPK.
+- YAP is explicit-only or fallback/debug scoped.
+- Auto-install requires local validation, API key presence, WorkspaceID presence, and user confirmation.
+- App changes use a versioned YAPK and upgrade only when a safe target app/package is identified and confirmed.
+- API results are classified as `success`, `already_installed`, `api_rejected`, or `http_rejected`.
+
+Proof boundary: generated YAPK upload is proven, and generated YAPK install is proven at API acceptance level only. YAP import remains not proven. YAPK upgrade is deferred until a specific disposable upgrade target is confirmed. Browser/runtime verification after API install remains manual/pending.
+
+Install smoke result: pending for RC tag `yeeflow-builder-plugin-v0.6.4-rc1`, official source `https://github.com/Yeeflow/yeeflow-codex-plugins.git`, sparse paths `.agents/plugins/marketplace.json` and `dist/yeeflow-builder-plugin`, expected version `0.6.4`, and bundled skill count `21`. Final tag `yeeflow-builder-plugin-v0.6.4` must wait until smoke passes.
 
 ## v0.6.3 Scope
 
