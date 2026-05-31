@@ -25,16 +25,16 @@ Use this when Codex asks to add a plugin marketplace from a GitHub repo, Git URL
 ./dist/yeeflow-builder-plugin
 ```
 
-Current RC install target: v0.6.4 RC1 is ready for private marketplace smoke testing as `yeeflow-builder-plugin-v0.6.4-rc1`. The final `yeeflow-builder-plugin-v0.6.4` tag must wait until smoke testing passes.
+Current final install target: v0.6.4 passed private marketplace smoke testing and is finalized as `yeeflow-builder-plugin-v0.6.4`.
 
-Use these values in Codex's Add marketplace dialog for the v0.6.4 RC smoke test:
+Use these values in Codex's Add marketplace dialog for the final v0.6.4 release:
 
 ```text
 Source:
 https://github.com/Yeeflow/yeeflow-codex-plugins.git
 
 Git ref:
-yeeflow-builder-plugin-v0.6.4-rc1
+yeeflow-builder-plugin-v0.6.4
 
 Sparse paths:
 .agents/plugins/marketplace.json
@@ -44,7 +44,19 @@ dist/yeeflow-builder-plugin
 Expected version: `0.6.4`
 Expected bundled skills: `21`
 
-Latest final install status: v0.6.3 passed private marketplace smoke testing and is finalized as `yeeflow-builder-plugin-v0.6.3`.
+Latest final install status: v0.6.4 passed private marketplace smoke testing and is finalized as `yeeflow-builder-plugin-v0.6.4`.
+
+v0.6.4 install smoke test result:
+
+- RC tag tested: `yeeflow-builder-plugin-v0.6.4-rc1`
+- Install result: passed
+- Final tag: `yeeflow-builder-plugin-v0.6.4`
+- Marketplace name: `Yeeflow Internal`
+- Category: `Developer Tools`
+- Plugin name: `Yeeflow Builder`
+- Expected version: `0.6.4`
+- Expected bundled skills: `21`
+- Smoke-test question: `What package API automation and YAPK-first delivery workflow are included in v0.6.4?`
 
 v0.6.3 install smoke test result:
 

@@ -2,7 +2,7 @@
 
 The Yeeflow Builder Plugin is a skills-only Codex plugin for Yeeflow application builders. It packages proven Yeeflow skills so Codex can plan, generate, validate, test, and improve Yeeflow application work without adding OAuth or MCP servers. API-backed helper scripts require local environment variables and must not hardcode a tenant-specific URL.
 
-Package status: v0.6.4 RC1 is prepared for private marketplace smoke testing as `yeeflow-builder-plugin-v0.6.4-rc1`. The latest final release remains `yeeflow-builder-plugin-v0.6.3` until v0.6.4 smoke testing passes. The official public Git install source is `https://github.com/Yeeflow/yeeflow-codex-plugins.git`.
+Package status: v0.6.4 passed private marketplace smoke testing and is finalized as `yeeflow-builder-plugin-v0.6.4`. The official public Git install source is `https://github.com/Yeeflow/yeeflow-codex-plugins.git`.
 
 ## Package Contents
 
@@ -165,7 +165,7 @@ Included package automation hardening:
 
 Proof boundary: generated YAPK upload is proven, and generated YAPK install is proven at API acceptance level only. YAP import remains not proven. YAPK upgrade is deferred until a specific disposable upgrade target is confirmed. Browser/runtime verification after API install remains manual/pending.
 
-Install smoke result: pending for RC tag `yeeflow-builder-plugin-v0.6.4-rc1`, official source `https://github.com/Yeeflow/yeeflow-codex-plugins.git`, sparse paths `.agents/plugins/marketplace.json` and `dist/yeeflow-builder-plugin`, expected version `0.6.4`, and bundled skill count `21`. Final tag `yeeflow-builder-plugin-v0.6.4` must wait until smoke passes.
+Install smoke result: passed for tested RC tag `yeeflow-builder-plugin-v0.6.4-rc1`, official source `https://github.com/Yeeflow/yeeflow-codex-plugins.git`, sparse paths `.agents/plugins/marketplace.json` and `dist/yeeflow-builder-plugin`, expected version `0.6.4`, and bundled skill count `21`. Final tag: `yeeflow-builder-plugin-v0.6.4`.
 
 ## v0.6.3 Scope
 
